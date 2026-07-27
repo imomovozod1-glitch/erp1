@@ -37,7 +37,7 @@ export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#94a3b8" />
                 <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
                 <Tooltip
-                  formatter={(value: number) => [formatCurrency(value), t('revenue')]}
+                  formatter={(value: any) => [formatCurrency(Number(value || 0)), t('revenue')]}
                   contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
                 />
                 <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
@@ -74,7 +74,7 @@ export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps
                       <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Tooltip formatter={(value: any) => formatCurrency(Number(value || 0))} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="mt-3 space-y-1.5">
