@@ -121,6 +121,7 @@
     "unit": "Unit",
     "price": "Selling Price",
     "costPrice": "Cost Price",
+    "incomingCost": "Incoming Cost",
     "stock": "Stock",
     "minStock": "Min Stock",
     "maxStock": "Max Stock",

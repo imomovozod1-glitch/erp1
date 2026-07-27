@@ -19,7 +19,7 @@ import { formatCurrency } from '@/lib/utils'
 
 interface PurchaseOrderFormProps {
   suppliers: { id: string; name: string }[]
-  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string }[]
+  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
   lang: string
 }
 
@@ -29,6 +29,10 @@ interface LineItem {
   quantity: number
   unitCost: number
   totalCost: number
+}
+
+function generatePoNumber() {
+  return `PO-${Date.now().toString().slice(-8)}`
 }
 
 export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFormProps) {
@@ -96,18 +100,35 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
         return
       }
 
+      // Match supplier if returned
+      if (data.supplier && Array.isArray(suppliers)) {
+        const matchedSupplier = suppliers.find(
+          s => s.name.toLowerCase().includes(data.supplier.toLowerCase()) ||
+               data.supplier.toLowerCase().includes(s.name.toLowerCase())
+        )
+        if (matchedSupplier) {
+          setSupplierId(matchedSupplier.id)
+          toast.success(`Ta'minotchi aniqlandi: ${matchedSupplier.name}`)
+        } else {
+          toast.info(`Ta'minotchi aniqlandi (${data.supplier}), lekin tizimda bunday ta'minotchi topilmadi.`)
+        }
+      }
+
       if (data.items && Array.isArray(data.items)) {
         const scannedItems: LineItem[] = data.items.map((item: any) => {
-          // Try to match with existing products
+          // Try to match with existing products by name or SKU
           const matchedProduct = products.find(
-            p => p.name.toLowerCase().includes(item.name?.toLowerCase() ?? '')
+            p => p.name.toLowerCase().includes(item.name?.toLowerCase() ?? '') ||
+                 (item.sku && p.sku.toLowerCase() === item.sku.toLowerCase())
           )
+          const qty = item.quantity ?? item.stock ?? 1
+          const cost = item.cost_price ?? item.price ?? 0
           return {
             productId: matchedProduct?.id ?? '',
             productName: item.name ?? 'Unknown',
-            quantity: item.stock ?? item.quantity ?? 1,
-            unitCost: item.cost_price ?? item.price ?? 0,
-            totalCost: (item.stock ?? item.quantity ?? 1) * (item.cost_price ?? item.price ?? 0),
+            quantity: qty,
+            unitCost: cost,
+            totalCost: qty * cost,
           }
         })
         setItems(prev => [...prev, ...scannedItems])
@@ -130,14 +151,14 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
 
     setIsSubmitting(true)
     try {
-      const supabase = createClient()
+      const supabase = createClient() as any
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
       // Generate PO number
-      const poNumber = `PO-${Date.now().toString().slice(-8)}`
+      const poNumber = generatePoNumber()
 
       // Create purchase order
       const { data: po, error: poError } = await supabase

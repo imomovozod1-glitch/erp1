@@ -17,7 +17,7 @@ import { Plus, Trash2, ShoppingCart } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface SaleFormProps {
-  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string }[]
+  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
   customers: { id: string; name: string }[]
   lang: string
 }
@@ -29,6 +29,10 @@ interface SaleItem {
   quantity: number
   stock: number
   totalPrice: number
+}
+
+function generateOrderNumber() {
+  return `SO-${Date.now().toString().slice(-8)}`
 }
 
 export function SaleForm({ products, customers, lang }: SaleFormProps) {
@@ -94,6 +98,10 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!customerId) {
+      toast.error(tCommon('required'))
+      return
+    }
     if (items.length === 0) {
       toast.error(t('noItems'))
       return
@@ -101,11 +109,11 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
     setIsSubmitting(true)
     try {
-      const supabase = createClient()
+      const supabase = createClient() as any
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      const orderNumber = `SO-${Date.now().toString().slice(-8)}`
+      const orderNumber = generateOrderNumber()
 
       // Create sales order
       const { data: order, error: orderError } = await supabase
@@ -177,10 +185,10 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl">
-      {/* Customer Selection (Optional) */}
+      {/* Customer Selection */}
       <Card className="border shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t('customer')}</CardTitle>
+          <CardTitle className="text-base">{t('customer')} *</CardTitle>
         </CardHeader>
         <CardContent>
           <select
@@ -188,7 +196,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
             onChange={(e) => setCustomerId(e.target.value)}
             className="flex h-10 w-full max-w-sm rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
-            <option value="">{tCommon('select')} ({tCommon('all')})</option>
+            <option value="">{tCommon('select')}</option>
             {customers.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}

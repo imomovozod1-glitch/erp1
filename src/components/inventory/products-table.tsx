@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { MoreHorizontal, Pencil, Trash2, Search, Package, Sparkles } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Search, Package, Sparkles, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProducts } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,6 +22,7 @@ import {
   TableHeader, TableRow,
 } from '@/components/ui/table'
 import { formatCurrency } from '@/lib/utils'
+import * as XLSX from 'xlsx'
 
 interface ProductsTableProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,6 +58,76 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     setIsDeleting(null)
   }
 
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result
+        const wb = XLSX.read(bstr, { type: 'binary' })
+        const wsname = wb.SheetNames[0]
+        const ws = wb.Sheets[wsname]
+        const data = XLSX.utils.sheet_to_json(ws) as any[]
+
+        if (data.length === 0) {
+          toast.error('Excel fayli bo\'sh')
+          return
+        }
+
+        const supabase = createClient()
+        // Map Excel columns to products table columns (supporting multi-language headers)
+        const newProducts = data.map((row: any) => {
+          const name = row.Nomi || row.name || row.Name || row['Наименование'] || '';
+          const sku = row.SKU || row.sku || row.Artikul || row['Артикул'] || `SKU-${Math.random().toString().slice(-6)}`;
+          const price = Number(row['Sotuv narxi'] || row['Chiqim'] || row.price || row.Price || row['Цена продажи'] || 0);
+          const cost_price = Number(row['Tannarx'] || row['Cost'] || row.cost_price || row.cost || row['Себестоимость'] || 0);
+          const incoming_cost = Number(row['Kirim narxi'] || row['Kirim cost'] || row.incoming_cost || row['Входящая цена'] || cost_price);
+          const stock = Number(row['Zaxira'] || row.stock || row.Stock || row['Запас'] || 0);
+          const min_stock = Number(row['Minimal zaxira'] || row.min_stock || row['Мин. запас'] || 0);
+          const unit = row['O\'lchov birligi'] || row.unit || row.Unit || row['Ед. изм.'] || 'dona';
+          const description = row.Tavsif || row.description || row.Description || row['Описание'] || '';
+
+          return {
+            name,
+            sku,
+            price,
+            cost_price,
+            incoming_cost,
+            stock,
+            min_stock,
+            unit,
+            description,
+            is_active: true
+          }
+        }).filter(p => p.name);
+
+        if (newProducts.length === 0) {
+          toast.error('Yaroqli mahsulotlar topilmadi. Ustun nomlarini tekshiring (Nomi, SKU, Sotuv narxi, Tannarx, Zaxira, O\'lchov birligi)')
+          return
+        }
+
+        toast.loading('Ma\'lumotlar yuklanmoqda...')
+        const { error } = await supabase.from('products').insert(newProducts as any)
+        
+        toast.dismiss()
+        if (error) {
+          toast.error(`Xatolik: ${error.message}`)
+        } else {
+          toast.success(`${newProducts.length} ta mahsulot muvaffaqiyatli yuklandi!`)
+          await invalidateProducts()
+          router.refresh()
+        }
+      } catch (err: any) {
+        toast.dismiss()
+        toast.error(`Excel o'qishda xatolik: ${err.message}`)
+      }
+    };
+    reader.readAsBinaryString(file)
+    e.target.value = ''
+  }
+
   return (
     <>
       <Card className="border-0 shadow-sm">
@@ -73,6 +144,23 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
               />
             </div>
             <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleExcelUpload}
+                className="hidden"
+                id="excel-upload-input"
+              />
+              <Button
+                type="button"
+                onClick={() => document.getElementById('excel-upload-input')?.click()}
+                variant="outline"
+                size="sm"
+                className="h-9 gap-2 border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/70 hover:text-emerald-800 transition-colors font-medium text-xs rounded-lg"
+              >
+                <Upload className="h-4 w-4 text-emerald-600" />
+                Exceldan yuklash
+              </Button>
               <Button
                 onClick={() => setIsScanModalOpen(true)}
                 variant="outline"
@@ -95,6 +183,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
               <TableHead>{t('sku')}</TableHead>
               <TableHead>{t('category')}</TableHead>
               <TableHead className="text-right">{t('costPrice')}</TableHead>
+              <TableHead className="text-right">{t('incomingCost')}</TableHead>
               <TableHead className="text-right">{t('price')}</TableHead>
               <TableHead className="text-right">{t('stock')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
@@ -104,7 +193,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-12">
+                <TableCell colSpan={9} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Package className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -137,6 +226,11 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                   <TableCell className="text-right">
                     <span className="text-sm font-medium text-slate-600">
                       {formatCurrency(product.cost_price)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <span className="text-sm font-medium text-slate-600">
+                      {formatCurrency(product.incoming_cost || 0)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-semibold">

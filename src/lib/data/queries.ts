@@ -377,7 +377,7 @@ export const getCachedProductsForSelect = unstable_cache(
     const supabase = getCacheClient()
     const { data } = await supabase
       .from('products')
-      .select('id, name, price, cost_price, stock, unit')
+      .select('id, name, price, cost_price, stock, unit, sku')
       .eq('is_active', true)
       .order('name')
     return data ?? []

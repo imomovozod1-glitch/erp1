@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getGeminiModel, fileToGenerativePart } from '@/lib/gemini'
+import { analyzeImageWithOpenAI } from '@/lib/openai'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,25 +14,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!process.env.GEMINI_API_KEY?.trim()) {
-      return NextResponse.json(
-        { error: 'Server sozlamalari xatosi: GEMINI_API_KEY sozlanmagan' },
-        { status: 500 }
-      )
-    }
-
     const defaultPrompt = `Analyze this document/image for an ERP system. 
     Extract the key information in a structured format (JSON if possible, or clear text). 
     If it's an invoice, extract: vendor, date, total amount, and line items.
     If it's a generic document, extract the main text and summarize key entities.`
 
     const finalPrompt = prompt || defaultPrompt
-    const imagePart = await fileToGenerativePart(file)
-
-    const model = getGeminiModel('gemini-1.5-flash')
-    const result = await model.generateContent([finalPrompt, imagePart])
-    const response = await result.response
-    const text = response.text()
+    const text = await analyzeImageWithOpenAI(file, finalPrompt, false)
 
     return NextResponse.json({ result: text })
   } catch (error: unknown) {

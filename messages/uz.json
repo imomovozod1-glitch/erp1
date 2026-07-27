@@ -122,6 +122,7 @@
     "unit": "O'lchov birligi",
     "price": "Sotuv narxi",
     "costPrice": "Tannarx",
+    "incomingCost": "Kirim narxi",
     "stock": "Zaxira",
     "minStock": "Minimal zaxira",
     "maxStock": "Maksimal zaxira",

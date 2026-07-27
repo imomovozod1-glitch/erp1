@@ -134,6 +134,7 @@ export type Database = {
           unit: string
           price: number
           cost_price: number
+          incoming_cost: number
           stock: number
           min_stock: number
           max_stock: number | null
@@ -151,6 +152,7 @@ export type Database = {
           unit?: string
           price?: number
           cost_price?: number
+          incoming_cost?: number
           stock?: number
           min_stock?: number
           max_stock?: number | null
@@ -165,6 +167,7 @@ export type Database = {
           unit?: string
           price?: number
           cost_price?: number
+          incoming_cost?: number
           stock?: number
           min_stock?: number
           max_stock?: number | null

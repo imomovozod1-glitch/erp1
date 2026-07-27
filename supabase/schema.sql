@@ -95,6 +95,7 @@ CREATE TABLE products (
   unit TEXT NOT NULL DEFAULT 'pcs',
   price DECIMAL(12, 2) NOT NULL DEFAULT 0,
   cost_price DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  incoming_cost DECIMAL(12, 2) NOT NULL DEFAULT 0,
   stock INTEGER NOT NULL DEFAULT 0,
   min_stock INTEGER NOT NULL DEFAULT 0,
   max_stock INTEGER,

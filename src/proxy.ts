@@ -1,5 +1,5 @@
 import createMiddleware from 'next-intl/middleware'
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { routing } from '@/i18n/routing'
 
@@ -7,12 +7,56 @@ const intlMiddleware = createMiddleware(routing)
 
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password']
 
+function getTenantSubdomain(host: string): string | null {
+  // Exclude port if present (e.g. localhost:3000 -> localhost)
+  const hostname = host.split(':')[0]
+
+  // If local development, check for subdomain before "localhost"
+  // e.g. "tenant1.localhost" -> "tenant1"
+  if (hostname.endsWith('.localhost')) {
+    const parts = hostname.split('.')
+    if (parts.length > 1) {
+      const sub = parts[0]
+      if (sub !== 'www') return sub
+    }
+    return null
+  }
+
+  // For production domains like "tenant1.urlerp.com"
+  const parts = hostname.split('.')
+  if (parts.length > 2) {
+    const sub = parts[0]
+    if (sub !== 'www') return sub
+  }
+
+  return null
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  
+  // Extract host and check for subdomain
+  const host = request.headers.get('host') || ''
+  const tenantSubdomain = getTenantSubdomain(host)
+
+  // Clone headers and append tenant context if present
+  const requestHeaders = new Headers(request.headers)
+  if (tenantSubdomain) {
+    requestHeaders.set('x-tenant-subdomain', tenantSubdomain)
+  }
+
+  // Create a new request with the updated headers
+  const reqWithHeaders = new NextRequest(request, {
+    headers: requestHeaders,
+  })
 
   // ─── Fast path: Skip i18n & locale redirects for API routes ───────────────
   if (pathname.startsWith('/api/') || pathname.includes('/api/')) {
-    return NextResponse.next()
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      }
+    })
   }
 
   // Extract locale from pathname
@@ -30,14 +74,17 @@ export async function proxy(request: NextRequest) {
   )
 
   // ─── Fast path: skip Supabase network call for public routes ──────────────
-  // Public routes (login, register) don't need JWT validation. Just run the
-  // i18n middleware and return — saves ~150 ms on every auth page request.
   if (isPublicRoute) {
-    return intlMiddleware(request) ?? NextResponse.next()
+    const response = intlMiddleware(reqWithHeaders) ?? NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      }
+    })
+    return response
   }
 
   // ─── Protected routes: validate session with Supabase ─────────────────────
-  const { supabaseResponse, user } = await updateSession(request)
+  const { supabaseResponse, user } = await updateSession(reqWithHeaders)
 
   // Redirect unauthenticated users to login
   if (!user && pathnameLocale) {
@@ -48,7 +95,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Apply i18n middleware and forward Supabase cookies
-  const intlResponse = intlMiddleware(request)
+  const intlResponse = intlMiddleware(reqWithHeaders)
   if (intlResponse) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       intlResponse.cookies.set(cookie.name, cookie.value, cookie)
@@ -58,7 +105,6 @@ export async function proxy(request: NextRequest) {
 
   return supabaseResponse
 }
-
 
 export const config = {
   matcher: [

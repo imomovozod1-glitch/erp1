@@ -22,6 +22,7 @@ const formSchema = z.object({
   unit: z.string().min(1, 'Unit is required'),
   price: z.coerce.number().min(0),
   cost_price: z.coerce.number().min(0),
+  incoming_cost: z.coerce.number().min(0),
   stock: z.coerce.number().min(0),
   min_stock: z.coerce.number().min(0),
   description: z.string().optional(),
@@ -51,6 +52,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     unit: z.string().min(1, tCommon('required')),
     price: z.coerce.number().min(0, tCommon('required')),
     cost_price: z.coerce.number().min(0, tCommon('required')),
+    incoming_cost: z.coerce.number().min(0, tCommon('required')),
     stock: z.coerce.number().min(0, tCommon('required')),
     min_stock: z.coerce.number().min(0, tCommon('required')),
     category_id: z.string().optional().nullable(),
@@ -66,6 +68,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       unit: initialData?.unit || 'pcs',
       price: initialData?.price || 0,
       cost_price: initialData?.cost_price || 0,
+      incoming_cost: initialData?.incoming_cost || 0,
       stock: initialData?.stock || 0,
       min_stock: initialData?.min_stock || 0,
       description: initialData?.description || '',
@@ -155,6 +158,12 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
           <Label htmlFor="cost_price">{t('costPrice')} *</Label>
           <Input id="cost_price" type="number" step="0.01" {...register('cost_price')} />
           {errors.cost_price && <p className="text-sm text-red-500">{errors.cost_price.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="incoming_cost">{t('incomingCost')} *</Label>
+          <Input id="incoming_cost" type="number" step="0.01" {...register('incoming_cost')} />
+          {errors.incoming_cost && <p className="text-sm text-red-500">{errors.incoming_cost.message}</p>}
         </div>
 
         <div className="space-y-2">

@@ -43,7 +43,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true)
     try {
-      const supabase = createClient()
+      const supabase = createClient() as any
 
       if (initialData?.id) {
         const { error } = await supabase
