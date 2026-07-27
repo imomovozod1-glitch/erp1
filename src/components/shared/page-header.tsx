@@ -56,6 +56,7 @@ export function PageHeader({
           action.href ? (
             <Link
               href={action.href}
+              prefetch={true}
               className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[0.8rem] font-medium rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
             >
               {ActionIcon && <ActionIcon className="h-3.5 w-3.5" />}

@@ -265,7 +265,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem
-                          render={<Link href={`/${lang}/inventory/products/${product.id}/edit`} />}
+                          render={<Link href={`/${lang}/inventory/products/${product.id}/edit`} prefetch={true} />}
                         >
                           <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
                         </DropdownMenuItem>

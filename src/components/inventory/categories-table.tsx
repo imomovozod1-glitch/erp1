@@ -114,7 +114,7 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuItem
-                          render={<Link href={`/${lang}/inventory/categories/${category.id}/edit`} />}
+                          render={<Link href={`/${lang}/inventory/categories/${category.id}/edit`} prefetch={true} />}
                         >
                           <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
                         </DropdownMenuItem>
