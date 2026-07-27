@@ -27,7 +27,7 @@ export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps
         </CardHeader>
         <CardContent>
           {chartData.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">
+            <div className="flex items-center justify-center h-75 text-muted-foreground text-sm">
               {t('noSalesData')}
             </div>
           ) : (
@@ -54,7 +54,7 @@ export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps
         </CardHeader>
         <CardContent>
           {topProducts.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">
+            <div className="flex items-center justify-center h-75 text-muted-foreground text-sm">
               {t('noSalesData')}
             </div>
           ) : (
@@ -82,7 +82,7 @@ export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps
                   <div key={idx} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                      <span className="text-slate-700 truncate max-w-[120px]">{p.name}</span>
+                      <span className="text-slate-700 truncate max-w-30">{p.name}</span>
                     </div>
                     <span className="font-medium text-slate-900">{formatCurrency(p.totalSum)}</span>
                   </div>

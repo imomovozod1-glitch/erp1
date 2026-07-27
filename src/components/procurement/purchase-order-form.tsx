@@ -134,7 +134,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
         setItems(prev => [...prev, ...scannedItems])
         toast.success(`${scannedItems.length} ta mahsulot aniqlandi`)
       }
-    } catch (err) {
+    } catch {
       toast.error(tCommon('error'))
     } finally {
       setIsScanning(false)
@@ -268,7 +268,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-gradient-to-br from-indigo-50/50 to-purple-50/50">
+        <Card className="border shadow-sm bg-linear-to-br from-indigo-50/50 to-purple-50/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-indigo-600" />
@@ -315,7 +315,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[200px] space-y-1">
+            <div className="flex-1 min-w-50 space-y-1">
               <Label className="text-xs">{t('selectProduct')}</Label>
               <select
                 value={selectedProductId}

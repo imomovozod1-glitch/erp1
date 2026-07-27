@@ -25,7 +25,6 @@ import { formatCurrency } from '@/lib/utils'
 import * as XLSX from 'xlsx'
 
 interface ProductsTableProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   products: any[]
   lang: string
 }
@@ -207,7 +206,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                     <div>
                       <p className="font-medium text-slate-800">{product.name}</p>
                       {product.description && (
-                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                        <p className="text-xs text-muted-foreground truncate max-w-50">
                           {product.description}
                         </p>
                       )}

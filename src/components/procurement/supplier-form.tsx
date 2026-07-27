@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 interface SupplierFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any
   lang: string
 }

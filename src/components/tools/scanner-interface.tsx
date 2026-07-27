@@ -73,7 +73,7 @@ export function ScannerInterface() {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Upload Section */}
-      <Card className="border-0 shadow-sm flex flex-col h-full min-h-[500px]">
+      <Card className="border-0 shadow-sm flex flex-col h-full min-h-125">
         <CardContent className="p-6 flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-slate-800 text-lg">Hujjat rasmi</h3>
@@ -142,7 +142,7 @@ export function ScannerInterface() {
       </Card>
 
       {/* Result Section */}
-      <Card className="border-0 shadow-sm min-h-[500px]">
+      <Card className="border-0 shadow-sm min-h-125">
         <CardContent className="p-6 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">

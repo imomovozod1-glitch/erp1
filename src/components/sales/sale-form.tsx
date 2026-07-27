@@ -211,7 +211,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[200px] space-y-1">
+            <div className="flex-1 min-w-50 space-y-1">
               <Label className="text-xs">{t('selectProduct')}</Label>
               <select
                 value={selectedProductId}

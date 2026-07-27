@@ -329,7 +329,7 @@ export function AIStockScannerModal({
           {scanStep === 'upload' ? (
             <div className="grid gap-6 md:grid-cols-2">
               {/* Dropzone */}
-              <div className="flex flex-col h-full min-h-[300px]">
+              <div className="flex flex-col h-full min-h-75">
                 <label className="text-xs font-semibold text-slate-700 mb-2">
                   Hujjat / Tovarlar rasmi:
                 </label>
@@ -341,12 +341,12 @@ export function AIStockScannerModal({
                   }`}
                 >
                   {preview ? (
-                    <div className="relative w-full h-full min-h-[220px] flex items-center justify-center">
+                    <div className="relative w-full h-full min-h-55 flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={preview}
                         alt="Scanned doc preview"
-                        className="max-h-[260px] w-auto object-contain rounded-lg shadow-sm"
+                        className="max-h-65 w-auto object-contain rounded-lg shadow-sm"
                       />
                     </div>
                   ) : (
@@ -444,7 +444,7 @@ export function AIStockScannerModal({
                 </div>
               </div>
 
-              <div className="border border-slate-200 rounded-xl overflow-hidden max-h-[400px] overflow-y-auto shadow-xs bg-white">
+              <div className="border border-slate-200 rounded-xl overflow-hidden max-h-100 overflow-y-auto shadow-xs bg-white">
                 <Table>
                   <TableHeader className="bg-slate-50 sticky top-0 z-10">
                     <TableRow>

@@ -225,9 +225,7 @@ export const getCachedAnalyticsStats = unstable_cache(
     ])
 
     // Aggregate sold products for the analytics table
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const productMap: Record<string, { name: string; costPrice: number; sellingPrice: number; quantity: number; totalSum: number }> = {}
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(orderItems ?? []).forEach((item: any) => {
       const productName = item.products?.name ?? 'Unknown'
       const costPrice = item.products?.cost_price ?? 0
@@ -260,7 +258,6 @@ export const getCachedAnalyticsStats = unstable_cache(
 
     // Monthly data for chart
     const monthlyData: Record<string, { revenue: number; cost: number }> = {}
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(monthlyOrders ?? []).forEach((o: any) => {
       const month = o.order_date?.slice(0, 7) ?? 'unknown'
       if (!monthlyData[month]) monthlyData[month] = { revenue: 0, cost: 0 }
