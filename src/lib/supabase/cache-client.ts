@@ -9,7 +9,7 @@
  * so it cannot be used inside a cache boundary.
  *
  * This client uses the anon key directly (no SSR cookie wrapper).
- * Routes are already protected at the middleware layer (`proxy.ts`),
+ * Routes are already protected at the middleware layer (`middleware.ts`),
  * so only authenticated users ever reach pages that use cached data.
  *
  * If your Supabase tables have RLS policies that require a user JWT,

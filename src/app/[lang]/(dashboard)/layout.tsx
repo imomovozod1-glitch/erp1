@@ -14,7 +14,7 @@ export default async function DashboardLayout({
   const { lang } = await params
 
   // getSession() reads the JWT locally — NO network call (~0 ms).
-  // Security: middleware (proxy.ts) already called getUser() on every request
+  // Security: middleware (middleware.ts) already called getUser() on every request
   // and redirects unauthenticated users before reaching this layout.
   const user = await getSessionUser()
 

@@ -17,7 +17,7 @@
  * Security note
  * ─────────────
  * `getSession()` reads the JWT from the cookie WITHOUT a network call. It
- * is safe here because `proxy.ts` middleware already calls `getUser()` (the
+ * is safe here because `middleware.ts` already calls `getUser()` (the
  * full server-side validation) on every request and redirects unauthenticated
  * users before they ever reach the layout. Using `getSession()` in the layout
  * is an intentional perf trade-off, not a security hole.
