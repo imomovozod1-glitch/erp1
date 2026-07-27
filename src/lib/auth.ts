@@ -45,19 +45,20 @@ export const getSessionUser = cache(async () => {
  * Cached for 5 minutes in the Next.js Data Cache, keyed by user id.
  * Invalidated via revalidateTag('profile:<userId>') when the profile changes.
  */
-const _getCachedProfile = unstable_cache(
-  async (userId: string) => {
-    const supabase = getCacheClient()
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    return data
-  },
-  ['user-profile'],
-  { revalidate: 300 } // 5 minutes
-)
+const _getCachedProfile = (userId: string) =>
+  unstable_cache(
+    async () => {
+      const supabase = getCacheClient()
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      return data
+    },
+    ['user-profile', userId],
+    { revalidate: 300 } // 5 minutes
+  )()
 
 export async function getCachedProfile(userId: string) {
   return _getCachedProfile(userId)

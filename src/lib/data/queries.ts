@@ -301,8 +301,7 @@ export const getCachedDashboardStats = unstable_cache(
       { count: totalEmployees },
       { data: recentOrders },
       { data: chartTxData },
-      { data: incomeRows },
-      { data: expenseRows },
+      { data: allTxAmounts },
       { data: lowStockRows },
       { count: pendingInvoices },
     ] = await Promise.all([
@@ -320,11 +319,13 @@ export const getCachedDashboardStats = unstable_cache(
         .select('amount, type, transaction_date')
         .gte('transaction_date', sixMonthsAgo)
         .order('transaction_date', { ascending: true }),
-      supabase.from('transactions').select('amount').eq('type', 'income'),
-      supabase.from('transactions').select('amount').eq('type', 'expense'),
+      supabase.from('transactions').select('amount, type'),
       supabase.from('products').select('id, name, sku, stock, min_stock').order('stock', { ascending: true }).limit(10),
       supabase.from('invoices').select('*', { count: 'exact', head: true }).in('status', ['sent', 'overdue']),
     ])
+
+    const incomeRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'income')
+    const expenseRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'expense')
 
     return {
       totalOrders,
@@ -333,8 +334,8 @@ export const getCachedDashboardStats = unstable_cache(
       totalEmployees,
       recentOrders: recentOrders ?? [],
       chartTxData: chartTxData ?? [],
-      incomeRows: incomeRows ?? [],
-      expenseRows: expenseRows ?? [],
+      incomeRows,
+      expenseRows,
       lowStockRows: lowStockRows ?? [],
       pendingInvoices,
     }

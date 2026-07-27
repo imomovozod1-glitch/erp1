@@ -154,7 +154,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href={`/${lang}/dashboard`} />}>
+            <SidebarMenuButton size="lg" render={<Link href={`/${lang}/dashboard`} prefetch={true} />}>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
                 <Building2 className="size-4" />
               </div>
@@ -181,7 +181,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
-                        render={<Link href={fullHref} />}
+                        render={<Link href={fullHref} prefetch={true} />}
                         isActive={isActive}
                         tooltip={tNav(item.key as string)}
                       >
@@ -195,7 +195,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 return (
                   <SidebarMenuItem key={item.key}>
                     <SidebarMenuButton
-                      render={<Link href={fullHref} />}
+                      render={<Link href={fullHref} prefetch={true} />}
                       isActive={isActive}
                       tooltip={tNav(item.key as string)}
                     >
@@ -215,7 +215,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                           const isSubActive = pathname === subFullHref || pathname.startsWith(`${subFullHref}/`)
                           return (
                             <SidebarMenuSubItem key={sub.key}>
-                              <SidebarMenuSubButton render={<Link href={subFullHref} />} isActive={isSubActive}>
+                              <SidebarMenuSubButton render={<Link href={subFullHref} prefetch={true} />} isActive={isSubActive}>
                                 <span>{getSubLabel(item.key, sub.key)}</span>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -234,7 +234,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href={`/${lang}/settings/profile`} />}>
+            <SidebarMenuButton size="lg" render={<Link href={`/${lang}/settings/profile`} prefetch={true} />}>
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarFallback className="rounded-lg bg-indigo-100 text-indigo-700 text-xs font-semibold">
                   {initials}
