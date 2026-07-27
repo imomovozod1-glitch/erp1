@@ -1,0 +1,105 @@
+
+> erp@0.1.0 lint
+> eslint
+
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/app/[lang]/(dashboard)/dashboard/page.tsx
+  29:9   warning  'tCommon' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  32:33  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/app/[lang]/(dashboard)/dashboard/page.tsx:32:33
+  30 |   const supabase = await createClient()
+  31 |
+> 32 |   const sixMonthsAgo = new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+     |                                 ^^^^^^^^^^ Cannot call impure function
+  33 |
+  34 |   // Parallel data fetching for performance
+  35 |   const [  react-hooks/purity
+  60:17  warning  'profile' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/app/[lang]/(dashboard)/settings/page.tsx
+  30:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/app/[lang]/(dashboard)/tools/scanner/page.tsx
+  31:18   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  35:24   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  35:54   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  35:91   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  35:105  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/app/[lang]/layout.tsx
+  4:23  warning  'getLocale' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/app/api/ocr/route.ts
+  37:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/components/dashboard/recent-orders.tsx
+   2:10  warning  'Badge' is defined but never used         @typescript-eslint/no-unused-vars
+   4:26  warning  'formatDate' is defined but never used    @typescript-eslint/no-unused-vars
+  16:11  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/components/finance/transactions-table.tsx
+  12:17  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:51  warning  'lang' is defined but never used          @typescript-eslint/no-unused-vars
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/components/hr/employees-table.tsx
+   6:10  warning  'toast' is defined but never used                @typescript-eslint/no-unused-vars
+   7:10  warning  'MoreHorizontal' is defined but never used       @typescript-eslint/no-unused-vars
+   7:26  warning  'Pencil' is defined but never used               @typescript-eslint/no-unused-vars
+   7:34  warning  'Trash2' is defined but never used               @typescript-eslint/no-unused-vars
+   8:10  warning  'createClient' is defined but never used         @typescript-eslint/no-unused-vars
+  11:10  warning  'Button' is defined but never used               @typescript-eslint/no-unused-vars
+  15:3   warning  'DropdownMenu' is defined but never used         @typescript-eslint/no-unused-vars
+  15:17  warning  'DropdownMenuContent' is defined but never used  @typescript-eslint/no-unused-vars
+  16:3   warning  'DropdownMenuItem' is defined but never used     @typescript-eslint/no-unused-vars
+  16:21  warning  'DropdownMenuTrigger' is defined but never used  @typescript-eslint/no-unused-vars
+  25:14  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  29:45  warning  'lang' is defined but never used                 @typescript-eslint/no-unused-vars
+  32:9   warning  'router' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/components/inventory/products-table.tsx
+  24:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/components/layout/app-sidebar.tsx
+  185:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/components/procurement/suppliers-table.tsx
+   6:10  warning  'toast' is defined but never used         @typescript-eslint/no-unused-vars
+   7:34  warning  'Trash2' is defined but never used        @typescript-eslint/no-unused-vars
+   8:10  warning  'createClient' is defined but never used  @typescript-eslint/no-unused-vars
+  21:14  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/components/sales/customers-table.tsx
+  24:14  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  29:9   warning  't' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  33:10  warning  'isDeleting' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/components/sales/orders-table.tsx
+  30:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/hooks/use-mobile.ts
+  14:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/gulshodatoxtamurodova/Desktop/erp/src/hooks/use-mobile.ts:14:5
+  12 |     }
+  13 |     mql.addEventListener("change", onChange)
+> 14 |     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  15 |     return () => mql.removeEventListener("change", onChange)
+  16 |   }, [])
+  17 |  react-hooks/set-state-in-effect
+
+✖ 44 problems (21 errors, 23 warnings)
+

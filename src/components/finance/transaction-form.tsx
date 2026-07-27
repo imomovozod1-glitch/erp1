@@ -1,0 +1,198 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { useForm, Resolver } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { createClient } from '@/lib/supabase/client'
+import { invalidateTransactions } from '@/lib/data/revalidate'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select, SelectContent,
+  SelectItem, SelectTrigger, SelectValue
+} from '@/components/ui/select'
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const formSchema = z.object({
+  type: z.enum(['income', 'expense']),
+  amount: z.coerce.number().min(0.01, 'Amount must be greater than 0'),
+  category: z.string().min(1, 'Category is required'),
+  transaction_date: z.string().min(1, 'Date is required'),
+  description: z.string().optional().or(z.literal('')),
+  reference_type: z.string().optional().or(z.literal('')),
+  reference_id: z.string().optional().or(z.literal('')),
+})
+
+type FormData = z.infer<typeof formSchema>
+
+interface TransactionFormProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialData?: any
+  defaultType?: 'income' | 'expense'
+  lang: string
+}
+
+export function TransactionForm({ initialData, defaultType = 'income', lang }: TransactionFormProps) {
+  const t = useTranslations('finance')
+  const tCommon = useTranslations('common')
+  const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase.auth.getUser().then(({ data }: any) => {
+      if (data?.user) setUserId(data.user.id)
+    })
+  }, [supabase.auth])
+
+  const innerFormSchema = z.object({
+    type: z.enum(['income', 'expense']),
+    amount: z.coerce.number().min(0.01, tCommon('required')),
+    category: z.string().min(1, tCommon('required')),
+    transaction_date: z.string().min(1, tCommon('required')),
+    description: z.string().optional().or(z.literal('')),
+    reference_type: z.string().optional().or(z.literal('')),
+    reference_id: z.string().optional().or(z.literal('')),
+  })
+
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
+    defaultValues: {
+      type: initialData?.type || defaultType,
+      amount: initialData?.amount || 0,
+      category: initialData?.category || '',
+      transaction_date: initialData?.transaction_date ? initialData.transaction_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      description: initialData?.description || '',
+      reference_type: initialData?.reference_type || '',
+      reference_id: initialData?.reference_id || '',
+    },
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onSubmit = async (data: any) => {
+    if (!userId && !initialData) {
+      toast.error('User session not found')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const payload = {
+        ...data,
+        description: data.description || null,
+        reference_type: data.reference_type || null,
+        reference_id: data.reference_id || null,
+        created_by: initialData?.created_by || userId,
+      }
+
+      if (initialData?.id) {
+        const { error } = await supabase
+          .from('transactions')
+          .update(payload)
+          .eq('id', initialData.id)
+        if (error) throw error
+        toast.success(tCommon('success'))
+      } else {
+        const { error } = await supabase
+          .from('transactions')
+          .insert([payload])
+        if (error) throw error
+        toast.success(tCommon('success'))
+      }
+      
+      await invalidateTransactions()
+      if (initialData?.type || defaultType) {
+        const redirectType = initialData?.type || defaultType
+        router.push(`/${lang}/finance/${redirectType === 'income' ? 'income' : 'expenses'}`)
+      } else {
+        router.push(`/${lang}/finance/transactions`)
+      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error.message || tCommon('error'))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const typeValue = watch('type')
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl bg-white p-6 rounded-xl border shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="type">Turi *</Label>
+          <Select value={typeValue} onValueChange={(val: any) => setValue('type', val)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Turini tanlang" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="income">Kirim (Daromad)</SelectItem>
+              <SelectItem value="expense">Chiqim (Xarajat)</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="amount">Summa *</Label>
+          <Input id="amount" type="number" step="0.01" {...register('amount')} />
+          {errors.amount && <p className="text-sm text-red-500">{errors.amount.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="category">Toifa *</Label>
+          <Input id="category" placeholder="Masalan: Sotuv, Oylik" {...register('category')} />
+          {errors.category && <p className="text-sm text-red-500">{errors.category.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="transaction_date">Sana *</Label>
+          <Input id="transaction_date" type="date" {...register('transaction_date')} />
+          {errors.transaction_date && <p className="text-sm text-red-500">{errors.transaction_date.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="reference_type">Reference turi (Ixtiyoriy)</Label>
+          <Input id="reference_type" placeholder="Masalan: order, invoice" {...register('reference_type')} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="reference_id">Reference ID (Ixtiyoriy)</Label>
+          <Input id="reference_id" {...register('reference_id')} />
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="description">Ta'rif (Ixtiyoriy)</Label>
+          <Textarea id="description" {...register('description')} rows={3} />
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={() => {
+            const redirectType = initialData?.type || defaultType
+            router.push(`/${lang}/finance/${redirectType === 'income' ? 'income' : 'expenses'}`)
+          }}
+          disabled={isSubmitting}
+        >
+          {tCommon('cancel')}
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? tCommon('saving') : tCommon('save')}
+        </Button>
+      </div>
+    </form>
+  )
+}
