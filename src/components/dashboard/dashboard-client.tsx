@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import {
@@ -48,7 +48,22 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ lang, stats, analytics }: DashboardClientProps) {
-  const [period, setPeriod] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>('all')
+  const [period, setPeriod] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('dashboard_period')
+      if (saved === 'today' || saved === 'yesterday' || saved === 'week' || saved === 'month' || saved === 'all') {
+        return saved
+      }
+    }
+    return 'all'
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('dashboard_period', period)
+    }
+  }, [period])
+
   const td = useTranslations('dashboard')
 
   const {
