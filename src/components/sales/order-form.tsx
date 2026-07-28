@@ -131,16 +131,16 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="order_number">Buyurtma raqami *</Label>
+          <Label htmlFor="order_number">{t('orderNumber')} *</Label>
           <Input id="order_number" {...register('order_number')} />
           {errors.order_number && <p className="text-sm text-red-500">{errors.order_number.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_id">Mijoz *</Label>
+          <Label htmlFor="customer_id">{t('customer')} *</Label>
           <Select value={customerIdValue} onValueChange={(val) => { if (val) setValue('customer_id', val) }}>
             <SelectTrigger>
-              <SelectValue placeholder="Mijoz tanlang" />
+              <SelectValue placeholder={t('selectCustomer')} />
             </SelectTrigger>
             <SelectContent>
               {customers.map((c) => (
@@ -152,39 +152,39 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Holati</Label>
+          <Label htmlFor="status">{tCommon('status')}</Label>
           <Select value={statusValue} onValueChange={(val: any) => setValue('status', val)}>
             <SelectTrigger>
-              <SelectValue placeholder="Holat tanlang" />
+              <SelectValue placeholder={t('selectStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Qoralama (Draft)</SelectItem>
-              <SelectItem value="pending">Kutilmoqda (Pending)</SelectItem>
-              <SelectItem value="confirmed">Tasdiqlangan (Confirmed)</SelectItem>
-              <SelectItem value="shipped">Yuborilgan (Shipped)</SelectItem>
-              <SelectItem value="delivered">Yetkazib berilgan (Delivered)</SelectItem>
-              <SelectItem value="cancelled">Bekor qilingan (Cancelled)</SelectItem>
+              <SelectItem value="draft">{t('status.draft')}</SelectItem>
+              <SelectItem value="pending">{t('status.pending')}</SelectItem>
+              <SelectItem value="confirmed">{t('status.confirmed')}</SelectItem>
+              <SelectItem value="shipped">{t('status.shipped')}</SelectItem>
+              <SelectItem value="delivered">{t('status.delivered')}</SelectItem>
+              <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="order_date">Buyurtma sanasi</Label>
+          <Label htmlFor="order_date">{t('orderDate')}</Label>
           <Input id="order_date" type="date" {...register('order_date')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="total_amount">Umumiy summa</Label>
+          <Label htmlFor="total_amount">{tCommon('total')}</Label>
           <Input id="total_amount" type="number" step="0.01" {...register('total_amount')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="delivery_date">Yetkazib berish sanasi</Label>
+          <Label htmlFor="delivery_date">{t('deliveryDate')}</Label>
           <Input id="delivery_date" type="date" {...register('delivery_date')} />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="notes">Eslatma</Label>
+          <Label htmlFor="notes">{tCommon('notes')}</Label>
           <Textarea id="notes" {...register('notes')} rows={3} />
         </div>
       </div>

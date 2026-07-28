@@ -92,7 +92,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                   <TableCell className="text-right font-semibold">{formatCurrency(order.total_amount)}</TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-600'}`}>
-                      {order.status?.replace('_', ' ')}
+                      {t(`status.${order.status}`)}
                     </span>
                   </TableCell>
                   <TableCell>

@@ -139,16 +139,16 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="invoice_number">Hisob-faktura raqami *</Label>
+          <Label htmlFor="invoice_number">{t('invoiceNumber')} *</Label>
           <Input id="invoice_number" {...register('invoice_number')} />
           {errors.invoice_number && <p className="text-sm text-red-500">{errors.invoice_number.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_id">Mijoz *</Label>
+          <Label htmlFor="customer_id">{t('customer')} *</Label>
           <Select value={customerIdValue} onValueChange={(val) => { if (val) setValue('customer_id', val) }}>
             <SelectTrigger>
-              <SelectValue placeholder="Mijoz tanlang" />
+              <SelectValue placeholder={t('selectCustomer')} />
             </SelectTrigger>
             <SelectContent>
               {customers.map((c) => (
@@ -160,13 +160,13 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="order_id">Buyurtma (Ixtiyoriy)</Label>
+          <Label htmlFor="order_id">{t('orders')} ({tCommon('optional')})</Label>
           <Select value={orderIdValue || 'none'} onValueChange={(val) => { if (val) setValue('order_id', val === 'none' ? '' : val) }}>
             <SelectTrigger>
-              <SelectValue placeholder="Buyurtma tanlang (ixtiyoriy)" />
+              <SelectValue placeholder={t('selectOrder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Tanlanmagan</SelectItem>
+              <SelectItem value="none">{tCommon('none')}</SelectItem>
               {orders.map((o) => (
                 <SelectItem key={o.id} value={o.id}>{o.order_number}</SelectItem>
               ))}
@@ -175,49 +175,49 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Holati</Label>
+          <Label htmlFor="status">{tCommon('status')}</Label>
           <Select value={statusValue} onValueChange={(val: any) => setValue('status', val)}>
             <SelectTrigger>
-              <SelectValue placeholder="Holat tanlang" />
+              <SelectValue placeholder={t('selectStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Qoralama (Draft)</SelectItem>
-              <SelectItem value="sent">Yuborilgan (Sent)</SelectItem>
-              <SelectItem value="paid">To'langan (Paid)</SelectItem>
-              <SelectItem value="overdue">Muddati o'tgan (Overdue)</SelectItem>
-              <SelectItem value="cancelled">Bekor qilingan (Cancelled)</SelectItem>
+              <SelectItem value="draft">{t('status.draft')}</SelectItem>
+              <SelectItem value="sent">{t('status.sent')}</SelectItem>
+              <SelectItem value="paid">{t('status.paid')}</SelectItem>
+              <SelectItem value="overdue">{t('status.overdue')}</SelectItem>
+              <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="total_amount">Umumiy summa</Label>
+          <Label htmlFor="total_amount">{tCommon('total')}</Label>
           <Input id="total_amount" type="number" step="0.01" {...register('total_amount')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="paid_amount">To'langan summa</Label>
+          <Label htmlFor="paid_amount">{t('paidAmount')}</Label>
           <Input id="paid_amount" type="number" step="0.01" {...register('paid_amount')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="issued_at">Berilgan sana</Label>
+          <Label htmlFor="issued_at">{tCommon('date')}</Label>
           <Input id="issued_at" type="date" {...register('issued_at')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="due_at">To'lov muddati *</Label>
+          <Label htmlFor="due_at">{t('dueDate')} *</Label>
           <Input id="due_at" type="date" {...register('due_at')} />
           {errors.due_at && <p className="text-sm text-red-500">{errors.due_at.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="paid_at">To'langan sana</Label>
+          <Label htmlFor="paid_at">{t('paidDate')}</Label>
           <Input id="paid_at" type="date" {...register('paid_at')} />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="notes">Eslatma</Label>
+          <Label htmlFor="notes">{tCommon('notes')}</Label>
           <Textarea id="notes" {...register('notes')} rows={3} />
         </div>
       </div>

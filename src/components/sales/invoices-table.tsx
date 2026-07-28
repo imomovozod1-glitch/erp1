@@ -32,6 +32,7 @@ interface InvoicesTableProps {
 
 export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
   const tCommon = useTranslations('common')
+  const t = useTranslations('sales')
   const router = useRouter()
   const [search, setSearch] = useState('')
 
@@ -61,12 +62,12 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
-                <TableHead className="w-45">Hisob-faktura (Invoice)</TableHead>
-                <TableHead>Mijoz</TableHead>
-                <TableHead>Holat</TableHead>
-                <TableHead className="text-right">Umumiy Summa</TableHead>
-                <TableHead className="text-right">To&apos;langan</TableHead>
-                <TableHead className="text-right">Berilgan Sana</TableHead>
+                <TableHead className="w-45">{t('invoiceNumber')}</TableHead>
+                <TableHead>{t('customer')}</TableHead>
+                <TableHead>{tCommon('status')}</TableHead>
+                <TableHead className="text-right">{tCommon('total')}</TableHead>
+                <TableHead className="text-right">{t('status.paid')}</TableHead>
+                <TableHead className="text-right">{tCommon('date')}</TableHead>
                 <TableHead className="w-17.5"></TableHead>
               </TableRow>
             </TableHeader>
@@ -102,7 +103,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     </TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[invoice.status]}`}>
-                        {invoice.status}
+                        {t(`status.${invoice.status}`)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right font-medium">

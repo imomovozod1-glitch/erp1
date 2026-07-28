@@ -41,6 +41,7 @@
     "noData": "Ma'lumot topilmadi",
     "noResults": "Natija topilmadi",
     "required": "Majburiy maydon",
+    "optional": "Ixtiyoriy",
     "success": "Muvaffaqiyatli",
     "error": "Xatolik",
     "warning": "Ogohlantirish",
@@ -54,7 +55,9 @@
     "sum": "Summa",
     "profit": "Foyda",
     "quantity": "Miqdor",
-    "pieces": "dona"
+    "pieces": "dona",
+    "lowStock": "Kam zaxira",
+    "noValidProducts": "Yaroqli mahsulotlar topilmadi. Ustun nomlarini tekshiring (Nomi, SKU, Sotuv narxi, Tannarx, Zaxira, O'lchov birligi)"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -138,7 +141,14 @@
     "adjustment": "Tuzatish",
     "quantity": "Miqdor",
     "before": "Oldingi",
-    "after": "Keyingi"
+    "after": "Keyingi",
+    "importExcel": "Exceldan yuklash",
+    "importAI": "AI Rasmdan yuklash",
+    "excelEmpty": "Excel fayli bo'sh",
+    "excelReadError": "Excel o'qishda xatolik",
+    "noValidProducts": "Yaroqli mahsulotlar topilmadi. Ustun nomlarini tekshiring (Nomi, SKU, Sotuv narxi, Tannarx, Zaxira, O'lchov birligi)",
+    "importingData": "Ma'lumotlar yuklanmoqda...",
+    "productsImported": "{count} ta mahsulot muvaffaqiyatli yuklandi!"
   },
   "sales": {
     "title": "Sotuv",
@@ -159,6 +169,11 @@
     "tax": "Soliq",
     "subtotal": "Oraliq jami",
     "selectProduct": "Mahsulot tanlash",
+    "selectCustomer": "Mijoz tanlash",
+    "selectOrder": "Buyurtma tanlash",
+    "selectStatus": "Holat tanlash",
+    "paidAmount": "To'langan summa",
+    "paidDate": "To'langan sana",
     "unitPrice": "Birlik narxi",
     "totalPrice": "Umumiy narx",
     "productName": "Mahsulot nomi",

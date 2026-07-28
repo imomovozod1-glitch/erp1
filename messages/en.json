@@ -41,6 +41,7 @@
     "noData": "No data found",
     "noResults": "No results found",
     "required": "Required field",
+    "optional": "Optional",
     "success": "Success",
     "error": "Error",
     "warning": "Warning",
@@ -54,7 +55,9 @@
     "sum": "Sum",
     "profit": "Profit",
     "quantity": "Quantity",
-    "pieces": "pcs"
+    "pieces": "pcs",
+    "lowStock": "Low Stock",
+    "noValidProducts": "No valid products found. Check column names (Name, SKU, Selling price, Cost price, Stock, Unit)"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -138,7 +141,14 @@
     "quantity": "Quantity",
     "before": "Before",
     "after": "After",
-    "slug": "Slug"
+    "slug": "Slug",
+    "importExcel": "Import from Excel",
+    "importAI": "AI Image Import",
+    "excelEmpty": "Excel file is empty",
+    "excelReadError": "Error reading Excel file",
+    "noValidProducts": "No valid products found. Check column names (Name, SKU, Selling price, Cost price, Stock, Unit)",
+    "importingData": "Loading data...",
+    "productsImported": "{count} products successfully imported!"
   },
   "sales": {
     "title": "Sales",
@@ -159,6 +169,11 @@
     "tax": "Tax",
     "subtotal": "Subtotal",
     "selectProduct": "Select Product",
+    "selectCustomer": "Select Customer",
+    "selectOrder": "Select Order",
+    "selectStatus": "Select Status",
+    "paidAmount": "Paid Amount",
+    "paidDate": "Paid Date",
     "unitPrice": "Unit Price",
     "totalPrice": "Total Price",
     "productName": "Product Name",

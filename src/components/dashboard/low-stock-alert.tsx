@@ -1,6 +1,9 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 interface LowStockAlertProps {
   products: { id: string; name: string; sku: string; stock: number; min_stock: number }[]
@@ -8,6 +11,9 @@ interface LowStockAlertProps {
 }
 
 export function LowStockAlert({ products, lang }: LowStockAlertProps) {
+  const t = useTranslations('dashboard')
+  const tCommon = useTranslations('common')
+
   const mockProducts = products.length > 0 ? products : [
     { id: '1', name: 'Laptop Dell XPS 13', sku: 'LAP-001', stock: 2, min_stock: 5 },
     { id: '2', name: 'Mouse Logitech MX', sku: 'MOU-003', stock: 0, min_stock: 10 },
@@ -21,13 +27,13 @@ export function LowStockAlert({ products, lang }: LowStockAlertProps) {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-orange-500" />
-          Kam zaxira
+          {t('lowStock')}
         </CardTitle>
         <Link
           href={`/${lang}/inventory/products`}
           className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
         >
-          Barchasi →
+          {tCommon('all')} →
         </Link>
       </CardHeader>
       <CardContent>

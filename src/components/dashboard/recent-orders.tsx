@@ -1,6 +1,9 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 const STATUS_COLORS = {
   draft: 'bg-slate-100 text-slate-600',
@@ -19,6 +22,7 @@ interface RecentOrdersProps {
 }
 
 export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
+  const t = useTranslations('sales')
   const mockOrders = orders.length > 0 ? orders : [
     { id: '1', order_number: 'ORD-001', status: 'delivered', total_amount: 15000000, order_date: '2026-07-15', customers: { name: 'Alisher Karimov' } },
     { id: '2', order_number: 'ORD-002', status: 'confirmed', total_amount: 8500000, order_date: '2026-07-16', customers: { name: 'Zulfiya Rahimova' } },
@@ -64,7 +68,7 @@ export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
                     STATUS_COLORS[order.status as keyof typeof STATUS_COLORS] ?? 'bg-slate-100 text-slate-600'
                   }`}
                 >
-                  {order.status}
+                  {t(`status.${order.status}`)}
                 </span>
                 <span className="text-sm font-semibold text-slate-800">
                   {formatCurrency(order.total_amount)}
