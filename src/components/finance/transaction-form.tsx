@@ -19,37 +19,20 @@ import {
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const formSchema = z.object({
-  type: z.enum(['income', 'expense']),
-  amount: z.coerce.number().min(0.01, 'Amount must be greater than 0'),
-  category: z.string().min(1, 'Category is required'),
-  transaction_date: z.string().min(1, 'Date is required'),
-  description: z.string().optional().or(z.literal('')),
-  reference_type: z.string().optional().or(z.literal('')),
-  reference_id: z.string().optional().or(z.literal('')),
-})
-
-type FormData = z.infer<typeof formSchema>
-
 interface TransactionFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any
   defaultType?: 'income' | 'expense'
   lang: string
 }
 
 export function TransactionForm({ initialData, defaultType = 'income', lang }: TransactionFormProps) {
-  const t = useTranslations('finance')
-  const tCommon = useTranslations('common')
+  const t = useTranslations()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supabase.auth.getUser().then(({ data }: any) => {
       if (data?.user) setUserId(data.user.id)
     })
@@ -57,13 +40,15 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
 
   const innerFormSchema = z.object({
     type: z.enum(['income', 'expense']),
-    amount: z.coerce.number().min(0.01, tCommon('required')),
-    category: z.string().min(1, tCommon('required')),
-    transaction_date: z.string().min(1, tCommon('required')),
+    amount: z.coerce.number().min(0.01, t('common.required')),
+    category: z.string().min(1, t('common.required')),
+    transaction_date: z.string().min(1, t('common.required')),
     description: z.string().optional().or(z.literal('')),
     reference_type: z.string().optional().or(z.literal('')),
     reference_id: z.string().optional().or(z.literal('')),
   })
+
+  type FormData = z.infer<typeof innerFormSchema>
 
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
@@ -78,10 +63,9 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
     },
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     if (!userId && !initialData) {
-      toast.error('User session not found')
+      toast.error(t('common.sessionNotFound'))
       return
     }
 
@@ -101,13 +85,13 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
           .update(payload)
           .eq('id', initialData.id)
         if (error) throw error
-        toast.success(tCommon('success'))
+        toast.success(t('common.success'))
       } else {
         const { error } = await supabase
           .from('transactions')
           .insert([payload])
         if (error) throw error
-        toast.success(tCommon('success'))
+        toast.success(t('common.success'))
       }
       
       await invalidateTransactions()
@@ -117,9 +101,8 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
       } else {
         router.push(`/${lang}/finance/transactions`)
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(error.message || t('common.error'))
     } finally {
       setIsSubmitting(false)
     }
@@ -131,21 +114,21 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl bg-white p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="type">Turi *</Label>
+          <Label htmlFor="type">{t('finance.type')} *</Label>
           <Select value={typeValue} onValueChange={(val: any) => setValue('type', val)}>
             <SelectTrigger>
-              <SelectValue placeholder="Turini tanlang" />
+              <SelectValue placeholder={t('finance.selectType')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="income">Kirim (Daromad)</SelectItem>
-              <SelectItem value="expense">Chiqim (Xarajat)</SelectItem>
+              <SelectItem value="income">{t('finance.incomeType')}</SelectItem>
+              <SelectItem value="expense">{t('finance.expenseType')}</SelectItem>
             </SelectContent>
           </Select>
           {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="amount">Summa *</Label>
+          <Label htmlFor="amount">{t('common.amount')} *</Label>
           <Controller
             control={control}
             name="amount"
@@ -157,29 +140,29 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="category">Toifa *</Label>
-          <Input id="category" placeholder="Masalan: Sotuv, Oylik" {...register('category')} />
+          <Label htmlFor="category">{t('finance.category')} *</Label>
+          <Input id="category" placeholder={t('finance.categoryPlaceholder')} {...register('category')} />
           {errors.category && <p className="text-sm text-red-500">{errors.category.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="transaction_date">Sana *</Label>
+          <Label htmlFor="transaction_date">{t('common.date')} *</Label>
           <Input id="transaction_date" type="date" {...register('transaction_date')} />
           {errors.transaction_date && <p className="text-sm text-red-500">{errors.transaction_date.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="reference_type">Reference turi (Ixtiyoriy)</Label>
-          <Input id="reference_type" placeholder="Masalan: order, invoice" {...register('reference_type')} />
+          <Label htmlFor="reference_type">{t('finance.referenceType')} ({t('common.optional')})</Label>
+          <Input id="reference_type" placeholder={t('finance.referenceTypePlaceholder')} {...register('reference_type')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="reference_id">Reference ID (Ixtiyoriy)</Label>
+          <Label htmlFor="reference_id">{t('finance.referenceId')} ({t('common.optional')})</Label>
           <Input id="reference_id" {...register('reference_id')} />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="description">Ta&apos;rif (Ixtiyoriy)</Label>
+          <Label htmlFor="description">{t('common.description')} ({t('common.optional')})</Label>
           <Textarea id="description" {...register('description')} rows={3} />
         </div>
       </div>
@@ -194,10 +177,10 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
           }}
           disabled={isSubmitting}
         >
-          {tCommon('cancel')}
+          {t('common.cancel')}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? tCommon('saving') : tCommon('save')}
+          {isSubmitting ? t('common.saving') : t('common.save')}
         </Button>
       </div>
     </form>

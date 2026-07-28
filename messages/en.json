@@ -3,6 +3,7 @@
     "type": "Type",
     "loading": "Loading...",
     "save": "Save",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -57,7 +58,8 @@
     "quantity": "Quantity",
     "pieces": "pcs",
     "lowStock": "Low Stock",
-    "noValidProducts": "No valid products found. Check column names (Name, SKU, Selling price, Cost price, Stock, Unit)"
+    "noValidProducts": "No valid products found. Check column names (Name, SKU, Selling price, Cost price, Stock, Unit)",
+    "sessionNotFound": "User session not found"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -207,6 +209,13 @@
     "type": "Type",
     "category": "Category",
     "transactionDate": "Transaction Date",
+    "selectType": "Select Type",
+    "incomeType": "Income (Revenue)",
+    "expenseType": "Expense (Outflow)",
+    "categoryPlaceholder": "e.g. Sales, Salary",
+    "referenceType": "Reference Type",
+    "referenceTypePlaceholder": "e.g. order, invoice",
+    "referenceId": "Reference ID",
     "categories": {
       "sales": "Sales",
       "service": "Service",

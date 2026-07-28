@@ -3,6 +3,7 @@
     "type": "Turi",
     "loading": "Yuklanmoqda...",
     "save": "Saqlash",
+    "saving": "Saqlanmoqda...",
     "cancel": "Bekor qilish",
     "delete": "O'chirish",
     "edit": "Tahrirlash",
@@ -57,7 +58,8 @@
     "quantity": "Miqdor",
     "pieces": "dona",
     "lowStock": "Kam zaxira",
-    "noValidProducts": "Yaroqli mahsulotlar topilmadi. Ustun nomlarini tekshiring (Nomi, SKU, Sotuv narxi, Tannarx, Zaxira, O'lchov birligi)"
+    "noValidProducts": "Yaroqli mahsulotlar topilmadi. Ustun nomlarini tekshiring (Nomi, SKU, Sotuv narxi, Tannarx, Zaxira, O'lchov birligi)",
+    "sessionNotFound": "Foydalanuvchi seansi topilmadi"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -207,6 +209,13 @@
     "type": "Turi",
     "category": "Kategoriya",
     "transactionDate": "Tranzaksiya sanasi",
+    "selectType": "Turini tanlang",
+    "incomeType": "Kirim (Daromad)",
+    "expenseType": "Chiqim (Xarajat)",
+    "categoryPlaceholder": "Masalan: Sotuv, Oylik",
+    "referenceType": "Reference turi",
+    "referenceTypePlaceholder": "Masalan: order, invoice",
+    "referenceId": "Reference ID",
     "categories": {
       "sales": "Sotuv",
       "service": "Xizmat",
