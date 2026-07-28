@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver, Controller, useWatch } from 'react-hook-form'
+import { Resolver, Controller, useWatch } from 'react-hook-form'
+import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -72,7 +73,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
 
   const [defaultOrderNumber] = useState(() => initialData?.order_number || `ORD-${Date.now()}`)
 
-  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('order-form', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       order_number: defaultOrderNumber,
@@ -118,6 +119,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
       }
       
       await invalidateOrders()
+      clearPersistedForm('order-form')
       router.push(`/${lang}/sales/orders`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver, Controller, useWatch } from 'react-hook-form'
+import { Resolver, Controller, useWatch } from 'react-hook-form'
+import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -57,7 +58,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
 
   const [defaultInvoiceNumber] = useState(() => initialData?.invoice_number || `INV-${Date.now()}`)
 
-  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('invoice-form', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       invoice_number: defaultInvoiceNumber,
@@ -105,6 +106,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
       }
       
       await invalidateInvoices()
+      clearPersistedForm('invoice-form')
       router.push(`/${lang}/sales/invoices`)
     } catch (error: any) {
       toast.error(error.message || t('common.error'))

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Bell, Globe, LogOut, Settings, User } from 'lucide-react'
@@ -50,7 +51,60 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
     toast.success('Logged out successfully')
   }
 
+  useEffect(() => {
+    try {
+      const savedStr = sessionStorage.getItem('pending_form_data')
+      if (savedStr) {
+        const saved = JSON.parse(savedStr)
+        const currentPath = window.location.pathname.replace(`/${lang}`, '')
+        if (saved.path === currentPath) {
+          const timer = setTimeout(() => {
+            Object.entries(saved.fields).forEach(([name, value]) => {
+              const elements = document.querySelectorAll(`[name="${name}"]`)
+              elements.forEach(el => {
+                const input = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                  (input as HTMLInputElement).checked = (input.value === value)
+                } else {
+                  input.value = value as string
+                }
+                input.dispatchEvent(new Event('input', { bubbles: true }))
+                input.dispatchEvent(new Event('change', { bubbles: true }))
+              })
+            })
+            sessionStorage.removeItem('pending_form_data')
+          }, 300)
+          return () => clearTimeout(timer)
+        } else {
+          sessionStorage.removeItem('pending_form_data')
+        }
+      }
+    } catch (e) {
+      console.error('Error restoring form data', e)
+    }
+  }, [lang])
+
   const handleLocaleChange = (locale: string) => {
+    const fields: Record<string, string> = {}
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      const input = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      if (input.name && input.type !== 'submit' && input.type !== 'button' && input.type !== 'hidden') {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+          if ((input as HTMLInputElement).checked) {
+            fields[input.name] = input.value
+          }
+        } else {
+          fields[input.name] = input.value
+        }
+      }
+    })
+    if (Object.keys(fields).length > 0) {
+      sessionStorage.setItem('pending_form_data', JSON.stringify({
+        path: window.location.pathname.replace(`/${lang}`, ''),
+        fields
+      }))
+    }
+
     const pathWithoutLocale = window.location.pathname.replace(`/${lang}`, '')
     router.replace(`/${locale}${pathWithoutLocale}`)
   }

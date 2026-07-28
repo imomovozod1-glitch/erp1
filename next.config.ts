@@ -3,7 +3,8 @@ import createNextIntlPlugin from 'next-intl/plugin'
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
-const nextConfig: NextConfig = {
+const nextConfig: any = {
+  outputFileTracingRoot: process.cwd(),
   images: {
     remotePatterns: [
       {
@@ -19,6 +20,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  turbopack: {
+    root: process.cwd(),
   },
 }
 

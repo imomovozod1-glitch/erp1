@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver, Controller, useWatch } from 'react-hook-form'
+import { Resolver, Controller, useWatch } from 'react-hook-form'
+import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -50,7 +51,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
 
   type FormData = z.infer<typeof innerFormSchema>
 
-  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('transaction-form', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       type: initialData?.type || defaultType,
@@ -95,6 +96,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
       }
       
       await invalidateTransactions()
+      clearPersistedForm('transaction-form')
       if (initialData?.type || defaultType) {
         const redirectType = initialData?.type || defaultType
         router.push(`/${lang}/finance/${redirectType === 'income' ? 'income' : 'expenses'}`)

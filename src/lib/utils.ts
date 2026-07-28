@@ -9,13 +9,16 @@ export function cn(...inputs: ClassValue[]) {
 export function formatCurrency(
   amount: number,
   currency: string = "UZS",
-  locale: string = "uz-UZ"
+  _locale: string = "uz-UZ"
 ): string {
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
+  const formatted = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(amount).replace(/,/g, " ")
+
+  if (currency === "UZS") {
+    return `${formatted} soʻm`
+  }
+  return `${currency} ${formatted}`
 }
 
 export function formatDate(dateStr: string, fmt: string = "dd.MM.yyyy"): string {

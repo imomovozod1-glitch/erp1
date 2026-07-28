@@ -32,7 +32,7 @@ function getTenantSubdomain(host: string): string | null {
   return null
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   
   // Extract host and check for subdomain

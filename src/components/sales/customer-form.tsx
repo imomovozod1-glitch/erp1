@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver } from 'react-hook-form'
+import { Resolver } from 'react-hook-form'
+import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
@@ -39,7 +40,7 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
 
   type FormData = z.infer<typeof innerFormSchema>
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors } } = usePersistedForm<FormData>('customer-form', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
@@ -75,6 +76,7 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
       }
       
       await invalidateCustomers()
+      clearPersistedForm('customer-form')
       router.push(`/${lang}/sales/customers`)
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))

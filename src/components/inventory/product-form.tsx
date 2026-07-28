@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver, Controller } from 'react-hook-form'
+import { Resolver, Controller } from 'react-hook-form'
+import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -60,7 +61,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     description: z.string().optional(),
   })
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, formState: { errors } } = usePersistedForm<FormData>('product-form', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
@@ -104,6 +105,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         toast.success(tCommon('success'))
       }
       await invalidateProducts()
+      clearPersistedForm('product-form')
       router.push(`/${lang}/inventory/products`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
