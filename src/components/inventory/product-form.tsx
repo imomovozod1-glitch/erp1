@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver } from 'react-hook-form'
+import { useForm, Resolver, Controller } from 'react-hook-form'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
@@ -59,7 +60,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     description: z.string().optional(),
   })
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
@@ -150,31 +151,61 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
 
         <div className="space-y-2">
           <Label htmlFor="price">{t('price')} *</Label>
-          <Input id="price" type="number" step="0.01" {...register('price')} />
+          <Controller
+            control={control}
+            name="price"
+            render={({ field: { onChange, value } }) => (
+              <NumericInput id="price" value={value} onChange={onChange} />
+            )}
+          />
           {errors.price && <p className="text-sm text-red-500">{errors.price.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="cost_price">{t('costPrice')} *</Label>
-          <Input id="cost_price" type="number" step="0.01" {...register('cost_price')} />
+          <Controller
+            control={control}
+            name="cost_price"
+            render={({ field: { onChange, value } }) => (
+              <NumericInput id="cost_price" value={value} onChange={onChange} />
+            )}
+          />
           {errors.cost_price && <p className="text-sm text-red-500">{errors.cost_price.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="incoming_cost">{t('incomingCost')} *</Label>
-          <Input id="incoming_cost" type="number" step="0.01" {...register('incoming_cost')} />
+          <Controller
+            control={control}
+            name="incoming_cost"
+            render={({ field: { onChange, value } }) => (
+              <NumericInput id="incoming_cost" value={value} onChange={onChange} />
+            )}
+          />
           {errors.incoming_cost && <p className="text-sm text-red-500">{errors.incoming_cost.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="stock">{t('stock')} *</Label>
-          <Input id="stock" type="number" {...register('stock')} />
+          <Controller
+            control={control}
+            name="stock"
+            render={({ field: { onChange, value } }) => (
+              <NumericInput id="stock" value={value} onChange={onChange} />
+            )}
+          />
           {errors.stock && <p className="text-sm text-red-500">{errors.stock.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="min_stock">{t('minStock')} *</Label>
-          <Input id="min_stock" type="number" {...register('min_stock')} />
+          <Controller
+            control={control}
+            name="min_stock"
+            render={({ field: { onChange, value } }) => (
+              <NumericInput id="min_stock" value={value} onChange={onChange} />
+            )}
+          />
           {errors.min_stock && <p className="text-sm text-red-500">{errors.min_stock.message}</p>}
         </div>
       </div>
@@ -189,7 +220,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.back()}
+          onClick={() => router.push(`/${lang}/inventory/products`)}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

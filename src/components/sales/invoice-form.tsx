@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver } from 'react-hook-form'
+import { useForm, Resolver, Controller } from 'react-hook-form'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
@@ -73,7 +74,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
     notes: z.string().optional().or(z.literal('')),
   })
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       invoice_number: initialData?.invoice_number || `INV-${Date.now()}`,
@@ -192,12 +193,24 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
 
         <div className="space-y-2">
           <Label htmlFor="total_amount">{tCommon('total')}</Label>
-          <Input id="total_amount" type="number" step="0.01" {...register('total_amount')} />
+          <Controller
+            control={control}
+            name="total_amount"
+            render={({ field: { onChange, value } }) => (
+              <NumericInput id="total_amount" value={value} onChange={onChange} />
+            )}
+          />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="paid_amount">{t('paidAmount')}</Label>
-          <Input id="paid_amount" type="number" step="0.01" {...register('paid_amount')} />
+          <Controller
+            control={control}
+            name="paid_amount"
+            render={({ field: { onChange, value } }) => (
+              <NumericInput id="paid_amount" value={value} onChange={onChange} />
+            )}
+          />
         </div>
 
         <div className="space-y-2">

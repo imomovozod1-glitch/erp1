@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver } from 'react-hook-form'
+import { useForm, Resolver, Controller } from 'react-hook-form'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
@@ -64,7 +65,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
     reference_id: z.string().optional().or(z.literal('')),
   })
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       type: initialData?.type || defaultType,
@@ -145,7 +146,13 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
 
         <div className="space-y-2">
           <Label htmlFor="amount">Summa *</Label>
-          <Input id="amount" type="number" step="0.01" {...register('amount')} />
+          <Controller
+            control={control}
+            name="amount"
+            render={({ field: { onChange, value } }) => (
+              <NumericInput id="amount" value={value} onChange={onChange} />
+            )}
+          />
           {errors.amount && <p className="text-sm text-red-500">{errors.amount.message}</p>}
         </div>
 
@@ -172,7 +179,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="description">Ta'rif (Ixtiyoriy)</Label>
+          <Label htmlFor="description">Ta&apos;rif (Ixtiyoriy)</Label>
           <Textarea id="description" {...register('description')} rows={3} />
         </div>
       </div>

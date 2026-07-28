@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -52,7 +53,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     notes: z.string().optional(),
   })
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       employee_code: initialData?.employee_code || '',
@@ -118,7 +119,13 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="salary">{t('salary')}</Label>
-              <Input id="salary" type="number" step="0.01" {...register('salary')} />
+              <Controller
+                control={control}
+                name="salary"
+                render={({ field: { onChange, value } }) => (
+                  <NumericInput id="salary" value={value} onChange={onChange} />
+                )}
+              />
               {errors.salary && (
                 <p className="text-sm text-red-500">{errors.salary.message}</p>
               )}

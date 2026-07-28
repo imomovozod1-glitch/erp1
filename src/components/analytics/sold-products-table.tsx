@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatNumber } from '@/lib/utils'
 
 interface SoldProduct {
   name: string
@@ -85,7 +85,7 @@ export function SoldProductsTable({ products }: SoldProductsTableProps) {
                     <TableCell className="font-medium text-slate-800">{product.name}</TableCell>
                     <TableCell className="text-right text-muted-foreground">{formatCurrency(product.costPrice)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(product.sellingPrice)}</TableCell>
-                    <TableCell className="text-right font-medium">{product.quantity}</TableCell>
+                    <TableCell className="text-right font-medium">{formatNumber(product.quantity)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(product.totalSum)}</TableCell>
                     <TableCell className="text-right">
                       <span className={product.profit >= 0 ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold'}>
@@ -99,7 +99,7 @@ export function SoldProductsTable({ products }: SoldProductsTableProps) {
                   <TableCell>{tCommon('total')}</TableCell>
                   <TableCell />
                   <TableCell />
-                  <TableCell className="text-right">{totals.quantity}</TableCell>
+                  <TableCell className="text-right">{formatNumber(totals.quantity)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(totals.totalSum)}</TableCell>
                   <TableCell className="text-right">
                     <span className={totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { formatNumber } from '@/lib/utils'
 
 interface LowStockAlertProps {
   products: { id: string; name: string; sku: string; stock: number; min_stock: number }[]
@@ -54,7 +55,7 @@ export function LowStockAlert({ products, lang }: LowStockAlertProps) {
                   <span
                     className={`text-xs font-bold ${isOut ? 'text-red-600' : 'text-orange-600'}`}
                   >
-                    {product.stock} / {product.min_stock}
+                    {formatNumber(product.stock)} / {formatNumber(product.min_stock)}
                   </span>
                 </div>
                 <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">

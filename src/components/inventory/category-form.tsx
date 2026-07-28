@@ -107,7 +107,7 @@ export function CategoryForm({ initialData, lang }: CategoryFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.back()}
+          onClick={() => router.push(`/${lang}/inventory/categories`)}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

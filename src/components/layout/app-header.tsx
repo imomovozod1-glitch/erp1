@@ -52,7 +52,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
   const handleLocaleChange = (locale: string) => {
     const pathWithoutLocale = window.location.pathname.replace(`/${lang}`, '')
-    router.push(`/${locale}${pathWithoutLocale}`)
+    router.replace(`/${locale}${pathWithoutLocale}`)
   }
 
   const currentLocale = LOCALES.find((l) => l.code === lang)

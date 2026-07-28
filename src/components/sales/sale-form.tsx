@@ -8,6 +8,7 @@ import { invalidateOrders, invalidateOrderItems, invalidateProducts, invalidateM
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -228,12 +229,9 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
             </div>
             <div className="w-24 space-y-1">
               <Label className="text-xs">{t('quantity')}</Label>
-              <Input
-                type="number"
-                min={1}
-                max={products.find(p => p.id === selectedProductId)?.stock ?? 9999}
+              <NumericInput
                 value={tempQty}
-                onChange={(e) => setTempQty(Number(e.target.value))}
+                onChange={(val) => setTempQty(val === "" ? 0 : val)}
                 className="h-9"
               />
             </div>
@@ -316,7 +314,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.back()}
+          onClick={() => router.push(`/${lang}/sales/orders`)}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

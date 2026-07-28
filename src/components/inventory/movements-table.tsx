@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { Search, ArrowDownRight, ArrowUpRight, Settings2, Activity } from 'lucide-react'
+import { formatNumber } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -101,14 +102,14 @@ export function MovementsTable({ movements }: MovementsTableProps) {
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     <span className={movement.type === 'in' ? 'text-emerald-600' : movement.type === 'out' ? 'text-red-600' : 'text-orange-600'}>
-                      {movement.type === 'in' ? '+' : movement.type === 'out' ? '-' : ''}{movement.quantity}
+                      {movement.type === 'in' ? '+' : movement.type === 'out' ? '-' : ''}{formatNumber(movement.quantity)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground text-sm">
-                    {movement.quantity_before}
+                    {formatNumber(movement.quantity_before)}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {movement.quantity_after}
+                    {formatNumber(movement.quantity_after)}
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground max-w-[200px] truncate block">

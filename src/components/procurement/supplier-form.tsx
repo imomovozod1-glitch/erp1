@@ -97,7 +97,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.back()}
+          onClick={() => router.push(`/${lang}/procurement/suppliers`)}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

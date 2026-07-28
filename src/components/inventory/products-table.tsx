@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 import * as XLSX from "xlsx";
 
 interface ProductsTableProps {
@@ -313,7 +313,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                               : "text-emerald-600"
                         }`}
                       >
-                        {product.stock} {product.unit}
+                        {formatNumber(product.stock)} {product.unit}
                       </span>
                     </TableCell>
                     <TableCell>

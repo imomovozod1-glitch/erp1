@@ -8,6 +8,7 @@ import { invalidatePurchaseOrders, invalidateProducts, invalidateMovements } fro
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -330,22 +331,17 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
             </div>
             <div className="w-24 space-y-1">
               <Label className="text-xs">{t('quantity')}</Label>
-              <Input
-                type="number"
-                min={1}
+              <NumericInput
                 value={tempQty}
-                onChange={(e) => setTempQty(Number(e.target.value))}
+                onChange={(val) => setTempQty(val === "" ? 0 : val)}
                 className="h-9"
               />
             </div>
             <div className="w-32 space-y-1">
               <Label className="text-xs">{t('unitCost')}</Label>
-              <Input
-                type="number"
-                min={0}
-                step="0.01"
+              <NumericInput
                 value={tempUnitCost}
-                onChange={(e) => setTempUnitCost(Number(e.target.value))}
+                onChange={(val) => setTempUnitCost(val === "" ? 0 : val)}
                 className="h-9"
               />
             </div>
@@ -412,7 +408,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.back()}
+          onClick={() => router.push(`/${lang}/procurement/purchase-orders`)}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}
