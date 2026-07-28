@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -11,7 +12,6 @@ import {
   DollarSign,
   Users,
   Truck,
-  BarChart3,
   Settings,
   ChevronRight,
   Wrench,
@@ -55,7 +55,14 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'stockMovements', href: 'inventory/movements' },
     ]
   },
-  { key: 'sales', icon: ShoppingCart, href: 'sales/orders' },
+  {
+    key: 'sales', icon: ShoppingCart, href: 'sales',
+    subItems: [
+      { key: 'orders', href: 'sales/orders' },
+      { key: 'customers', href: 'sales/customers' },
+      { key: 'invoices', href: 'sales/invoices' },
+    ]
+  },
   {
     key: 'procurement', icon: Truck, href: 'procurement',
     subItems: [
@@ -102,6 +109,29 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
   const tProcurement = useTranslations('procurement')
   const tTools = useTranslations('tools')
   const pathname = usePathname()
+
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {}
+    NAV_ITEMS.forEach(item => {
+      if (item.subItems) {
+        const isCurrentActive = item.subItems.some(sub => {
+          const subFullHref = `/${lang}/${sub.href}`
+          return pathname === subFullHref || pathname.startsWith(`${subFullHref}/`)
+        })
+        if (isCurrentActive) {
+          initial[item.key] = true
+        }
+      }
+    })
+    return initial
+  })
+
+  const toggleExpand = (key: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }))
+  }
 
   const getSubLabel = (parentKey: string, subKey: string) => {
     const map: Record<string, Record<string, string>> = {
@@ -185,11 +215,17 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                   )
                 }
 
+                const isExpanded = expandedItems[item.key]
+                const isParentActive = item.subItems.some(sub => {
+                  const subFullHref = `/${lang}/${sub.href}`
+                  return pathname === subFullHref || pathname.startsWith(`${subFullHref}/`)
+                })
+
                 return (
                   <SidebarMenuItem key={item.key}>
                     <SidebarMenuButton
-                      render={<Link href={fullHref} prefetch={true} />}
-                      isActive={isActive}
+                      onClick={() => toggleExpand(item.key)}
+                      isActive={isParentActive}
                       tooltip={tNav(item.key as string)}
                     >
                       <Icon />
@@ -197,11 +233,11 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                       <ChevronRight
                         className={cn(
                           'ml-auto transition-transform duration-200',
-                          isActive && 'rotate-90'
+                          isExpanded && 'rotate-90'
                         )}
                       />
                     </SidebarMenuButton>
-                    {isActive && (
+                    {isExpanded && (
                       <SidebarMenuSub>
                         {item.subItems.map((sub) => {
                           const subFullHref = `/${lang}/${sub.href}`

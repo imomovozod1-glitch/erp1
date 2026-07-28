@@ -196,7 +196,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     lowStockTitle: td('lowStockTitle'),
     activeCustomers: td('activeCustomers'),
     activeEmployees: td('activeEmployees'),
-    growthVsLastMonth: td('growthVsLastMonth'),
+    growthVsLastMonth: td('vsLastMonth'),
     pendingInvoices: td('pendingInvoices'),
   }
 
