@@ -14,31 +14,17 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const formSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
-  address: z.string().optional().or(z.literal('')),
-  city: z.string().optional().or(z.literal('')),
-  tin: z.string().optional().or(z.literal('')),
-  notes: z.string().optional().or(z.literal('')),
-})
 
-type FormData = z.infer<typeof formSchema>
 
 interface CustomerFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any
   lang: string
 }
 
 export function CustomerForm({ initialData, lang }: CustomerFormProps) {
-  const t = useTranslations('sales')
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
 
   const innerFormSchema = z.object({
@@ -50,6 +36,8 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
     tin: z.string().optional().or(z.literal('')),
     notes: z.string().optional().or(z.literal('')),
   })
+
+  type FormData = z.infer<typeof innerFormSchema>
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
@@ -64,7 +52,6 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
     },
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     setIsSubmitting(true)
     try {
@@ -89,7 +76,6 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
       
       await invalidateCustomers()
       router.push(`/${lang}/sales/customers`)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver, Controller } from 'react-hook-form'
+import { useForm, Resolver, Controller, useWatch } from 'react-hook-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -19,65 +19,48 @@ import {
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const formSchema = z.object({
-  invoice_number: z.string().min(1, 'Invoice number is required'),
-  customer_id: z.string().min(1, 'Customer is required'),
-  order_id: z.string().optional().or(z.literal('')),
-  status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']),
-  total_amount: z.coerce.number().min(0),
-  paid_amount: z.coerce.number().min(0),
-  issued_at: z.string().optional().or(z.literal('')),
-  due_at: z.string().min(1, 'Due date is required'),
-  paid_at: z.string().optional().or(z.literal('')),
-  notes: z.string().optional().or(z.literal('')),
-})
-
-type FormData = z.infer<typeof formSchema>
 
 interface InvoiceFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customers: any[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   orders?: any[]
   lang: string
 }
 
 export function InvoiceForm({ initialData, customers, orders = [], lang }: InvoiceFormProps) {
-  const t = useTranslations('sales')
-  const tCommon = useTranslations('common')
+  const t = useTranslations()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supabase.auth.getUser().then(({ data }: any) => {
       if (data?.user) setUserId(data.user.id)
     })
   }, [supabase.auth])
 
   const innerFormSchema = z.object({
-    invoice_number: z.string().min(1, tCommon('required')),
-    customer_id: z.string().min(1, tCommon('required')),
+    invoice_number: z.string().min(1, t('common.required')),
+    customer_id: z.string().min(1, t('common.required')),
     order_id: z.string().optional().or(z.literal('')),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']),
     total_amount: z.coerce.number().min(0),
     paid_amount: z.coerce.number().min(0),
     issued_at: z.string().optional().or(z.literal('')),
-    due_at: z.string().min(1, tCommon('required')),
+    due_at: z.string().min(1, t('common.required')),
     paid_at: z.string().optional().or(z.literal('')),
     notes: z.string().optional().or(z.literal('')),
   })
 
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormData>({
+  type FormData = z.infer<typeof innerFormSchema>
+
+  const [defaultInvoiceNumber] = useState(() => initialData?.invoice_number || `INV-${Date.now()}`)
+
+  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
-      invoice_number: initialData?.invoice_number || `INV-${Date.now()}`,
+      invoice_number: defaultInvoiceNumber,
       customer_id: initialData?.customer_id || '',
       order_id: initialData?.order_id || '',
       status: initialData?.status || 'draft',
@@ -90,7 +73,6 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
     },
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     if (!userId && !initialData) {
       toast.error('User session not found')
@@ -113,43 +95,42 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
           .update(payload)
           .eq('id', initialData.id)
         if (error) throw error
-        toast.success(tCommon('success'))
+        toast.success(t('common.success'))
       } else {
         const { error } = await supabase
           .from('invoices')
           .insert([payload])
         if (error) throw error
-        toast.success(tCommon('success'))
+        toast.success(t('common.success'))
       }
       
       await invalidateInvoices()
       router.push(`/${lang}/sales/invoices`)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(error.message || t('common.error'))
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const statusValue = watch('status')
-  const customerIdValue = watch('customer_id')
-  const orderIdValue = watch('order_id')
+  const statusValue = useWatch({ control, name: 'status' })
+  const customerIdValue = useWatch({ control, name: 'customer_id' })
+  const orderIdValue = useWatch({ control, name: 'order_id' })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="invoice_number">{t('invoiceNumber')} *</Label>
+          <Label htmlFor="invoice_number">{t('sales.invoiceNumber')} *</Label>
           <Input id="invoice_number" {...register('invoice_number')} />
           {errors.invoice_number && <p className="text-sm text-red-500">{errors.invoice_number.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_id">{t('customer')} *</Label>
+          <Label htmlFor="customer_id">{t('sales.customer')} *</Label>
           <Select value={customerIdValue} onValueChange={(val) => { if (val) setValue('customer_id', val) }}>
             <SelectTrigger>
-              <SelectValue placeholder={t('selectCustomer')} />
+              <SelectValue placeholder={t('sales.selectCustomer')} />
             </SelectTrigger>
             <SelectContent>
               {customers.map((c) => (
@@ -161,13 +142,13 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="order_id">{t('orders')} ({tCommon('optional')})</Label>
+          <Label htmlFor="order_id">{t('sales.orders')} ({t('common.optional')})</Label>
           <Select value={orderIdValue || 'none'} onValueChange={(val) => { if (val) setValue('order_id', val === 'none' ? '' : val) }}>
             <SelectTrigger>
-              <SelectValue placeholder={t('selectOrder')} />
+              <SelectValue placeholder={t('sales.selectOrder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">{tCommon('none')}</SelectItem>
+              <SelectItem value="none">{t('common.none')}</SelectItem>
               {orders.map((o) => (
                 <SelectItem key={o.id} value={o.id}>{o.order_number}</SelectItem>
               ))}
@@ -176,23 +157,23 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">{tCommon('status')}</Label>
+          <Label htmlFor="status">{t('common.status')}</Label>
           <Select value={statusValue} onValueChange={(val: any) => setValue('status', val)}>
             <SelectTrigger>
-              <SelectValue placeholder={t('selectStatus')} />
+              <SelectValue placeholder={t('sales.selectStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">{t('status.draft')}</SelectItem>
-              <SelectItem value="sent">{t('status.sent')}</SelectItem>
-              <SelectItem value="paid">{t('status.paid')}</SelectItem>
-              <SelectItem value="overdue">{t('status.overdue')}</SelectItem>
-              <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
+              <SelectItem value="draft">{t('sales.status.draft')}</SelectItem>
+              <SelectItem value="sent">{t('sales.status.sent')}</SelectItem>
+              <SelectItem value="paid">{t('sales.status.paid')}</SelectItem>
+              <SelectItem value="overdue">{t('sales.status.overdue')}</SelectItem>
+              <SelectItem value="cancelled">{t('sales.status.cancelled')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="total_amount">{tCommon('total')}</Label>
+          <Label htmlFor="total_amount">{t('common.total')}</Label>
           <Controller
             control={control}
             name="total_amount"
@@ -203,7 +184,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="paid_amount">{t('paidAmount')}</Label>
+          <Label htmlFor="paid_amount">{t('sales.paidAmount')}</Label>
           <Controller
             control={control}
             name="paid_amount"
@@ -214,23 +195,23 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="issued_at">{tCommon('date')}</Label>
+          <Label htmlFor="issued_at">{t('common.date')}</Label>
           <Input id="issued_at" type="date" {...register('issued_at')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="due_at">{t('dueDate')} *</Label>
+          <Label htmlFor="due_at">{t('sales.dueDate')} *</Label>
           <Input id="due_at" type="date" {...register('due_at')} />
           {errors.due_at && <p className="text-sm text-red-500">{errors.due_at.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="paid_at">{t('paidDate')}</Label>
+          <Label htmlFor="paid_at">{t('sales.paidDate')}</Label>
           <Input id="paid_at" type="date" {...register('paid_at')} />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="notes">{tCommon('notes')}</Label>
+          <Label htmlFor="notes">{t('common.notes')}</Label>
           <Textarea id="notes" {...register('notes')} rows={3} />
         </div>
       </div>
@@ -242,10 +223,10 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
           onClick={() => router.push(`/${lang}/sales/invoices`)}
           disabled={isSubmitting}
         >
-          {tCommon('cancel')}
+          {t('common.cancel')}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? tCommon('saving') : tCommon('save')}
+          {isSubmitting ? t('common.saving') : t('common.save')}
         </Button>
       </div>
     </form>

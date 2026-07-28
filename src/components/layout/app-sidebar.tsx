@@ -55,14 +55,7 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'stockMovements', href: 'inventory/movements' },
     ]
   },
-  {
-    key: 'sales', icon: ShoppingCart, href: 'sales',
-    subItems: [
-      { key: 'orders', href: 'sales/orders' },
-      { key: 'customers', href: 'sales/customers' },
-      { key: 'invoices', href: 'sales/invoices' },
-    ]
-  },
+  { key: 'sales', icon: ShoppingCart, href: 'sales/orders' },
   {
     key: 'procurement', icon: Truck, href: 'procurement',
     subItems: [

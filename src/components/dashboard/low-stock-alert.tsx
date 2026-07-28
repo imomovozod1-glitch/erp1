@@ -24,7 +24,7 @@ export function LowStockAlert({ products, lang }: LowStockAlertProps) {
   ]
 
   return (
-    <Card className="border-0 shadow-sm h-full">
+    <Card className="border-0 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-orange-500" />

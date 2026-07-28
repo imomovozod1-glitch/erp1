@@ -23,6 +23,7 @@ interface RecentOrdersProps {
 
 export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
   const t = useTranslations('sales')
+  const tCommon = useTranslations('common')
   const mockOrders = orders.length > 0 ? orders : [
     { id: '1', order_number: 'ORD-001', status: 'delivered', total_amount: 15000000, order_date: '2026-07-15', customers: { name: 'Alisher Karimov' } },
     { id: '2', order_number: 'ORD-002', status: 'confirmed', total_amount: 8500000, order_date: '2026-07-16', customers: { name: 'Zulfiya Rahimova' } },
@@ -39,7 +40,7 @@ export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
           href={`/${lang}/sales/orders`}
           className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
         >
-          View all →
+          {tCommon('all')} →
         </Link>
       </CardHeader>
       <CardContent>

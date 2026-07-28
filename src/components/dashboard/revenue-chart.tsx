@@ -12,32 +12,40 @@ import {
   Legend,
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 interface RevenueChartProps {
   data: { month: string; income: number; expense: number }[]
   title: string
 }
 
-const MONTH_LABELS: Record<string, string> = {
-  '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr',
-  '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Aug',
-  '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec',
-}
-
 export function RevenueChart({ data, title }: RevenueChartProps) {
-  const formattedData = data.map((d) => ({
-    ...d,
-    monthLabel: MONTH_LABELS[d.month.slice(5, 7)] ?? d.month,
-  }))
+  const t = useTranslations()
+  const formattedData = data.map((d) => {
+    let label = d.month
+    if (d.month.length === 7 && d.month.includes('-')) {
+      const monthPart = d.month.slice(5, 7)
+      label = t(`common.months.${monthPart}`)
+    } else if (d.month.length === 10 && d.month.includes('-')) {
+      const dayPart = d.month.slice(8, 10)
+      const monthPart = d.month.slice(5, 7)
+      const monthName = t(`common.months.${monthPart}`)
+      label = `${dayPart} ${monthName}`.trim()
+    }
+    return {
+      ...d,
+      monthLabel: label,
+    }
+  })
 
   // Add mock data if empty for visual demonstration
   const displayData = formattedData.length > 0 ? formattedData : [
-    { month: '2026-01', monthLabel: 'Jan', income: 45000000, expense: 28000000 },
-    { month: '2026-02', monthLabel: 'Feb', income: 52000000, expense: 31000000 },
-    { month: '2026-03', monthLabel: 'Mar', income: 48000000, expense: 27000000 },
-    { month: '2026-04', monthLabel: 'Apr', income: 61000000, expense: 35000000 },
-    { month: '2026-05', monthLabel: 'May', income: 55000000, expense: 32000000 },
-    { month: '2026-06', monthLabel: 'Jun', income: 67000000, expense: 38000000 },
+    { month: '2026-01', monthLabel: t('common.months.01'), income: 45000000, expense: 28000000 },
+    { month: '2026-02', monthLabel: t('common.months.02'), income: 52000000, expense: 31000000 },
+    { month: '2026-03', monthLabel: t('common.months.03'), income: 48000000, expense: 27000000 },
+    { month: '2026-04', monthLabel: t('common.months.04'), income: 61000000, expense: 35000000 },
+    { month: '2026-05', monthLabel: t('common.months.05'), income: 55000000, expense: 32000000 },
+    { month: '2026-06', monthLabel: t('common.months.06'), income: 67000000, expense: 38000000 },
   ]
 
   return (
@@ -72,7 +80,6 @@ export function RevenueChart({ data, title }: RevenueChartProps) {
               tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`}
             />
             <Tooltip
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => formatCurrency(value as number)}
               contentStyle={{
                 borderRadius: '8px',
@@ -82,7 +89,7 @@ export function RevenueChart({ data, title }: RevenueChartProps) {
               }}
             />
             <Legend
-              formatter={(value) => value === 'income' ? 'Daromad' : 'Xarajat'}
+              formatter={(value) => value === 'income' ? t('finance.income') : t('finance.expenses')}
               wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }}
             />
             <Area

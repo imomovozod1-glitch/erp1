@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver, Controller } from 'react-hook-form'
+import { useForm, Resolver, Controller, useWatch } from 'react-hook-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -70,10 +70,12 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
     notes: z.string().optional().or(z.literal('')),
   })
 
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormData>({
+  const [defaultOrderNumber] = useState(() => initialData?.order_number || `ORD-${Date.now()}`)
+
+  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
-      order_number: initialData?.order_number || `ORD-${Date.now()}`,
+      order_number: defaultOrderNumber,
       customer_id: initialData?.customer_id || '',
       status: initialData?.status || 'draft',
       total_amount: initialData?.total_amount || 0,
@@ -125,8 +127,8 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
     }
   }
 
-  const statusValue = watch('status')
-  const customerIdValue = watch('customer_id')
+  const statusValue = useWatch({ control, name: 'status' })
+  const customerIdValue = useWatch({ control, name: 'customer_id' })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border shadow-sm">

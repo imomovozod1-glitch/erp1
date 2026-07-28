@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -19,16 +19,6 @@ import type { Resolver } from 'react-hook-form'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 
-const formSchema = z.object({
-  employee_code: z.string().min(1, 'Required'),
-  position: z.string().min(1, 'Required'),
-  salary: z.coerce.number().min(0),
-  hired_at: z.string(),
-  is_active: z.boolean(),
-  notes: z.string().optional(),
-})
-
-type FormData = z.infer<typeof formSchema>
 
 interface EmployeeFormProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,7 +43,9 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     notes: z.string().optional(),
   })
 
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormData>({
+  type FormData = z.infer<typeof innerFormSchema>
+
+  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       employee_code: initialData?.employee_code || '',
@@ -92,6 +84,8 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       setIsSubmitting(false)
     }
   }
+
+  const isActiveValue = useWatch({ control, name: 'is_active' })
 
   return (
     <Card>
@@ -151,7 +145,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
           <div className="flex items-center space-x-2 pt-2">
             <Checkbox 
               id="is_active" 
-              checked={watch('is_active')}
+              checked={isActiveValue}
               onCheckedChange={(checked) => setValue('is_active', checked as boolean)}
             />
             <Label htmlFor="is_active" className="cursor-pointer">

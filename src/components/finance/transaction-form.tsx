@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm, Resolver, Controller } from 'react-hook-form'
+import { useForm, Resolver, Controller, useWatch } from 'react-hook-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -50,7 +50,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
 
   type FormData = z.infer<typeof innerFormSchema>
 
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       type: initialData?.type || defaultType,
@@ -108,7 +108,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
     }
   }
 
-  const typeValue = watch('type')
+  const typeValue = useWatch({ control, name: 'type' })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl bg-white p-6 rounded-xl border shadow-sm">

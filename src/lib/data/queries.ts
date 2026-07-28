@@ -319,7 +319,7 @@ export const getCachedDashboardStats = unstable_cache(
         .select('amount, type, transaction_date')
         .gte('transaction_date', sixMonthsAgo)
         .order('transaction_date', { ascending: true }),
-      supabase.from('transactions').select('amount, type'),
+      supabase.from('transactions').select('amount, type, transaction_date'),
       supabase.from('products').select('id, name, sku, stock, min_stock').order('stock', { ascending: true }).limit(10),
       supabase.from('invoices').select('*', { count: 'exact', head: true }).in('status', ['sent', 'overdue']),
     ])
