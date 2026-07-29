@@ -33,9 +33,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 interface ProductFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   categories: any[]
   lang: string
 }
@@ -45,7 +43,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
 
   const innerFormSchema = z.object({
@@ -77,7 +74,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     },
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     setIsSubmitting(true)
     try {
@@ -90,7 +86,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         // Update
         const { error } = await supabase
           .from('products')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .update(payload as any)
           .eq('id', initialData.id)
         if (error) throw error
@@ -99,7 +94,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         // Create
         const { error } = await supabase
           .from('products')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .insert([payload as any])
         if (error) throw error
         toast.success(tCommon('success'))
@@ -107,7 +101,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       await invalidateProducts()
       clearPersistedForm('product-form-v3')
       router.push(`/${lang}/inventory/products`)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -188,7 +181,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="stock">{t('stock')} *</Label>
+          <Label htmlFor="stock">{t('stock')}</Label>
           <Controller
             control={control}
             name="stock"
@@ -200,7 +193,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="min_stock">{t('minStock')} *</Label>
+          <Label htmlFor="min_stock">{t('minStock')}</Label>
           <Controller
             control={control}
             name="min_stock"

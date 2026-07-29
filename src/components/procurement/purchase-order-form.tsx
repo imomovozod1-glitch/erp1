@@ -377,7 +377,35 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               <TableBody>
                 {items.map((item, idx) => (
                   <TableRow key={idx} className="hover:bg-slate-50/50">
-                    <TableCell className="font-medium">{item.productName}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productId ? (
+                        item.productName
+                      ) : (
+                        <div className="flex flex-col gap-1.5 max-w-md">
+                          <span className="text-red-500 text-xs font-semibold">Tizimdagi tovar bilan bog&apos;lanmagan: &quot;{item.productName}&quot;</span>
+                          <select
+                            value={item.productId}
+                            onChange={(e) => {
+                              const prodId = e.target.value
+                              const prod = products.find(p => p.id === prodId)
+                              if (prod) {
+                                setItems(prev => prev.map((it, i) => i === idx ? {
+                                  ...it,
+                                  productId: prod.id,
+                                  productName: prod.name,
+                                } : it))
+                              }
+                            }}
+                            className="flex h-9 w-full rounded-md border border-red-300 bg-white px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500"
+                          >
+                            <option value="">{t('selectProduct')}...</option>
+                            {products.map(p => (
+                              <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.unitCost)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(item.totalCost)}</TableCell>
@@ -417,7 +445,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
         </Button>
         <Button
           type="submit"
-          disabled={isSubmitting || items.length === 0 || !supplierId}
+          disabled={isSubmitting || items.length === 0 || !supplierId || items.some(item => !item.productId)}
           className="bg-indigo-600 hover:bg-indigo-500"
         >
           {isSubmitting ? tCommon('loading') : tCommon('save')}
