@@ -145,7 +145,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="price">{t('price')} *</Label>
+          <Label htmlFor="price">{t('price')} </Label>
           <Controller
             control={control}
             name="price"
@@ -157,7 +157,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="cost_price">{t('costPrice')} *</Label>
+          <Label htmlFor="cost_price">{t('costPrice')} </Label>
           <Controller
             control={control}
             name="cost_price"
@@ -169,7 +169,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="incoming_cost">{t('incomingCost')} *</Label>
+          <Label htmlFor="incoming_cost">{t('incomingCost')} </Label>
           <Controller
             control={control}
             name="incoming_cost"

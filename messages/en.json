@@ -205,6 +205,8 @@
   },
   "sales": {
     "title": "Sales",
+    "editOrder": "Edit Order",
+    "editCustomer": "Edit Customer",
     "orders": "Orders",
     "customers": "Customers",
     "invoices": "Invoices",

@@ -206,6 +206,8 @@
   "sales": {
     "title": "Sotuv",
     "orders": "Sotuvlar",
+    "editOrder": "Sotuvni tahrirlash",
+    "editCustomer": "Mijozni tahrirlash",
     "customers": "Mijozlar",
     "invoices": "Hisob-fakturalar",
     "addOrder": "Sotuv qo'shish",
