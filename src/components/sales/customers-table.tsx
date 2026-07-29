@@ -78,7 +78,6 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
               <TableHead>{tCommon('name')}</TableHead>
               <TableHead>{tCommon('email')}</TableHead>
               <TableHead>{tCommon('phone')}</TableHead>
-              <TableHead>{tCommon('city')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
@@ -86,7 +85,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12">
+                <TableCell colSpan={5} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -108,7 +107,6 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{customer.email ?? '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer.phone ?? '—'}</TableCell>
-                  <TableCell className="text-muted-foreground">{customer.city ?? '—'}</TableCell>
                   <TableCell>
                     <Badge
                       variant={customer.is_active ? 'default' : 'secondary'}

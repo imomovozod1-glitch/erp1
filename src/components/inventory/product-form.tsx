@@ -61,18 +61,18 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     description: z.string().optional(),
   })
 
-  const { register, handleSubmit, control, formState: { errors } } = usePersistedForm<FormData>('product-form', {
+  const { register, handleSubmit, control, formState: { errors } } = usePersistedForm<FormData>('product-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
       sku: initialData?.sku || '',
       category_id: initialData?.category_id || '',
-      unit: initialData?.unit || 'pcs',
-      price: initialData?.price || 0,
-      cost_price: initialData?.cost_price || 0,
-      incoming_cost: initialData?.incoming_cost || 0,
-      stock: initialData?.stock || 0,
-      min_stock: initialData?.min_stock || 0,
+      unit: initialData?.unit || '',
+      price: initialData?.price ?? '' as any,
+      cost_price: initialData?.cost_price ?? '' as any,
+      incoming_cost: initialData?.incoming_cost ?? '' as any,
+      stock: initialData?.stock ?? '' as any,
+      min_stock: initialData?.min_stock ?? '' as any,
       description: initialData?.description || '',
     },
   })
@@ -105,7 +105,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         toast.success(tCommon('success'))
       }
       await invalidateProducts()
-      clearPersistedForm('product-form')
+      clearPersistedForm('product-form-v3')
       router.push(`/${lang}/inventory/products`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

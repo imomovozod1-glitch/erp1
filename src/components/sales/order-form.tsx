@@ -23,7 +23,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const formSchema = z.object({
   order_number: z.string().min(1, 'Order number is required'),
-  customer_id: z.string().min(1, 'Customer is required'),
+  customer_id: z.string().optional().or(z.literal('')),
   status: z.enum(['draft', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled']),
   total_amount: z.coerce.number().min(0),
   discount_amount: z.coerce.number().min(0),
@@ -61,7 +61,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
 
   const innerFormSchema = z.object({
     order_number: z.string().min(1, tCommon('required')),
-    customer_id: z.string().min(1, tCommon('required')),
+    customer_id: z.string().optional().or(z.literal('')),
     status: z.enum(['draft', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled']),
     total_amount: z.coerce.number().min(0),
     discount_amount: z.coerce.number().min(0),
@@ -71,18 +71,18 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
     notes: z.string().optional().or(z.literal('')),
   })
 
-  const [defaultOrderNumber] = useState(() => initialData?.order_number || `ORD-${Date.now()}`)
+  const [defaultOrderNumber] = useState(() => initialData?.order_number || '')
 
-  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('order-form', {
+  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('order-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       order_number: defaultOrderNumber,
       customer_id: initialData?.customer_id || '',
       status: initialData?.status || 'draft',
-      total_amount: initialData?.total_amount || 0,
-      discount_amount: initialData?.discount_amount || 0,
-      tax_amount: initialData?.tax_amount || 0,
-      order_date: initialData?.order_date ? initialData.order_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      total_amount: initialData?.total_amount ?? '' as any,
+      discount_amount: initialData?.discount_amount ?? '' as any,
+      tax_amount: initialData?.tax_amount ?? '' as any,
+      order_date: initialData?.order_date ? initialData.order_date.split('T')[0] : '',
       delivery_date: initialData?.delivery_date ? initialData.delivery_date.split('T')[0] : '',
       notes: initialData?.notes || '',
     },
@@ -99,6 +99,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
     try {
       const payload = {
         ...data,
+        customer_id: (data.customer_id && data.customer_id !== 'none') ? data.customer_id : null,
         delivery_date: data.delivery_date || null,
         created_by: initialData?.created_by || userId,
       }
@@ -119,7 +120,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
       }
       
       await invalidateOrders()
-      clearPersistedForm('order-form')
+      clearPersistedForm('order-form-v3')
       router.push(`/${lang}/sales/orders`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -142,12 +143,13 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_id">{t('customer')} *</Label>
-          <Select value={customerIdValue} onValueChange={(val) => { if (val) setValue('customer_id', val) }}>
+          <Label htmlFor="customer_id">{t('customer')}</Label>
+          <Select value={customerIdValue || 'none'} onValueChange={(val) => setValue('customer_id', val || '')}>
             <SelectTrigger>
               <SelectValue placeholder={t('selectCustomer')} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">{tCommon('none')}</SelectItem>
               {customers.map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}

@@ -47,7 +47,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
   // Temp selection
   const [selectedProductId, setSelectedProductId] = useState('')
-  const [tempQty, setTempQty] = useState(1)
+  const [tempQty, setTempQty] = useState<number | ''>(1)
 
   const handleProductChange = (productId: string) => {
     setSelectedProductId(productId)
@@ -58,11 +58,12 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
   }
 
   const addItem = () => {
-    if (!selectedProductId || tempQty <= 0) return
+    const qty = Number(tempQty) || 0
+    if (!selectedProductId || qty <= 0) return
     const product = products.find(p => p.id === selectedProductId)
     if (!product) return
 
-    if (tempQty > product.stock) {
+    if (qty > product.stock) {
       toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
       return
     }
@@ -72,7 +73,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
     if (existing >= 0) {
       setItems(prev => prev.map((item, idx) => {
         if (idx === existing) {
-          const newQty = item.quantity + tempQty
+          const newQty = item.quantity + qty
           return { ...item, quantity: newQty, totalPrice: newQty * item.unitPrice }
         }
         return item
@@ -82,9 +83,9 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
         productId: product.id,
         productName: product.name,
         unitPrice: product.price,
-        quantity: tempQty,
+        quantity: qty,
         stock: product.stock,
-        totalPrice: tempQty * product.price,
+        totalPrice: qty * product.price,
       }])
     }
     setSelectedProductId('')
@@ -99,10 +100,6 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!customerId) {
-      toast.error(tCommon('required'))
-      return
-    }
     if (items.length === 0) {
       toast.error(t('noItems'))
       return
@@ -189,7 +186,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
       {/* Customer Selection */}
       <Card className="border shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t('customer')} *</CardTitle>
+          <CardTitle className="text-base">{t('customer')}</CardTitle>
         </CardHeader>
         <CardContent>
           <select
@@ -231,7 +228,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
               <Label className="text-xs">{t('quantity')}</Label>
               <NumericInput
                 value={tempQty}
-                onChange={(val) => setTempQty(val === "" ? 0 : val)}
+                onChange={(val) => setTempQty(val)}
                 className="h-9"
               />
             </div>

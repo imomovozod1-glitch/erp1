@@ -14,8 +14,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import dynamic from 'next/dynamic'
+import { User, Mail, Phone, MapPin, FileText, CreditCard, Loader2 } from 'lucide-react'
 
-
+// Load MapPicker dynamically for Next.js SSR compatibility
+const MapPicker = dynamic(() => import('./map-picker').then(mod => mod.MapPicker), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[320px] bg-slate-50 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
+      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+    </div>
+  )
+})
 
 interface CustomerFormProps {
   initialData?: any
@@ -24,8 +35,11 @@ interface CustomerFormProps {
 
 export function CustomerForm({ initialData, lang }: CustomerFormProps) {
   const tCommon = useTranslations('common')
+  const tSales = useTranslations('sales')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isMapOpen, setIsMapOpen] = useState(false)
+  const [tempAddress, setTempAddress] = useState('')
   const supabase = createClient() as any
 
   const innerFormSchema = z.object({
@@ -33,21 +47,19 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
     email: z.string().email(tCommon('invalidEmail')).optional().or(z.literal('')),
     phone: z.string().optional().or(z.literal('')),
     address: z.string().optional().or(z.literal('')),
-    city: z.string().optional().or(z.literal('')),
     tin: z.string().optional().or(z.literal('')),
     notes: z.string().optional().or(z.literal('')),
   })
 
   type FormData = z.infer<typeof innerFormSchema>
 
-  const { register, handleSubmit, formState: { errors } } = usePersistedForm<FormData>('customer-form', {
+  const { register, handleSubmit, setValue, getValues, formState: { errors } } = usePersistedForm<FormData>('customer-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
       email: initialData?.email || '',
       phone: initialData?.phone || '',
       address: initialData?.address || '',
-      city: initialData?.city || '',
       tin: initialData?.tin || '',
       notes: initialData?.notes || '',
     },
@@ -58,6 +70,7 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
     try {
       const payload = {
         ...data,
+        name: data.name || '',
       }
 
       if (initialData?.id) {
@@ -71,12 +84,12 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
         const { error } = await supabase
           .from('customers')
           .insert([payload])
-        if (error) throw error
+          if (error) throw error
         toast.success(tCommon('success'))
       }
       
       await invalidateCustomers()
-      clearPersistedForm('customer-form')
+      clearPersistedForm('customer-form-v3')
       router.push(`/${lang}/sales/customers`)
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
@@ -85,60 +98,193 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
     }
   }
 
+  const handleLocationSelect = (address: string) => {
+    setTempAddress(address)
+  }
+
+  const handleOpenMap = () => {
+    setTempAddress(getValues('address') || '')
+    setIsMapOpen(true)
+  }
+
+  const handleConfirmLocation = () => {
+    setValue('address', tempAddress, { shouldDirty: true, shouldValidate: true })
+    setIsMapOpen(false)
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border shadow-sm">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="name">Mijoz Ismi / Tashkilot nomi *</Label>
-          <Input id="name" {...register('name')} />
-          {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Customer Details Card */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs space-y-6">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
+            <div className="p-2 bg-indigo-50 rounded-lg">
+              <User className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-800 text-base">{tSales('customer')}</h3>
+              <p className="text-xs text-slate-500 font-sans">{tSales('customerSubtitle')}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Customer Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-slate-400" />
+                {tSales('customerName')} *
+              </Label>
+              <Input
+              required
+                id="name"
+                {...register('name')}
+                placeholder={tSales('customerNamePlaceholder')}
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+              />
+              {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name.message}</p>}
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-slate-400" />
+                {tSales('phone')}
+              </Label>
+              <Input
+                id="phone"
+                {...register('phone')}
+                placeholder={tSales('phonePlaceholder')}
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-slate-400" />
+                {tSales('email')}
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                {...register('email')}
+                placeholder={tSales('emailPlaceholder')}
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+              />
+              {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
+            </div>
+
+            {/* TIN */}
+            <div className="space-y-2">
+              <Label htmlFor="tin" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                {tSales('tin')}
+              </Label>
+              <Input
+                id="tin"
+                {...register('tin')}
+                placeholder={tSales('tinPlaceholder')}
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+              />
+            </div>
+
+            {/* Address Field */}
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="address" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                {tSales('address')}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="address"
+                  {...register('address')}
+                  placeholder={tSales('addressPlaceholder')}
+                  className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleOpenMap}
+                  className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+                >
+                  <MapPin className="h-4 w-4 text-slate-500" />
+                  {tSales('locationPicker.button')}
+                </Button>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="notes" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-slate-400" />
+                {tSales('notes')}
+              </Label>
+              <Textarea
+                id="notes"
+                {...register('notes')}
+                placeholder={tSales('notesPlaceholder')}
+                rows={3}
+                className="bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white resize-none"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" {...register('email')} />
-          {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-5 border-t border-slate-100">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => router.push(`/${lang}/sales/customers`)}
+            disabled={isSubmitting}
+          >
+            {tCommon('cancel')}
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? tCommon('saving') : tCommon('save')}
+          </Button>
         </div>
+      </form>
 
-        <div className="space-y-2">
-          <Label htmlFor="phone">Telefon</Label>
-          <Input id="phone" {...register('phone')} />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="city">Shahar</Label>
-          <Input id="city" {...register('city')} />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="address">Manzil</Label>
-          <Input id="address" {...register('address')} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="tin">STIR (TIN)</Label>
-          <Input id="tin" {...register('tin')} />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="notes">Eslatma (Notes)</Label>
-          <Textarea id="notes" {...register('notes')} rows={3} />
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => router.push(`/${lang}/sales/customers`)}
-          disabled={isSubmitting}
-        >
-          {tCommon('cancel')}
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? tCommon('saving') : tCommon('save')}
-        </Button>
-      </div>
-    </form>
+      {/* Dynamic Map Dialog */}
+      {isMapOpen && (
+        <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+          <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
+            <DialogHeader className="pb-3 border-b border-slate-100">
+              <DialogTitle className="font-bold text-slate-800 text-base flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-indigo-600" />
+                {tSales('locationPicker.dialogTitle')}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 font-sans mt-1">
+                {tSales('locationPicker.dialogSubtitle')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <MapPicker
+                onLocationSelect={handleLocationSelect}
+                initialAddress={tempAddress || getValues('address')}
+              />
+            </div>
+            <DialogFooter className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsMapOpen(false)}
+                className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors"
+              >
+                {tCommon('cancel')}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmLocation}
+                className="h-10 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
+              >
+                {tCommon('save')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   )
 }

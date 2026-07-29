@@ -50,8 +50,8 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     defaultValues: {
       employee_code: initialData?.employee_code || '',
       position: initialData?.position || '',
-      salary: initialData?.salary || 0,
-      hired_at: initialData?.hired_at ? initialData.hired_at.split('T')[0] : new Date().toISOString().split('T')[0],
+      salary: initialData?.salary ?? '' as any,
+      hired_at: initialData?.hired_at ? initialData.hired_at.split('T')[0] : '',
       is_active: initialData?.is_active ?? true,
       notes: initialData?.notes || '',
     }

@@ -50,8 +50,8 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
 
   // Temp item state
   const [selectedProductId, setSelectedProductId] = useState('')
-  const [tempQty, setTempQty] = useState(1)
-  const [tempUnitCost, setTempUnitCost] = useState(0)
+  const [tempQty, setTempQty] = useState<number | ''>(1)
+  const [tempUnitCost, setTempUnitCost] = useState<number | ''>('')
 
   const handleProductChange = (productId: string) => {
     setSelectedProductId(productId)
@@ -62,20 +62,22 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
   }
 
   const addItem = () => {
-    if (!selectedProductId || tempQty <= 0) return
+    const qty = Number(tempQty) || 0
+    const cost = Number(tempUnitCost) || 0
+    if (!selectedProductId || qty <= 0) return
     const product = products.find(p => p.id === selectedProductId)
     if (!product) return
 
     setItems(prev => [...prev, {
       productId: product.id,
       productName: product.name,
-      quantity: tempQty,
-      unitCost: tempUnitCost,
-      totalCost: tempQty * tempUnitCost,
+      quantity: qty,
+      unitCost: cost,
+      totalCost: qty * cost,
     }])
     setSelectedProductId('')
     setTempQty(1)
-    setTempUnitCost(0)
+    setTempUnitCost('')
   }
 
   const removeItem = (index: number) => {
@@ -333,7 +335,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               <Label className="text-xs">{t('quantity')}</Label>
               <NumericInput
                 value={tempQty}
-                onChange={(val) => setTempQty(val === "" ? 0 : val)}
+                onChange={(val) => setTempQty(val)}
                 className="h-9"
               />
             </div>
@@ -341,7 +343,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               <Label className="text-xs">{t('unitCost')}</Label>
               <NumericInput
                 value={tempUnitCost}
-                onChange={(val) => setTempUnitCost(val === "" ? 0 : val)}
+                onChange={(val) => setTempUnitCost(val)}
                 className="h-9"
               />
             </div>

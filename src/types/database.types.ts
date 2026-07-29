@@ -182,7 +182,6 @@ export type Database = {
           email: string | null
           phone: string | null
           address: string | null
-          city: string | null
           tin: string | null
           notes: string | null
           is_active: boolean
@@ -195,7 +194,6 @@ export type Database = {
           email?: string | null
           phone?: string | null
           address?: string | null
-          city?: string | null
           tin?: string | null
           notes?: string | null
           is_active?: boolean
@@ -205,7 +203,6 @@ export type Database = {
           email?: string | null
           phone?: string | null
           address?: string | null
-          city?: string | null
           tin?: string | null
           notes?: string | null
           is_active?: boolean
@@ -254,7 +251,7 @@ export type Database = {
         Row: {
           id: string
           order_number: string
-          customer_id: string
+          customer_id: string | null
           status: 'draft' | 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
           total_amount: number
           discount_amount: number
@@ -269,7 +266,7 @@ export type Database = {
         Insert: {
           id?: string
           order_number: string
-          customer_id: string
+          customer_id?: string | null
           status?: 'draft' | 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
           total_amount?: number
           discount_amount?: number
@@ -286,6 +283,7 @@ export type Database = {
           tax_amount?: number
           notes?: string | null
           delivery_date?: string | null
+          customer_id?: string | null
         }
       }
       sales_order_items: {
@@ -320,7 +318,7 @@ export type Database = {
           id: string
           invoice_number: string
           order_id: string | null
-          customer_id: string
+          customer_id: string | null
           status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
           total_amount: number
           paid_amount: number
@@ -337,7 +335,7 @@ export type Database = {
           id?: string
           invoice_number: string
           order_id?: string | null
-          customer_id: string
+          customer_id?: string | null
           status?: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
           total_amount?: number
           paid_amount?: number
@@ -355,6 +353,7 @@ export type Database = {
           paid_at?: string | null
           image_url?: string | null
           notes?: string | null
+          customer_id?: string | null
         }
       }
       purchase_orders: {

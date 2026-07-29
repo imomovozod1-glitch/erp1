@@ -43,7 +43,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
 
   const innerFormSchema = z.object({
     invoice_number: z.string().min(1, t('common.required')),
-    customer_id: z.string().min(1, t('common.required')),
+    customer_id: z.string().optional().or(z.literal('')),
     order_id: z.string().optional().or(z.literal('')),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']),
     total_amount: z.coerce.number().min(0),
@@ -56,18 +56,18 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
 
   type FormData = z.infer<typeof innerFormSchema>
 
-  const [defaultInvoiceNumber] = useState(() => initialData?.invoice_number || `INV-${Date.now()}`)
+  const [defaultInvoiceNumber] = useState(() => initialData?.invoice_number || '')
 
-  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('invoice-form', {
+  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('invoice-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       invoice_number: defaultInvoiceNumber,
       customer_id: initialData?.customer_id || '',
       order_id: initialData?.order_id || '',
       status: initialData?.status || 'draft',
-      total_amount: initialData?.total_amount || 0,
-      paid_amount: initialData?.paid_amount || 0,
-      issued_at: initialData?.issued_at ? initialData.issued_at.split('T')[0] : new Date().toISOString().split('T')[0],
+      total_amount: initialData?.total_amount ?? '' as any,
+      paid_amount: initialData?.paid_amount ?? '' as any,
+      issued_at: initialData?.issued_at ? initialData.issued_at.split('T')[0] : '',
       due_at: initialData?.due_at ? initialData.due_at.split('T')[0] : '',
       paid_at: initialData?.paid_at ? initialData.paid_at.split('T')[0] : '',
       notes: initialData?.notes || '',
@@ -84,6 +84,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
     try {
       const payload = {
         ...data,
+        customer_id: (data.customer_id && data.customer_id !== 'none') ? data.customer_id : null,
         order_id: data.order_id || null,
         issued_at: data.issued_at || null,
         paid_at: data.paid_at || null,
@@ -106,7 +107,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
       }
       
       await invalidateInvoices()
-      clearPersistedForm('invoice-form')
+      clearPersistedForm('invoice-form-v3')
       router.push(`/${lang}/sales/invoices`)
     } catch (error: any) {
       toast.error(error.message || t('common.error'))
@@ -129,12 +130,13 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_id">{t('sales.customer')} *</Label>
-          <Select value={customerIdValue} onValueChange={(val) => { if (val) setValue('customer_id', val) }}>
+          <Label htmlFor="customer_id">{t('sales.customer')}</Label>
+          <Select value={customerIdValue || 'none'} onValueChange={(val) => setValue('customer_id', val || '')}>
             <SelectTrigger>
               <SelectValue placeholder={t('sales.selectCustomer')} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">{t('common.none')}</SelectItem>
               {customers.map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}

@@ -51,13 +51,13 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
 
   type FormData = z.infer<typeof innerFormSchema>
 
-  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('transaction-form', {
+  const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('transaction-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       type: initialData?.type || defaultType,
-      amount: initialData?.amount || 0,
+      amount: initialData?.amount ?? '' as any,
       category: initialData?.category || '',
-      transaction_date: initialData?.transaction_date ? initialData.transaction_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      transaction_date: initialData?.transaction_date ? initialData.transaction_date.split('T')[0] : '',
       description: initialData?.description || '',
       reference_type: initialData?.reference_type || '',
       reference_id: initialData?.reference_id || '',
@@ -96,7 +96,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
       }
       
       await invalidateTransactions()
-      clearPersistedForm('transaction-form')
+      clearPersistedForm('transaction-form-v3')
       if (initialData?.type || defaultType) {
         const redirectType = initialData?.type || defaultType
         router.push(`/${lang}/finance/${redirectType === 'income' ? 'income' : 'expenses'}`)

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingCart, MoreHorizontal, Eye } from 'lucide-react'
+import { Search, ShoppingCart, MoreHorizontal, Pencil } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -104,8 +104,8 @@ export function OrdersTable({ orders, lang }: OrdersTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/orders/${order.id}`)}>
-                          <Eye className="mr-2 h-3.5 w-3.5" /> {tCommon('view')}
+                        <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}>
+                          <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
