@@ -168,6 +168,12 @@
   "inventory": {
     "title": "Ombor",
     "products": "Mahsulotlar",
+    "kg": "Kg",
+    "liter": "Litr",
+    "meter": "Metr",
+    "package": "Qop",
+    "ton": "Tonna",
+    "piece": "Dona",
     "categories": "Kategoriyalar",
     "stockMovements": "Zaxira harakatlari",
     "slug": "Slug (URL)",

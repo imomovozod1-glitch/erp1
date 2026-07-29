@@ -168,6 +168,12 @@
   "inventory": {
     "title": "Inventory",
     "products": "Products",
+    "kg": "Kg",
+    "liter": "Liter",
+    "meter": "Meter",
+    "package": "Package",
+    "ton": "Ton",
+    "piece": "Piece",
     "categories": "Categories",
     "stockMovements": "Stock Movements",
     "addProduct": "Add Product",

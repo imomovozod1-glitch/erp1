@@ -168,6 +168,12 @@
   "inventory": {
     "title": "Склад",
     "products": "Товары",
+    "kg": "Кг",
+    "liter": "Литр",
+    "meter": "Метр",
+    "package": "Пакет",
+    "ton": "Тонна",
+    "piece": "Штука",
     "categories": "Категории",
     "stockMovements": "Движение склада",
     "addProduct": "Добавить товар",

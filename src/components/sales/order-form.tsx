@@ -20,25 +20,8 @@ import {
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const formSchema = z.object({
-  order_number: z.string().min(1, 'Order number is required'),
-  customer_id: z.string().optional().or(z.literal('')),
-  status: z.enum(['draft', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled']),
-  total_amount: z.coerce.number().min(0),
-  discount_amount: z.coerce.number().min(0),
-  tax_amount: z.coerce.number().min(0),
-  order_date: z.string().optional().or(z.literal('')),
-  delivery_date: z.string().optional().or(z.literal('')),
-  notes: z.string().optional().or(z.literal('')),
-})
-
-type FormData = z.infer<typeof formSchema>
-
 interface OrderFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customers: any[]
   lang: string
 }
@@ -48,12 +31,10 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supabase.auth.getUser().then(({ data }: any) => {
       if (data?.user) setUserId(data.user.id)
     })
@@ -61,7 +42,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
 
   const innerFormSchema = z.object({
     order_number: z.string().min(1, tCommon('required')),
-    customer_id: z.string().optional().or(z.literal('')),
+    customer_name: z.string().optional().or(z.literal('')),
     status: z.enum(['draft', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled']),
     total_amount: z.coerce.number().min(0),
     discount_amount: z.coerce.number().min(0),
@@ -71,13 +52,15 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
     notes: z.string().optional().or(z.literal('')),
   })
 
+  type FormData = z.infer<typeof innerFormSchema>
+
   const [defaultOrderNumber] = useState(() => initialData?.order_number || '')
 
   const { register, handleSubmit, setValue, control, formState: { errors } } = usePersistedForm<FormData>('order-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       order_number: defaultOrderNumber,
-      customer_id: initialData?.customer_id || '',
+      customer_name: initialData?.customer_name || '',
       status: initialData?.status || 'draft',
       total_amount: initialData?.total_amount ?? '' as any,
       discount_amount: initialData?.discount_amount ?? '' as any,
@@ -88,7 +71,6 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
     },
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     if (!userId && !initialData) {
       toast.error('User session not found')
@@ -99,7 +81,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
     try {
       const payload = {
         ...data,
-        customer_id: (data.customer_id && data.customer_id !== 'none') ? data.customer_id : null,
+        customer_id: (data.customer_name && data.customer_name !== 'none') ? data.customer_name : null,
         delivery_date: data.delivery_date || null,
         created_by: initialData?.created_by || userId,
       }
@@ -122,7 +104,6 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
       await invalidateOrders()
       clearPersistedForm('order-form-v3')
       router.push(`/${lang}/sales/orders`)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -131,7 +112,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
   }
 
   const statusValue = useWatch({ control, name: 'status' })
-  const customerIdValue = useWatch({ control, name: 'customer_id' })
+  const customerIdValue = useWatch({ control, name: 'customer_name' })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border shadow-sm">
@@ -143,8 +124,8 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_id">{t('customer')}</Label>
-          <Select value={customerIdValue || 'none'} onValueChange={(val) => setValue('customer_id', val || '')}>
+          <Label htmlFor="customer_name">{t('customer')}</Label>
+          <Select value={customerIdValue || 'none'} onValueChange={(val) => setValue('customer_name', val || '')}>
             <SelectTrigger>
               <SelectValue placeholder={t('selectCustomer')} />
             </SelectTrigger>
@@ -155,7 +136,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
               ))}
             </SelectContent>
           </Select>
-          {errors.customer_id && <p className="text-sm text-red-500">{errors.customer_id.message}</p>}
+          {errors.customer_name && <p className="text-sm text-red-500">{errors.customer_name.message}</p>}
         </div>
 
         <div className="space-y-2">

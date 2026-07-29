@@ -57,12 +57,15 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     category_id: z.string().optional().nullable(),
     description: z.string().optional(),
   })
+  const units = [t('piece'), t('kg'), t('liter'), t('meter'), t('package'), t('ton')]
+
+  const [defaultSku] = useState(() => initialData?.sku || Math.floor(1000 + Math.random() * 9000).toString())
 
   const { register, handleSubmit, control, formState: { errors } } = usePersistedForm<FormData>('product-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
-      sku: initialData?.sku || '',
+      sku: defaultSku,
       category_id: initialData?.category_id || '',
       unit: initialData?.unit || '',
       price: initialData?.price ?? '' as any,
@@ -140,7 +143,17 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
 
         <div className="space-y-2">
           <Label htmlFor="unit">{t('unit')} *</Label>
-          <Input id="unit" {...register('unit')} placeholder={t('unit')} />
+          {/* <Input id="unit" {...register('unit')} placeholder={t('unit')} /> */}
+                    <select 
+            id="unit" 
+            {...register('unit')}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            <option value="">{tCommon('select')}</option>
+            {units.map(u => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
           {errors.unit && <p className="text-sm text-red-500">{errors.unit.message}</p>}
         </div>
 
