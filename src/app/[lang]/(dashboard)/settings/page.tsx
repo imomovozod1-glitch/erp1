@@ -27,7 +27,6 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
             className="block p-6 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 group"
           >
             <h3 className="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {t(item.key as any)}
             </h3>
           </a>

@@ -57,7 +57,7 @@ const _getCachedProfile = (userId: string) =>
       return data
     },
     ['user-profile', userId],
-    { revalidate: 300 } // 5 minutes
+    { revalidate: 300, tags: [`profile:${userId}`] }
   )()
 
 export async function getCachedProfile(userId: string) {

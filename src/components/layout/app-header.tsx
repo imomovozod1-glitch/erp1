@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Bell, Globe, LogOut, Settings, User } from 'lucide-react'
+import { Bell, Globe, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -35,6 +35,124 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   const router = useRouter()
   const t = useTranslations('auth')
   const tSettings = useTranslations('settings')
+
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+
+  const unreadCount = notifications.filter((n) => !n.read).length
+
+  const markAsRead = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => {
+        if (n.id === id) {
+          const updated = { ...n, read: true }
+          try {
+            const saved = localStorage.getItem('read_notification_ids')
+            const readIds = saved ? JSON.parse(saved) : []
+            if (!readIds.includes(id)) {
+              readIds.push(id)
+              localStorage.setItem('read_notification_ids', JSON.stringify(readIds))
+            }
+          } catch (e) {
+            console.error(e)
+          }
+          return updated
+        }
+        return n
+      })
+    )
+  }
+
+  const markAllAsRead = () => {
+    setNotifications((prev) =>
+      prev.map((n) => {
+        const updated = { ...n, read: true }
+        try {
+          const saved = localStorage.getItem('read_notification_ids')
+          const readIds = saved ? JSON.parse(saved) : []
+          if (!readIds.includes(n.id)) {
+            readIds.push(n.id)
+            localStorage.setItem('read_notification_ids', JSON.stringify(readIds))
+          }
+        } catch (e) {
+          console.error(e)
+        }
+        return updated
+      })
+    )
+  }
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const supabase = createClient() as any
+
+      // 1. Fetch low stock products
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, name, stock, min_stock, updated_at')
+        .eq('is_active', true)
+
+      // 2. Fetch invoices
+      const { data: invoices } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, total_amount, due_at, customers(name)')
+        .in('status', ['sent', 'overdue'])
+
+      // Load read IDs from localStorage
+      let readIds: string[] = []
+      try {
+        const saved = localStorage.getItem('read_notification_ids')
+        if (saved) {
+          readIds = JSON.parse(saved)
+        }
+      } catch (e) {
+        console.error(e)
+      }
+
+      const lowStockAlerts = (products || [])
+        .filter((p: any) => p.stock <= p.min_stock)
+        .map((p: any) => ({
+          id: `low-stock-${p.id}`,
+          type: 'low_stock',
+          title: lang === 'uz' ? 'Kam qolgan tovar' : lang === 'ru' ? 'Мало на складе' : 'Low stock alert',
+          description: lang === 'uz' 
+            ? `"${p.name}" tovaridan ${p.stock} dona qoldi (min: ${p.min_stock})`
+            : lang === 'ru'
+            ? `Осталось ${p.stock} шт. товара "${p.name}" (мин: ${p.min_stock})`
+            : `Only ${p.stock} left of "${p.name}" (min: ${p.min_stock})`,
+          href: `/${lang}/inventory/products`,
+          read: readIds.includes(`low-stock-${p.id}`),
+          created_at: new Date(p.updated_at || Date.now()),
+        }))
+
+      const overdueAlerts = (invoices || [])
+        .filter((i: any) => new Date(i.due_at) < new Date())
+        .map((i: any) => ({
+          id: `overdue-invoice-${i.id}`,
+          type: 'overdue_invoice',
+          title: lang === 'uz' ? 'Muddati o\'tgan faktura' : lang === 'ru' ? 'Просроченный счет' : 'Overdue invoice',
+          description: lang === 'uz'
+            ? `"${i.customers?.name || ''}" uchun #${i.invoice_number} muddati o'tdi`
+            : lang === 'ru'
+            ? `Счет #${i.invoice_number} для "${i.customers?.name || ''}" просрочен`
+            : `Invoice #${i.invoice_number} for "${i.customers?.name || ''}" is past due`,
+          href: `/${lang}/sales/invoices`,
+          read: readIds.includes(`overdue-invoice-${i.id}`),
+          created_at: new Date(i.due_at),
+        }))
+
+      const allNotifications = [...lowStockAlerts, ...overdueAlerts].sort(
+        (a, b) => b.created_at.getTime() - a.created_at.getTime()
+      )
+
+      setNotifications(allNotifications)
+    }
+
+    fetchNotifications()
+
+    const interval = setInterval(fetchNotifications, 120000)
+    return () => clearInterval(interval)
+  }, [lang])
 
   const initials = profile?.full_name
     ?.split(' ')
@@ -141,10 +259,96 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       </DropdownMenu>
 
       {/* Notifications */}
-      <Button variant="ghost" size="icon" className="relative text-slate-600">
-        <Bell className="h-4 w-4" />
-        <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-red-500" />
-      </Button>
+      <DropdownMenu open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+        <DropdownMenuTrigger render={
+          <Button variant="ghost" size="icon" className="relative text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+            <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-2 right-2 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
+            )}
+          </Button>
+        } />
+        <DropdownMenuContent align="end" className="w-80 sm:w-96 p-0 border border-slate-200/60 shadow-lg rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between p-4 bg-slate-50/50 border-b border-slate-100">
+            <span className="font-semibold text-slate-800 text-sm">
+              {lang === 'uz' ? 'Bildirishnomalar' : lang === 'ru' ? 'Уведомления' : 'Notifications'}
+              {unreadCount > 0 && (
+                <span className="ml-2 px-1.5 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                  {unreadCount}
+                </span>
+              )}
+            </span>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1 hover:underline cursor-pointer"
+              >
+                <Check className="h-3 w-3" />
+                {lang === 'uz' ? 'Hammasini o\'qilgan qilish' : lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
+              </button>
+            )}
+          </div>
+          <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-100">
+            {notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
+                <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
+                <p className="text-sm font-medium text-slate-700">
+                  {lang === 'uz' ? 'Hamma bildirishnomalar o\'qildi' : lang === 'ru' ? 'Все прочитано' : 'All caught up!'}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {lang === 'uz' ? 'Hozircha yangi bildirishnomalar yo\'q' : lang === 'ru' ? 'Нет новых уведомлений' : 'No new notifications.'}
+                </p>
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const isUnread = !n.read
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => {
+                      markAsRead(n.id)
+                      setIsNotificationsOpen(false)
+                      router.push(n.href)
+                    }}
+                    className={`flex items-start gap-3 p-4 cursor-pointer transition-colors ${
+                      isUnread ? 'bg-indigo-50/20 hover:bg-indigo-50/40' : 'bg-white hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-xl mt-0.5 ${
+                      n.type === 'low_stock' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'
+                    }`}>
+                      {n.type === 'low_stock' ? (
+                        <AlertTriangle className="h-4 w-4" />
+                      ) : (
+                        <Clock className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-0.5">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-semibold ${isUnread ? 'text-slate-800' : 'text-slate-500'}`}>
+                          {n.title}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          {new Date(n.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className={`text-xs ${isUnread ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>
+                        {n.description}
+                      </p>
+                    </div>
+                    {isUnread && (
+                      <div className="h-2 w-2 rounded-full bg-indigo-600 mt-2 self-start shrink-0" />
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* User Menu */}
       <DropdownMenu>

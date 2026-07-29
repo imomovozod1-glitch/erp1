@@ -73,6 +73,11 @@ export async function invalidateAnalytics() {
   revalidateTag(CACHE_TAGS.orderItems, undefined as any)
 }
 
+export async function invalidateProfile(userId: string) {
+  revalidateTag(`profile:${userId}`, undefined as any)
+}
+
 export async function invalidateAll() {
   Object.values(CACHE_TAGS).forEach((tag) => revalidateTag(tag, undefined as any))
 }
+

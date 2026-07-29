@@ -53,6 +53,7 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'products', href: 'inventory/products' },
       { key: 'categories', href: 'inventory/categories' },
       { key: 'stockMovements', href: 'inventory/movements' },
+      { key: 'unit', href: 'inventory/units' },
     ]
   },
   {
@@ -139,6 +140,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
         products: tInventory('products'),
         categories: tInventory('categories'),
         stockMovements: tInventory('stockMovements'),
+        unit: tInventory('unit'),
       },
       sales: {
         orders: tSales('orders'),
