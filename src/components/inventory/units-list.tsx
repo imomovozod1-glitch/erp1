@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus, Trash2, Scale, Info } from 'lucide-react'
+import { Plus, Trash2, Scale, Info, Pencil, Check, X } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,8 @@ export function UnitsList({ lang }: UnitsListProps) {
   const [isMounted, setIsMounted] = useState(false)
   const [customUnits, setCustomUnits] = useState<string[]>([])
   const [newUnit, setNewUnit] = useState('')
+  const [editingUnit, setEditingUnit] = useState<string | null>(null)
+  const [editingValue, setEditingValue] = useState('')
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -34,21 +36,12 @@ export function UnitsList({ lang }: UnitsListProps) {
     }
   }, [])
 
-  const defaultUnits = [
-    t('piece') || 'Dona',
-    t('kg') || 'Kg',
-    t('liter') || 'Litr',
-    t('meter') || 'Metr',
-    t('package') || 'Qop',
-    t('ton') || 'Tonna',
-  ]
-
   const handleAddUnit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = newUnit.trim()
     if (!trimmed) return
 
-    if (defaultUnits.includes(trimmed) || customUnits.includes(trimmed)) {
+    if (customUnits.includes(trimmed)) {
       toast.error(lang === 'uz' ? 'Bu o\'lchov birligi allaqachon mavjud' : lang === 'ru' ? 'Эта единица измерения уже существует' : 'This unit already exists')
       return
     }
@@ -64,6 +57,28 @@ export function UnitsList({ lang }: UnitsListProps) {
     const updated = customUnits.filter((u) => u !== unitToDelete)
     setCustomUnits(updated)
     localStorage.setItem('measurement_units', JSON.stringify(updated))
+    toast.success(tCommon('success'))
+  }
+
+  const handleSaveEdit = (oldUnit: string) => {
+    const trimmed = editingValue.trim()
+    if (!trimmed) return
+
+    if (trimmed === oldUnit) {
+      setEditingUnit(null)
+      return
+    }
+
+    if (customUnits.includes(trimmed) && trimmed !== oldUnit) {
+      toast.error(lang === 'uz' ? 'Bu o\'lchov birligi allaqachon mavjud' : lang === 'ru' ? 'Эта единица измерения уже существует' : 'This unit already exists')
+      return
+    }
+
+    const updated = customUnits.map((u) => u === oldUnit ? trimmed : u)
+    setCustomUnits(updated)
+    localStorage.setItem('measurement_units', JSON.stringify(updated))
+    setEditingUnit(null)
+    setEditingValue('')
     toast.success(tCommon('success'))
   }
 
@@ -102,10 +117,10 @@ export function UnitsList({ lang }: UnitsListProps) {
               {lang === 'uz' ? 'Jami o\'lchov birliklari' : lang === 'ru' ? 'Всего единиц' : 'Total Units'}
             </p>
             <p className="text-2xl font-bold text-slate-800">
-              {defaultUnits.length + customUnits.length}
+              {customUnits.length}
             </p>
             <p className="text-xs text-slate-500 font-normal">
-              {defaultUnits.length} {lang === 'uz' ? 'tizim' : lang === 'ru' ? 'системных' : 'default'} • {customUnits.length} {lang === 'uz' ? 'maxsus' : lang === 'ru' ? 'пользовательских' : 'custom'}
+              {lang === 'uz' ? 'Foydalanuvchi birliklari' : lang === 'ru' ? 'Пользовательские единицы' : 'User-defined units'}
             </p>
           </div>
         </Card>
@@ -150,51 +165,91 @@ export function UnitsList({ lang }: UnitsListProps) {
               <TableHeader className="bg-slate-50/50">
                 <TableRow>
                   <TableHead className="font-semibold text-slate-600">Unit Name</TableHead>
-                  <TableHead className="w-[150px] font-semibold text-slate-600">Type</TableHead>
                   <TableHead className="w-[100px] font-semibold text-slate-600 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Default Units */}
-                {defaultUnits.map((u) => (
-                  <TableRow key={u} className="hover:bg-slate-50/30 transition-colors">
-                    <TableCell className="font-semibold text-slate-800 text-sm">
-                      {u}
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                        {lang === 'uz' ? 'Tizim' : lang === 'ru' ? 'Системный' : 'Default'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="text-xs text-slate-400 font-normal italic">Locked</span>
+                {customUnits.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center py-12">
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Scale className="h-8 w-8 opacity-40" />
+                        <p className="text-sm">{tCommon('noData')}</p>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))}
-
-                {/* Custom Units */}
-                {customUnits.map((u) => (
-                  <TableRow key={u} className="hover:bg-slate-50/30 transition-colors">
-                    <TableCell className="font-semibold text-slate-800 text-sm">
-                      {u}
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        {lang === 'uz' ? 'Foydalanuvchi' : lang === 'ru' ? 'Пользовательский' : 'Custom'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteUnit(u)}
-                        className="h-8 w-8 text-rose-600 hover:text-rose-900 hover:bg-rose-50 cursor-pointer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                ) : (
+                  customUnits.map((u) => {
+                    const isEditing = editingUnit === u
+                    return (
+                      <TableRow key={u} className="hover:bg-slate-50/30 transition-colors">
+                        <TableCell className="font-semibold text-slate-800 text-sm">
+                          {isEditing ? (
+                            <Input
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              className="h-8 py-1 px-2 text-sm border-slate-200 focus-visible:ring-indigo-500 max-w-[200px]"
+                              autoFocus
+                            />
+                          ) : (
+                            u
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isEditing ? (
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleSaveEdit(u)}
+                                className="h-8 w-8 text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50 cursor-pointer"
+                                title={tCommon('save') || 'Save'}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingUnit(null)
+                                  setEditingValue('')
+                                }}
+                                className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                title={tCommon('cancel') || 'Cancel'}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingUnit(u)
+                                  setEditingValue(u)
+                                }}
+                                className="h-8 w-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 cursor-pointer"
+                                title={tCommon('edit') || 'Edit'}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteUnit(u)}
+                                className="h-8 w-8 text-rose-600 hover:text-rose-900 hover:bg-rose-50 cursor-pointer"
+                                title={tCommon('delete') || 'Delete'}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
