@@ -86,7 +86,8 @@
     "analytics": "Analitika",
     "reports": "Hisobotlar",
     "settings": "Sozlamalar",
-    "tools": "Vositalar"
+    "tools": "Vositalar",
+    "pos": "Kassa (POS)"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -419,5 +420,39 @@
     "title": "Vositalar",
     "scanner": "AI Skaner",
     "scannerDesc": "Sun'iy intellekt yordamida hujjatlardan ma'lumot ajratib olish"
+  },
+  "pos": {
+    "title": "Kassa (POS)",
+    "searchProduct": "Mahsulotni SKU yoki nomi bo'yicha qidirish...",
+    "cart": "Savat",
+    "emptyCart": "Savat bo'sh. Mahsulot qo'shing",
+    "customer": "Mijoz",
+    "walkInCustomer": "Noma'lum mijoz",
+    "paymentMethod": "To'lov turi",
+    "cash": "Naqd",
+    "card": "Plastik karta",
+    "transfer": "O'tkazma",
+    "debt": "Nasiya (Qarz)",
+    "discount": "Chegirma",
+    "tax": "QQS (12%)",
+    "subtotal": "Oraliq summa",
+    "total": "Jami",
+    "checkout": "Sotish (Checkout)",
+    "quickAddCustomer": "Yangi mijoz qo'shish",
+    "receipt": "Kassa cheki",
+    "printReceipt": "Chekni chop etish",
+    "orderSuccess": "Sotuv muvaffaqiyatli yakunlandi!",
+    "cashier": "Kassir",
+    "noProducts": "Mahsulotlar topilmadi",
+    "insufficientStock": "Omborda yetarli tovar yo'q!",
+    "addCustomer": "Mijoz qo'shish",
+    "customerName": "Mijoz ismi",
+    "customerPhone": "Mijoz telefoni",
+    "customerAddress": "Mijoz manzili",
+    "outOfStock": "Tugagan",
+    "stock": "Qoldiq",
+    "selectCategory": "Barcha kategoriyalar",
+    "generalDiscount": "Umumiy chegirma",
+    "itemDiscount": "Mahsulot chegirmasi"
   }
 }

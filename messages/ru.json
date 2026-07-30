@@ -86,7 +86,8 @@
     "analytics": "Аналитика",
     "reports": "Отчёты",
     "settings": "Настройки",
-    "tools": "Инструменты"
+    "tools": "Инструменты",
+    "pos": "Касса (POS)"
   },
   "auth": {
     "loading": "Вход...",
@@ -419,5 +420,39 @@
     "title": "Инструменты",
     "scanner": "AI Сканер",
     "scannerDesc": "Извлечение информации из документов с помощью ИИ"
+  },
+  "pos": {
+    "title": "Касса (POS)",
+    "searchProduct": "Поиск товара по SKU или наименованию...",
+    "cart": "Корзина",
+    "emptyCart": "Корзина пуста. Добавьте товары",
+    "customer": "Клиент",
+    "walkInCustomer": "Розничный клиент",
+    "paymentMethod": "Способ оплаты",
+    "cash": "Наличные",
+    "card": "Пластиковая карта",
+    "transfer": "Перевод",
+    "debt": "Долг (Кредит)",
+    "discount": "Скидка",
+    "tax": "НДС (12%)",
+    "subtotal": "Промежуточный итог",
+    "total": "Итого",
+    "checkout": "Продать (Checkout)",
+    "quickAddCustomer": "Быстро добавить клиента",
+    "receipt": "Кассовый чек",
+    "printReceipt": "Печать чека",
+    "orderSuccess": "Продажа успешно завершена!",
+    "cashier": "Кассир",
+    "noProducts": "Товары не найдены",
+    "insufficientStock": "Недостаточно товара на складе!",
+    "addCustomer": "Добавить клиента",
+    "customerName": "Имя клиента",
+    "customerPhone": "Телефон клиента",
+    "customerAddress": "Адрес клиента",
+    "outOfStock": "Нет в наличии",
+    "stock": "Остаток",
+    "selectCategory": "Все категории",
+    "generalDiscount": "Общая скидка",
+    "itemDiscount": "Скидка на товар"
   }
 }

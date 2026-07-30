@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Wrench,
   TrendingUp,
+  Store,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -47,6 +48,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', icon: LayoutDashboard, href: 'dashboard' },
+  { key: 'pos', icon: Store, href: 'pos' },
   {
     key: 'inventory', icon: Package, href: 'inventory',
     subItems: [

@@ -86,7 +86,8 @@
     "analytics": "Analytics",
     "reports": "Reports",
     "settings": "Settings",
-    "tools": "Tools"
+    "tools": "Tools",
+    "pos": "POS (Kassa)"
   },
   "auth": {
     "loading": "Signing in...",
@@ -419,5 +420,39 @@
     "title": "Tools",
     "scanner": "AI Scanner",
     "scannerDesc": "Extract information from documents using AI"
+  },
+  "pos": {
+    "title": "Point of Sale (POS)",
+    "searchProduct": "Search product by SKU or name...",
+    "cart": "Cart",
+    "emptyCart": "Cart is empty. Add products",
+    "customer": "Customer",
+    "walkInCustomer": "Walk-in Customer",
+    "paymentMethod": "Payment Method",
+    "cash": "Cash",
+    "card": "Card",
+    "transfer": "Bank Transfer",
+    "debt": "Debt / Nasiya",
+    "discount": "Discount",
+    "tax": "Tax (12% VAT)",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "checkout": "Checkout (Pay)",
+    "quickAddCustomer": "Quick Add Customer",
+    "receipt": "Sales Receipt",
+    "printReceipt": "Print Receipt",
+    "orderSuccess": "Sale completed successfully!",
+    "cashier": "Cashier",
+    "noProducts": "No products found",
+    "insufficientStock": "Insufficient stock in warehouse!",
+    "addCustomer": "Add Customer",
+    "customerName": "Customer Name",
+    "customerPhone": "Customer Phone",
+    "customerAddress": "Customer Address",
+    "outOfStock": "Out of stock",
+    "stock": "Stock",
+    "selectCategory": "All Categories",
+    "generalDiscount": "General Discount",
+    "itemDiscount": "Item Discount"
   }
 }
