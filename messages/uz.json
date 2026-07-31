@@ -87,7 +87,7 @@
     "reports": "Hisobotlar",
     "settings": "Sozlamalar",
     "tools": "Vositalar",
-    "pos": "Kassa (POS)"
+    "pos": "POS"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -427,7 +427,7 @@
     "scannerDesc": "Sun'iy intellekt yordamida hujjatlardan ma'lumot ajratib olish"
   },
   "pos": {
-    "title": "Kassa (POS)",
+    "title": "POS",
     "searchProduct": "Mahsulotni SKU yoki nomi bo'yicha qidirish...",
     "cart": "Savat",
     "emptyCart": "Savat bo'sh. Mahsulot qo'shing",

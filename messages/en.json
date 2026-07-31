@@ -427,7 +427,7 @@
     "scannerDesc": "Extract information from documents using AI"
   },
   "pos": {
-    "title": "Point of Sale (POS)",
+    "title": "Point of Sale",
     "searchProduct": "Search product by SKU or name...",
     "cart": "Cart",
     "emptyCart": "Cart is empty. Add products",
