@@ -133,6 +133,23 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
   const onSubmit = async (data: any) => {
     setIsSubmitting(true)
     try {
+      // Check for duplicate product names (case-insensitive)
+      let nameQuery = supabase
+        .from('products')
+        .select('id')
+        .ilike('name', data.name.trim())
+
+      if (initialData?.id) {
+        nameQuery = nameQuery.neq('id', initialData.id)
+      }
+
+      const { data: existing, error: checkError } = await nameQuery
+      if (checkError) throw checkError
+
+      if (existing && existing.length > 0) {
+        throw new Error(t('nameExists'))
+      }
+
       const payload = {
         ...data,
         category_id: data.category_id || null, // convert empty string to null

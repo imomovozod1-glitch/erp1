@@ -212,7 +212,9 @@
     "excelReadError": "Excel o'qishda xatolik",
     "noValidProducts": "Yaroqli mahsulotlar topilmadi. Ustun nomlarini tekshiring (Nomi, SKU, Sotuv narxi, Tannarx, Zaxira, O'lchov birligi)",
     "importingData": "Ma'lumotlar yuklanmoqda...",
-    "productsImported": "{count} ta mahsulot muvaffaqiyatli yuklandi!"
+    "productsImported": "{count} ta mahsulot muvaffaqiyatli yuklandi!",
+    "productDeactivatedInsteadOfDeleted": "Mahsulot sotuvlar yoki boshqa hujjatlarda ishlatilgani uchun butunlay o'chirilmaydi. U faolsizlantirildi (arxivlandi).",
+    "nameExists": "Ushbu nomdagi mahsulot allaqachon mavjud."
   },
   "sales": {
     "title": "Sotuv",

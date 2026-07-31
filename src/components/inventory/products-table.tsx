@@ -58,10 +58,25 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
 
   const handleDelete = async (id: string) => {
     setIsDeleting(id);
-    const supabase = createClient();
+    const supabase = createClient() as any;
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) {
-      toast.error(t("common.error"));
+      if (error.code === "23503") {
+        const { error: updateError } = await supabase
+          .from("products")
+          .update({ is_active: false })
+          .eq("id", id);
+        
+        if (updateError) {
+          toast.error(t("common.error"));
+        } else {
+          toast.success(t("inventory.productDeactivatedInsteadOfDeleted"));
+          await invalidateProducts();
+          router.refresh();
+        }
+      } else {
+        toast.error(error.message || t("common.error"));
+      }
     } else {
       toast.success(t("common.success"));
       await invalidateProducts();

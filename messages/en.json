@@ -212,7 +212,9 @@
     "excelReadError": "Error reading Excel file",
     "noValidProducts": "No valid products found. Check column names (Name, SKU, Selling price, Cost price, Stock, Unit)",
     "importingData": "Loading data...",
-    "productsImported": "{count} products successfully imported!"
+    "productsImported": "{count} products successfully imported!",
+    "productDeactivatedInsteadOfDeleted": "The product is used in sales or other documents and cannot be deleted. It has been deactivated.",
+    "nameExists": "A product with this name already exists."
   },
   "sales": {
     "title": "Sales",
