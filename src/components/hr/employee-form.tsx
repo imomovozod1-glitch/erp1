@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useForm, Controller, useWatch } from 'react-hook-form'
@@ -31,8 +31,19 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createClient() as any
+  const [profiles, setProfiles] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name')
+      if (data) setProfiles(data)
+    }
+    fetchProfiles()
+  }, [supabase])
 
   const innerFormSchema = z.object({
     employee_code: z.string().min(1, tCommon('required')),
@@ -41,6 +52,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     hired_at: z.string().min(1, tCommon('required')),
     is_active: z.boolean().default(true),
     notes: z.string().optional(),
+    profile_id: z.string().optional().nullable(),
   })
 
   type FormData = z.infer<typeof innerFormSchema>
@@ -54,23 +66,28 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       hired_at: initialData?.hired_at ? initialData.hired_at.split('T')[0] : '',
       is_active: initialData?.is_active ?? true,
       notes: initialData?.notes || '',
+      profile_id: initialData?.profile_id || '',
     }
   })
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true)
     try {
+      const payload = {
+        ...data,
+        profile_id: data.profile_id || null,
+      }
       if (initialData?.id) {
         const { error } = await supabase
           .from('employees')
-          .update(data as any)
+          .update(payload as any)
           .eq('id', initialData.id)
         if (error) throw error
         toast.success(tCommon('saved'))
       } else {
         const { error } = await supabase
           .from('employees')
-          .insert(data as any)
+          .insert(payload as any)
         if (error) throw error
         toast.success(tCommon('created'))
       }
@@ -95,6 +112,25 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="profile_id">{tCommon('name')}</Label>
+              <select 
+                id="profile_id" 
+                {...register('profile_id')}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+              >
+                <option value="">{tCommon('select')}</option>
+                {profiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.full_name} ({p.email})
+                  </option>
+                ))}
+              </select>
+              {errors.profile_id && (
+                <p className="text-sm text-red-500">{errors.profile_id.message}</p>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="employee_code">{t('employeeCode')}</Label>
               <Input id="employee_code" {...register('employee_code')} />

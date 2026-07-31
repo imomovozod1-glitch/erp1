@@ -10,7 +10,7 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateProducts } from '@/lib/data/revalidate'
+import { invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -138,23 +138,65 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         category_id: data.category_id || null, // convert empty string to null
       }
 
+      let userId: string | null = null
+      const userRes = await supabase.auth.getUser()
+      if (userRes.data?.user) userId = userRes.data.user.id
+
       if (initialData?.id) {
         // Update
+        const stockBefore = Number(initialData.stock) || 0
+        const stockAfter = Number(payload.stock) || 0
+
         const { error } = await supabase
           .from('products')
           .update(payload as any)
           .eq('id', initialData.id)
         if (error) throw error
+
+        if (stockBefore !== stockAfter) {
+          const diff = stockAfter - stockBefore
+          const { error: moveErr } = await supabase.from('stock_movements').insert({
+            product_id: initialData.id,
+            type: diff > 0 ? 'in' : 'out',
+            quantity: Math.abs(diff),
+            quantity_before: stockBefore,
+            quantity_after: stockAfter,
+            reference_type: 'product_adjustment',
+            reason: 'Manual adjustment in product form',
+            created_by: userId
+          })
+          if (moveErr) console.error('Error inserting stock movement:', moveErr)
+        }
+
         toast.success(tCommon('success'))
       } else {
         // Create
-        const { error } = await supabase
+        const { data: newProds, error } = await supabase
           .from('products')
           .insert([payload as any])
+          .select()
         if (error) throw error
+
+        const newProd = newProds?.[0]
+        const initialStock = Number(payload.stock) || 0
+        if (initialStock > 0 && newProd) {
+          const { error: moveErr } = await supabase.from('stock_movements').insert({
+            product_id: newProd.id,
+            type: 'in',
+            quantity: initialStock,
+            quantity_before: 0,
+            quantity_after: initialStock,
+            reference_type: 'initial_stock',
+            reason: 'Initial stock on product creation',
+            created_by: userId
+          })
+          if (moveErr) console.error('Error inserting initial stock movement:', moveErr)
+        }
+
         toast.success(tCommon('success'))
       }
       await invalidateProducts()
+      await invalidateMovements()
       clearPersistedForm('product-form-v3')
       router.push(`/${lang}/inventory/products`)
     } catch (error: any) {

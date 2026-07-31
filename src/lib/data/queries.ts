@@ -33,6 +33,7 @@ export const CACHE_TAGS = {
   transactions: 'transactions',
   dashboard: 'dashboard',
   analytics: 'analytics',
+  cashbox: 'cashbox',
 } as const
 
 // ─── Inventory ─────────────────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ export const getCachedEmployees = unstable_cache(
     const supabase = getCacheClient()
     const { data } = await supabase
       .from('employees')
-      .select('*, profiles(full_name, email, avatar_url), departments(name)')
+      .select('*, profiles(full_name, email, avatar_url, departments!fk_profiles_department(name))')
       .order('created_at', { ascending: false })
     return data ?? []
   },

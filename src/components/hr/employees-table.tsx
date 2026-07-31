@@ -98,7 +98,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                     <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">{emp.employee_code}</code>
                   </TableCell>
                   <TableCell className="text-sm">{emp.position}</TableCell>
-                  <TableCell className="text-muted-foreground">{emp.departments?.name ?? '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">{emp.profiles?.departments?.name ?? '—'}</TableCell>
                   <TableCell className="text-right font-semibold">{formatCurrency(emp.salary)}</TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(emp.hired_at)}</TableCell>
                   <TableCell>

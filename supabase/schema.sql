@@ -375,3 +375,33 @@ CREATE INDEX idx_invoices_due ON invoices(due_at);
 CREATE INDEX idx_transactions_type ON transactions(type);
 CREATE INDEX idx_transactions_date ON transactions(transaction_date);
 CREATE INDEX idx_stock_movements_product ON stock_movements(product_id);
+
+-- =============================================
+-- CASHBOXES (Finance Cash Registers)
+-- =============================================
+
+CREATE TABLE cashboxes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  balance DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  description TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE cashboxes ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "authenticated_read_cashboxes" ON cashboxes FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_write_cashboxes" ON cashboxes FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Auto-update Trigger
+CREATE TRIGGER update_cashboxes_updated_at BEFORE UPDATE ON cashboxes FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Index for cashboxes
+CREATE INDEX idx_cashboxes_name ON cashboxes(name);
+
+-- Option to link transactions to a specific cashbox
+-- ALTER TABLE transactions ADD COLUMN cashbox_id UUID REFERENCES cashboxes(id) ON DELETE SET NULL;
+

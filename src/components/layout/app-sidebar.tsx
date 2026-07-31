@@ -80,6 +80,7 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'transactions', href: 'finance/transactions' },
       { key: 'income', href: 'finance/income' },
       { key: 'expenses', href: 'finance/expenses' },
+      { key: 'cashbox', href: 'finance/cashbox' },
     ]
   },
   {
@@ -157,6 +158,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
         transactions: tFinance('transactions'),
         income: tFinance('income'),
         expenses: tFinance('expenses'),
+        cashbox: tFinance('cashbox'),
       },
       hr: {
         employees: tHr('employees'),
