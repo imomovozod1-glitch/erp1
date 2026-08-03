@@ -56,6 +56,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     ),
     category_id: z.string().optional().nullable(),
     description: z.string().optional(),
+    is_active: z.boolean().default(true),
   })
 
   type FormData = z.infer<typeof innerFormSchema>
@@ -96,6 +97,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       stock: initialData?.stock ?? '' as any,
       min_stock: initialData?.min_stock ?? '' as any,
       description: initialData?.description || '',
+      is_active: initialData?.is_active ?? true,
     },
   })
 
@@ -430,7 +432,18 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
           {errors.price && <p className="text-sm text-red-500">{errors.price.message}</p>}
         </div>
 
-        <div className="col-span-1 md:col-span-1"></div>
+        <div className="space-y-2">
+          <Label htmlFor="is_active">{tCommon('status')}</Label>
+          <select 
+            id="is_active" 
+            {...register('is_active', { setValueAs: (v) => v === 'true' })}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            <option value="true">{tCommon('active')}</option>
+            <option value="false">{tCommon('inactive')}</option>
+          </select>
+          {errors.is_active && <p className="text-sm text-red-500">{errors.is_active.message}</p>}
+        </div>
 
         {costPriceNum > 0 && priceNum > 0 && (
           <div className="col-span-1 md:col-span-2 bg-gradient-to-r from-slate-50 to-slate-100 p-4 rounded-xl border border-slate-200/60 shadow-inner flex flex-wrap justify-between items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">

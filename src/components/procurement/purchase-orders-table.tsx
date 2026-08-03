@@ -144,7 +144,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
 
       {/* Details Dialog */}
       <Dialog open={selectedOrder !== null} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-        <DialogContent className=" bg-white  rounded-xl shadow-lg border border-slate-200">
+        <DialogContent className="bg-white rounded-xl shadow-lg border border-slate-200 sm:max-w-xl w-full">
           <DialogHeader className="border-b pb-4 flex flex-row items-center gap-3">
             <div className="h-10  rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
               <Receipt className="h-5 w-5" />
@@ -197,7 +197,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                     <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
                   </div>
                 ) : (
-                  <div className="border rounded-lg overflow-hidden">
+                  <div className="border rounded-lg overflow-x-auto w-full">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-slate-50/50">

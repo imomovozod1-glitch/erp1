@@ -13,6 +13,7 @@ import {
   Package,
   Sparkles,
   Upload,
+  Power,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateProducts } from "@/lib/data/revalidate";
@@ -49,6 +50,24 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
   const [search, setSearch] = useState("");
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    setIsUpdatingStatus(id);
+    const supabase = createClient() as any;
+    const { error } = await supabase
+      .from("products")
+      .update({ is_active: !currentStatus })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message || t("common.error"));
+    } else {
+      toast.success(t("common.success"));
+      await invalidateProducts();
+      router.refresh();
+    }
+    setIsUpdatingStatus(null);
+  };
 
   const filtered = products.filter(
     (p) =>
@@ -366,13 +385,20 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                             <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
+                            onClick={() => handleToggleStatus(product.id, product.is_active)}
+                            disabled={isUpdatingStatus === product.id}
+                          >
+                            <Power className="mr-2 h-3.5 w-3.5" />{" "}
+                            {product.is_active ? t("common.inactive") : t("common.active")}
+                          </DropdownMenuItem>
+                          {/* <DropdownMenuItem
                             onClick={() => handleDelete(product.id)}
                             className="text-red-600 focus:text-red-600 focus:bg-red-50"
                             disabled={isDeleting === product.id}
                           >
                             <Trash2 className="mr-2 h-3.5 w-3.5" />{" "}
                             {t("common.delete")}
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
