@@ -229,12 +229,28 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
   const currentLocale = LOCALES.find((l) => l.code === lang)
 
+  // Count active overdue invoice alerts in notifications
+  const hasOverdueInvoices = notifications.some((n) => n.type === 'overdue_invoice')
+
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white/80 backdrop-blur-sm px-4 sticky top-0 z-30">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 h-4" />
 
       <div className="flex-1" />
+
+      {/* Overdue Invoices Alert Notification */}
+      {hasOverdueInvoices && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push(`/${lang}/sales/invoices`)}
+          className="h-8 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 font-semibold text-xs rounded-lg animate-pulse gap-1.5 transition-all mr-2"
+        >
+          <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
+          {lang === 'uz' ? "Muddati o'tgan" : lang === 'ru' ? 'Просрочено' : 'Overdue'}
+        </Button>
+      )}
 
       {/* Language Switcher */}
       <DropdownMenu>

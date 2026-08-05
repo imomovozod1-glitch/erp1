@@ -169,9 +169,21 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                       <div className="font-medium text-slate-900">{invoice.customers?.name || '-'}</div>
                     </TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[invoice.status]}`}>
-                        {t(`status.${invoice.status}`)}
-                      </span>
+                      <div className="flex flex-col items-start gap-1.5">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[invoice.status]}`}>
+                          {t(`status.${invoice.status}`)}
+                        </span>
+                        {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.customer_id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
+                            className="h-7 border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70 hover:text-indigo-800 font-medium text-[10px] rounded-md transition-all px-2 mt-1"
+                          >
+                            To&apos;lov qilish
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(invoice.total_amount)}
@@ -199,18 +211,27 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                             {tCommon('edit')}
                           </DropdownMenuItem>
                           {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-                            <DropdownMenuItem 
-                              onClick={() => handleAcceptPayment(invoice)}
-                              disabled={isProcessingPayment === invoice.id}
-                              className="text-emerald-600 focus:text-emerald-700"
-                            >
-                              {isProcessingPayment === invoice.id ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              ) : (
+                            <>
+                              <DropdownMenuItem 
+                                onClick={() => handleAcceptPayment(invoice)}
+                                disabled={isProcessingPayment === invoice.id}
+                                className="text-emerald-600 focus:text-emerald-700"
+                              >
+                                {isProcessingPayment === invoice.id ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                                )}
+                                To&apos;lovni qabul qilish (Tezkor)
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
+                                className="text-indigo-600 focus:text-indigo-700 font-medium"
+                              >
                                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                              )}
-                              To'lovni qabul qilish
-                            </DropdownMenuItem>
+                                To&apos;lov qilish (Kassa orqali)
+                              </DropdownMenuItem>
+                            </>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -360,7 +381,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     ) : (
                       <CheckCircle2 className="h-4 w-4" />
                     )}
-                    To'lovni qabul qilish
+                    To&apos;lovni qabul qilish
                   </Button>
                 </div>
               )}
