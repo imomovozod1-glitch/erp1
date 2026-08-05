@@ -220,6 +220,7 @@
     "title": "Sales",
     "editOrder": "Edit Order",
     "editCustomer": "Edit Customer",
+    "editInvoice": "Edit Invoice",
     "orders": "Orders",
     "customers": "Customers",
     "invoices": "Invoices",

@@ -8,7 +8,7 @@ import { notFound } from 'next/navigation'
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
   const t = await getTranslations({ locale: lang, namespace: 'sales' })
-  return { title: 'Edit Invoice' }
+  return { title: t('editInvoice') }
 }
 
 export default async function EditInvoicePage({
@@ -32,7 +32,7 @@ export default async function EditInvoicePage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Edit Invoice"
+        title={t('editInvoice')}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/sales` },

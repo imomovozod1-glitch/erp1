@@ -30,7 +30,8 @@ interface InvoiceFormProps {
 }
 
 export function InvoiceForm({ initialData, customers, orders = [], lang }: InvoiceFormProps) {
-  const t = useTranslations()
+  const t = useTranslations('sales')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
@@ -43,14 +44,14 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
   }, [supabase.auth])
 
   const innerFormSchema = z.object({
-    invoice_number: z.string().min(1, t('common.required')),
+    invoice_number: z.string().min(1, tCommon('required')),
     customer_id: z.string().optional().or(z.literal('')),
     order_id: z.string().optional().or(z.literal('')),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']),
     total_amount: z.coerce.number().min(0),
     paid_amount: z.coerce.number().min(0),
-    issued_at: z.string().optional().or(z.literal('')),
-    due_at: z.string().min(1, t('common.required')),
+    issued_at: z.string().min(1, tCommon('required')),
+    due_at: z.string().min(1, tCommon('required')),
     paid_at: z.string().optional().or(z.literal('')),
     notes: z.string().optional().or(z.literal('')),
   })
@@ -68,7 +69,9 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
       status: initialData?.status || 'draft',
       total_amount: initialData?.total_amount ?? '' as any,
       paid_amount: initialData?.paid_amount ?? '' as any,
-      issued_at: initialData?.issued_at ? initialData.issued_at.split('T')[0] : '',
+      issued_at: initialData?.issued_at 
+        ? initialData.issued_at.split('T')[0] 
+        : new Date().toISOString().split('T')[0],
       due_at: initialData?.due_at ? initialData.due_at.split('T')[0] : '',
       paid_at: initialData?.paid_at ? initialData.paid_at.split('T')[0] : '',
       notes: initialData?.notes || '',
@@ -87,7 +90,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         ...data,
         customer_id: (data.customer_id && data.customer_id !== 'none') ? data.customer_id : null,
         order_id: data.order_id || null,
-        issued_at: data.issued_at || null,
+        issued_at: data.issued_at,
         paid_at: data.paid_at || null,
         created_by: initialData?.created_by || userId,
       }
@@ -102,13 +105,13 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
           .update(payload)
           .eq('id', initialData.id)
         if (error) throw error
-        toast.success(t('common.success'))
+        toast.success(tCommon('success'))
       } else {
         const { error } = await supabase
           .from('invoices')
           .insert([payload])
         if (error) throw error
-        toast.success(t('common.success'))
+        toast.success(tCommon('success'))
       }
 
       if (difference !== 0) {
@@ -119,7 +122,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
       clearPersistedForm('invoice-form-v3')
       router.push(`/${lang}/sales/invoices`)
     } catch (error: any) {
-      toast.error(error.message || t('common.error'))
+      toast.error(error.message || tCommon('error'))
     } finally {
       setIsSubmitting(false)
     }
@@ -133,19 +136,23 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="invoice_number">{t('sales.invoiceNumber')} *</Label>
+          <Label htmlFor="invoice_number">{t('invoiceNumber')} *</Label>
           <Input id="invoice_number" {...register('invoice_number')} />
           {errors.invoice_number && <p className="text-sm text-red-500">{errors.invoice_number.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_id">{t('sales.customer')}</Label>
+          <Label htmlFor="customer_id">{t('customer')}</Label>
           <Select value={customerIdValue || 'none'} onValueChange={(val) => setValue('customer_id', val || '')}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('sales.selectCustomer')} />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('selectCustomer')}>
+                {customerIdValue && customerIdValue !== 'none'
+                  ? customers.find((c) => c.id === customerIdValue)?.name
+                  : tCommon('none')}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">{t('common.none')}</SelectItem>
+              <SelectItem value="none">{tCommon('none')}</SelectItem>
               {customers.map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
@@ -155,13 +162,17 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="order_id">{t('sales.orders')} ({t('common.optional')})</Label>
+          <Label htmlFor="order_id">{t('orders')} ({tCommon('optional')})</Label>
           <Select value={orderIdValue || 'none'} onValueChange={(val) => { if (val) setValue('order_id', val === 'none' ? '' : val) }}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('sales.selectOrder')} />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('selectOrder')}>
+                {orderIdValue && orderIdValue !== 'none'
+                  ? orders.find((o) => o.id === orderIdValue)?.order_number
+                  : tCommon('none')}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">{t('common.none')}</SelectItem>
+              <SelectItem value="none">{tCommon('none')}</SelectItem>
               {orders.map((o) => (
                 <SelectItem key={o.id} value={o.id}>{o.order_number}</SelectItem>
               ))}
@@ -170,23 +181,25 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">{t('common.status')}</Label>
+          <Label htmlFor="status">{tCommon('status')}</Label>
           <Select value={statusValue} onValueChange={(val: any) => setValue('status', val)}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('sales.selectStatus')} />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('selectStatus')}>
+                {statusValue ? t(`status.${statusValue}`) : ''}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">{t('sales.status.draft')}</SelectItem>
-              <SelectItem value="sent">{t('sales.status.sent')}</SelectItem>
-              <SelectItem value="paid">{t('sales.status.paid')}</SelectItem>
-              <SelectItem value="overdue">{t('sales.status.overdue')}</SelectItem>
-              <SelectItem value="cancelled">{t('sales.status.cancelled')}</SelectItem>
+              <SelectItem value="draft">{t('status.draft')}</SelectItem>
+              <SelectItem value="sent">{t('status.sent')}</SelectItem>
+              <SelectItem value="paid">{t('status.paid')}</SelectItem>
+              <SelectItem value="overdue">{t('status.overdue')}</SelectItem>
+              <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="total_amount">{t('common.total')}</Label>
+          <Label htmlFor="total_amount">{tCommon('total')}</Label>
           <Controller
             control={control}
             name="total_amount"
@@ -197,7 +210,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="paid_amount">{t('sales.paidAmount')}</Label>
+          <Label htmlFor="paid_amount">{t('paidAmount')}</Label>
           <Controller
             control={control}
             name="paid_amount"
@@ -208,23 +221,24 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="issued_at">{t('common.date')}</Label>
+          <Label htmlFor="issued_at">{tCommon('date')} *</Label>
           <Input id="issued_at" type="date" {...register('issued_at')} />
+          {errors.issued_at && <p className="text-sm text-red-500">{errors.issued_at.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="due_at">{t('sales.dueDate')} *</Label>
+          <Label htmlFor="due_at">{t('dueDate')} *</Label>
           <Input id="due_at" type="date" {...register('due_at')} />
           {errors.due_at && <p className="text-sm text-red-500">{errors.due_at.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="paid_at">{t('sales.paidDate')}</Label>
+          <Label htmlFor="paid_at">{t('paidDate')}</Label>
           <Input id="paid_at" type="date" {...register('paid_at')} />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="notes">{t('common.notes')}</Label>
+          <Label htmlFor="notes">{tCommon('notes')}</Label>
           <Textarea id="notes" {...register('notes')} rows={3} />
         </div>
       </div>
@@ -236,10 +250,10 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
           onClick={() => router.push(`/${lang}/sales/invoices`)}
           disabled={isSubmitting}
         >
-          {t('common.cancel')}
+          {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? t('common.saving') : t('common.save')}
+          {isSubmitting ? tCommon('saving') : tCommon('save')}
         </Button>
       </div>
     </form>

@@ -221,6 +221,7 @@
     "orders": "Sotuvlar",
     "editOrder": "Sotuvni tahrirlash",
     "editCustomer": "Mijozni tahrirlash",
+    "editInvoice": "Hisob-fakturani tahrirlash",
     "customers": "Mijozlar",
     "invoices": "Hisob-fakturalar",
     "addOrder": "Sotuv qo'shish",

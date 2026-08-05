@@ -126,8 +126,12 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
         <div className="space-y-2">
           <Label htmlFor="customer_name">{t('customer')}</Label>
           <Select value={customerIdValue || 'none'} onValueChange={(val) => setValue('customer_name', val || '')}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('selectCustomer')} />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('selectCustomer')}>
+                {customerIdValue && customerIdValue !== 'none'
+                  ? customers.find((c) => c.id === customerIdValue)?.name
+                  : tCommon('none')}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">{tCommon('none')}</SelectItem>
@@ -142,8 +146,10 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
         <div className="space-y-2">
           <Label htmlFor="status">{tCommon('status')}</Label>
           <Select value={statusValue} onValueChange={(val: any) => setValue('status', val)}>
-            <SelectTrigger>
-              <SelectValue placeholder={t('selectStatus')} />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('selectStatus')}>
+                {statusValue ? t(`status.${statusValue}`) : ''}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="draft">{t('status.draft')}</SelectItem>
