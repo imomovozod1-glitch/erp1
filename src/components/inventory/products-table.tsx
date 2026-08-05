@@ -14,6 +14,7 @@ import {
   Sparkles,
   Upload,
   Power,
+  Download,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateProducts } from "@/lib/data/revalidate";
@@ -51,6 +52,26 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+
+  const downloadExcelTemplate = () => {
+    const templateData = [
+      {
+        "Nomi": "Mahsulot A",
+        "SKU": "SKU-000001",
+        "Sotuv narxi": 15000,
+        "Tannarx": 10000,
+        "Kirim narxi": 9500,
+        "Zaxira": 100,
+        "Minimal zaxira": 10,
+        "O'lchov birligi": "dona",
+        "Tavsif": "Namuna mahsulot tavsifi"
+      }
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+    XLSX.writeFile(workbook, "mahsulotlar_shablon.xlsx");
+  };
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     setIsUpdatingStatus(id);
@@ -123,18 +144,34 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
         }
 
         const supabase = createClient();
+        const parseNumber = (val: any): number => {
+          if (typeof val === 'number') return val;
+          if (!val) return 0;
+          const cleaned = String(val)
+            .replace(/so'm|сум|sum|usd|\$|\s/gi, '')
+            .replace(/,/g, '');
+          const num = Number(cleaned);
+          return isNaN(num) ? 0 : num;
+        };
+
         // Map Excel columns to products table columns (supporting multi-language headers)
         const newProducts = data
           .map((row: any) => {
             const name =
               row.Nomi || row.name || row.Name || row["Наименование"] || "";
+            
+            const lowerName = String(name).toLowerCase().trim();
+            if (!name || lowerName === "jami" || lowerName === "jami:" || lowerName === "total" || lowerName === "итого" || lowerName === "итого:") {
+              return null;
+            }
+
             const sku =
               row.SKU ||
               row.sku ||
               row.Artikul ||
               row["Артикул"] ||
               `SKU-${Math.random().toString().slice(-6)}`;
-            const price = Number(
+            const price = parseNumber(
               row["Sotuv narxi"] ||
                 row["Chiqim"] ||
                 row.price ||
@@ -142,7 +179,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 row["Цена продажи"] ||
                 0,
             );
-            const cost_price = Number(
+            const cost_price = parseNumber(
               row["Tannarx"] ||
                 row["Cost"] ||
                 row.cost_price ||
@@ -150,17 +187,17 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 row["Себестоимость"] ||
                 0,
             );
-            const incoming_cost = Number(
+            const incoming_cost = parseNumber(
               row["Kirim narxi"] ||
                 row["Kirim cost"] ||
                 row.incoming_cost ||
                 row["Входящая цена"] ||
                 cost_price,
             );
-            const stock = Number(
+            const stock = parseNumber(
               row["Zaxira"] || row.stock || row.Stock || row["Запас"] || 0,
             );
-            const min_stock = Number(
+            const min_stock = parseNumber(
               row["Minimal zaxira"] || row.min_stock || row["Мин. запас"] || 0,
             );
             const unit =
@@ -189,7 +226,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
               is_active: true,
             };
           })
-          .filter((p) => p.name);
+          .filter((p) => p !== null && p.name);
 
         if (newProducts.length === 0) {
           toast.error(t("inventory.noValidProducts"));
@@ -199,7 +236,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
         toast.loading(t("inventory.importingData"));
         const { error } = await supabase
           .from("products")
-          .insert(newProducts as any);
+          .upsert(newProducts as any, { onConflict: 'sku' });
 
         toast.dismiss();
         if (error) {
@@ -241,18 +278,37 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 className="hidden"
                 id="excel-upload-input"
               />
-              <Button
-                type="button"
-                onClick={() =>
-                  document.getElementById("excel-upload-input")?.click()
-                }
-                variant="outline"
-                size="sm"
-                className="h-9 gap-2 border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/70 hover:text-emerald-800 transition-colors font-medium text-xs rounded-lg"
-              >
-                <Upload className="h-4 w-4 text-emerald-600" />
-                {t("inventory.importExcel")}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 gap-2 border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/70 hover:text-emerald-800 transition-colors font-medium text-xs rounded-lg animate-pulse"
+                    />
+                  }
+                >
+                  <Upload className="h-4 w-4 text-emerald-600" />
+                  {t("inventory.importExcel")}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-white rounded-lg shadow-md border p-1">
+                  <DropdownMenuItem
+                    onClick={() => document.getElementById("excel-upload-input")?.click()}
+                    className="cursor-pointer flex items-center gap-2 text-slate-700 hover:bg-slate-50 focus:bg-slate-50 rounded"
+                  >
+                    <Upload className="h-4 w-4 text-slate-500" />
+                    Faylni tanlash (Yuklash)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={downloadExcelTemplate}
+                    className="cursor-pointer flex items-center gap-2 text-emerald-700 hover:bg-emerald-50 focus:bg-emerald-50 focus:text-emerald-800 rounded font-medium"
+                  >
+                    <Download className="h-4 w-4 text-emerald-600" />
+                    Shablonni yuklab olish
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 onClick={() => setIsScanModalOpen(true)}
                 variant="outline"
@@ -364,14 +420,16 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            />
+                          }
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem

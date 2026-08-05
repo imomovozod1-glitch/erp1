@@ -11,6 +11,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateInvoices } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
+import { adjustCashboxBalance } from '@/lib/finance-helpers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -91,6 +92,10 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         created_by: initialData?.created_by || userId,
       }
 
+      const oldPaidAmount = initialData ? (Number(initialData.paid_amount) || 0) : 0
+      const newPaidAmount = Number(data.paid_amount) || 0
+      const difference = newPaidAmount - oldPaidAmount
+
       if (initialData?.id) {
         const { error } = await supabase
           .from('invoices')
@@ -104,6 +109,10 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
           .insert([payload])
         if (error) throw error
         toast.success(t('common.success'))
+      }
+
+      if (difference !== 0) {
+        await adjustCashboxBalance(Math.abs(difference), difference > 0 ? 'income' : 'expense', supabase)
       }
       
       await invalidateInvoices()

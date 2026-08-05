@@ -11,6 +11,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateTransactions } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
+import { adjustCashboxBalance } from '@/lib/finance-helpers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -80,6 +81,12 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
         created_by: initialData?.created_by || userId,
       }
 
+      const oldChange = initialData 
+        ? (initialData.type === 'income' ? Number(initialData.amount) : -Number(initialData.amount))
+        : 0
+      const newChange = data.type === 'income' ? Number(data.amount) : -Number(data.amount)
+      const difference = newChange - oldChange
+
       if (initialData?.id) {
         const { error } = await supabase
           .from('transactions')
@@ -93,6 +100,10 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
           .insert([payload])
         if (error) throw error
         toast.success(t('common.success'))
+      }
+
+      if (difference !== 0) {
+        await adjustCashboxBalance(Math.abs(difference), difference > 0 ? 'income' : 'expense', supabase)
       }
       
       await invalidateTransactions()

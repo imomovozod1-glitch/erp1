@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Search, MoreHorizontal, Pencil, FileText, Eye, Loader2, Calendar, ShoppingBag, Receipt, User } from 'lucide-react'
+import { Search, MoreHorizontal, Pencil, FileText, Eye, Loader2, Calendar, ShoppingBag, Receipt, User, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -41,6 +41,43 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
   const [items, setItems] = useState<any[]>([])
   const [isLoadingItems, setIsLoadingItems] = useState(false)
+  const [isProcessingPayment, setIsProcessingPayment] = useState<string | null>(null)
+
+  const handleAcceptPayment = async (invoice: any) => {
+    setIsProcessingPayment(invoice.id)
+    try {
+      const supabase = createClient() as any
+      const amountToPay = (Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0)
+      
+      if (amountToPay <= 0) {
+        toast.error("Ushbu invoys bo'yicha to'lanadigan qarz mavjud emas")
+        return
+      }
+
+      const { error } = await supabase
+        .from('invoices')
+        .update({
+          status: 'paid',
+          paid_amount: invoice.total_amount,
+          paid_at: new Date().toISOString().split('T')[0]
+        })
+        .eq('id', invoice.id)
+
+      if (error) throw error
+
+      const { adjustCashboxBalance } = await import('@/lib/finance-helpers')
+      await adjustCashboxBalance(amountToPay, 'income', supabase)
+
+      toast.success(lang === 'uz' ? "To'lov muvaffaqiyatli qabul qilindi" : "Оплата успешно принята")
+      
+      setSelectedInvoice(null)
+      router.refresh()
+    } catch (err: any) {
+      toast.error(err.message || 'Xatolik yuz berdi')
+    } finally {
+      setIsProcessingPayment(null)
+    }
+  }
 
   const handleOpenDetails = async (invoice: any) => {
     setSelectedInvoice(invoice)
@@ -152,7 +189,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuContent align="end" className="w-52">
                           <DropdownMenuItem onClick={() => handleOpenDetails(invoice)}>
                             <Eye className="h-4 w-4 mr-2" />
                             {tCommon('view')}
@@ -161,6 +198,20 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                             <Pencil className="h-4 w-4 mr-2" />
                             {tCommon('edit')}
                           </DropdownMenuItem>
+                          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+                            <DropdownMenuItem 
+                              onClick={() => handleAcceptPayment(invoice)}
+                              disabled={isProcessingPayment === invoice.id}
+                              className="text-emerald-600 focus:text-emerald-700"
+                            >
+                              {isProcessingPayment === invoice.id ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                              )}
+                              To'lovni qabul qilish
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -295,6 +346,22 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                       </TableRow>
                     </TableBody>
                   </Table>
+                </div>
+              )}
+              {selectedInvoice.status !== 'paid' && selectedInvoice.status !== 'cancelled' && (
+                <div className="flex justify-end pt-4 border-t border-slate-100">
+                  <Button 
+                    onClick={() => handleAcceptPayment(selectedInvoice)}
+                    disabled={isProcessingPayment === selectedInvoice.id}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-medium"
+                  >
+                    {isProcessingPayment === selectedInvoice.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4" />
+                    )}
+                    To'lovni qabul qilish
+                  </Button>
                 </div>
               )}
             </div>

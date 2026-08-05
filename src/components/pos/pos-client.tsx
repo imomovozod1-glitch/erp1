@@ -19,6 +19,7 @@ import {
   Scale
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { adjustCashboxBalance } from '@/lib/finance-helpers'
 import {
   invalidateProducts,
   invalidateOrders,
@@ -210,8 +211,8 @@ export function POSClient({
       : Math.min(subtotal, generalDiscountValue)
 
   const postDiscountTotal = subtotal - calculatedDiscount
-  const calculatedTax = taxActive ? postDiscountTotal * 0.12 : 0
-  const totalPayable = postDiscountTotal + calculatedTax
+  const calculatedTax = 0
+  const totalPayable = postDiscountTotal
 
   // Save new customer quick add
   const handleAddCustomer = async (e: React.FormEvent) => {
@@ -358,7 +359,7 @@ export function POSClient({
         if (moveErr) throw moveErr
       }
 
-      // 7. Auto-create Invoice if paid (Cash, Card, Transfer)
+      // 7. Auto-create Invoice if paid (Cash, Card, Transfer) and update cash register balance
       if (paymentMethod !== 'debt') {
         const generatedInvoiceNumber = generatePOSInvoiceNumber()
         await supabase.from('invoices').insert({
@@ -374,6 +375,7 @@ export function POSClient({
           notes: `Paid instantly on POS via ${paymentMethod}`,
           created_by: user.id
         })
+        await adjustCashboxBalance(totalPayable, 'income', supabase)
       }
 
       // Success
@@ -668,9 +670,29 @@ export function POSClient({
                           >
                             <Minus className="h-3 w-3" />
                           </button>
-                          <span className="w-9 text-center text-xs font-bold text-slate-800">
-                            {item.quantity}
-                          </span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={item.quantity === 0 ? '' : item.quantity}
+                            onChange={(e) => {
+                              const rawVal = e.target.value
+                              if (rawVal === '') {
+                                setCart(cart.map((i) => (i.product.id === item.product.id ? { ...i, quantity: 0 } : i)))
+                                return
+                              }
+                              const val = parseInt(rawVal, 10)
+                              if (!isNaN(val)) {
+                                updateQuantity(item.product.id, val)
+                              }
+                            }}
+                            onBlur={() => {
+                              if (item.quantity <= 0) {
+                                removeFromCart(item.product.id)
+                              }
+                            }}
+                            className="w-9 text-center text-xs font-bold text-slate-800 focus:outline-none focus:bg-slate-50 h-full border-0 p-0"
+                          />
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
@@ -751,43 +773,25 @@ export function POSClient({
                 </Select>
               </div>
 
-              {/* General Discount & Tax */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-[10px] font-semibold text-slate-500">{t('generalDiscount')}</Label>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      value={generalDiscountValue || ''}
-                      onChange={(e) => setGeneralDiscountValue(Number(e.target.value))}
-                      placeholder="0"
-                      className="h-8 text-xs border-slate-200 bg-white rounded-lg"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setGeneralDiscountType(generalDiscountType === 'flat' ? 'percent' : 'flat')}
-                      className="h-8 px-2 text-xs border-slate-200 bg-white rounded-lg"
-                    >
-                      {generalDiscountType === 'percent' ? '%' : 'so\'m'}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-[10px] font-semibold text-slate-500">Tax VAT (12%)</Label>
+              {/* General Discount */}
+              <div className="space-y-1">
+                <Label className="text-[10px] font-semibold text-slate-500">{t('generalDiscount')}</Label>
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={generalDiscountValue || ''}
+                    onChange={(e) => setGeneralDiscountValue(Number(e.target.value))}
+                    placeholder="0"
+                    className="h-8 text-xs border-slate-200 bg-white rounded-lg"
+                  />
                   <Button
                     type="button"
-                    variant={taxActive ? 'default' : 'outline'}
-                    onClick={() => setTaxActive(!taxActive)}
-                    className={`w-full h-8 text-xs rounded-lg transition-colors border ${
-                      taxActive
-                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
+                    variant="outline"
+                    onClick={() => setGeneralDiscountType(generalDiscountType === 'flat' ? 'percent' : 'flat')}
+                    className="h-8 px-2 text-xs border-slate-200 bg-white rounded-lg"
                   >
-                    {taxActive ? 'Faol (12%)' : 'Nofaol'}
+                    {generalDiscountType === 'percent' ? '%' : 'so\'m'}
                   </Button>
                 </div>
               </div>
