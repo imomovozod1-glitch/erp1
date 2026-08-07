@@ -77,6 +77,10 @@ export function CashboxClient({ lang }: { lang: string }) {
   const [customerDebt, setCustomerDebt] = useState<number | null>(null)
   const [isLoadingDebt, setIsLoadingDebt] = useState(false)
 
+  // Employee payroll states
+  const [employees, setEmployees] = useState<any[]>([])
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
+
   const fetchCustomers = async (fallback: boolean) => {
     try {
       if (fallback) {
@@ -92,6 +96,29 @@ export function CashboxClient({ lang }: { lang: string }) {
       }
     } catch (err: any) {
       console.warn('Failed to fetch customers:', err.message)
+    }
+  }
+
+  const fetchEmployees = async (fallback: boolean) => {
+    try {
+      if (fallback) {
+        const localEmp = localStorage.getItem('erp_employees')
+        if (localEmp) setEmployees(JSON.parse(localEmp))
+      } else {
+        const { data, error } = await supabase
+          .from('employees')
+          .select('id, employee_code, profiles(full_name)')
+          .eq('is_active', true)
+        if (!error && data) {
+          const formatted = data.map((emp: any) => ({
+            id: emp.id,
+            name: emp.profiles?.full_name || emp.employee_code || 'Xodim'
+          }))
+          setEmployees(formatted)
+        }
+      }
+    } catch (err: any) {
+      console.warn('Failed to fetch employees:', err.message)
     }
   }
 
@@ -201,6 +228,7 @@ export function CashboxClient({ lang }: { lang: string }) {
     const timer = setTimeout(() => {
       fetchCashboxes().then((fallback) => {
         fetchCustomers(fallback)
+        fetchEmployees(fallback)
       })
     }, 0)
     
@@ -358,6 +386,7 @@ export function CashboxClient({ lang }: { lang: string }) {
     setTxDate(new Date().toISOString().split('T')[0])
     setTxDescription('')
     setSelectedCustomerId('')
+    setSelectedEmployeeId('')
     setCustomerDebt(null)
     setIsTransactionModalOpen(true)
   }
@@ -367,6 +396,11 @@ export function CashboxClient({ lang }: { lang: string }) {
     e.preventDefault()
     if (!selectedCashboxForTx || !txAmount || Number(txAmount) <= 0) {
       toast.error(tCommon('required'))
+      return
+    }
+
+    if (txCategory === 'salary' && !selectedEmployeeId) {
+      toast.error(lang === 'uz' ? "Iltimos, xodimni tanlang" : lang === 'ru' ? "Пожалуйста, выберите сотрудника" : "Please select an employee")
       return
     }
 
@@ -385,6 +419,16 @@ export function CashboxClient({ lang }: { lang: string }) {
     if (!categoryText) {
       toast.error(tCommon('required'))
       return
+    }
+
+    let finalDescription = txDescription.trim() || null
+    if (txCategory === 'salary' && selectedEmployeeId) {
+      const emp = employees.find(e => e.id === selectedEmployeeId)
+      if (emp) {
+        finalDescription = txDescription.trim() 
+          ? `${txDescription.trim()} (Xodim: ${emp.name})` 
+          : `Maosh - ${emp.name}`
+      }
     }
 
     setIsLoading(true)
@@ -481,7 +525,7 @@ export function CashboxClient({ lang }: { lang: string }) {
           type: txType,
           amount: numAmount,
           category: categoryText,
-          description: txDescription.trim() || null,
+          description: finalDescription,
           reference_type: 'cashbox',
           reference_id: selectedCashboxForTx.id,
           transaction_date: txDate,
@@ -517,7 +561,7 @@ export function CashboxClient({ lang }: { lang: string }) {
             type: txType,
             amount: numAmount,
             category: categoryText,
-            description: txDescription.trim() || null,
+            description: finalDescription,
             reference_type: 'cashbox',
             reference_id: selectedCashboxForTx.id,
             transaction_date: txDate,
@@ -984,7 +1028,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                         }`}>
                           {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
                         </td>
-                        <td className="p-4 pr-6 flex justify-end">
+                        {/* <td className="p-4 pr-6 flex justify-end">
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -993,7 +1037,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
-                        </td>
+                        </td> */}
                       </tr>
                     )
                   })
@@ -1106,25 +1150,15 @@ export function CashboxClient({ lang }: { lang: string }) {
 
             <form onSubmit={handleSaveTransaction} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="tx_amount" className="text-xs font-semibold text-slate-600">{tCommon('amount')} *</Label>
-                <NumericInput
-                  id="tx_amount"
-                  value={txAmount}
-                  onChange={(val) => setTxAmount(val)}
-                  placeholder="0.00"
-                  required
-                  autoFocus
-                  className="rounded-xl border-slate-200 text-lg font-extrabold focus-visible:ring-indigo-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
                 <Label htmlFor="tx_category" className="text-xs font-semibold text-slate-600">{t('category')} *</Label>
                 <Select value={txCategory} onValueChange={(val) => {
                   setTxCategory(val || '')
                   if (val !== 'debt_collection') {
                     setSelectedCustomerId('')
                     setCustomerDebt(null)
+                  }
+                  if (val !== 'salary') {
+                    setSelectedEmployeeId('')
                   }
                 }}>
                   <SelectTrigger className="w-full rounded-xl border-slate-200 focus:ring-indigo-500">
@@ -1183,6 +1217,33 @@ export function CashboxClient({ lang }: { lang: string }) {
                 </div>
               )}
 
+              {txCategory === 'salary' && (
+                <div className="space-y-1.5 animate-in fade-in duration-200">
+                  <Label htmlFor="tx_employee" className="text-xs font-semibold text-slate-600">
+                    {lang === 'uz' ? 'Xodim' : lang === 'ru' ? 'Сотрудник' : 'Employee'} *
+                  </Label>
+                  <Select 
+                    value={selectedEmployeeId} 
+                    onValueChange={(val) => setSelectedEmployeeId(val || '')}
+                  >
+                    <SelectTrigger className="w-full rounded-xl border-slate-200">
+                      <SelectValue placeholder={lang === 'uz' ? 'Xodimni tanlang' : 'Выберите сотрудника'}>
+                        {selectedEmployeeId 
+                          ? (employees.find(e => e.id === selectedEmployeeId)?.name || '')
+                          : (lang === 'uz' ? 'Xodimni tanlang' : 'Выберите сотрудника')}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {employees.map((emp) => (
+                        <SelectItem key={emp.id} value={emp.id} className="rounded-lg">
+                          {emp.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               {txCategory === 'custom' && (
                 <div className="space-y-1.5 animate-in fade-in duration-200">
                   <Label htmlFor="custom_category" className="text-xs font-semibold text-slate-600">{lang === 'uz' ? "Kategoriya nomi" : lang === 'ru' ? "Название категории" : "Category Name"} *</Label>
@@ -1196,6 +1257,19 @@ export function CashboxClient({ lang }: { lang: string }) {
                   />
                 </div>
               )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="tx_amount" className="text-xs font-semibold text-slate-600">{tCommon('amount')} *</Label>
+                <NumericInput
+                  id="tx_amount"
+                  value={txAmount}
+                  onChange={(val) => setTxAmount(val)}
+                  placeholder="0.00"
+                  required
+                  autoFocus
+                  className="rounded-xl border-slate-200 text-lg font-extrabold focus-visible:ring-indigo-500"
+                />
+              </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="tx_date" className="text-xs font-semibold text-slate-600">{tCommon('date')} *</Label>
