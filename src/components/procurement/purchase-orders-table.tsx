@@ -86,6 +86,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50">
+                <TableHead className="w-10 font-semibold text-center">#</TableHead>
                 <TableHead>{t('poNumber')}</TableHead>
                 <TableHead>{t('supplier')}</TableHead>
                 <TableHead>{tCommon('date')}</TableHead>
@@ -105,8 +106,11 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((order) => (
+                filtered.map((order, index) => (
                   <TableRow key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                      {index + 1}
+                    </TableCell>
                     <TableCell>
                       <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono font-semibold">
                         {order.po_number}

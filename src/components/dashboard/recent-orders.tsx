@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
@@ -24,13 +24,17 @@ interface RecentOrdersProps {
 export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
   const t = useTranslations('sales')
   const tCommon = useTranslations('common')
-  const mockOrders = orders.length > 0 ? orders : [
-    { id: '1', order_number: 'ORD-001', status: 'delivered', total_amount: 15000000, order_date: '2026-07-15', customers: { name: 'Alisher Karimov' } },
-    { id: '2', order_number: 'ORD-002', status: 'confirmed', total_amount: 8500000, order_date: '2026-07-16', customers: { name: 'Zulfiya Rahimova' } },
-    { id: '3', order_number: 'ORD-003', status: 'pending', total_amount: 22000000, order_date: '2026-07-17', customers: { name: 'Bobur Toshmatov' } },
-    { id: '4', order_number: 'ORD-004', status: 'shipped', total_amount: 5750000, order_date: '2026-07-18', customers: { name: 'Malika Yusupova' } },
-    { id: '5', order_number: 'ORD-005', status: 'draft', total_amount: 33000000, order_date: '2026-07-19', customers: { name: 'Jasur Nazarov' } },
-  ]
+
+  if (orders.length === 0) {
+    return (
+      <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+        <CardHeader>
+          <CardTitle className="text-base font-bold text-slate-800">{t('recentOrders')}</CardTitle>
+          <CardDescription>{tCommon('noData')}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
 
   return (
     <Card className="border-0 shadow-sm">
@@ -44,13 +48,13 @@ export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
         </Link>
       </CardHeader>
       <CardContent>
-        <div className="space-y-1">
+        <div className="space-y-4">
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {mockOrders.map((order: any) => (
+          {orders.map((order: any) => (
             <Link
               key={order.id}
               href={`/${lang}/sales/orders/${order.id}`}
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors group"
+              className="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition-colors group"
             >
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold">

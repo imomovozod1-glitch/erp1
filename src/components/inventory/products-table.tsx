@@ -15,6 +15,8 @@ import {
   Upload,
   Power,
   Download,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateProducts } from "@/lib/data/revalidate";
@@ -39,6 +41,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import * as XLSX from "xlsx";
+import React from "react";
 
 interface ProductsTableProps {
   products: any[];
@@ -52,6 +55,8 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   const downloadExcelTemplate = () => {
     const templateData = [
@@ -90,13 +95,19 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     setIsUpdatingStatus(null);
   };
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = products.filter((p) => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === 'all' ? true : statusFilter === 'active' ? p.is_active : !p.is_active;
+    return matchesSearch && matchesStatus;
+  });
 
   const handleDelete = async (id: string) => {
+    const product = products.find(p => p.id === id);
+    if (product && product.stock > 0) {
+      toast.error(lang === 'uz' ? 'Zahirasi mavjud mahsulotlarni o\'chirib bo\'lmaydi' : 'Cannot delete products with stock');
+      return;
+    }
+    
     setIsDeleting(id);
     const supabase = createClient() as any;
     const { error } = await supabase.from("products").delete().eq("id", id);
@@ -270,6 +281,26 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 className="pl-9 h-9"
               />
             </div>
+            <div className="flex bg-slate-100 p-0.5 rounded-lg border shadow-inner">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                {t("common.all", { fallback: "Barchasi" })}
+              </button>
+              <button
+                onClick={() => setStatusFilter('active')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'active' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                {t("common.active", { fallback: "Faol" })}
+              </button>
+              <button
+                onClick={() => setStatusFilter('inactive')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'inactive' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                {t("common.inactive", { fallback: "Nofaol" })}
+              </button>
+            </div>
             <div className="flex items-center gap-3">
               <input
                 type="file"
@@ -327,6 +358,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50">
+                <TableHead className="w-10 font-semibold text-center">#</TableHead>
                 <TableHead className="font-semibold">
                   {t("inventory.productName")}
                 </TableHead>
@@ -353,114 +385,152 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((product) => (
-                  <TableRow
-                    key={product.id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-800">
-                          {product.name}
-                        </p>
-                        {product.description && (
-                          <p className="text-xs text-muted-foreground truncate max-w-50">
-                            {product.description}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
-                        {product.sku}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {product.categories?.name ?? "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="text-sm font-medium text-slate-600">
-                        {formatCurrency(product.cost_price)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="text-sm font-medium text-slate-600">
-                        {formatCurrency(product.incoming_cost || 0)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(product.price)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span
-                        className={`text-sm font-semibold ${
-                          product.stock === 0
-                            ? "text-red-600"
-                            : product.stock <= product.min_stock
-                              ? "text-orange-600"
-                              : "text-emerald-600"
-                        }`}
-                      >
-                        {formatNumber(product.stock)} {product.unit}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={product.is_active ? "default" : "secondary"}
-                        className={
-                          product.is_active
-                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                            : ""
-                        }
-                      >
-                        {product.is_active ? t("common.active") : t("common.inactive")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            />
+                filtered.map((product, index) => (
+                  <React.Fragment key={product.id}>
+                    <TableRow
+                      className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${expandedRow === product.id ? 'bg-slate-50/80' : ''}`}
+                      onClick={() => setExpandedRow(expandedRow === product.id ? null : product.id)}
+                    >
+                      <TableCell className="text-center font-medium text-slate-500 text-xs">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {expandedRow === product.id ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                          <div>
+                            <p className="font-medium text-slate-800">
+                              {product.name}
+                            </p>
+                            {product.description && (
+                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                {product.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                          {product.sku}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {product.categories?.name ?? "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-sm font-medium text-slate-600">
+                          {formatCurrency(product.cost_price)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-sm font-medium text-slate-600">
+                          {formatCurrency(product.incoming_cost || 0)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatCurrency(product.price)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span
+                          className={`text-sm font-semibold ${
+                            product.stock === 0
+                              ? "text-red-600"
+                              : product.stock <= product.min_stock
+                                ? "text-orange-600"
+                                : "text-emerald-600"
+                          }`}
+                        >
+                          {formatNumber(product.stock)} {product.unit}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={product.is_active ? "default" : "secondary"}
+                          className={
+                            product.is_active
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                              : ""
                           }
                         >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
+                          {product.is_active ? t("common.active") : t("common.inactive")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
                             render={
-                              <Link
-                                href={`/${lang}/inventory/products/${product.id}/edit`}
-                                prefetch={true}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
                               />
                             }
                           >
-                            <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleToggleStatus(product.id, product.is_active)}
-                            disabled={isUpdatingStatus === product.id}
-                          >
-                            <Power className="mr-2 h-3.5 w-3.5" />{" "}
-                            {product.is_active ? t("common.inactive") : t("common.active")}
-                          </DropdownMenuItem>
-                          {/* <DropdownMenuItem
-                            onClick={() => handleDelete(product.id)}
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                            disabled={isDeleting === product.id}
-                          >
-                            <Trash2 className="mr-2 h-3.5 w-3.5" />{" "}
-                            {t("common.delete")}
-                          </DropdownMenuItem> */}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem
+                              render={
+                                <Link
+                                  href={`/${lang}/inventory/products/${product.id}/edit`}
+                                  prefetch={true}
+                                />
+                              }
+                            >
+                              <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleToggleStatus(product.id, product.is_active)}
+                              disabled={isUpdatingStatus === product.id}
+                            >
+                              <Power className="mr-2 h-3.5 w-3.5" />{" "}
+                              {product.is_active ? t("common.inactive") : t("common.active")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                    {expandedRow === product.id && (
+                      <TableRow className="bg-slate-50 hover:bg-slate-50">
+                        <TableCell colSpan={10} className="p-0 border-b-2 border-indigo-100">
+                          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold text-slate-800">{t("inventory.productName")}</h4>
+                              <p className="text-sm text-slate-600">{product.name}</p>
+                              
+                              <h4 className="text-sm font-semibold text-slate-800 mt-4">{t("inventory.sku")}</h4>
+                              <p className="text-sm text-slate-600 font-mono bg-white inline-block px-2 py-1 rounded border">{product.sku}</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold text-slate-800">{t("inventory.costPrice")}</h4>
+                              <p className="text-sm text-slate-600">{formatCurrency(product.cost_price)}</p>
+                              
+                              <h4 className="text-sm font-semibold text-slate-800 mt-4">{t("inventory.price")}</h4>
+                              <p className="text-sm text-slate-600 font-bold text-indigo-600">{formatCurrency(product.price)}</p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold text-slate-800">{t("inventory.stock")}</h4>
+                              <p className="text-sm text-slate-600">{formatNumber(product.stock)} {product.unit}</p>
+                              
+                              <h4 className="text-sm font-semibold text-slate-800 mt-4">{t("inventory.minStock", { fallback: 'Minimal zaxira' })}</h4>
+                              <p className="text-sm text-slate-600">{formatNumber(product.min_stock)} {product.unit}</p>
+                            </div>
+                            
+                            {product.description && (
+                              <div className="col-span-1 md:col-span-3 mt-2 pt-4 border-t border-slate-200">
+                                <h4 className="text-sm font-semibold text-slate-800 mb-1">{t("common.description")}</h4>
+                                <p className="text-sm text-slate-600">{product.description}</p>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
                 ))
               )}
             </TableBody>

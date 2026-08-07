@@ -345,7 +345,8 @@
     "hiredAt": "Hire Date",
     "terminatedAt": "Termination Date",
     "department": "Department",
-    "manager": "Manager"
+    "manager": "Manager",
+    "isActive": "Active (Employed)"
   },
   "procurement": {
     "title": "Procurement",
@@ -462,5 +463,19 @@
     "selectCategory": "All Categories",
     "generalDiscount": "General Discount",
     "itemDiscount": "Item Discount"
+  },
+  "analytics": {
+    "title": "Analytics Overview",
+    "description": "Monitor your business metrics and growth.",
+    "revenue": "Total Revenue",
+    "sales": "Total Sales",
+    "activeCustomers": "Active Customers",
+    "topProducts": "Top Products",
+    "revenueOverTime": "Revenue Over Time",
+    "salesByCategory": "Sales by Category",
+    "period": "Period",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "thisYear": "This Year"
   }
 }

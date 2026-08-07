@@ -210,20 +210,18 @@ export const getCachedAnalyticsStats = unstable_cache(
 
     const [
       { data: orderItems },
-      { count: totalOrders },
-      { data: monthlyOrders },
+      { data: salesOrders },
     ] = await Promise.all([
       supabase
         .from('sales_order_items')
-        .select('quantity, unit_price, total_price, products(name, cost_price, price)'),
+        .select('quantity, unit_price, total_price, products(name, cost_price, price), sales_orders(order_date, status)'),
       supabase
         .from('sales_orders')
-        .select('*', { count: 'exact', head: true }),
-      supabase
-        .from('sales_orders')
-        .select('total_amount, order_date')
+        .select('id, total_amount, order_date, status')
         .order('order_date', { ascending: true }),
     ])
+
+    const totalOrders = salesOrders?.length ?? 0
 
     // Aggregate sold products for the analytics table
     const productMap: Record<string, { name: string; costPrice: number; sellingPrice: number; quantity: number; totalSum: number }> = {}
@@ -259,7 +257,7 @@ export const getCachedAnalyticsStats = unstable_cache(
 
     // Monthly data for chart
     const monthlyData: Record<string, { revenue: number; cost: number }> = {}
-    ;(monthlyOrders ?? []).forEach((o: any) => {
+    ;(salesOrders ?? []).forEach((o: any) => {
       const month = o.order_date?.slice(0, 7) ?? 'unknown'
       if (!monthlyData[month]) monthlyData[month] = { revenue: 0, cost: 0 }
       monthlyData[month].revenue += o.total_amount ?? 0
@@ -274,9 +272,11 @@ export const getCachedAnalyticsStats = unstable_cache(
       totalRevenue,
       totalProfit,
       totalSold,
-      totalOrders: totalOrders ?? 0,
+      totalOrders,
       avgOrderValue,
       chartData,
+      rawItems: orderItems ?? [],
+      rawOrders: salesOrders ?? [],
     }
   },
   ['analytics-stats'],

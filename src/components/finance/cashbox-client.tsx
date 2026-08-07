@@ -89,7 +89,7 @@ export function CashboxClient({ lang }: { lang: string }) {
           const customerInvoices = localInvoices.filter((i: any) => i.customer_id === cId && i.status !== 'paid' && i.status !== 'cancelled')
           debt = customerInvoices.reduce((sum: number, i: any) => sum + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
         } else {
-          debt = 1200000 // default mock debt
+          debt = 0
         }
         setCustomerDebt(debt)
       } else {
@@ -180,9 +180,14 @@ export function CashboxClient({ lang }: { lang: string }) {
   }
 
   useEffect(() => {
-    fetchCashboxes().then((fallback) => {
-      fetchCustomers(fallback)
-    })
+    // Avoid calling setState synchronously within the effect body
+    const timer = setTimeout(() => {
+      fetchCashboxes().then((fallback) => {
+        fetchCustomers(fallback)
+      })
+    }, 0)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   // Auto-routing parameters checking
@@ -194,26 +199,28 @@ export function CashboxClient({ lang }: { lang: string }) {
     const customerId = searchParams.get('customerId')
 
     if (action === 'kirim') {
-      const targetCb = cashboxes.find(c => c.name.toLowerCase().includes('asosiy') || c.name.toLowerCase().includes('main')) || cashboxes[0]
-      if (targetCb) {
-        setSelectedCashboxForTx(targetCb)
-        setTxType('income')
-        setTxAmount('')
-        setTxCategory(type || 'sales')
-        setCustomCategory('')
-        setTxDate(new Date().toISOString().split('T')[0])
-        setTxDescription('')
-        setIsTransactionModalOpen(true)
-        
-        if (type === 'debt_collection' && customerId) {
-          setSelectedCustomerId(customerId)
-          fetchCustomerDebt(customerId, isLocalStorageFallback)
+      setTimeout(() => {
+        const targetCb = cashboxes.find(c => c.name.toLowerCase().includes('asosiy') || c.name.toLowerCase().includes('main')) || cashboxes[0]
+        if (targetCb) {
+          setSelectedCashboxForTx(targetCb)
+          setTxType('income')
+          setTxAmount('')
+          setTxCategory(type || 'sales')
+          setCustomCategory('')
+          setTxDate(new Date().toISOString().split('T')[0])
+          setTxDescription('')
+          setIsTransactionModalOpen(true)
+          
+          if (type === 'debt_collection' && customerId) {
+            setSelectedCustomerId(customerId)
+            fetchCustomerDebt(customerId, isLocalStorageFallback)
+          }
         }
-      }
-      
-      // Clear URL params to avoid re-triggering on refresh
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, '', newUrl)
+        
+        // Clear URL params to avoid re-triggering on refresh
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+      }, 0)
     }
   }, [searchParams, cashboxes, isLocalStorageFallback])
 
@@ -299,6 +306,12 @@ export function CashboxClient({ lang }: { lang: string }) {
   }
 
   const handleDelete = async (id: string) => {
+    const cashbox = cashboxes.find(cb => cb.id === id);
+    if (cashbox && cashbox.balance > 0) {
+      toast.error(lang === 'uz' ? 'Puli bor kassani o\'chirib bo\'lmaydi' : 'Cannot delete cashbox with balance > 0');
+      return;
+    }
+    
     if (confirm(lang === 'uz' ? "Ushbu kassani o'chirishni xohlaysizmi?" : lang === 'ru' ? "Удалить эту кассу?" : "Are you sure you want to delete this cashbox?")) {
       if (isLocalStorageFallback) {
         const updated = cashboxes.filter((cb) => cb.id !== id)
@@ -946,12 +959,11 @@ export function CashboxClient({ lang }: { lang: string }) {
               {!editingCashbox && (
                 <div className="space-y-2">
                   <Label htmlFor="cb_balance">{t('initialBalance')}</Label>
-                  <Input
+                  <NumericInput
                     id="cb_balance"
-                    type="number"
                     value={balance}
-                    onChange={(e) => setBalance(e.target.value)}
-                    min="0"
+                    onChange={(val) => setBalance(val.toString())}
+                    placeholder="0"
                   />
                 </div>
               )}

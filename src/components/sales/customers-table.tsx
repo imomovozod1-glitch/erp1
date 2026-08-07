@@ -48,7 +48,11 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
     const supabase = createClient()
     const { error } = await supabase.from('customers').delete().eq('id', id)
     if (error) {
-      toast.error(tCommon('error'))
+      if (error.code === '23503') {
+        toast.error(lang === 'uz' ? 'Mijozning qarzi yoki tranzaksiyalari borligi sababli o\'chirib bo\'lmaydi' : 'Cannot delete customer with existing records (debt/transactions)')
+      } else {
+        toast.error(tCommon('error'))
+      }
     } else {
       toast.success(tCommon('success'))
       await invalidateCustomers()

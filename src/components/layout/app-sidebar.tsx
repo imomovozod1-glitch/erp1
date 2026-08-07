@@ -48,6 +48,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', icon: LayoutDashboard, href: 'dashboard' },
+  { key: 'analytics', icon: TrendingUp, href: 'analytics' },
   { key: 'pos', icon: Store, href: 'pos' },
   {
     key: 'inventory', icon: Package, href: 'inventory',
@@ -73,27 +74,17 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'suppliers', href: 'procurement/suppliers' },
     ]
   },
-  { key: 'analytics', icon: TrendingUp, href: 'analytics' },
   {
     key: 'finance', icon: DollarSign, href: 'finance',
     subItems: [
-      { key: 'transactions', href: 'finance/transactions' },
-      { key: 'income', href: 'finance/income' },
-      { key: 'expenses', href: 'finance/expenses' },
       { key: 'cashbox', href: 'finance/cashbox' },
+      { key: 'transactions', href: 'finance/transactions' },
     ]
   },
   {
     key: 'hr', icon: Users, href: 'hr',
     subItems: [
       { key: 'employees', href: 'hr/employees' },
-      { key: 'departments', href: 'hr/departments' },
-    ]
-  },
-  {
-    key: 'tools', icon: Wrench, href: 'tools',
-    subItems: [
-      { key: 'scanner', href: 'tools/scanner' },
     ]
   },
   { key: 'settings', icon: Settings, href: 'settings' },
@@ -111,7 +102,6 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
   const tFinance = useTranslations('finance')
   const tHr = useTranslations('hr')
   const tProcurement = useTranslations('procurement')
-  const tTools = useTranslations('tools')
   const pathname = usePathname()
 
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(() => {
@@ -156,16 +146,10 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       },
       finance: {
         transactions: tFinance('transactions'),
-        income: tFinance('income'),
-        expenses: tFinance('expenses'),
         cashbox: tFinance('cashbox'),
       },
       hr: {
         employees: tHr('employees'),
-        departments: tHr('departments'),
-      },
-      tools: {
-        scanner: tTools('scanner'),
       },
     }
     return map[parentKey]?.[subKey] ?? subKey
@@ -283,7 +267,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 variant="outline"
                 className="ml-auto text-[10px] px-1.5 capitalize border-indigo-200 text-indigo-600"
               >
-                {profile?.role}
+                {profile?.role === 'admin' ? 'Support' : profile?.role}
               </Badge>
             </SidebarMenuButton>
           </SidebarMenuItem>

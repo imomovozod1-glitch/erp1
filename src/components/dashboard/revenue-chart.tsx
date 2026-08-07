@@ -38,15 +38,18 @@ export function RevenueChart({ data, title }: RevenueChartProps) {
     }
   })
 
-  // Add mock data if empty for visual demonstration
-  const displayData = formattedData.length > 0 ? formattedData : [
-    { month: '2026-01', monthLabel: t('common.months.01'), income: 45000000, expense: 28000000 },
-    { month: '2026-02', monthLabel: t('common.months.02'), income: 52000000, expense: 31000000 },
-    { month: '2026-03', monthLabel: t('common.months.03'), income: 48000000, expense: 27000000 },
-    { month: '2026-04', monthLabel: t('common.months.04'), income: 61000000, expense: 35000000 },
-    { month: '2026-05', monthLabel: t('common.months.05'), income: 55000000, expense: 32000000 },
-    { month: '2026-06', monthLabel: t('common.months.06'), income: 67000000, expense: 38000000 },
-  ]
+  if (formattedData.length === 0) {
+    return (
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-slate-800">{title}</CardTitle>
+          <p className="text-sm text-slate-500">{t('common.noData')}</p>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  const displayData = formattedData
 
   return (
     <Card className="border-0 shadow-sm">

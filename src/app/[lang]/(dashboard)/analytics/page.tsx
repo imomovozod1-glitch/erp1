@@ -1,46 +1,33 @@
-import type { Metadata } from 'next'
-import { getTranslations } from 'next-intl/server'
-import { PageHeader } from '@/components/shared/page-header'
-import { AnalyticsStats } from '@/components/analytics/analytics-stats'
-import { AnalyticsCharts } from '@/components/analytics/analytics-charts'
-import { SoldProductsTable } from '@/components/analytics/sold-products-table'
 import { getCachedAnalyticsStats } from '@/lib/data/queries'
+import { AnalyticsClient } from '@/components/analytics/analytics-client'
+import { PageHeader } from '@/components/shared/page-header'
+import { PageClock } from '@/components/shared/page-clock'
+import { getTranslations } from 'next-intl/server'
 
-export const revalidate = 60
+interface AnalyticsPageProps {
+  params: { lang: string }
+}
 
-export const metadata: Metadata = { title: 'Analytics' }
-
-export default async function AnalyticsPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
-  const [t, stats] = await Promise.all([
-    getTranslations('analytics'),
-    getCachedAnalyticsStats(),
-  ])
+export default async function AnalyticsPage({ params: { lang } }: AnalyticsPageProps) {
+  const t = await getTranslations('analytics')
+  
+  // We fetch the stats server-side
+  const stats = await getCachedAnalyticsStats()
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4 p-4 md:p-8 pt-6">
       <PageHeader
         title={t('title')}
-        subtitle={t('subtitle')}
-      />
+        // description={t('description')}
+        breadcrumbs={[
+          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: t('title') }
+        ]}
+      >
+        <PageClock lang={lang} />
+      </PageHeader>
 
-      <AnalyticsStats
-        totalRevenue={stats.totalRevenue}
-        totalProfit={stats.totalProfit}
-        totalSold={stats.totalSold}
-        totalOrders={stats.totalOrders}
-        avgOrderValue={stats.avgOrderValue}
-      />
-
-      <AnalyticsCharts
-        chartData={stats.chartData}
-        topProducts={stats.aggregatedProducts.slice(0, 7)}
-      />
-
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-3">{t('soldProducts')}</h2>
-        <SoldProductsTable products={stats.aggregatedProducts} />
-      </div>
+      <AnalyticsClient lang={lang} stats={stats} />
     </div>
   )
 }

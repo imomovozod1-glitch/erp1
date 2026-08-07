@@ -286,14 +286,14 @@
       "geoUnsupported": "Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi."
     },
     "status": {
-      "draft": "Qoralama",
-      "pending": "Kutmoqda",
-      "confirmed": "Tasdiqlangan",
-      "shipped": "Jo'natilgan",
-      "delivered": "Yetkazilgan",
+      "draft": "Yangi",
+      "pending": "Yangi",
+      "confirmed": "Yangi",
+      "shipped": "Yangi",
+      "delivered": "Yakunlangan",
       "cancelled": "Bekor qilingan",
-      "sent": "Yuborilgan",
-      "paid": "To'langan",
+      "sent": "Yangi",
+      "paid": "Yakunlangan",
       "overdue": "Muddati o'tgan"
     }
   },
@@ -345,7 +345,8 @@
     "hiredAt": "Ishga qabul qilingan sana",
     "terminatedAt": "Ishdan bo'shatilgan sana",
     "department": "Bo'lim",
-    "manager": "Menejer"
+    "manager": "Menejer",
+    "isActive": "Faol (Ishlamoqda)"
   },
   "procurement": {
     "title": "Ta'minot",
@@ -376,10 +377,10 @@
     "supplierCreated": "Yetkazib beruvchi muvaffaqiyatli qo'shildi",
     "supplierUpdated": "Yetkazib beruvchi muvaffaqiyatli yangilandi",
     "status": {
-      "draft": "Qoralama",
-      "sent": "Yuborilgan",
-      "received": "Qabul qilingan",
-      "partially_received": "Qisman qabul qilingan",
+      "draft": "Yangi",
+      "sent": "Yangi",
+      "received": "Yakunlangan",
+      "partially_received": "Yangi",
       "cancelled": "Bekor qilingan"
     }
   },
@@ -462,5 +463,19 @@
     "selectCategory": "Barcha kategoriyalar",
     "generalDiscount": "Umumiy chegirma",
     "itemDiscount": "Mahsulot chegirmasi"
+  },
+  "analytics": {
+    "title": "Analitika O'zlashtirishi",
+    "description": "Biznesingiz ko'rsatkichlari va o'sishini kuzatib boring.",
+    "revenue": "Umumiy Daromad",
+    "sales": "Umumiy Sotuv",
+    "activeCustomers": "Faol Mijozlar",
+    "topProducts": "Top Mahsulotlar",
+    "revenueOverTime": "Vaqt bo'yicha Daromad",
+    "salesByCategory": "Kategoriya bo'yicha Sotuvlar",
+    "period": "Davr",
+    "thisWeek": "Shu hafta",
+    "thisMonth": "Shu oy",
+    "thisYear": "Shu yil"
   }
 }

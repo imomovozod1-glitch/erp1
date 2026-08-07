@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -15,13 +15,16 @@ export function LowStockAlert({ products, lang }: LowStockAlertProps) {
   const t = useTranslations('dashboard')
   const tCommon = useTranslations('common')
 
-  const mockProducts = products.length > 0 ? products : [
-    { id: '1', name: 'Laptop Dell XPS 13', sku: 'LAP-001', stock: 2, min_stock: 5 },
-    { id: '2', name: 'Mouse Logitech MX', sku: 'MOU-003', stock: 0, min_stock: 10 },
-    { id: '3', name: 'USB-C Hub 7-Port', sku: 'HUB-012', stock: 3, min_stock: 8 },
-    { id: '4', name: 'Keyboard Mechanical', sku: 'KEY-007', stock: 1, min_stock: 5 },
-    { id: '5', name: 'Monitor 27" 4K', sku: 'MON-004', stock: 2, min_stock: 3 },
-  ]
+  if (products.length === 0) {
+    return (
+      <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">{t('lowStock')}</CardTitle>
+          <CardDescription>{tCommon('noData')}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
 
   return (
     <Card className="border-0 shadow-sm">
@@ -38,8 +41,8 @@ export function LowStockAlert({ products, lang }: LowStockAlertProps) {
         </Link>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {mockProducts.map((product) => {
+        <div className="space-y-4">
+          {products.map((product) => {
             const pct = Math.min((product.stock / product.min_stock) * 100, 100)
             const isOut = product.stock === 0
             return (

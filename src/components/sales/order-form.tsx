@@ -153,9 +153,6 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="draft">{t('status.draft')}</SelectItem>
-              <SelectItem value="pending">{t('status.pending')}</SelectItem>
-              <SelectItem value="confirmed">{t('status.confirmed')}</SelectItem>
-              <SelectItem value="shipped">{t('status.shipped')}</SelectItem>
               <SelectItem value="delivered">{t('status.delivered')}</SelectItem>
               <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
             </SelectContent>

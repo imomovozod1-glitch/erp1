@@ -345,7 +345,8 @@
     "hiredAt": "Дата приёма на работу",
     "terminatedAt": "Дата увольнения",
     "department": "Отдел",
-    "manager": "Менеджер"
+    "manager": "Менеджер",
+    "isActive": "Активен (Работает)"
   },
   "procurement": {
     "title": "Закупки",

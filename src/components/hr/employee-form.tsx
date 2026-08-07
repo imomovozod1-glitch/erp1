@@ -21,7 +21,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 
 
 interface EmployeeFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any
   lang: string
 }
@@ -51,6 +50,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     salary: z.coerce.number().min(0, tCommon('invalidAmount')),
     hired_at: z.string().min(1, tCommon('required')),
     is_active: z.boolean().default(true),
+    terminated_at: z.string().optional().nullable(),
     notes: z.string().optional(),
     profile_id: z.string().optional().nullable(),
   })
@@ -65,6 +65,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       salary: initialData?.salary ?? '' as any,
       hired_at: initialData?.hired_at ? initialData.hired_at.split('T')[0] : '',
       is_active: initialData?.is_active ?? true,
+      terminated_at: initialData?.terminated_at ? initialData.terminated_at.split('T')[0] : '',
       notes: initialData?.notes || '',
       profile_id: initialData?.profile_id || '',
     }
@@ -76,6 +77,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       const payload = {
         ...data,
         profile_id: data.profile_id || null,
+        terminated_at: !data.is_active && data.terminated_at ? data.terminated_at : null,
       }
       if (initialData?.id) {
         const { error } = await supabase
@@ -94,7 +96,6 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       
       await invalidateEmployees()
       router.push(`/${lang}/hr/employees`)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -182,12 +183,29 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
             <Checkbox 
               id="is_active" 
               checked={isActiveValue}
-              onCheckedChange={(checked) => setValue('is_active', checked as boolean)}
+              onCheckedChange={(checked) => {
+                setValue('is_active', checked as boolean)
+                if (checked) {
+                  setValue('terminated_at', '')
+                } else {
+                  setValue('terminated_at', new Date().toISOString().split('T')[0])
+                }
+              }}
             />
             <Label htmlFor="is_active" className="cursor-pointer">
               {t('isActive')}
             </Label>
           </div>
+
+          {!isActiveValue && (
+            <div className="space-y-2 max-w-sm animate-in fade-in slide-in-from-top-1 duration-200">
+              <Label htmlFor="terminated_at">{t('terminatedAt')}</Label>
+              <Input id="terminated_at" type="date" {...register('terminated_at')} />
+              {errors.terminated_at && (
+                <p className="text-sm text-red-500">{errors.terminated_at.message}</p>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-4">
             <Button 

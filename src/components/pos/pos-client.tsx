@@ -469,10 +469,11 @@ export function POSClient({
       `}</style>
 
       {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 no-print">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 no-print items-start">
         {/* Left Side: Product catalog and search */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex flex-col md:flex-row gap-3">
+          <div className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur pt-2 pb-2 -mt-2 space-y-4">
+            <div className="flex flex-col md:flex-row gap-3">
             {/* SKU & Title Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -534,6 +535,7 @@ export function POSClient({
               </Button>
             ))}
           </div>
+          </div>
 
           {/* Products Grid */}
           {filteredProducts.length === 0 ? (
@@ -544,7 +546,7 @@ export function POSClient({
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProducts.map((p) => {
                 const isOutOfStock = p.stock <= 0
                 const isLowStock = p.stock > 0 && p.stock <= p.min_stock
@@ -601,8 +603,8 @@ export function POSClient({
         </div>
 
         {/* Right Side: Cart list, customer selector, checkout */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card className="border-0 shadow-sm rounded-2xl bg-white flex flex-col min-h-[580px] justify-between">
+        <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)]">
+          <Card className="border-0 shadow-sm rounded-2xl bg-white flex flex-col h-full justify-between">
             {/* Cart Header */}
             <CardHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0">
               <div className="flex items-center gap-2">
@@ -627,7 +629,7 @@ export function POSClient({
             </CardHeader>
 
             {/* Cart Scrollable Items */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[320px]">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {cart.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center text-slate-400 space-y-2">
                   <Store className="h-8 w-8 opacity-30" />

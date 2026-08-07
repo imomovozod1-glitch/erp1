@@ -1,9 +1,3 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
-
 # ERP Design & Logic Guidelines (Top 10 ERPs, Bito, Billz, Smartap)
 
 1. **Clock & Time Display**: Ensure dashboard, analytics, and primary management sections include a real-time clock displaying date and time down to the minute.
@@ -14,4 +8,3 @@ This version has breaking changes — APIs, conventions, and file structure may 
 3. **Logic & Architecture**:
    - Keep analytics and charts highly responsive and informative.
    - Maintain consistent translations/locales (uz-UZ / ru-RU) across all dashboard components and dates.
-

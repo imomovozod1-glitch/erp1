@@ -20,7 +20,10 @@ import { formatCurrency } from '@/lib/utils'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
 import { RecentOrders } from '@/components/dashboard/recent-orders'
 import { LowStockAlert } from '@/components/dashboard/low-stock-alert'
-
+import { AnalyticsStats } from '@/components/analytics/analytics-stats'
+import { AnalyticsCharts } from '@/components/analytics/analytics-charts'
+import { SoldProductsTable } from '@/components/analytics/sold-products-table'
+import { Clock } from 'lucide-react'
 
 interface DashboardClientProps {
   lang: string
@@ -63,6 +66,17 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
       sessionStorage.setItem('dashboard_period', period)
     }
   }, [period])
+
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
+  
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setCurrentTime(new Date()), 0)
+    const timerId = setInterval(() => setCurrentTime(new Date()), 60000)
+    return () => {
+      clearTimeout(timeoutId)
+      clearInterval(timerId)
+    }
+  }, [])
 
   const td = useTranslations('dashboard')
 
@@ -206,7 +220,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     newSale: td('newSale'),
     addIncome: td('addIncome'),
     addExpense: td('addExpense'),
-    scanner: td('scanner'),
+    // scanner: td('scanner'),
     recentOrdersTitle: td('recentOrdersTitle'),
     lowStockTitle: td('lowStockTitle'),
     activeCustomers: td('activeCustomers'),
@@ -280,13 +294,13 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
             <span>{t.addExpense}</span>
           </Link>
 
-          <Link
+          {/* <Link
             href={`/${lang}/tools/scanner`}
             className="flex items-center justify-start gap-2 h-12 px-4 py-2 border border-amber-100 bg-amber-50/20 text-amber-700 hover:bg-amber-50 hover:text-amber-800 transition-colors text-sm font-semibold rounded-lg"
           >
             <Package className="h-4 w-4" />
             <span>{t.scanner}</span>
-          </Link>
+          </Link> */}
         </div>
       </div>
 
@@ -426,6 +440,43 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
           </div>
 
           <LowStockAlert products={lowStock} lang={lang} />
+        </div>
+      </div>
+
+      {/* Analytics Section Integrated */}
+      <div className="pt-8 mt-8 border-t space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-indigo-600" />
+              {td('analyticsTitle', { fallback: 'Analitika' })}
+            </h2>
+          </div>
+          {currentTime && (
+            <div className="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg font-medium shadow-sm border border-slate-200">
+              <Clock className="h-4 w-4 text-indigo-600" />
+              {currentTime.toLocaleDateString(lang === 'uz' ? 'uz-UZ' : 'ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}{' '}
+              {currentTime.toLocaleTimeString(lang === 'uz' ? 'uz-UZ' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          )}
+        </div>
+
+        <AnalyticsStats
+          totalRevenue={analytics.totalRevenue}
+          totalProfit={analytics.totalProfit}
+          totalSold={analytics.totalSold}
+          totalOrders={analytics.totalOrders}
+          avgOrderValue={analytics.avgOrderValue}
+        />
+
+        <AnalyticsCharts
+          chartData={analytics.chartData}
+          topProducts={analytics.aggregatedProducts.slice(0, 7)}
+        />
+
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 mb-3">{td('soldProducts', { fallback: 'Sotilgan maxsulotlar' })}</h2>
+          <SoldProductsTable products={analytics.aggregatedProducts} />
         </div>
       </div>
     </div>
