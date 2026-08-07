@@ -476,7 +476,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
 
         <div>
           <h2 className="text-lg font-semibold text-slate-900 mb-3">{td('soldProducts', { fallback: 'Sotilgan maxsulotlar' })}</h2>
-          <SoldProductsTable products={analytics.aggregatedProducts} />
+          <SoldProductsTable products={analytics.aggregatedProducts} lang={lang} />
         </div>
       </div>
     </div>

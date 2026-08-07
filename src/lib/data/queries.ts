@@ -523,3 +523,93 @@ export const getCachedSupplierById = unstable_cache(
   ['supplier-by-id'],
   { tags: [CACHE_TAGS.suppliers], revalidate: 60 }
 )
+
+export const getCachedProductDetails = unstable_cache(
+  async (id: string) => {
+    const supabase = getCacheClient()
+    const [
+      { data: product },
+      { data: movements },
+      { data: salesOrderItems },
+      { data: purchaseOrderItems },
+    ] = await Promise.all([
+      supabase.from('products').select('*, categories(name)').eq('id', id).single(),
+      supabase.from('stock_movements').select('*').eq('product_id', id).order('created_at', { ascending: false }),
+      supabase.from('sales_order_items').select('quantity, total_price, sales_orders(order_number, order_date, status, customers(name))').eq('product_id', id),
+      supabase.from('purchase_order_items').select('quantity, total_cost, purchase_orders(po_number, order_date, status, suppliers(name))').eq('product_id', id),
+    ])
+    return {
+      product,
+      movements: movements ?? [],
+      sales: salesOrderItems ?? [],
+      purchases: purchaseOrderItems ?? [],
+    }
+  },
+  ['product-details-by-id'],
+  { tags: [CACHE_TAGS.products, CACHE_TAGS.movements, CACHE_TAGS.orders, CACHE_TAGS.purchaseOrders], revalidate: 30 }
+)
+
+export const getCachedEmployeeDetails = unstable_cache(
+  async (id: string) => {
+    const supabase = getCacheClient()
+    const { data: employee } = await supabase
+      .from('employees')
+      .select('*, profiles(*, departments!fk_profiles_department(name))')
+      .eq('id', id)
+      .single()
+
+    if (!employee) return null
+    const profileId = employee.profile_id
+
+    const [
+      { data: transactions },
+      { data: salesOrders },
+    ] = await Promise.all([
+      supabase
+        .from('transactions')
+        .select('*')
+        .eq('reference_type', 'employee')
+        .eq('reference_id', id)
+        .order('transaction_date', { ascending: false }),
+      profileId
+        ? supabase
+            .from('sales_orders')
+            .select('*, customers(name)')
+            .eq('created_by', profileId)
+            .order('order_date', { ascending: false })
+        : Promise.resolve({ data: [] })
+    ])
+
+    return {
+      employee,
+      transactions: transactions ?? [],
+      salesOrders: salesOrders ?? [],
+    }
+  },
+  ['employee-details-by-id'],
+  { tags: [CACHE_TAGS.employees, CACHE_TAGS.transactions, CACHE_TAGS.orders], revalidate: 30 }
+)
+
+export const getCachedSupplierDetails = unstable_cache(
+  async (id: string) => {
+    const supabase = getCacheClient()
+    const [
+      { data: supplier },
+      { data: purchaseOrders },
+      { data: transactions },
+    ] = await Promise.all([
+      supabase.from('suppliers').select('*').eq('id', id).single(),
+      supabase.from('purchase_orders').select('*').eq('supplier_id', id).order('order_date', { ascending: false }),
+      supabase.from('transactions').select('*').eq('reference_type', 'supplier').eq('reference_id', id).order('transaction_date', { ascending: false }),
+    ])
+
+    return {
+      supplier,
+      purchaseOrders: purchaseOrders ?? [],
+      transactions: transactions ?? [],
+    }
+  },
+  ['supplier-details-by-id'],
+  { tags: [CACHE_TAGS.suppliers, CACHE_TAGS.purchaseOrders, CACHE_TAGS.transactions], revalidate: 30 }
+)
+

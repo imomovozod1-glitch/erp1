@@ -17,6 +17,7 @@ import {
   Wrench,
   TrendingUp,
   Store,
+  LifeBuoy,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -253,23 +254,42 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href={`/${lang}/settings/profile`} prefetch={true} />}>
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg bg-indigo-100 text-indigo-700 text-xs font-semibold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{profile?.full_name ?? 'User'}</span>
-                <span className="truncate text-xs text-muted-foreground">{profile?.email}</span>
-              </div>
-              <Badge
-                variant="outline"
-                className="ml-auto text-[10px] px-1.5 capitalize border-indigo-200 text-indigo-600"
+            {profile?.role === 'admin' ? (
+              <SidebarMenuButton
+                size="lg"
+                render={<Link href={`/${lang}/support`} prefetch={true} />}
+                className="gap-3 text-slate-700 hover:text-indigo-700 hover:bg-slate-100 transition-colors duration-200"
               >
-                {profile?.role === 'admin' ? 'Support' : profile?.role}
-              </Badge>
-            </SidebarMenuButton>
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors">
+                  <LifeBuoy className="size-4 text-indigo-600 animate-pulse" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">{lang === 'uz' ? 'Qo\'llab-quvvatlash' : lang === 'ru' ? 'Поддержка' : 'Support'}</span>
+                  <span className="truncate text-xs text-muted-foreground">{lang === 'uz' ? 'Yordam xizmati' : lang === 'ru' ? 'Служба поддержки' : 'Help Desk'}</span>
+                </div>
+              </SidebarMenuButton>
+            ) : (
+              <SidebarMenuButton
+                size="lg"
+                render={<Link href={`/${lang}/settings/profile`} prefetch={true} />}
+              >
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarFallback className="rounded-lg bg-indigo-100 text-indigo-700 text-xs font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">{profile?.full_name ?? 'User'}</span>
+                  <span className="truncate text-xs text-muted-foreground">{profile?.email}</span>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="ml-auto text-[10px] px-1.5 capitalize border-indigo-200 text-indigo-600"
+                >
+                  {profile?.role}
+                </Badge>
+              </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

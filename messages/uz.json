@@ -477,5 +477,21 @@
     "thisWeek": "Shu hafta",
     "thisMonth": "Shu oy",
     "thisYear": "Shu yil"
+  },
+  "support": {
+    "title": "Qo'llab-quvvatlash xizmati",
+    "description": "Muammolar yuzaga kelsa, biz bilan bog'laning. Biz har doim yordam berishga tayyormiz.",
+    "contactTelegram": "Telegram orqali bog'lanish",
+    "contactTelegramDesc": "Telegram botimiz orqali tezkor savollarga javob oling.",
+    "contactPhone": "Telefon orqali bog'lanish",
+    "contactPhoneDesc": "Ish vaqti: 9:00 dan 18:00 gacha, dushanbadan shanbagacha.",
+    "contactEmail": "Elektron pochta orqali bog'lanish",
+    "contactEmailDesc": "Xat yuboring, biz 24 soat ichida javob beramiz.",
+    "submitTicket": "Murojaat yuborish",
+    "ticketSubject": "Murojaat mavzusi",
+    "ticketMessage": "Murojaat matni",
+    "ticketSuccess": "Murojaatingiz muvaffaqiyatli yuborildi. Tez orada siz bilan bog'lanamiz!",
+    "liveStatus": "Operatorlarimiz tarmoqda",
+    "liveStatusDesc": "O'rtacha javob berish vaqti: 5 daqiqa"
   }
 }

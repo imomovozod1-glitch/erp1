@@ -286,14 +286,14 @@
       "geoUnsupported": "Your browser does not support geolocation."
     },
     "status": {
-      "draft": "Draft",
-      "pending": "Pending",
-      "confirmed": "Confirmed",
-      "shipped": "Shipped",
-      "delivered": "Delivered",
+      "draft": "New",
+      "pending": "New",
+      "confirmed": "New",
+      "shipped": "New",
+      "delivered": "Completed",
       "cancelled": "Cancelled",
-      "sent": "Sent",
-      "paid": "Paid",
+      "sent": "New",
+      "paid": "Completed",
       "overdue": "Overdue"
     }
   },
@@ -377,10 +377,10 @@
     "supplierCreated": "Supplier added successfully",
     "supplierUpdated": "Supplier updated successfully",
     "status": {
-      "draft": "Draft",
-      "sent": "Sent",
-      "received": "Received",
-      "partially_received": "Partially Received",
+      "draft": "New",
+      "sent": "New",
+      "received": "Completed",
+      "partially_received": "New",
       "cancelled": "Cancelled"
     }
   },
@@ -477,5 +477,21 @@
     "thisWeek": "This Week",
     "thisMonth": "This Month",
     "thisYear": "This Year"
+  },
+  "support": {
+    "title": "Support Service",
+    "description": "If you have any issues, please contact us. We are always ready to help.",
+    "contactTelegram": "Contact via Telegram",
+    "contactTelegramDesc": "Get quick answers via our Telegram bot.",
+    "contactPhone": "Contact via Phone",
+    "contactPhoneDesc": "Working hours: 9:00 to 18:00, Monday to Saturday.",
+    "contactEmail": "Contact via Email",
+    "contactEmailDesc": "Send us an email, we will reply within 24 hours.",
+    "submitTicket": "Submit Ticket",
+    "ticketSubject": "Ticket Subject",
+    "ticketMessage": "Message Details",
+    "ticketSuccess": "Your ticket has been submitted successfully. We will contact you soon!",
+    "liveStatus": "Our operators are online",
+    "liveStatusDesc": "Average response time: 5 minutes"
   }
 }

@@ -64,23 +64,32 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
   const [units, setUnits] = useState<string[]>([])
 
   useEffect(() => {
-    const defaultUnits = [t('piece'), t('kg'), t('liter'), t('meter'), t('package'), t('ton')]
     try {
       const saved = localStorage.getItem('measurement_units')
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const allUnits = Array.from(new Set([...defaultUnits, ...parsed]))
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setUnits(allUnits)
+          setTimeout(() => {
+            setUnits(parsed)
+          }, 0)
           return
         }
       }
     } catch (e) {
       console.error(e)
     }
-    setUnits(defaultUnits)
-  }, [t])
+    const defaultUnits = [
+      lang === 'uz' ? 'Dona' : lang === 'ru' ? 'Шт' : 'Pcs',
+      lang === 'uz' ? 'Kg' : lang === 'ru' ? 'Кг' : 'Kg',
+      lang === 'uz' ? 'Litr' : lang === 'ru' ? 'Литр' : 'Liter',
+      lang === 'uz' ? 'Metr' : lang === 'ru' ? 'Метр' : 'Meter',
+      lang === 'uz' ? 'Qop' : lang === 'ru' ? 'Мешок' : 'Bag',
+      lang === 'uz' ? 'Tonna' : lang === 'ru' ? 'Тонна' : 'Ton'
+    ]
+    setTimeout(() => {
+      setUnits(defaultUnits)
+    }, 0)
+  }, [lang])
 
   const [defaultSku] = useState(() => initialData?.sku || Math.floor(1000 + Math.random() * 9000).toString())
 

@@ -33,7 +33,7 @@ export default async function MovementsPage({
           { label: t('stockMovements') },
         ]}
       />
-      <MovementsTable movements={movements} />
+      <MovementsTable movements={movements} lang={lang} />
     </div>
   )
 }

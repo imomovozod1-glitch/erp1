@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -25,15 +26,24 @@ import type { Profile } from '@/types/database.types'
 interface UsersListProps {
   profiles: Profile[]
   currentUserProfile: Profile | null
+  lang: string
 }
 
-export function UsersList({ profiles: initialProfiles, currentUserProfile }: UsersListProps) {
+export function UsersList({ profiles: initialProfiles, currentUserProfile, lang }: UsersListProps) {
   const t = useTranslations('settings')
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [profiles, setProfiles] = useState<Profile[]>(initialProfiles)
-  const [searchTerm, setSearchTerm] = useState('')
+  const [search, setSearch] = useState('')
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1)
+    }, 0)
+  }, [search])
   const supabase = createClient() as any
 
   const isAdmin = currentUserProfile?.role === 'admin'
@@ -88,9 +98,12 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile }: Use
   // Filter profiles based on search term
   const filteredProfiles = profiles.filter(
     (p) =>
-      p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      p.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.email?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage)
+  const paginated = filteredProfiles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   // Count summaries
   const totalCount = profiles.length
@@ -159,8 +172,8 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile }: Use
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder={tCommon('search') || 'Search...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-9 border-slate-200 focus-visible:ring-indigo-500"
             />
           </div>
@@ -170,6 +183,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile }: Use
             <Table>
               <TableHeader className="bg-slate-50/50">
                 <TableRow>
+                  <TableHead className="w-10 text-center font-semibold text-slate-600">#</TableHead>
                   <TableHead className="w-[280px] font-semibold text-slate-600">User</TableHead>
                   <TableHead className="font-semibold text-slate-600">Email</TableHead>
                   <TableHead className="font-semibold text-slate-600">Role</TableHead>
@@ -180,12 +194,12 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile }: Use
               <TableBody>
                 {filteredProfiles.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 5 : 4} className="h-24 text-center text-slate-400">
+                    <TableCell colSpan={isAdmin ? 6 : 5} className="h-24 text-center text-slate-400">
                       No results found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredProfiles.map((p) => {
+                  paginated.map((p, index) => {
                     const initials = p.full_name
                       ?.split(' ')
                       .map((n) => n[0])
@@ -197,6 +211,9 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile }: Use
 
                     return (
                       <TableRow key={p.id} className="hover:bg-slate-50/30 transition-colors">
+                        <TableCell className="text-center font-medium text-slate-500 text-xs">
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </TableCell>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
@@ -286,6 +303,31 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile }: Use
                 )}
               </TableBody>
             </Table>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between p-4 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="cursor-pointer"
+                >
+                  {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+                </Button>
+                <span className="text-xs text-muted-foreground font-medium">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="cursor-pointer"
+                >
+                  {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

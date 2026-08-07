@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -28,6 +30,11 @@ export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
   const t = useTranslations('hr')
   const tCommon = useTranslations('common')
   const router = useRouter()
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  const totalPages = Math.ceil(departments.length / itemsPerPage)
+  const paginated = departments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <Card>
@@ -35,6 +42,7 @@ export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
               <TableHead>{t('name')}</TableHead>
               <TableHead>{t('description')}</TableHead>
               <TableHead className="w-12.5"></TableHead>
@@ -43,13 +51,16 @@ export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
           <TableBody>
             {departments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
+                <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
                   {tCommon('noData')}
                 </TableCell>
               </TableRow>
             ) : (
-              departments.map((dept) => (
+              paginated.map((dept, index) => (
                 <TableRow key={dept.id}>
+                  <TableCell className="text-center font-medium text-slate-500 text-xs">
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </TableCell>
                   <TableCell className="font-medium">{dept.name}</TableCell>
                   <TableCell>{dept.description || '-'}</TableCell>
                   <TableCell>
@@ -69,6 +80,31 @@ export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+            </Button>
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

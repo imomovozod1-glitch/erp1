@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Search, DollarSign, TrendingUp, TrendingDown, MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -24,12 +24,23 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1)
+    }, 0)
+  }, [search])
 
   const filtered = transactions.filter(
     (tx) =>
       (tx.description ?? '').toLowerCase().includes(search.toLowerCase()) ||
       tx.category.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <Card className="border-0 shadow-sm">
@@ -49,6 +60,7 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
               <TableHead>{tCommon('date')}</TableHead>
               <TableHead>{t('type')}</TableHead>
               <TableHead>{t('category')}</TableHead>
@@ -60,7 +72,7 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12">
+                <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <DollarSign className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -68,8 +80,11 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((tx) => (
+              paginated.map((tx, index) => (
                 <TableRow key={tx.id} className="hover:bg-slate-50/50">
+                  <TableCell className="text-center font-medium text-slate-500 text-xs">
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(tx.transaction_date)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5">
@@ -115,6 +130,31 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+            </Button>
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

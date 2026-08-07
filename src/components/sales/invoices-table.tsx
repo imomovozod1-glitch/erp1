@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Search, MoreHorizontal, Pencil, FileText, Eye, Loader2, Calendar, ShoppingBag, Receipt, User, CheckCircle2 } from 'lucide-react'
@@ -42,6 +42,14 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
   const [items, setItems] = useState<any[]>([])
   const [isLoadingItems, setIsLoadingItems] = useState(false)
   const [isProcessingPayment, setIsProcessingPayment] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1)
+    }, 0)
+  }, [search])
 
   const handleAcceptPayment = async (invoice: any) => {
     setIsProcessingPayment(invoice.id)
@@ -108,6 +116,9 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
       (i.customers?.name ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   return (
     <>
       <Card className="border-0 shadow-sm">
@@ -129,6 +140,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
                 <TableHead className="w-45">{t('invoiceNumber')}</TableHead>
                 <TableHead>{t('customer')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
@@ -141,13 +153,16 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                     {tCommon('noData')}
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((invoice) => (
+                paginated.map((invoice, index) => (
                   <TableRow key={invoice.id} className="group">
+                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
@@ -239,11 +254,36 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                   </TableRow>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+          </TableBody>
+        </Table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+            </Button>
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+            </Button>
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
 
     {/* Details Dialog */}
     <Dialog open={selectedInvoice !== null} onOpenChange={(open) => !open && setSelectedInvoice(null)}>

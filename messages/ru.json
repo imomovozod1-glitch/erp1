@@ -286,14 +286,14 @@
       "geoUnsupported": "Ваш браузер не поддерживает геолокацию."
     },
     "status": {
-      "draft": "Черновик",
-      "pending": "В ожидании",
-      "confirmed": "Подтверждён",
-      "shipped": "Отправлен",
-      "delivered": "Доставлен",
-      "cancelled": "Отменён",
-      "sent": "Отправлен",
-      "paid": "Оплачен",
+      "draft": "Новый",
+      "pending": "Новый",
+      "confirmed": "Новый",
+      "shipped": "Новый",
+      "delivered": "Завершен",
+      "cancelled": "Отменен",
+      "sent": "Новый",
+      "paid": "Завершен",
       "overdue": "Просрочен"
     }
   },
@@ -377,11 +377,11 @@
     "supplierCreated": "Поставщик успешно добавлен",
     "supplierUpdated": "Поставщик успешно обновлён",
     "status": {
-      "draft": "Черновик",
-      "sent": "Отправлен",
-      "received": "Получен",
-      "partially_received": "Частично получен",
-      "cancelled": "Отменён"
+      "draft": "Новый",
+      "sent": "Новый",
+      "received": "Завершен",
+      "partially_received": "Новый",
+      "cancelled": "Отменен"
     }
   },
   "analytics": {
@@ -463,5 +463,21 @@
     "selectCategory": "Все категории",
     "generalDiscount": "Общая скидка",
     "itemDiscount": "Скидка на товар"
+  },
+  "support": {
+    "title": "Служба поддержки",
+    "description": "Если у вас возникнут проблемы, свяжитесь с нами. Мы всегда рады помочь.",
+    "contactTelegram": "Связаться через Telegram",
+    "contactTelegramDesc": "Получите быстрые ответы через нашего Telegram-бота.",
+    "contactPhone": "Связаться по телефону",
+    "contactPhoneDesc": "Рабочее время: с 9:00 до 18:00, с понедельника по субботу.",
+    "contactEmail": "Связаться по электронной почте",
+    "contactEmailDesc": "Отправьте нам письмо, мы ответим в течение 24 часов.",
+    "submitTicket": "Отправить обращение",
+    "ticketSubject": "Тема обращения",
+    "ticketMessage": "Текст обращения",
+    "ticketSuccess": "Ваше обращение успешно отправлено. Мы свяжемся с вами в ближайшее время!",
+    "liveStatus": "Наши операторы онлайн",
+    "liveStatusDesc": "Среднее время ответа: 5 минут"
   }
 }

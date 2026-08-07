@@ -1,11 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Search, Users, ChevronDown, ChevronUp } from 'lucide-react'
+import { Search, Users, MoreHorizontal, Pencil } from 'lucide-react'
+import React from 'react'
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
+
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
@@ -18,8 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal } from 'lucide-react'
-import React from 'react'
+import Link from 'next/link'
 
 interface EmployeesTableProps {
   employees: any[]
@@ -33,8 +36,14 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
   
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'hired' | 'not_hired'>('all')
-  const [expandedRow, setExpandedRow] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1)
+    }, 0)
+  }, [search, statusFilter])
   const filtered = employees.filter((e) => {
     const matchesSearch = (e.profiles?.full_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
                           e.position.toLowerCase().includes(search.toLowerCase()) ||
@@ -43,9 +52,16 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
     return matchesSearch && matchesStatus
   })
 
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  const startItem = filtered.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+  const endItem = Math.min(currentPage * itemsPerPage, filtered.length);
+
   return (
-    <Card className="border-0 shadow-sm">
-      <CardContent className="p-0">
+    <TooltipProvider>
+      <Card className="border-0 shadow-sm">
+        <CardContent className="p-0">
         <div className="flex items-center gap-3 p-4 border-b">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -73,10 +89,12 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
               onClick={() => setStatusFilter('not_hired')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'not_hired' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              {lang === 'uz' ? 'Ishdan bo\'shatilgan' : lang === 'ru' ? 'Уволен' : 'Terminated'}
+              {t("notHired", { fallback: "Ishdan bo'shatilgan" })}
             </button>
           </div>
-          <span className="text-xs text-muted-foreground">{filtered.length} {tCommon('rows')}</span>
+          <span className="text-xs text-muted-foreground font-medium">
+            {lang === 'uz' ? `${filtered.length} tadan ${startItem}-${endItem} ko'rsatilmoqda` : lang === 'ru' ? `Показано ${startItem}-${endItem} из ${filtered.length}` : `Showing ${startItem}-${endItem} of ${filtered.length}`}
+          </span>
         </div>
         <Table>
           <TableHeader>
@@ -103,25 +121,32 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((emp, index) => (
+              paginated.map((emp, index) => (
                 <React.Fragment key={emp.id}>
                   <TableRow 
-                    className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${expandedRow === emp.id ? 'bg-slate-50/80' : ''}`}
-                    onClick={() => setExpandedRow(expandedRow === emp.id ? null : emp.id)}
+                    key={emp.id}
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/${lang}/hr/employees/${emp.id}`)}
                   >
                     <TableCell className="text-center font-medium text-slate-500 text-xs">
-                      {index + 1}
+                      {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2.5">
-                        {expandedRow === emp.id ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs">
                             {emp.profiles?.full_name?.[0] ?? 'E'}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-slate-800">{emp.profiles?.full_name ?? '—'}</p>
+                          <p className="font-semibold text-slate-800">
+                            <Link
+                              href={`/${lang}/hr/employees/${emp.id}`}
+                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-colors"
+                            >
+                              {emp.profiles?.full_name ?? '—'}
+                            </Link>
+                          </p>
                           <p className="text-xs text-muted-foreground">{emp.profiles?.email}</p>
                         </div>
                       </div>
@@ -140,7 +165,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                           {lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed'}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:rose-400 border border-rose-200 dark:border-rose-900/50">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                           {lang === 'uz' ? 'Bo\'shatilgan' : lang === 'ru' ? 'Уволен' : 'Terminated'}
                         </span>
@@ -148,67 +173,63 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </DropdownMenuTrigger>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </DropdownMenuTrigger>
+                            }
+                          />
+                          <TooltipContent side="left">
+                            <p>{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</p>
+                          </TooltipContent>
+                        </Tooltip>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}`)}>
+                            <Users className="mr-2 h-3.5 w-3.5 text-slate-500" />
+                            {lang === 'uz' ? 'Batafsil' : lang === 'ru' ? 'Подробнее' : 'Details'}
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}/edit`)}>
+                            <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
                             {tCommon('edit')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                  {expandedRow === emp.id && (
-                    <TableRow className="bg-slate-50 hover:bg-slate-50">
-                      <TableCell colSpan={9} className="p-0 border-b-2 border-indigo-100">
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
-                          <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-slate-800">{tCommon('name')}</h4>
-                            <p className="text-sm text-slate-600">{emp.profiles?.full_name ?? '—'}</p>
-                            
-                            <h4 className="text-sm font-semibold text-slate-800 mt-4">{t('employeeCode')}</h4>
-                            <p className="text-sm text-slate-600 font-mono bg-white inline-block px-2 py-1 rounded border">{emp.employee_code}</p>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-slate-800">{t('position')}</h4>
-                            <p className="text-sm text-slate-600">{emp.position}</p>
-                            
-                            <h4 className="text-sm font-semibold text-slate-800 mt-4">{t('department')}</h4>
-                            <p className="text-sm text-slate-600">{emp.profiles?.departments?.name ?? '—'}</p>
-                          </div>
-
-                          <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-slate-800">{t('hiredAt')}</h4>
-                            <p className="text-sm text-slate-600">{formatDate(emp.hired_at)}</p>
-
-                            {!emp.is_active && emp.terminated_at && (
-                              <>
-                                <h4 className="text-sm font-semibold text-rose-800 mt-4">
-                                  {t('terminatedAt')}
-                                </h4>
-                                <p className="text-sm text-rose-600">{formatDate(emp.terminated_at)}</p>
-                              </>
-                            )}
-                          </div>
-                          
-                          {emp.notes && (
-                            <div className="col-span-1 md:col-span-3 mt-2 pt-4 border-t border-slate-200">
-                              <h4 className="text-sm font-semibold text-slate-800 mb-1">{tCommon('description')}</h4>
-                              <p className="text-sm text-slate-600">{emp.notes}</p>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </React.Fragment>
               ))
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+            </Button>
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
+    </TooltipProvider>
   )
 }

@@ -1,7 +1,8 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
 import { Search, BarChart3 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -22,16 +23,28 @@ interface SoldProduct {
 
 interface SoldProductsTableProps {
   products: SoldProduct[]
+  lang: string
 }
 
-export function SoldProductsTable({ products }: SoldProductsTableProps) {
+export function SoldProductsTable({ products, lang }: SoldProductsTableProps) {
   const t = useTranslations('analytics')
   const tCommon = useTranslations('common')
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1)
+    }, 0)
+  }, [search])
 
   const filtered = products.filter(
     (p) => p.name.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const totals = filtered.reduce(
     (acc, p) => ({
@@ -60,6 +73,7 @@ export function SoldProductsTable({ products }: SoldProductsTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
               <TableHead className="font-semibold">{t('productName')}</TableHead>
               <TableHead className="text-right">{t('costPrice')}</TableHead>
               <TableHead className="text-right">{t('sellingPrice')}</TableHead>
@@ -69,19 +83,22 @@ export function SoldProductsTable({ products }: SoldProductsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-12">
+             {filtered.length === 0 ? (
+               <TableRow>
+                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <BarChart3 className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{t('noSalesData')}</p>
                   </div>
                 </TableCell>
               </TableRow>
-            ) : (
-              <>
-                {filtered.map((product, idx) => (
-                  <TableRow key={idx} className="hover:bg-slate-50/50 transition-colors">
+             ) : (
+               <>
+                 {paginated.map((product, idx) => (
+                   <TableRow key={idx} className="hover:bg-slate-50/50 transition-colors">
+                     <TableCell className="text-center font-medium text-slate-500 text-xs">
+                       {(currentPage - 1) * itemsPerPage + idx + 1}
+                     </TableCell>
                     <TableCell className="font-medium text-slate-800">{product.name}</TableCell>
                     <TableCell className="text-right text-muted-foreground">{formatCurrency(product.costPrice)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(product.sellingPrice)}</TableCell>
@@ -94,11 +111,12 @@ export function SoldProductsTable({ products }: SoldProductsTableProps) {
                     </TableCell>
                   </TableRow>
                 ))}
-                {/* Totals row */}
-                <TableRow className="bg-slate-50 border-t-2 font-semibold">
-                  <TableCell>{tCommon('total')}</TableCell>
-                  <TableCell />
-                  <TableCell />
+                 {/* Totals row */}
+                 <TableRow className="bg-slate-50 border-t-2 font-semibold">
+                   <TableCell className="text-center text-xs">#</TableCell>
+                   <TableCell>{tCommon('total')}</TableCell>
+                   <TableCell />
+                   <TableCell />
                   <TableCell className="text-right">{formatNumber(totals.quantity)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(totals.totalSum)}</TableCell>
                   <TableCell className="text-right">
@@ -111,6 +129,31 @@ export function SoldProductsTable({ products }: SoldProductsTableProps) {
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+            </Button>
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

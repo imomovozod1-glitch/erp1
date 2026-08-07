@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -31,12 +31,23 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1)
+    }, 0)
+  }, [search])
 
   const filtered = categories.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.slug.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const handleDelete = async (id: string) => {
     setIsDeleting(id)
@@ -73,6 +84,7 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
               <TableHead className="font-semibold">{tCommon('name')}</TableHead>
               <TableHead>{t('slug')}</TableHead>
               <TableHead>{tCommon('description')}</TableHead>
@@ -80,18 +92,21 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-12">
+             {filtered.length === 0 ? (
+               <TableRow>
+                 <TableCell colSpan={5} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <FolderTree className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
                   </div>
                 </TableCell>
               </TableRow>
-            ) : (
-              filtered.map((category) => (
-                <TableRow key={category.id} className="hover:bg-slate-50/50 transition-colors">
+             ) : (
+               paginated.map((category, index) => (
+                 <TableRow key={category.id} className="hover:bg-slate-50/50 transition-colors">
+                   <TableCell className="text-center font-medium text-slate-500 text-xs">
+                     {(currentPage - 1) * itemsPerPage + index + 1}
+                   </TableCell>
                   <TableCell>
                     <p className="font-medium text-slate-800">{category.name}</p>
                   </TableCell>
@@ -133,6 +148,31 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+            </Button>
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

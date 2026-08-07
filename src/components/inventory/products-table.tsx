@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -15,8 +15,6 @@ import {
   Upload,
   Power,
   Download,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateProducts } from "@/lib/data/revalidate";
@@ -42,6 +40,7 @@ import {
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import * as XLSX from "xlsx";
 import React from "react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface ProductsTableProps {
   products: any[];
@@ -56,8 +55,16 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1);
+    }, 0);
+  }, [search, statusFilter]);
+
+ 
   const downloadExcelTemplate = () => {
     const templateData = [
       {
@@ -100,7 +107,8 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     const matchesStatus = statusFilter === 'all' ? true : statusFilter === 'active' ? p.is_active : !p.is_active;
     return matchesSearch && matchesStatus;
   });
-
+ const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const handleDelete = async (id: string) => {
     const product = products.find(p => p.id === id);
     if (product && product.stock > 0) {
@@ -266,8 +274,11 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     e.target.value = "";
   };
 
+  const startItem = filtered.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+  const endItem = Math.min(currentPage * itemsPerPage, filtered.length);
+
   return (
-    <>
+    <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           {/* Toolbar */}
@@ -340,17 +351,26 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
-                onClick={() => setIsScanModalOpen(true)}
-                variant="outline"
-                size="sm"
-                className="h-9 gap-2 border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70 hover:text-indigo-800 transition-colors font-medium text-xs rounded-lg"
-              >
-                <Sparkles className="h-4 w-4 text-indigo-600" />
-                {t("inventory.importAI")}
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {filtered.length} {t("common.rows")}
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      onClick={() => setIsScanModalOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className="h-9 gap-2 border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70 hover:text-indigo-800 transition-colors font-medium text-xs rounded-lg cursor-pointer"
+                    >
+                      <Sparkles className="h-4 w-4 text-indigo-600" />
+                      {t("inventory.importAI")}
+                    </Button>
+                  }
+                />
+                <TooltipContent>
+                  <p>{lang === 'uz' ? 'AI orqali chek/fakturani skanerlash' : lang === 'ru' ? 'Сканировать чек/фактуру с помощью ИИ' : 'Scan receipt/invoice using AI'}</p>
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-xs text-muted-foreground font-medium">
+                {lang === 'uz' ? `${filtered.length} tadan ${startItem}-${endItem} ko'rsatilmoqda` : lang === 'ru' ? `Показано ${startItem}-${endItem} из ${filtered.length}` : `Showing ${startItem}-${endItem} of ${filtered.length}`}
               </span>
             </div>
           </div>
@@ -385,162 +405,156 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((product, index) => (
-                  <React.Fragment key={product.id}>
-                    <TableRow
-                      className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${expandedRow === product.id ? 'bg-slate-50/80' : ''}`}
-                      onClick={() => setExpandedRow(expandedRow === product.id ? null : product.id)}
-                    >
-                      <TableCell className="text-center font-medium text-slate-500 text-xs">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {expandedRow === product.id ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
-                          <div>
-                            <p className="font-medium text-slate-800">
+                paginated.map((product, index) => (
+                  <TableRow
+                    key={product.id}
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/${lang}/inventory/products/${product.id}`)}
+                  >
+                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <p className="font-semibold text-slate-800">
+                            <Link
+                              href={`/${lang}/inventory/products/${product.id}`}
+                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-colors"
+                            >
                               {product.name}
+                            </Link>
+                          </p>
+                          {product.description && (
+                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                              {product.description}
                             </p>
-                            {product.description && (
-                              <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                {product.description}
-                              </p>
-                            )}
-                          </div>
+                          )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
-                          {product.sku}
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {product.categories?.name ?? "—"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="text-sm font-medium text-slate-600">
-                          {formatCurrency(product.cost_price)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span className="text-sm font-medium text-slate-600">
-                          {formatCurrency(product.incoming_cost || 0)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatCurrency(product.price)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <span
-                          className={`text-sm font-semibold ${
-                            product.stock === 0
-                              ? "text-red-600"
-                              : product.stock <= product.min_stock
-                                ? "text-orange-600"
-                                : "text-emerald-600"
-                          }`}
-                        >
-                          {formatNumber(product.stock)} {product.unit}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={product.is_active ? "default" : "secondary"}
-                          className={
-                            product.is_active
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                              : ""
-                          }
-                        >
-                          {product.is_active ? t("common.active") : t("common.inactive")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                        {product.sku}
+                      </code>
+                    </TableCell>
+                    <TableCell>{product.categories?.name ?? "—"}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(product.cost_price)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium text-slate-600">
+                      {formatCurrency(product.incoming_cost || 0)}
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-indigo-600">
+                      {formatCurrency(product.price)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      <span
+                        className={
+                          product.stock <= product.min_stock
+                            ? "text-rose-600 font-bold"
+                            : "text-slate-700"
+                        }
+                      >
+                        {formatNumber(product.stock)} {product.unit}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={product.is_active ? "default" : "secondary"}
+                        className={
+                          product.is_active
+                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                            : ""
+                        }
+                      >
+                        {product.is_active ? t("common.active") : t("common.inactive")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <Tooltip>
+                          <TooltipTrigger
                             render={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
+                              <DropdownMenuTrigger
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </DropdownMenuTrigger>
+                            }
+                          />
+                          <TooltipContent side="left">
+                            <p>{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            render={
+                              <Link
+                                href={`/${lang}/inventory/products/${product.id}`}
                               />
                             }
                           >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem
-                              render={
-                                <Link
-                                  href={`/${lang}/inventory/products/${product.id}/edit`}
-                                  prefetch={true}
-                                />
-                              }
-                            >
-                              <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleToggleStatus(product.id, product.is_active)}
-                              disabled={isUpdatingStatus === product.id}
-                            >
-                              <Power className="mr-2 h-3.5 w-3.5" />{" "}
-                              {product.is_active ? t("common.inactive") : t("common.active")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                    {expandedRow === product.id && (
-                      <TableRow className="bg-slate-50 hover:bg-slate-50">
-                        <TableCell colSpan={10} className="p-0 border-b-2 border-indigo-100">
-                          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
-                            <div className="space-y-2">
-                              <h4 className="text-sm font-semibold text-slate-800">{t("inventory.productName")}</h4>
-                              <p className="text-sm text-slate-600">{product.name}</p>
-                              
-                              <h4 className="text-sm font-semibold text-slate-800 mt-4">{t("inventory.sku")}</h4>
-                              <p className="text-sm text-slate-600 font-mono bg-white inline-block px-2 py-1 rounded border">{product.sku}</p>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <h4 className="text-sm font-semibold text-slate-800">{t("inventory.costPrice")}</h4>
-                              <p className="text-sm text-slate-600">{formatCurrency(product.cost_price)}</p>
-                              
-                              <h4 className="text-sm font-semibold text-slate-800 mt-4">{t("inventory.price")}</h4>
-                              <p className="text-sm text-slate-600 font-bold text-indigo-600">{formatCurrency(product.price)}</p>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <h4 className="text-sm font-semibold text-slate-800">{t("inventory.stock")}</h4>
-                              <p className="text-sm text-slate-600">{formatNumber(product.stock)} {product.unit}</p>
-                              
-                              <h4 className="text-sm font-semibold text-slate-800 mt-4">{t("inventory.minStock", { fallback: 'Minimal zaxira' })}</h4>
-                              <p className="text-sm text-slate-600">{formatNumber(product.min_stock)} {product.unit}</p>
-                            </div>
-                            
-                            {product.description && (
-                              <div className="col-span-1 md:col-span-3 mt-2 pt-4 border-t border-slate-200">
-                                <h4 className="text-sm font-semibold text-slate-800 mb-1">{t("common.description")}</h4>
-                                <p className="text-sm text-slate-600">{product.description}</p>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
+                            <Package className="mr-2 h-3.5 w-3.5 text-slate-500" />{" "}
+                            {lang === 'uz' ? 'Batafsil' : lang === 'ru' ? 'Подробнее' : 'Details'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            render={
+                              <Link
+                                href={`/${lang}/inventory/products/${product.id}/edit`}
+                                prefetch={true}
+                              />
+                            }
+                          >
+                            <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleToggleStatus(product.id, product.is_active)}
+                            disabled={isUpdatingStatus === product.id}
+                          >
+                            <Power className="mr-2 h-3.5 w-3.5" />{" "}
+                            {product.is_active ? t("common.inactive") : t("common.active")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="cursor-pointer"
+              >
+                {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+              </Button>
+              <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md">
+                {currentPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="cursor-pointer"
+              >
+                {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
       <AIStockScannerModal
         open={isScanModalOpen}
         onOpenChange={setIsScanModalOpen}
       />
-    </>
+    </TooltipProvider>
   );
 }

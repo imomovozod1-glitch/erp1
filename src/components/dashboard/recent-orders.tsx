@@ -6,12 +6,12 @@ import { formatCurrency } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 
 const STATUS_COLORS = {
-  draft: 'bg-slate-100 text-slate-600',
-  pending: 'bg-amber-100 text-amber-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  shipped: 'bg-purple-100 text-purple-700',
-  delivered: 'bg-emerald-100 text-emerald-700',
-  cancelled: 'bg-red-100 text-red-700',
+  draft: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  pending: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  confirmed: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  shipped: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+  cancelled: 'bg-rose-50 text-rose-700 border-rose-200/60',
 }
 
 interface RecentOrdersProps {
@@ -69,8 +69,8 @@ export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${
-                    STATUS_COLORS[order.status as keyof typeof STATUS_COLORS] ?? 'bg-slate-100 text-slate-600'
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                    STATUS_COLORS[order.status as keyof typeof STATUS_COLORS] ?? 'bg-slate-50 text-slate-600 border-slate-200/60'
                   }`}
                 >
                   {t(`status.${order.status}`)}

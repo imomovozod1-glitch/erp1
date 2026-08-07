@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Search, ShoppingCart, MoreHorizontal, Eye, Loader2, Calendar, FileText, Truck, Receipt } from 'lucide-react'
@@ -21,11 +21,11 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 text-slate-600',
-  sent: 'bg-blue-100 text-blue-700',
-  received: 'bg-emerald-100 text-emerald-700',
-  partially_received: 'bg-amber-100 text-amber-700',
-  cancelled: 'bg-red-100 text-red-700',
+  draft: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  sent: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  received: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+  partially_received: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  cancelled: 'bg-rose-50 text-rose-700 border-rose-200/60',
 }
 
 interface PurchaseOrdersTableProps {
@@ -41,6 +41,14 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
   const [items, setItems] = useState<any[]>([])
   const [isLoadingItems, setIsLoadingItems] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1)
+    }, 0)
+  }, [search])
 
   const handleOpenDetails = async (order: any) => {
     setSelectedOrder(order)
@@ -66,6 +74,9 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
       o.po_number.toLowerCase().includes(search.toLowerCase()) ||
       (o.suppliers?.name ?? '').toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <>
@@ -106,10 +117,10 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((order, index) => (
+                paginated.map((order, index) => (
                   <TableRow key={order.id} className="hover:bg-slate-50/50 transition-colors">
                     <TableCell className="text-center font-medium text-slate-500 text-xs">
-                      {index + 1}
+                      {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
                     <TableCell>
                       <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono font-semibold">
@@ -120,7 +131,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                     <TableCell className="text-muted-foreground">{formatDate(order.order_date)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(order.total_amount)}</TableCell>
                     <TableCell>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 text-slate-600 border-slate-200/60'}`}>
                         {t(`status.${order.status}`)}
                       </span>
                     </TableCell>
@@ -143,8 +154,33 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+            </Button>
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
 
       {/* Details Dialog */}
       <Dialog open={selectedOrder !== null} onOpenChange={(open) => !open && setSelectedOrder(null)}>

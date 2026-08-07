@@ -496,7 +496,7 @@ export function AnalyticsClient({ stats, lang }: AnalyticsClientProps) {
       {/* Sold Products Table */}
       <div>
         <h2 className="text-lg font-semibold text-slate-900 mb-3">{t('soldProducts')}</h2>
-        <SoldProductsTable products={aggregatedProducts} />
+        <SoldProductsTable products={aggregatedProducts} lang={lang} />
       </div>
     </div>
   )

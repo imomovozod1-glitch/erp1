@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
+import { PageClock } from '@/components/shared/page-clock'
 import { CashboxClient } from '@/components/finance/cashbox-client'
 
 export const metadata: Metadata = { title: 'Cashbox' }
@@ -19,7 +20,9 @@ export default async function CashboxPage({ params }: { params: Promise<{ lang: 
           { label: t('title') },
           { label: t('cashbox') },
         ]}
-      />
+      >
+        <PageClock lang={lang} />
+      </PageHeader>
       <div className="px-4 md:px-8">
         <CashboxClient lang={lang} />
       </div>

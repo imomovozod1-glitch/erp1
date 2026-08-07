@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { Search, ArrowDownRight, ArrowUpRight, Settings2, Activity } from 'lucide-react'
@@ -16,18 +17,30 @@ import {
 interface MovementsTableProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   movements: any[]
+  lang: string
 }
 
-export function MovementsTable({ movements }: MovementsTableProps) {
+export function MovementsTable({ movements, lang }: MovementsTableProps) {
   const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCurrentPage(1)
+    }, 0)
+  }, [search])
 
   const filtered = movements.filter(
     (m) =>
       m.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
       m.reason?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const getMovementIcon = (type: string) => {
     switch (type) {
@@ -66,6 +79,7 @@ export function MovementsTable({ movements }: MovementsTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
               <TableHead className="w-[180px]">{tCommon('date')}</TableHead>
               <TableHead>{t('productName')}</TableHead>
               <TableHead>{tCommon('type')}</TableHead>
@@ -78,7 +92,7 @@ export function MovementsTable({ movements }: MovementsTableProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
+                <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Activity className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -86,8 +100,11 @@ export function MovementsTable({ movements }: MovementsTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((movement) => (
+              paginated.map((movement, index) => (
                 <TableRow key={movement.id} className="hover:bg-slate-50/50 transition-colors">
+                  <TableCell className="text-center font-medium text-slate-500 text-xs">
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </TableCell>
                   <TableCell className="text-sm text-slate-600">
                     {format(new Date(movement.created_at), 'MMM d, yyyy HH:mm')}
                   </TableCell>
@@ -121,6 +138,31 @@ export function MovementsTable({ movements }: MovementsTableProps) {
             )}
           </TableBody>
         </Table>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+            </Button>
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="cursor-pointer"
+            >
+              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

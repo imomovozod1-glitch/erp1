@@ -47,6 +47,7 @@ export default async function UsersSettingsPage({
       <UsersList
         profiles={profiles || []}
         currentUserProfile={currentUserProfile}
+        lang={lang}
       />
     </div>
   )
