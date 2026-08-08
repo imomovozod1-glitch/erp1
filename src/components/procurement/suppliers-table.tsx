@@ -136,10 +136,6 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                             </TooltipContent>
                           </Tooltip>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}`)}>
-                              <Truck className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                              {lang === 'uz' ? 'Batafsil' : lang === 'ru' ? 'Подробнее' : 'Details'}
-                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}/edit`)}>
                               <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
                               {tCommon('edit')}

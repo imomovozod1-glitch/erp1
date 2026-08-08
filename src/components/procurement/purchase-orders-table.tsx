@@ -38,9 +38,6 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [selectedOrder, setSelectedOrder] = useState<any>(null)
-  const [items, setItems] = useState<any[]>([])
-  const [isLoadingItems, setIsLoadingItems] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -49,25 +46,6 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
       setCurrentPage(1)
     }, 0)
   }, [search])
-
-  const handleOpenDetails = async (order: any) => {
-    setSelectedOrder(order)
-    setIsLoadingItems(true)
-    try {
-      const supabase = createClient() as any
-      const { data, error } = await supabase
-        .from('purchase_order_items')
-        .select('*, products(name)')
-        .eq('po_id', order.id)
-      
-      if (error) throw error
-      setItems(data || [])
-    } catch (err: any) {
-      toast.error(err.message || 'Xatolik yuz berdi')
-    } finally {
-      setIsLoadingItems(false)
-    }
-  }
 
   const filtered = orders.filter(
     (o) =>
@@ -103,7 +81,6 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                 <TableHead>{tCommon('date')}</TableHead>
                 <TableHead className="text-right">{tCommon('total')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
-                <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -118,7 +95,11 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                 </TableRow>
               ) : (
                 paginated.map((order, index) => (
-                  <TableRow key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                  <TableRow 
+                    key={order.id} 
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/${lang}/procurement/purchase-orders/${order.id}`)}
+                  >
                     <TableCell className="text-center font-medium text-slate-500 text-xs">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
@@ -134,20 +115,6 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 text-slate-600 border-slate-200/60'}`}>
                         {t(`status.${order.status}`)}
                       </span>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenDetails(order)}>
-                            <Eye className="mr-2 h-3.5 w-3.5" /> {tCommon('view')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
@@ -181,114 +148,6 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
         )}
       </CardContent>
     </Card>
-
-      {/* Details Dialog */}
-      <Dialog open={selectedOrder !== null} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-        <DialogContent className="bg-white rounded-xl shadow-lg border border-slate-200 sm:max-w-xl w-full">
-          <DialogHeader className="border-b pb-4 flex flex-row items-center gap-3">
-            <div className="h-10  rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-              <Receipt className="h-5 w-5" />
-            </div>
-            <div>
-              <DialogTitle className="text-lg font-bold text-slate-800">
-                {selectedOrder?.po_number}
-              </DialogTitle>
-              <p className="text-xs text-slate-500 font-sans">
-                {t('purchaseOrders')}
-              </p>
-            </div>
-          </DialogHeader>
-
-          {selectedOrder && (
-            <div className="space-y-6 pt-4">
-              {/* Order Info Grid */}
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg text-sm">
-                <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                    <Truck className="h-3.5 w-3.5" />
-                    {t('supplier')}
-                  </span>
-                  <p className="font-semibold text-slate-800">{selectedOrder.suppliers?.name ?? '—'}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {tCommon('date')}
-                  </span>
-                  <p className="font-semibold text-slate-800">{formatDate(selectedOrder.order_date)}</p>
-                </div>
-                {selectedOrder.notes && (
-                  <div className="col-span-2 space-y-1 pt-2 border-t border-slate-200/60">
-                    <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                      <FileText className="h-3.5 w-3.5" />
-                      {tCommon('notes')}
-                    </span>
-                    <p className="text-slate-700 whitespace-pre-wrap">{selectedOrder.notes}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Items Section */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-slate-800 text-sm">{t('product')}</h4>
-                
-                {isLoadingItems ? (
-                  <div className="flex items-center justify-center py-10">
-                    <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-                  </div>
-                ) : (
-                  <div className="border rounded-lg overflow-x-auto w-full">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-50/50">
-                          <TableHead className="h-9 py-1.5">{t('product')}</TableHead>
-                          <TableHead className="h-9 py-1.5 text-right">{t('quantity')}</TableHead>
-                          <TableHead className="h-9 py-1.5 text-right">{t('unitCost')}</TableHead>
-                          <TableHead className="h-9 py-1.5 text-right">{t('totalCost')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {items.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-6 text-slate-500 text-sm">
-                              {tCommon('noData')}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          items.map((item) => (
-                            <TableRow key={item.id} className="hover:bg-slate-50/50">
-                              <TableCell className="py-2.5 font-medium text-slate-800">
-                                {item.products?.name ?? '—'}
-                              </TableCell>
-                              <TableCell className="py-2.5 text-right text-slate-700">
-                                {item.quantity}
-                              </TableCell>
-                              <TableCell className="py-2.5 text-right text-slate-700">
-                                {formatCurrency(item.unit_cost)}
-                              </TableCell>
-                              <TableCell className="py-2.5 text-right font-semibold text-slate-900">
-                                {formatCurrency(item.total_cost)}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                        <TableRow className="bg-slate-50 font-semibold border-t">
-                          <TableCell colSpan={3} className="py-2.5 text-right text-slate-700">
-                            {tCommon('total')}:
-                          </TableCell>
-                          <TableCell className="py-2.5 text-right text-indigo-700 text-base">
-                            {formatCurrency(selectedOrder.total_amount)}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   )
 }

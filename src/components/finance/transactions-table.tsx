@@ -81,7 +81,11 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
               </TableRow>
             ) : (
               paginated.map((tx, index) => (
-                <TableRow key={tx.id} className="hover:bg-slate-50/50">
+                <TableRow 
+                  key={tx.id} 
+                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
+                >
                   <TableCell className="text-center font-medium text-slate-500 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
@@ -111,7 +115,7 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                       {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger>
                         <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">

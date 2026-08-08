@@ -404,7 +404,36 @@
     "avgOrderValue": "O'rtacha sotuv qiymati",
     "noSalesData": "Sotuv ma'lumotlari hali yo'q",
     "revenue": "Daromad",
-    "cost": "Xarajat"
+    "cost": "Xarajat",
+    "description": "Biznesingiz ko'rsatkichlari va o'sishini kuzatib boring.",
+    "sales": "Umumiy Sotuv",
+    "activeCustomers": "Faol Mijozlar",
+    "revenueOverTime": "Vaqt bo'yicha Daromad",
+    "salesByCategory": "Kategoriya bo'yicha Sotuvlar",
+    "period": "Davr",
+    "thisWeek": "Shu hafta",
+    "thisYear": "Shu yil",
+    "presets": {
+      "today": "Bugun",
+      "yesterday": "Kecha",
+      "week": "Oxirgi 7 kun",
+      "month": "Oxirgi 30 kun",
+      "thisMonth": "Shu oy",
+      "lastMonth": "O'tgan oy",
+      "all": "Barchasi",
+      "custom": "Boshqa muddat"
+    },
+    "customFilter": {
+      "title": "Muddatni tanlash",
+      "singleDay": "Yagona kun",
+      "dateRange": "Oraliq muddat",
+      "date": "Sana",
+      "startTime": "Boshlanish vaqti",
+      "endTime": "Tugash vaqti",
+      "startDateTime": "Boshlanish sanasi va vaqti",
+      "endDateTime": "Tugash sanasi va vaqti",
+      "confirm": "Tasdiqlash"
+    }
   },
   "settings": {
     "title": "Sozlamalar",
@@ -464,20 +493,7 @@
     "generalDiscount": "Umumiy chegirma",
     "itemDiscount": "Mahsulot chegirmasi"
   },
-  "analytics": {
-    "title": "Analitika O'zlashtirishi",
-    "description": "Biznesingiz ko'rsatkichlari va o'sishini kuzatib boring.",
-    "revenue": "Umumiy Daromad",
-    "sales": "Umumiy Sotuv",
-    "activeCustomers": "Faol Mijozlar",
-    "topProducts": "Top Mahsulotlar",
-    "revenueOverTime": "Vaqt bo'yicha Daromad",
-    "salesByCategory": "Kategoriya bo'yicha Sotuvlar",
-    "period": "Davr",
-    "thisWeek": "Shu hafta",
-    "thisMonth": "Shu oy",
-    "thisYear": "Shu yil"
-  },
+
   "support": {
     "title": "Qo'llab-quvvatlash xizmati",
     "description": "Muammolar yuzaga kelsa, biz bilan bog'laning. Biz har doim yordam berishga tayyormiz.",

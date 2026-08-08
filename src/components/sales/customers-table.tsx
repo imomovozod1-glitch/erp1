@@ -114,7 +114,11 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
               </TableRow>
             ) : (
               paginated.map((customer, index) => (
-                <TableRow key={customer.id} className="hover:bg-slate-50/50">
+                <TableRow 
+                  key={customer.id} 
+                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/${lang}/sales/customers/${customer.id}/edit`)}
+                >
                   <TableCell className="text-center font-medium text-slate-500 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
@@ -138,7 +142,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                       {customer.is_active ? tCommon('active') : tCommon('inactive')}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <Tooltip>
                           <TooltipTrigger

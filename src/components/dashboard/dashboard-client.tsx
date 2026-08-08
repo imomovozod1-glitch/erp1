@@ -38,6 +38,10 @@ interface DashboardClientProps {
     expenseRows: any[]
     lowStockRows: any[]
     pendingInvoices: number | null
+    totalCashboxBalance?: number
+    warehouseValue?: number
+    totalReceivables?: number
+    totalPayables?: number
   }
   analytics: {
     aggregatedProducts: any[]
@@ -91,7 +95,73 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     expenseRows,
     lowStockRows,
     pendingInvoices,
+    totalCashboxBalance = 0,
+    warehouseValue = 0,
+    totalReceivables = 0,
+    totalPayables = 0,
   } = stats
+
+  const [realCashboxBalance, setRealCashboxBalance] = useState(totalCashboxBalance)
+  const [realWarehouseValue, setRealWarehouseValue] = useState(warehouseValue)
+  const [realReceivables, setRealReceivables] = useState(totalReceivables)
+  const [realPayables, setRealPayables] = useState(totalPayables)
+
+  useEffect(() => {
+    // If local storage contains data, we update balances to make them accurate for demo/local fallback too!
+    const localCash = localStorage.getItem('erp_cashboxes')
+    if (localCash) {
+      try {
+        const parsed = JSON.parse(localCash)
+        const sum = parsed.reduce((acc: number, c: any) => acc + (Number(c.balance) || 0), 0)
+        setRealCashboxBalance(sum)
+      } catch (e) {
+        console.error(e)
+      }
+    } else {
+      setRealCashboxBalance(totalCashboxBalance)
+    }
+
+    const localInv = localStorage.getItem('erp_invoices')
+    if (localInv) {
+      try {
+        const parsed = JSON.parse(localInv)
+        const unpaid = parsed.filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
+        const sum = unpaid.reduce((acc: number, i: any) => acc + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
+        setRealReceivables(sum)
+      } catch (e) {
+        console.error(e)
+      }
+    } else {
+      setRealReceivables(totalReceivables)
+    }
+
+    const localProd = localStorage.getItem('erp_products')
+    if (localProd) {
+      try {
+        const parsed = JSON.parse(localProd)
+        const sum = parsed.reduce((acc: number, p: any) => acc + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
+        setRealWarehouseValue(sum)
+      } catch (e) {
+        console.error(e)
+      }
+    } else {
+      setRealWarehouseValue(warehouseValue)
+    }
+
+    const localPo = localStorage.getItem('erp_purchase_orders')
+    if (localPo) {
+      try {
+        const parsed = JSON.parse(localPo)
+        const unpaid = parsed.filter((po: any) => po.status !== 'received' && po.status !== 'cancelled')
+        const sum = unpaid.reduce((acc: number, po: any) => acc + (Number(po.total_amount) || 0), 0)
+        setRealPayables(sum)
+      } catch (e) {
+        console.error(e)
+      }
+    } else {
+      setRealPayables(totalPayables)
+    }
+  }, [totalCashboxBalance, totalReceivables, warehouseValue, totalPayables])
 
   // Date constants (initialized once to keep render pure)
   const [now] = useState(() => new Date())
@@ -229,8 +299,6 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     pendingInvoices: td('pendingInvoices'),
   }
 
-  const estimatedWarehouseValue = (totalProducts ?? 0) * 1250000
-
   return (
     <div className="space-y-6">
       {/* Top Bar with Period Presets */}
@@ -353,16 +421,22 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
             <div className="space-y-1">
               <span className="text-xs text-slate-500 font-semibold uppercase">{t.cashBalance}</span>
               <h3 className="text-2xl font-extrabold text-blue-700 tracking-tight">
-                {formatCurrency(metrics.profit * 0.85)}
+                {formatCurrency(realCashboxBalance)}
               </h3>
             </div>
             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
               <Layers className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 gap-1 truncate">
-            <span className="text-emerald-600 font-semibold">{td('incomeText', { amount: formatCurrency((pendingInvoices ?? 0) * 850000) })}</span>
-            <span className="text-rose-600 font-semibold">{td('debtText', { amount: formatCurrency(stats.lowStockRows.length * 600000) })}</span>
+          <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 gap-1 border-t pt-2 mt-2">
+            <div className="flex flex-col">
+              <span className="text-slate-400 font-medium text-[9px] uppercase">{t.receivables}</span>
+              <span className="font-bold text-emerald-600 mt-0.5">{formatCurrency(realReceivables)}</span>
+            </div>
+            <div className="flex flex-col text-right">
+              <span className="text-slate-400 font-medium text-[9px] uppercase">{t.payables}</span>
+              <span className="font-bold text-rose-600 mt-0.5">{formatCurrency(realPayables)}</span>
+            </div>
           </div>
         </div>
 
@@ -373,7 +447,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
             <div className="space-y-1">
               <span className="text-xs text-slate-500 font-semibold uppercase">{t.warehouseValue}</span>
               <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                {formatCurrency(estimatedWarehouseValue)}
+                {formatCurrency(realWarehouseValue)}
               </h3>
             </div>
             <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">

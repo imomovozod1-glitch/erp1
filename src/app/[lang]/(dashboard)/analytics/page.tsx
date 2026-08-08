@@ -1,7 +1,6 @@
 import { getCachedAnalyticsStats } from '@/lib/data/queries'
 import { AnalyticsClient } from '@/components/analytics/analytics-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { getTranslations } from 'next-intl/server'
 
 interface AnalyticsPageProps {
@@ -23,9 +22,7 @@ export default async function AnalyticsPage({ params: { lang } }: AnalyticsPageP
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') }
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <AnalyticsClient lang={lang} stats={stats} />
     </div>

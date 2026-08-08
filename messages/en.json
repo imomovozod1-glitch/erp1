@@ -404,7 +404,37 @@
     "avgOrderValue": "Avg Order Value",
     "noSalesData": "No sales data yet",
     "revenue": "Revenue",
-    "cost": "Cost"
+    "cost": "Cost",
+    "description": "Monitor your business metrics and growth.",
+    "sales": "Total Sales",
+    "activeCustomers": "Active Customers",
+    "revenueOverTime": "Revenue Over Time",
+    "salesByCategory": "Sales by Category",
+    "period": "Period",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "thisYear": "This Year",
+    "presets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "week": "Last 7 Days",
+      "month": "Last 30 Days",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "all": "All Time",
+      "custom": "Custom Range"
+    },
+    "customFilter": {
+      "title": "Select Period",
+      "singleDay": "Single Day",
+      "dateRange": "Date Range",
+      "date": "Date",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "startDateTime": "Start Date & Time",
+      "endDateTime": "End Date & Time",
+      "confirm": "Apply"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -463,20 +493,6 @@
     "selectCategory": "All Categories",
     "generalDiscount": "General Discount",
     "itemDiscount": "Item Discount"
-  },
-  "analytics": {
-    "title": "Analytics Overview",
-    "description": "Monitor your business metrics and growth.",
-    "revenue": "Total Revenue",
-    "sales": "Total Sales",
-    "activeCustomers": "Active Customers",
-    "topProducts": "Top Products",
-    "revenueOverTime": "Revenue Over Time",
-    "salesByCategory": "Sales by Category",
-    "period": "Period",
-    "thisWeek": "This Week",
-    "thisMonth": "This Month",
-    "thisYear": "This Year"
   },
   "support": {
     "title": "Support Service",

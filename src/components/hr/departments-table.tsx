@@ -57,13 +57,17 @@ export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
               </TableRow>
             ) : (
               paginated.map((dept, index) => (
-                <TableRow key={dept.id}>
+                <TableRow 
+                  key={dept.id}
+                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  onClick={() => router.push(`/${lang}/hr/departments/${dept.id}/edit`)}
+                >
                   <TableCell className="text-center font-medium text-slate-500 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
                   <TableCell className="font-medium">{dept.name}</TableCell>
                   <TableCell>{dept.description || '-'}</TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted">
                         <MoreHorizontal className="h-4 w-4" />

@@ -492,16 +492,6 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                           <DropdownMenuItem
                             render={
                               <Link
-                                href={`/${lang}/inventory/products/${product.id}`}
-                              />
-                            }
-                          >
-                            <Package className="mr-2 h-3.5 w-3.5 text-slate-500" />{" "}
-                            {lang === 'uz' ? 'Batafsil' : lang === 'ru' ? 'Подробнее' : 'Details'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            render={
-                              <Link
                                 href={`/${lang}/inventory/products/${product.id}/edit`}
                                 prefetch={true}
                               />

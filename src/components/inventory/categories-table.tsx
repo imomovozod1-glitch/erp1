@@ -102,48 +102,52 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
                 </TableCell>
               </TableRow>
              ) : (
-               paginated.map((category, index) => (
-                 <TableRow key={category.id} className="hover:bg-slate-50/50 transition-colors">
-                   <TableCell className="text-center font-medium text-slate-500 text-xs">
-                     {(currentPage - 1) * itemsPerPage + index + 1}
-                   </TableCell>
-                  <TableCell>
-                    <p className="font-medium text-slate-800">{category.name}</p>
-                  </TableCell>
-                  <TableCell>
-                    <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
-                      {category.slug}
-                    </code>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground max-w-75 truncate block">
-                      {category.description || '—'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem
-                          render={<Link href={`/${lang}/inventory/categories/${category.id}/edit`} prefetch={true} />}
-                        >
-                          <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(category.id)}
-                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                          disabled={isDeleting === category.id}
-                        >
-                          <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                paginated.map((category, index) => (
+                  <TableRow 
+                    key={category.id} 
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/${lang}/inventory/categories/${category.id}/edit`)}
+                  >
+                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-medium text-slate-800">{category.name}</p>
+                    </TableCell>
+                    <TableCell>
+                      <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                        {category.slug}
+                      </code>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground max-w-75 truncate block">
+                        {category.description || '—'}
+                      </span>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            render={<Link href={`/${lang}/inventory/categories/${category.id}/edit`} prefetch={true} />}
+                          >
+                            <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(category.id)}
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                            disabled={isDeleting === category.id}
+                          >
+                            <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
               ))
             )}
           </TableBody>

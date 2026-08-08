@@ -305,6 +305,10 @@ export const getCachedDashboardStats = unstable_cache(
       { data: allTxAmounts },
       { data: lowStockRows },
       { count: pendingInvoices },
+      cashboxesRes,
+      allProductsRes,
+      unpaidInvoicesRes,
+      unpaidPurchaseOrdersRes,
     ] = await Promise.all([
       supabase.from('sales_orders').select('*', { count: 'exact', head: true }),
       supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -323,10 +327,19 @@ export const getCachedDashboardStats = unstable_cache(
       supabase.from('transactions').select('amount, type, transaction_date'),
       supabase.from('products').select('id, name, sku, stock, min_stock').order('stock', { ascending: true }).limit(10),
       supabase.from('invoices').select('*', { count: 'exact', head: true }).in('status', ['sent', 'overdue']),
+      supabase.from('cashboxes').select('balance'),
+      supabase.from('products').select('stock, cost_price').eq('is_active', true),
+      supabase.from('invoices').select('total_amount, paid_amount').not('status', 'in', '("paid","cancelled")'),
+      supabase.from('purchase_orders').select('total_amount').not('status', 'in', '("received","cancelled")'),
     ])
 
     const incomeRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'income')
     const expenseRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'expense')
+
+    const totalCashboxBalance = (cashboxesRes.data ?? []).reduce((sum: number, cb: any) => sum + (Number(cb.balance) || 0), 0)
+    const warehouseValue = (allProductsRes.data ?? []).reduce((sum: number, p: any) => sum + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
+    const totalReceivables = (unpaidInvoicesRes.data ?? []).reduce((sum: number, inv: any) => sum + ((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)), 0)
+    const totalPayables = (unpaidPurchaseOrdersRes.data ?? []).reduce((sum: number, po: any) => sum + (Number(po.total_amount) || 0), 0)
 
     return {
       totalOrders,
@@ -339,6 +352,10 @@ export const getCachedDashboardStats = unstable_cache(
       expenseRows,
       lowStockRows: lowStockRows ?? [],
       pendingInvoices,
+      totalCashboxBalance,
+      warehouseValue,
+      totalReceivables,
+      totalPayables,
     }
   },
   ['dashboard-stats'],

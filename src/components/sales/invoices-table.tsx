@@ -38,9 +38,6 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
   const t = useTranslations('sales')
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
-  const [items, setItems] = useState<any[]>([])
-  const [isLoadingItems, setIsLoadingItems] = useState(false)
   const [isProcessingPayment, setIsProcessingPayment] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -78,35 +75,11 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
 
       toast.success(lang === 'uz' ? "To'lov muvaffaqiyatli qabul qilindi" : "Оплата успешно принята")
       
-      setSelectedInvoice(null)
       router.refresh()
     } catch (err: any) {
       toast.error(err.message || 'Xatolik yuz berdi')
     } finally {
       setIsProcessingPayment(null)
-    }
-  }
-
-  const handleOpenDetails = async (invoice: any) => {
-    setSelectedInvoice(invoice)
-    if (!invoice.order_id) {
-      setItems([])
-      return
-    }
-    setIsLoadingItems(true)
-    try {
-      const supabase = createClient() as any
-      const { data, error } = await supabase
-        .from('sales_order_items')
-        .select('*, products(name)')
-        .eq('order_id', invoice.order_id)
-      
-      if (error) throw error
-      setItems(data || [])
-    } catch (err: any) {
-      toast.error(err.message || 'Xatolik yuz berdi')
-    } finally {
-      setIsLoadingItems(false)
     }
   }
 
@@ -159,7 +132,11 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                 </TableRow>
               ) : (
                 paginated.map((invoice, index) => (
-                  <TableRow key={invoice.id} className="group">
+                  <TableRow 
+                    key={invoice.id} 
+                    className="group hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}`)}
+                  >
                     <TableCell className="text-center font-medium text-slate-500 text-xs">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
@@ -183,7 +160,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     <TableCell>
                       <div className="font-medium text-slate-900">{invoice.customers?.name || '-'}</div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex flex-col items-start gap-1.5">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[invoice.status]}`}>
                           {t(`status.${invoice.status}`)}
@@ -209,7 +186,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     <TableCell className="text-right text-muted-foreground">
                       {formatDate(invoice.issued_at)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger>
                           <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
@@ -217,12 +194,8 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">
-                          <DropdownMenuItem onClick={() => handleOpenDetails(invoice)}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            {tCommon('view')}
-                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)}>
-                            <Pencil className="h-4 w-4 mr-2" />
+                            <Pencil className="h-4 w-4 mr-2 text-slate-500" />
                             {tCommon('edit')}
                           </DropdownMenuItem>
                           {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
@@ -256,7 +229,8 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
               )}
           </TableBody>
         </Table>
-        {totalPages > 1 && (
+      </div>
+      {totalPages > 1 && (
           <div className="flex items-center justify-between p-4 border-t">
             <Button
               variant="outline"
@@ -281,155 +255,8 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
             </Button>
           </div>
         )}
-      </div>
-    </CardContent>
-  </Card>
-
-    {/* Details Dialog */}
-    <Dialog open={selectedInvoice !== null} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
-      <DialogContent className="bg-white rounded-xl shadow-lg border border-slate-200 sm:max-w-xl w-full">
-        <DialogHeader className="border-b pb-4 flex flex-row items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-            <Receipt className="h-5 w-5" />
-          </div>
-          <div>
-            <DialogTitle className="text-lg font-bold text-slate-800">
-              {selectedInvoice?.invoice_number}
-            </DialogTitle>
-            <p className="text-xs text-slate-500 font-sans">
-              {t('invoices')}
-            </p>
-          </div>
-        </DialogHeader>
-
-        {selectedInvoice && (
-          <div className="space-y-6 pt-4">
-            {/* Invoice Info Grid */}
-            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg text-sm">
-              <div className="space-y-1">
-                <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                  <User className="h-3.5 w-3.5" />
-                  {t('customer')}
-                </span>
-                <p className="font-semibold text-slate-800">{selectedInvoice.customers?.name ?? '—'}</p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {tCommon('date')}
-                </span>
-                <p className="font-semibold text-slate-800">{formatDate(selectedInvoice.issued_at)}</p>
-              </div>
-              {selectedInvoice.sales_orders?.order_number && (
-                <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                    <ShoppingBag className="h-3.5 w-3.5" />
-                    {t('orderNumber')}
-                  </span>
-                  <p className="font-semibold text-slate-800">{selectedInvoice.sales_orders.order_number}</p>
-                </div>
-              )}
-              <div className="space-y-1">
-                <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                  <FileText className="h-3.5 w-3.5" />
-                  {tCommon('status')}
-                </span>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${STATUS_STYLES[selectedInvoice.status] ?? 'bg-slate-100 text-slate-600'}`}>
-                  {t(`status.${selectedInvoice.status}`)}
-                </span>
-              </div>
-              {selectedInvoice.notes && (
-                <div className="col-span-2 space-y-1 pt-2 border-t border-slate-200/60">
-                  <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                    <FileText className="h-3.5 w-3.5" />
-                    {tCommon('notes')}
-                  </span>
-                  <p className="text-slate-700 whitespace-pre-wrap">{selectedInvoice.notes}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Items Section */}
-            <div className="space-y-2">
-              <h4 className="font-bold text-slate-800 text-sm">{t('items')}</h4>
-              
-              {isLoadingItems ? (
-                <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-                </div>
-              ) : !selectedInvoice.order_id ? (
-                <div className="text-center py-6 text-slate-500 text-sm border rounded-lg">
-                  {tCommon('noData')}
-                </div>
-              ) : (
-                <div className="border rounded-lg overflow-x-auto w-full">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-slate-50/50">
-                        <TableHead className="h-9 py-1.5">{t('productName')}</TableHead>
-                        <TableHead className="h-9 py-1.5 text-right">{t('quantity')}</TableHead>
-                        <TableHead className="h-9 py-1.5 text-right">{t('unitPrice')}</TableHead>
-                        <TableHead className="h-9 py-1.5 text-right">{t('totalPrice')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {items.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-6 text-slate-500 text-sm">
-                            {tCommon('noData')}
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        items.map((item) => (
-                          <TableRow key={item.id} className="hover:bg-slate-50/50">
-                            <TableCell className="py-2.5 font-medium text-slate-800">
-                              {item.products?.name ?? '—'}
-                            </TableCell>
-                            <TableCell className="py-2.5 text-right text-slate-700">
-                              {item.quantity}
-                            </TableCell>
-                            <TableCell className="py-2.5 text-right text-slate-700">
-                              {formatCurrency(item.unit_price)}
-                            </TableCell>
-                            <TableCell className="py-2.5 text-right font-semibold text-slate-900">
-                              {formatCurrency(item.total_price)}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                      <TableRow className="bg-slate-50 font-semibold border-t">
-                        <TableCell colSpan={3} className="py-2.5 text-right text-slate-700">
-                          {tCommon('total')}:
-                        </TableCell>
-                        <TableCell className="py-2.5 text-right text-indigo-700 text-base">
-                          {formatCurrency(selectedInvoice.total_amount)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-              {selectedInvoice.status !== 'paid' && selectedInvoice.status !== 'cancelled' && (
-                <div className="flex justify-end pt-4 border-t border-slate-100">
-                  <Button 
-                    onClick={() => handleAcceptPayment(selectedInvoice)}
-                    disabled={isProcessingPayment === selectedInvoice.id}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-medium"
-                  >
-                    {isProcessingPayment === selectedInvoice.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="h-4 w-4" />
-                    )}
-                    To&apos;lovni qabul qilish
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
     </>
   )
 }

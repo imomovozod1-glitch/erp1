@@ -68,7 +68,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       const saved = localStorage.getItem('measurement_units')
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setTimeout(() => {
             setUnits(parsed)
           }, 0)

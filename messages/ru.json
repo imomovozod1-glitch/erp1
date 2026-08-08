@@ -404,7 +404,28 @@
     "avgOrderValue": "Средний чек",
     "noSalesData": "Данные о продажах отсутствуют",
     "revenue": "Доход",
-    "cost": "Расход"
+    "cost": "Расход",
+    "presets": {
+      "today": "Сегодня",
+      "yesterday": "Вчера",
+      "week": "Последние 7 дней",
+      "month": "Последние 30 дней",
+      "thisMonth": "Этот месяц",
+      "lastMonth": "Прошлый месяц",
+      "all": "Все время",
+      "custom": "Другой период"
+    },
+    "customFilter": {
+      "title": "Выбор периода",
+      "singleDay": "Один день",
+      "dateRange": "Диапазон дат",
+      "date": "Дата",
+      "startTime": "Время начала",
+      "endTime": "Время окончания",
+      "startDateTime": "Дата и время начала",
+      "endDateTime": "Дата и время окончания",
+      "confirm": "Применить"
+    }
   },
   "settings": {
     "title": "Настройки",

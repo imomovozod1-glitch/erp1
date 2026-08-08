@@ -191,22 +191,7 @@ export function CashboxClient({ lang }: { lang: string }) {
       if (localData) {
         setCashboxes(JSON.parse(localData))
       } else {
-        const seedData: Cashbox[] = [
-          {
-            id: 'local-1',
-            name: 'Asosiy Kassa',
-            balance: 15000000,
-            description: "Kompaniyaning asosiy naqd pul g'aznasi",
-            created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: 'local-2',
-            name: 'Filial Kassasi (Yunusobod)',
-            balance: 5000000,
-            description: 'Yunusobod filialining naqd pul aylanmasi uchun',
-            created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-        ]
+        const seedData: Cashbox[] = []
         localStorage.setItem('erp_cashboxes', JSON.stringify(seedData))
         setCashboxes(seedData)
       }
@@ -404,6 +389,11 @@ export function CashboxClient({ lang }: { lang: string }) {
       return
     }
 
+    if ((txCategory === 'debt_collection' || (txType === 'expense' && txCategory === 'sales')) && !selectedCustomerId) {
+      toast.error(lang === 'uz' ? "Iltimos, mijozni tanlang" : lang === 'ru' ? "Пожалуйста, выберите клиента" : "Please select a customer")
+      return
+    }
+
     const numAmount = Number(txAmount)
     
     // Determine category text display name
@@ -428,6 +418,15 @@ export function CashboxClient({ lang }: { lang: string }) {
         finalDescription = txDescription.trim() 
           ? `${txDescription.trim()} (Xodim: ${emp.name})` 
           : `Maosh - ${emp.name}`
+      }
+    } else if ((txCategory === 'sales' || txCategory === 'debt_collection') && selectedCustomerId) {
+      const cust = customers.find(c => c.id === selectedCustomerId)
+      if (cust) {
+        if (txCategory === 'sales') {
+          finalDescription = txDescription.trim()
+            ? `${txDescription.trim()} (Mijoz: ${cust.name})`
+            : `${lang === 'uz' ? 'Sotuv' : lang === 'ru' ? 'Продажа' : 'Sales'} - ${cust.name}`
+        }
       }
     }
 
@@ -659,6 +658,7 @@ export function CashboxClient({ lang }: { lang: string }) {
   ]
 
   const expenseCategories = [
+    { key: 'sales', label: t('categories.sales') },
     { key: 'salary', label: t('categories.salary') },
     { key: 'rent', label: t('categories.rent') },
     { key: 'utilities', label: t('categories.utilities') },
@@ -999,7 +999,11 @@ export function CashboxClient({ lang }: { lang: string }) {
                     const cbName = cashboxes.find(c => c.id === tx.reference_id)?.name || 'Kassa'
                     const isIncome = tx.type === 'income'
                     return (
-                      <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors">
+                      <tr 
+                        key={tx.id} 
+                        className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                        onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
+                      >
                         <td className="p-4 pl-6 text-xs text-slate-500">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5 text-slate-400" />
@@ -1153,7 +1157,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                 <Label htmlFor="tx_category" className="text-xs font-semibold text-slate-600">{t('category')} *</Label>
                 <Select value={txCategory} onValueChange={(val) => {
                   setTxCategory(val || '')
-                  if (val !== 'debt_collection') {
+                  if (val !== 'debt_collection' && val !== 'sales') {
                     setSelectedCustomerId('')
                     setCustomerDebt(null)
                   }
@@ -1180,14 +1184,14 @@ export function CashboxClient({ lang }: { lang: string }) {
                 </Select>
               </div>
 
-              {txCategory === 'debt_collection' && (
+              {(txCategory === 'debt_collection' || (txType === 'expense' && txCategory === 'sales')) && (
                 <div className="space-y-2 animate-in fade-in duration-200">
                   <Label htmlFor="tx_customer" className="text-xs font-semibold text-slate-600">{t('customer')} *</Label>
                   <Select 
                     value={selectedCustomerId} 
                     onValueChange={(val) => {
                       setSelectedCustomerId(val || '')
-                      if (val) fetchCustomerDebt(val, isLocalStorageFallback)
+                      if (val && txCategory === 'debt_collection') fetchCustomerDebt(val, isLocalStorageFallback)
                     }}
                   >
                     <SelectTrigger className="w-full rounded-xl border-slate-200">
@@ -1206,7 +1210,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                     </SelectContent>
                   </Select>
                   
-                  {selectedCustomerId && (
+                  {txCategory === 'debt_collection' && selectedCustomerId && (
                     <div className="bg-rose-50 border border-rose-100 rounded-2xl p-3.5 mt-2 flex items-center justify-between text-xs text-rose-800 animate-in slide-in-from-top-1 duration-200">
                       <span className="font-medium">{lang === 'uz' ? 'Umumiy qarzdorlik summasi:' : 'Общая сумма задолженности:'}</span>
                       <span className="font-extrabold text-sm">

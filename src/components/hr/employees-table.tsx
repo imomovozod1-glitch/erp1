@@ -186,10 +186,6 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                           </TooltipContent>
                         </Tooltip>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}`)}>
-                            <Users className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                            {lang === 'uz' ? 'Batafsil' : lang === 'ru' ? 'Подробнее' : 'Details'}
-                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}/edit`)}>
                             <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
                             {tCommon('edit')}
