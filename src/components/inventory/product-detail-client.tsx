@@ -195,6 +195,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                   <TableHead className="text-right">{lang === 'uz' ? 'Miqdor' : 'Количество'}</TableHead>
                   <TableHead className="text-right">{lang === 'uz' ? 'Avval' : 'До'}</TableHead>
                   <TableHead className="text-right">{lang === 'uz' ? 'Keyin' : 'После'}</TableHead>
+                  <TableHead>{lang === 'uz' ? 'Qayerdan (Manba)' : 'Источник'}</TableHead>
                   <TableHead>{lang === 'uz' ? 'Sabab' : 'Причина'}</TableHead>
                   <TableHead>{tc('date')}</TableHead>
                 </TableRow>
@@ -202,7 +203,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               <TableBody>
                 {movements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-slate-400">
+                    <TableCell colSpan={8} className="text-center py-12 text-slate-400">
                       {tc('noData')}
                     </TableCell>
                   </TableRow>
@@ -212,18 +213,39 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                       <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          m.type === 'incoming' 
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
+                          m.type === 'incoming' || m.type === 'in'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                             : 'bg-rose-50 text-rose-700 border border-rose-100'
                         }`}>
-                          {m.type === 'incoming' ? (lang === 'uz' ? 'Kirim' : 'Приход') : (lang === 'uz' ? 'Chiqim' : 'Расход')}
+                          {m.type === 'incoming' || m.type === 'in' ? (lang === 'uz' ? 'Kirim' : 'Приход') : (lang === 'uz' ? 'Chiqim' : 'Расход')}
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-semibold">
-                        {m.type === 'incoming' ? '+' : '-'}{formatNumber(m.quantity)}
+                        {m.type === 'incoming' || m.type === 'in' ? '+' : '-'}{formatNumber(m.quantity)}
                       </TableCell>
                       <TableCell className="text-right text-slate-500">{formatNumber(m.quantity_before)}</TableCell>
                       <TableCell className="text-right text-slate-700 font-medium">{formatNumber(m.quantity_after)}</TableCell>
+                      <TableCell className="text-sm">
+                        {m.source?.type === 'purchase_order' ? (
+                          <span className="inline-flex items-center gap-1.5 text-amber-700">
+                            <Truck className="h-3.5 w-3.5 shrink-0" />
+                            <span className="font-medium">{m.source.label}</span>
+                            {m.source.supplierOrCustomer && <span className="text-slate-400">· {m.source.supplierOrCustomer}</span>}
+                          </span>
+                        ) : m.source?.type === 'sales_orders' ? (
+                          <span className="inline-flex items-center gap-1.5 text-indigo-700">
+                            <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
+                            <span className="font-medium">{m.source.label}</span>
+                            {m.source.supplierOrCustomer && <span className="text-slate-400">· {m.source.supplierOrCustomer}</span>}
+                          </span>
+                        ) : m.source?.type === 'initial_stock' ? (
+                          <span className="text-slate-500">{lang === 'uz' ? "Boshlang'ich zaxira" : 'Начальный запас'}</span>
+                        ) : m.source?.type === 'product_adjustment' ? (
+                          <span className="text-slate-500">{lang === 'uz' ? "Qo'lda tuzatish" : 'Ручная корректировка'}</span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-slate-600 text-sm">{m.reason || '—'}</TableCell>
                       <TableCell className="text-slate-500 text-xs">{formatDate(m.created_at)}</TableCell>
                     </TableRow>

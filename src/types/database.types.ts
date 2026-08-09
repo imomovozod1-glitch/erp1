@@ -449,6 +449,8 @@ export type Database = {
           description: string | null
           reference_type: string | null
           reference_id: string | null
+          employee_id: string | null
+          supplier_id: string | null
           transaction_date: string
           created_by: string
           created_at: string
@@ -462,6 +464,8 @@ export type Database = {
           description?: string | null
           reference_type?: string | null
           reference_id?: string | null
+          employee_id?: string | null
+          supplier_id?: string | null
           transaction_date?: string
           created_by: string
         }

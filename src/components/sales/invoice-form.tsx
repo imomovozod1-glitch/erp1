@@ -80,7 +80,7 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
 
   const onSubmit = async (data: any) => {
     if (!userId && !initialData) {
-      toast.error('User session not found')
+      toast.error(lang === 'uz' ? 'Foydalanuvchi seansi topilmadi' : lang === 'ru' ? 'Сессия пользователя не найдена' : 'User session not found')
       return
     }
 
@@ -99,6 +99,8 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
       const newPaidAmount = Number(data.paid_amount) || 0
       const difference = newPaidAmount - oldPaidAmount
 
+      let invoiceId = initialData?.id
+
       if (initialData?.id) {
         const { error } = await supabase
           .from('invoices')
@@ -107,17 +109,31 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         if (error) throw error
         toast.success(tCommon('success'))
       } else {
-        const { error } = await supabase
+        const { data: newInvoice, error } = await supabase
           .from('invoices')
           .insert([payload])
+          .select()
+          .single()
         if (error) throw error
+        invoiceId = newInvoice?.id
         toast.success(tCommon('success'))
       }
 
       if (difference !== 0) {
         await adjustCashboxBalance(Math.abs(difference), difference > 0 ? 'income' : 'expense', supabase)
+        const categoryLabel = lang === 'uz' ? 'Faktura to\'lovi' : lang === 'ru' ? 'Оплата по счету' : 'Invoice Payment'
+        await supabase.from('transactions').insert({
+          type: difference > 0 ? 'income' : 'expense',
+          amount: Math.abs(difference),
+          category: categoryLabel,
+          description: `${categoryLabel} #${data.invoice_number}`,
+          reference_type: 'invoices',
+          reference_id: invoiceId,
+          transaction_date: data.paid_at || data.issued_at,
+          created_by: initialData?.created_by || userId,
+        })
       }
-      
+
       await invalidateInvoices()
       clearPersistedForm('invoice-form-v3')
       router.push(`/${lang}/sales/invoices`)

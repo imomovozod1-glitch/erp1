@@ -81,6 +81,10 @@ export function CashboxClient({ lang }: { lang: string }) {
   const [employees, setEmployees] = useState<any[]>([])
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
 
+  // Supplier payment states
+  const [suppliers, setSuppliers] = useState<any[]>([])
+  const [selectedSupplierId, setSelectedSupplierId] = useState('')
+
   const fetchCustomers = async (fallback: boolean) => {
     try {
       if (fallback) {
@@ -119,6 +123,23 @@ export function CashboxClient({ lang }: { lang: string }) {
       }
     } catch (err: any) {
       console.warn('Failed to fetch employees:', err.message)
+    }
+  }
+
+  const fetchSuppliers = async (fallback: boolean) => {
+    try {
+      if (fallback) {
+        const localSup = localStorage.getItem('erp_suppliers')
+        if (localSup) setSuppliers(JSON.parse(localSup))
+      } else {
+        const { data, error } = await supabase
+          .from('suppliers')
+          .select('id, name')
+          .order('name', { ascending: true })
+        if (!error) setSuppliers(data || [])
+      }
+    } catch (err: any) {
+      console.warn('Failed to fetch suppliers:', err.message)
     }
   }
 
@@ -214,6 +235,7 @@ export function CashboxClient({ lang }: { lang: string }) {
       fetchCashboxes().then((fallback) => {
         fetchCustomers(fallback)
         fetchEmployees(fallback)
+        fetchSuppliers(fallback)
       })
     }, 0)
     
@@ -372,6 +394,7 @@ export function CashboxClient({ lang }: { lang: string }) {
     setTxDescription('')
     setSelectedCustomerId('')
     setSelectedEmployeeId('')
+    setSelectedSupplierId('')
     setCustomerDebt(null)
     setIsTransactionModalOpen(true)
   }
@@ -389,23 +412,30 @@ export function CashboxClient({ lang }: { lang: string }) {
       return
     }
 
+    if (txCategory === 'supplier_payment' && !selectedSupplierId) {
+      toast.error(lang === 'uz' ? "Iltimos, yetkazib beruvchini tanlang" : lang === 'ru' ? "Пожалуйста, выберите поставщика" : "Please select a supplier")
+      return
+    }
+
     if ((txCategory === 'debt_collection' || (txType === 'expense' && txCategory === 'sales')) && !selectedCustomerId) {
       toast.error(lang === 'uz' ? "Iltimos, mijozni tanlang" : lang === 'ru' ? "Пожалуйста, выберите клиента" : "Please select a customer")
       return
     }
 
     const numAmount = Number(txAmount)
-    
+
     // Determine category text display name
     let categoryText = ""
     if (txCategory === 'custom') {
       categoryText = customCategory.trim()
     } else if (txCategory === 'debt_collection') {
       categoryText = lang === 'uz' ? "Mijozdan qarzini qaytarib olish" : lang === 'ru' ? "Возврат долга от клиента" : "Customer debt collection"
+    } else if (txCategory === 'supplier_payment') {
+      categoryText = lang === 'uz' ? "Yetkazib beruvchiga to'lov" : lang === 'ru' ? 'Оплата поставщику' : 'Supplier payment'
     } else {
       categoryText = t(`categories.${txCategory}`)
     }
-    
+
     if (!categoryText) {
       toast.error(tCommon('required'))
       return
@@ -415,9 +445,16 @@ export function CashboxClient({ lang }: { lang: string }) {
     if (txCategory === 'salary' && selectedEmployeeId) {
       const emp = employees.find(e => e.id === selectedEmployeeId)
       if (emp) {
-        finalDescription = txDescription.trim() 
-          ? `${txDescription.trim()} (Xodim: ${emp.name})` 
+        finalDescription = txDescription.trim()
+          ? `${txDescription.trim()} (Xodim: ${emp.name})`
           : `Maosh - ${emp.name}`
+      }
+    } else if (txCategory === 'supplier_payment' && selectedSupplierId) {
+      const sup = suppliers.find(s => s.id === selectedSupplierId)
+      if (sup) {
+        finalDescription = txDescription.trim()
+          ? `${txDescription.trim()} (${lang === 'uz' ? 'Yetkazib beruvchi' : lang === 'ru' ? 'Поставщик' : 'Supplier'}: ${sup.name})`
+          : `${categoryText} - ${sup.name}`
       }
     } else if ((txCategory === 'sales' || txCategory === 'debt_collection') && selectedCustomerId) {
       const cust = customers.find(c => c.id === selectedCustomerId)
@@ -527,6 +564,8 @@ export function CashboxClient({ lang }: { lang: string }) {
           description: finalDescription,
           reference_type: 'cashbox',
           reference_id: selectedCashboxForTx.id,
+          employee_id: txCategory === 'salary' ? selectedEmployeeId : null,
+          supplier_id: txCategory === 'supplier_payment' ? selectedSupplierId : null,
           transaction_date: txDate,
           created_at: new Date().toISOString(),
         }
@@ -541,7 +580,7 @@ export function CashboxClient({ lang }: { lang: string }) {
         const userId = userData?.user?.id
 
         if (!userId) {
-          toast.error('User session not found')
+          toast.error(lang === 'uz' ? 'Foydalanuvchi seansi topilmadi' : lang === 'ru' ? 'Сессия пользователя не найдена' : 'User session not found')
           return
         }
 
@@ -563,6 +602,8 @@ export function CashboxClient({ lang }: { lang: string }) {
             description: finalDescription,
             reference_type: 'cashbox',
             reference_id: selectedCashboxForTx.id,
+            employee_id: txCategory === 'salary' ? selectedEmployeeId : null,
+            supplier_id: txCategory === 'supplier_payment' ? selectedSupplierId : null,
             transaction_date: txDate,
             created_by: userId
           }])
@@ -660,6 +701,7 @@ export function CashboxClient({ lang }: { lang: string }) {
   const expenseCategories = [
     { key: 'sales', label: t('categories.sales') },
     { key: 'salary', label: t('categories.salary') },
+    { key: 'supplier_payment', label: lang === 'uz' ? "Yetkazib beruvchiga to'lov" : lang === 'ru' ? 'Оплата поставщику' : 'Supplier payment' },
     { key: 'rent', label: t('categories.rent') },
     { key: 'utilities', label: t('categories.utilities') },
     { key: 'marketing', label: t('categories.marketing') },
@@ -1164,13 +1206,18 @@ export function CashboxClient({ lang }: { lang: string }) {
                   if (val !== 'salary') {
                     setSelectedEmployeeId('')
                   }
+                  if (val !== 'supplier_payment') {
+                    setSelectedSupplierId('')
+                  }
                 }}>
                   <SelectTrigger className="w-full rounded-xl border-slate-200 focus:ring-indigo-500">
                     <SelectValue placeholder={t('selectType')}>
-                      {txCategory === 'custom' 
+                      {txCategory === 'custom'
                         ? (lang === 'uz' ? 'Boshqa (Kiritish)' : lang === 'ru' ? 'Другое (Вручную)' : 'Other (Custom)')
                         : txCategory === 'debt_collection'
                         ? (lang === 'uz' ? "Mijozdan qarzini qaytarib olish" : lang === 'ru' ? "Возврат долга от клиента" : "Customer debt collection")
+                        : txCategory === 'supplier_payment'
+                        ? (lang === 'uz' ? "Yetkazib beruvchiga to'lov" : lang === 'ru' ? 'Оплата поставщику' : 'Supplier payment')
                         : t(`categories.${txCategory}`)}
                     </SelectValue>
                   </SelectTrigger>
@@ -1241,6 +1288,33 @@ export function CashboxClient({ lang }: { lang: string }) {
                       {employees.map((emp) => (
                         <SelectItem key={emp.id} value={emp.id} className="rounded-lg">
                           {emp.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {txCategory === 'supplier_payment' && (
+                <div className="space-y-1.5 animate-in fade-in duration-200">
+                  <Label htmlFor="tx_supplier" className="text-xs font-semibold text-slate-600">
+                    {lang === 'uz' ? 'Yetkazib beruvchi' : lang === 'ru' ? 'Поставщик' : 'Supplier'} *
+                  </Label>
+                  <Select
+                    value={selectedSupplierId}
+                    onValueChange={(val) => setSelectedSupplierId(val || '')}
+                  >
+                    <SelectTrigger className="w-full rounded-xl border-slate-200">
+                      <SelectValue placeholder={lang === 'uz' ? 'Yetkazib beruvchini tanlang' : lang === 'ru' ? 'Выберите поставщика' : 'Select a supplier'}>
+                        {selectedSupplierId
+                          ? (suppliers.find(s => s.id === selectedSupplierId)?.name || '')
+                          : (lang === 'uz' ? 'Yetkazib beruvchini tanlang' : lang === 'ru' ? 'Выберите поставщика' : 'Select a supplier')}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {suppliers.map((s) => (
+                        <SelectItem key={s.id} value={s.id} className="rounded-lg">
+                          {s.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

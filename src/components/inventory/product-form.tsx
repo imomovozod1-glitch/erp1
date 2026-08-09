@@ -91,7 +91,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     }, 0)
   }, [lang])
 
-  const [defaultSku] = useState(() => initialData?.sku || Math.floor(1000 + Math.random() * 9000).toString())
+  const [defaultSku] = useState(() => initialData?.sku || '')
 
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = usePersistedForm<FormData>('product-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
@@ -109,6 +109,26 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       is_active: initialData?.is_active ?? true,
     },
   })
+
+  useEffect(() => {
+    if (initialData?.sku) return
+    if (watch('sku')) return // don't overwrite a restored draft or typed value
+
+    const fetchNextSku = async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('sku')
+
+      let maxSku = 1000
+      for (const row of data || []) {
+        const num = parseInt(row.sku, 10)
+        if (!isNaN(num) && num > maxSku) maxSku = num
+      }
+      setValue('sku', (maxSku + 1).toString())
+    }
+    fetchNextSku()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [markupState, setMarkupState] = useState<string>(() => {
     if (initialData) {

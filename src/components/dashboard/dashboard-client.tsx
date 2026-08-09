@@ -15,6 +15,7 @@ import {
   Zap,
   Layers,
   Sparkles,
+  Truck,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
@@ -32,6 +33,7 @@ interface DashboardClientProps {
     totalProducts: number | null
     totalCustomers: number | null
     totalEmployees: number | null
+    totalSuppliers: number | null
     recentOrders: any[]
     chartTxData: any[]
     incomeRows: any[]
@@ -42,6 +44,7 @@ interface DashboardClientProps {
     warehouseValue?: number
     totalReceivables?: number
     totalPayables?: number
+    soldItems?: { order_date: string; revenue: number; cost: number }[]
   }
   analytics: {
     aggregatedProducts: any[]
@@ -89,6 +92,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     totalProducts,
     totalCustomers,
     totalEmployees,
+    totalSuppliers,
     recentOrders,
     chartTxData,
     incomeRows,
@@ -99,6 +103,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     warehouseValue = 0,
     totalReceivables = 0,
     totalPayables = 0,
+    soldItems = [],
   } = stats
 
   const [realCashboxBalance, setRealCashboxBalance] = useState(totalCashboxBalance)
@@ -209,7 +214,20 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
       })
     }
 
-    const profit = rev - exp
+    // Profit = total sales revenue - cost price (COGS) of sold goods, filtered to the same period
+    let filteredSoldItems = soldItems
+    if (period === 'today') {
+      filteredSoldItems = soldItems.filter((si) => si.order_date?.split('T')[0] === todayStr)
+    } else if (period === 'yesterday') {
+      filteredSoldItems = soldItems.filter((si) => si.order_date?.split('T')[0] === yesterdayStr)
+    } else if (period === 'week') {
+      filteredSoldItems = soldItems.filter((si) => new Date(si.order_date) >= weekAgo)
+    } else if (period === 'month') {
+      filteredSoldItems = soldItems.filter((si) => new Date(si.order_date) >= monthAgo)
+    }
+    const salesRevenue = filteredSoldItems.reduce((sum, si) => sum + si.revenue, 0)
+    const costOfGoods = filteredSoldItems.reduce((sum, si) => sum + si.cost, 0)
+    const profit = salesRevenue - costOfGoods
     const avgCheck = saleCount > 0 ? rev / saleCount : 0
 
     // Construct Chart Data
@@ -347,7 +365,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
           </Link>
 
           <Link
-            href={`/${lang}/finance/income/new`}
+            href={`/${lang}/finance/transactions/new?type=income`}
             className="flex items-center justify-start gap-2 h-12 px-4 py-2 border border-emerald-100 bg-emerald-50/20 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-colors text-sm font-semibold rounded-lg"
           >
             <ArrowUpRight className="h-4 w-4" />
@@ -355,7 +373,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
           </Link>
 
           <Link
-            href={`/${lang}/finance/expenses/new`}
+            href={`/${lang}/finance/transactions/new?type=expense`}
             className="flex items-center justify-start gap-2 h-12 px-4 py-2 border border-rose-100 bg-rose-50/20 text-rose-700 hover:bg-rose-50 hover:text-rose-800 transition-colors text-sm font-semibold rounded-lg"
           >
             <ArrowDownRight className="h-4 w-4" />
@@ -470,6 +488,10 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
         <div className="bg-white px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
           <Users className="h-4 w-4 text-slate-600" />
           <span className="text-xs font-semibold text-slate-700">{td('employeesCountText', { count: totalEmployees ?? 0 })}</span>
+        </div>
+        <div className="bg-white px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
+          <Truck className="h-4 w-4 text-amber-600" />
+          <span className="text-xs font-semibold text-slate-700">{td('suppliersCountText', { count: totalSuppliers ?? 0 })}</span>
         </div>
       </div>
 

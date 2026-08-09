@@ -73,7 +73,7 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
 
   const onSubmit = async (data: any) => {
     if (!userId && !initialData) {
-      toast.error('User session not found')
+      toast.error(lang === 'uz' ? 'Foydalanuvchi seansi topilmadi' : lang === 'ru' ? 'Сессия пользователя не найдена' : 'User session not found')
       return
     }
 

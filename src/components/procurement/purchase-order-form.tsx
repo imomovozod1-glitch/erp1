@@ -298,12 +298,12 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               {isScanning ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
-                  <span className="text-indigo-700">AI tahlil qilmoqda...</span>
+                  <span className="text-indigo-700">{lang === 'uz' ? 'AI tahlil qilmoqda...' : lang === 'ru' ? 'ИИ анализирует...' : 'AI is analyzing...'}</span>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1">
                   <Upload className="h-6 w-6 text-indigo-500" />
-                  <span className="text-sm text-indigo-700 font-medium">Rasm yuklash</span>
+                  <span className="text-sm text-indigo-700 font-medium">{lang === 'uz' ? 'Rasm yuklash' : lang === 'ru' ? 'Загрузить изображение' : 'Upload image'}</span>
                 </div>
               )}
             </Button>

@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   Percent,
   CheckCircle2,
-  Store,
+  ShoppingBag,
   Scale
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -28,7 +28,7 @@ import {
   invalidateMovements,
   invalidateCustomers
 } from '@/lib/data/revalidate'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -265,24 +265,19 @@ export function POSClient({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error(tCommon('sessionNotFound'))
 
-      // 1. Fetch current profile to get cashier name
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single()
+      // 1 & 2. Fetch cashier profile and current stock for all cart items in parallel
+      const [{ data: profile }, { data: freshProducts }] = await Promise.all([
+        supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+        supabase.from('products').select('id, stock').in('id', cart.map((item) => item.product.id)),
+      ])
 
       const cashierName = profile?.full_name || 'Cashier'
 
-      // 2. Validate current stock values just before inserting
+      // Validate current stock values just before inserting
+      const stockById = new Map<string, number>((freshProducts || []).map((p: any) => [p.id, Number(p.stock)]))
       for (const item of cart) {
-        const { data: freshProd } = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', item.product.id)
-          .single()
-        
-        if (!freshProd || freshProd.stock < item.quantity) {
+        const currentStock = stockById.get(item.product.id)
+        if (currentStock === undefined || currentStock < item.quantity) {
           throw new Error(`${t('insufficientStock')}: ${item.product.name}`)
         }
       }
@@ -309,7 +304,8 @@ export function POSClient({
 
       if (orderErr) throw orderErr
 
-      // 4. Create Order Items
+      // 4-7. Everything below only depends on orderData.id, not on each other —
+      // fire them all in parallel instead of awaiting one round-trip at a time.
       const itemsToInsert = cart.map((item) => ({
         order_id: orderData.id,
         product_id: item.product.id,
@@ -319,64 +315,61 @@ export function POSClient({
         total_price: (item.product.price * (1 - item.discountPercent / 100)) * item.quantity
       }))
 
-      const { error: itemsErr } = await supabase.from('sales_order_items').insert(itemsToInsert)
-      if (itemsErr) throw itemsErr
-
-      // 5. Create Financial Transaction Entry
-      const { error: txErr } = await supabase.from('transactions').insert({
-        type: 'income',
-        amount: totalPayable,
-        category: 'Sales',
-        description: `POS Sale - Order #${orderData.order_number}`,
-        reference_type: 'sales_orders',
-        reference_id: orderData.id,
-        transaction_date: orderDateStr,
-        created_by: user.id
-      })
-      if (txErr) throw txErr
-
-      // 6. Loop to update stock levels and insert stock movements log
-      for (const item of cart) {
+      const stockAndMovementUpdates = cart.flatMap((item) => {
         const newStock = item.product.stock - item.quantity
+        return [
+          supabase
+            .from('products')
+            .update({ stock: newStock })
+            .eq('id', item.product.id)
+            .then(({ error }: any) => { if (error) throw error }),
+          supabase.from('stock_movements').insert({
+            product_id: item.product.id,
+            type: 'out',
+            quantity: item.quantity,
+            quantity_before: item.product.stock,
+            quantity_after: newStock,
+            reference_type: 'sales_orders',
+            reference_id: orderData.id,
+            reason: 'POS Sale',
+            created_by: user.id
+          }).then(({ error }: any) => { if (error) throw error }),
+        ]
+      })
 
-        const { error: prodErr } = await supabase
-          .from('products')
-          .update({ stock: newStock })
-          .eq('id', item.product.id)
-        if (prodErr) throw prodErr
+      const generatedInvoiceNumber = paymentMethod !== 'debt' ? generatePOSInvoiceNumber() : null
 
-        const { error: moveErr } = await supabase.from('stock_movements').insert({
-          product_id: item.product.id,
-          type: 'out',
-          quantity: item.quantity,
-          quantity_before: item.product.stock,
-          quantity_after: newStock,
+      await Promise.all([
+        supabase.from('sales_order_items').insert(itemsToInsert).then(({ error }: any) => { if (error) throw error }),
+        supabase.from('transactions').insert({
+          type: 'income',
+          amount: totalPayable,
+          category: 'Sales',
+          description: `POS Sale - Order #${orderData.order_number}`,
           reference_type: 'sales_orders',
           reference_id: orderData.id,
-          reason: 'POS Sale',
+          transaction_date: orderDateStr,
           created_by: user.id
-        })
-        if (moveErr) throw moveErr
-      }
-
-      // 7. Auto-create Invoice if paid (Cash, Card, Transfer) and update cash register balance
-      if (paymentMethod !== 'debt') {
-        const generatedInvoiceNumber = generatePOSInvoiceNumber()
-        await supabase.from('invoices').insert({
-          invoice_number: generatedInvoiceNumber,
-          order_id: orderData.id,
-          customer_id: selectedCustomer ? selectedCustomer.id : null,
-          status: 'paid',
-          total_amount: totalPayable,
-          paid_amount: totalPayable,
-          issued_at: orderDateStr,
-          due_at: orderDateStr,
-          paid_at: orderDateStr,
-          notes: `Paid instantly on POS via ${paymentMethod}`,
-          created_by: user.id
-        })
-        await adjustCashboxBalance(totalPayable, 'income', supabase)
-      }
+        }).then(({ error }: any) => { if (error) throw error }),
+        ...stockAndMovementUpdates,
+        // Auto-create Invoice if paid (Cash, Card, Transfer) and update cash register balance
+        generatedInvoiceNumber
+          ? supabase.from('invoices').insert({
+              invoice_number: generatedInvoiceNumber,
+              order_id: orderData.id,
+              customer_id: selectedCustomer ? selectedCustomer.id : null,
+              status: 'paid',
+              total_amount: totalPayable,
+              paid_amount: totalPayable,
+              issued_at: orderDateStr,
+              due_at: orderDateStr,
+              paid_at: orderDateStr,
+              notes: `Paid instantly on POS via ${paymentMethod}`,
+              created_by: user.id
+            }).then(({ error }: any) => { if (error) throw error })
+          : Promise.resolve(),
+        paymentMethod !== 'debt' ? adjustCashboxBalance(totalPayable, 'income', supabase) : Promise.resolve(),
+      ])
 
       // Success
       toast.success(t('orderSuccess'))
@@ -441,7 +434,7 @@ export function POSClient({
   }
 
   return (
-    <div className="lg:h-[calc(100vh-7rem)] lg:flex lg:flex-col lg:min-h-0 lg:overflow-hidden select-none">
+    <div className="md:h-[calc(100vh-7rem)] md:flex md:flex-col md:min-h-0 md:overflow-hidden select-none">
       {/* Print & Scrollbar Style Injection */}
       <style jsx global>{`
         @media print {
@@ -490,9 +483,9 @@ export function POSClient({
       `}</style>
 
       {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 no-print items-stretch lg:h-full lg:min-h-0 lg:flex-1">
-        {/* Left Side: Product catalog and search */}
-        <div className="lg:col-span-2 lg:h-full lg:flex lg:flex-col lg:min-h-0 space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 no-print items-stretch md:h-full md:min-h-0 md:flex-1">
+        {/* Left Side: Product catalog and search — the ONLY area that scrolls */}
+        <div className="md:col-span-2 md:h-full md:flex md:flex-col md:min-h-0 space-y-5">
           <div className="shrink-0 space-y-4">
             <div className="flex flex-col md:flex-row gap-3">
               {/* SKU & Title Search */}
@@ -558,8 +551,8 @@ export function POSClient({
             </div>
           </div>
 
-          {/* Products Grid Wrapper */}
-          <div className="lg:flex-1 lg:overflow-y-auto lg:min-h-0 pr-1 pb-4 scrollbar-thin">
+          {/* Products Grid Wrapper — the only scrollable region on this page */}
+          <div className="md:flex-1 md:overflow-y-auto md:min-h-0 pr-1 pb-4 scrollbar-thin">
             {filteredProducts.length === 0 ? (
               <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.02)] py-20 text-center bg-white rounded-2xl">
                 <CardContent className="flex flex-col items-center gap-3">
@@ -625,18 +618,20 @@ export function POSClient({
           </div>
         </div>
 
-        {/* Right Side: Cart list, customer selector, checkout */}
-        <div className="lg:col-span-1 lg:h-full lg:flex lg:flex-col lg:min-h-0">
-          <Card className="border border-slate-100/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] rounded-2xl bg-white flex flex-col h-full justify-between overflow-hidden">
+        {/* Right Side: Cart, customer selector, checkout — fixed to the viewport, never scrolls as a whole */}
+        <div className="md:col-span-1 md:h-full md:flex md:flex-col md:min-h-0">
+          <Card className="border border-slate-100/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] rounded-2xl bg-white flex flex-col h-full min-h-0 overflow-hidden">
             {/* Cart Header */}
-            <CardHeader className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl shadow-xs">
-                  <Store className="h-5 w-5" />
+            <CardHeader className="shrink-0 p-4 bg-gradient-to-br from-indigo-50/70 via-white to-white border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-xl shadow-[0_4px_10px_rgba(99,102,241,0.25)]">
+                  <ShoppingBag className="h-4.5 w-4.5" />
                 </div>
                 <div>
                   <CardTitle className="text-sm font-bold text-slate-800">{t('cart')}</CardTitle>
-                  <CardDescription className="text-[10px] font-medium text-slate-400">{cart.length} {tCommon('rows')}</CardDescription>
+                  <span className="inline-flex items-center mt-0.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">
+                    {cart.length} {tCommon('rows')}
+                  </span>
                 </div>
               </div>
               {cart.length > 0 && (
@@ -651,12 +646,12 @@ export function POSClient({
               )}
             </CardHeader>
 
-            {/* Cart Scrollable Items */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* Cart Items — the only part of this panel that scrolls, kept compact so it rarely needs to */}
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin p-3 space-y-2">
               {cart.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 text-center text-slate-400 space-y-3">
-                  <div className="p-4 bg-slate-50 rounded-full">
-                    <Store className="h-8 w-8 text-slate-350 opacity-40" />
+                <div className="flex flex-col items-center justify-center py-20 text-center text-slate-400 space-y-3">
+                  <div className="p-5 rounded-full border-2 border-dashed border-slate-200">
+                    <ShoppingBag className="h-7 w-7 text-slate-300" />
                   </div>
                   <p className="text-xs font-semibold text-slate-400">{t('emptyCart')}</p>
                 </div>
@@ -666,17 +661,13 @@ export function POSClient({
                   return (
                     <div
                       key={item.product.id}
-                      className="p-3 bg-slate-50/30 hover:bg-slate-50/60 transition-all border border-slate-100/70 rounded-xl space-y-3 shadow-2xs"
+                      className="p-2.5 bg-slate-50/30 hover:bg-slate-50/60 transition-all border border-slate-100/70 rounded-xl shadow-2xs"
                     >
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-bold text-slate-800 leading-tight">
-                            {item.product.name}
-                          </p>
-                          <p className="text-[10px] text-slate-400 font-semibold">
-                            {formatCurrency(item.product.price)}
-                          </p>
-                        </div>
+                      <div className="flex justify-between items-center gap-2">
+                        <p className="text-xs font-bold text-slate-800 leading-tight truncate">
+                          {item.product.name}
+                          <span className="font-medium text-slate-400"> · {formatCurrency(item.product.price)}</span>
+                        </p>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -687,13 +678,13 @@ export function POSClient({
                         </Button>
                       </div>
 
-                      <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center justify-between gap-1.5 mt-1.5">
                         {/* Quantity picker */}
-                        <div className="flex items-center border border-slate-200/50 bg-white rounded-lg overflow-hidden h-8 shadow-3xs">
+                        <div className="flex items-center border border-slate-200/50 bg-white rounded-lg overflow-hidden h-7 shadow-3xs shrink-0">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                            className="px-2.5 h-full text-slate-500 hover:bg-slate-50 transition-colors border-r border-slate-100"
+                            className="px-2 h-full text-slate-500 hover:bg-slate-50 transition-colors border-r border-slate-100"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
@@ -718,20 +709,20 @@ export function POSClient({
                                 removeFromCart(item.product.id)
                               }
                             }}
-                            className="w-10 text-center text-xs font-bold text-slate-800 focus:outline-none focus:bg-slate-50 h-full border-0 p-0"
+                            className="w-8 text-center text-xs font-bold text-slate-800 focus:outline-none focus:bg-slate-50 h-full border-0 p-0"
                           />
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            className="px-2.5 h-full text-slate-500 hover:bg-slate-50 transition-colors border-l border-slate-100"
+                            className="px-2 h-full text-slate-500 hover:bg-slate-50 transition-colors border-l border-slate-100"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
 
                         {/* Item discount input */}
-                        <div className="flex items-center gap-1">
-                          <Percent className="h-3.5 w-3.5 text-slate-400" />
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Percent className="h-3 w-3 text-slate-400" />
                           <input
                             type="number"
                             min="0"
@@ -739,12 +730,11 @@ export function POSClient({
                             value={item.discountPercent || ''}
                             onChange={(e) => updateItemDiscount(item.product.id, Number(e.target.value))}
                             placeholder="0"
-                            className="w-11 h-8 text-xs text-center border border-slate-200/50 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all p-1 shadow-3xs"
+                            className="w-9 h-7 text-xs text-center border border-slate-200/50 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all p-1 shadow-3xs"
                           />
-                          <span className="text-[10px] text-slate-400 font-bold">%</span>
                         </div>
 
-                        <p className="text-xs font-bold text-slate-800">
+                        <p className="text-xs font-bold text-slate-800 ml-auto truncate">
                           {formatCurrency(finalPrice * item.quantity)}
                         </p>
                       </div>
@@ -754,8 +744,8 @@ export function POSClient({
               )}
             </div>
 
-            {/* Checkout Totals & Settings */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/10 space-y-4">
+            {/* Checkout Totals & Settings — fixed footer, never scrolls or shrinks */}
+            <div className="shrink-0 p-3.5 border-t border-slate-100 bg-slate-50/10 space-y-3">
               {/* Linked Customer Selection */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -782,7 +772,7 @@ export function POSClient({
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full h-10 bg-slate-100/50 border-0 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-2xs font-medium text-slate-700">
+                  <SelectTrigger className="w-full h-9 bg-slate-100/50 border-0 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-2xs font-medium text-slate-700">
                     <SelectValue placeholder={t('walkInCustomer')}>
                       {selectedCustomer
                         ? `${selectedCustomer.name}${selectedCustomer.phone ? ` (${selectedCustomer.phone})` : ''}`
@@ -810,27 +800,27 @@ export function POSClient({
                     value={generalDiscountValue || ''}
                     onChange={(e) => setGeneralDiscountValue(Number(e.target.value))}
                     placeholder="0"
-                    className="h-10 text-xs border-0 bg-slate-100/50 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 shadow-2xs text-slate-800"
+                    className="h-9 text-xs border-0 bg-slate-100/50 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 shadow-2xs text-slate-800"
                   />
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setGeneralDiscountType(generalDiscountType === 'flat' ? 'percent' : 'flat')}
-                    className="h-10 px-3.5 text-xs border-0 bg-slate-100 hover:bg-slate-200/80 text-slate-600 rounded-xl transition-all cursor-pointer font-bold shadow-2xs"
+                    className="h-9 px-3.5 text-xs border-0 bg-slate-100 hover:bg-slate-200/80 text-slate-600 rounded-xl transition-all cursor-pointer font-bold shadow-2xs"
                   >
                     {generalDiscountType === 'percent' ? '%' : 'so\'m'}
                   </Button>
                 </div>
               </div>
 
-              {/* Totals Breakdown */}
-              <div className="space-y-1.5 pt-2 border-t border-dashed border-slate-200/50">
+              {/* Totals Breakdown — receipt-style summary card */}
+              <div className="rounded-xl bg-slate-50/70 border border-slate-100 p-3 space-y-1.5">
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>{t('subtotal')}</span>
-                  <span>{formatCurrency(subtotal)}</span>
+                  <span className="font-medium text-slate-600">{formatCurrency(subtotal)}</span>
                 </div>
                 {calculatedDiscount > 0 && (
-                  <div className="flex justify-between text-xs text-rose-505 font-medium animate-none">
+                  <div className="flex justify-between text-xs text-rose-600 font-medium">
                     <span>{t('discount')}</span>
                     <span>-{formatCurrency(calculatedDiscount)}</span>
                   </div>
@@ -838,19 +828,19 @@ export function POSClient({
                 {taxActive && (
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>{t('tax')}</span>
-                    <span>{formatCurrency(calculatedTax)}</span>
+                    <span className="font-medium text-slate-600">{formatCurrency(calculatedTax)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-sm font-bold text-slate-800 pt-1.5 border-t border-slate-50 mt-1">
+                <div className="flex justify-between items-center text-sm font-bold text-slate-800 pt-1.5 border-t border-dashed border-slate-200 mt-1.5">
                   <span>{t('total')}</span>
-                  <span className="text-indigo-650 text-base font-extrabold">{formatCurrency(totalPayable)}</span>
+                  <span className="text-indigo-600 text-lg font-extrabold">{formatCurrency(totalPayable)}</span>
                 </div>
               </div>
 
-              {/* Payment Methods Grid */}
+              {/* Payment Method — minimal segmented control */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-slate-500">{t('paymentMethod')}</Label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100/70 rounded-xl">
                   {[
                     { key: 'cash', label: t('cash'), icon: Wallet },
                     { key: 'card', label: t('card'), icon: CreditCard },
@@ -864,14 +854,15 @@ export function POSClient({
                         key={pm.key}
                         type="button"
                         onClick={() => setPaymentMethod(pm.key as any)}
-                        className={`flex flex-col items-center justify-center p-2 rounded-xl border text-[9px] sm:text-[10px] font-bold transition-all duration-200 cursor-pointer shadow-3xs ${
+                        title={pm.label}
+                        className={`flex flex-col items-center justify-center gap-0.5 h-11 rounded-lg text-[9px] font-bold transition-all duration-150 cursor-pointer ${
                           isSelected
-                            ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-200 text-indigo-700 shadow-[0_4px_12px_rgba(99,102,241,0.08)]'
-                            : 'bg-white border-slate-200/30 text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                            ? 'bg-white text-indigo-700 shadow-[0_1px_4px_rgba(15,23,42,0.08)]'
+                            : 'text-slate-500 hover:text-slate-700'
                         }`}
                       >
-                        <Icon className="h-4 w-4 mb-1" />
-                        <span className="text-center leading-tight">{pm.label}</span>
+                        <Icon className="h-3.5 w-3.5" />
+                        <span className="leading-none truncate max-w-full px-0.5">{pm.label}</span>
                       </button>
                     )
                   })}
@@ -882,9 +873,14 @@ export function POSClient({
               <Button
                 onClick={handleCheckout}
                 disabled={cart.length === 0 || isLoadingCheckout}
-                className="w-full h-12 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm rounded-2xl cursor-pointer transition-all duration-250 shadow-[0_6px_18px_rgba(16,185,129,0.3)] active:scale-[0.98] border-0"
+                className="w-full h-11 gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm rounded-2xl cursor-pointer transition-all duration-250 shadow-[0_6px_18px_rgba(16,185,129,0.3)] active:scale-[0.98] border-0"
               >
-                {isLoadingCheckout ? tCommon('saving') : t('checkout')}
+                {isLoadingCheckout ? tCommon('saving') : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    {t('checkout')}
+                  </>
+                )}
               </Button>
             </div>
           </Card>

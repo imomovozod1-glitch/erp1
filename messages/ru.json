@@ -146,7 +146,7 @@
     "warehouseValue": "Стоимость склада",
     "topProducts": "Лидеры продаж",
     "sales": "Продажи",
-    "profit": "Чистая прибыль",
+    "profit": "Прибыль",
     "expenses": "Расходы",
     "avgCheck": "Средний чек",
     "activeCustomers": "Активные клиенты",
@@ -163,6 +163,7 @@
     "lowStockCountText": "{count} мало на складе",
     "customersCountText": "{count} активных клиентов",
     "employeesCountText": "{count} сотрудников",
+    "suppliersCountText": "{count} поставщиков",
     "revenueChartTitle": "Анализ доходов и расходов",
     "soldText": "Продано: {count} шт"
   },

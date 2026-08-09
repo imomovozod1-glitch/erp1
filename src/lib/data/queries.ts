@@ -300,6 +300,7 @@ export const getCachedDashboardStats = unstable_cache(
       { count: totalProducts },
       { count: totalCustomers },
       { count: totalEmployees },
+      { count: totalSuppliers },
       { data: recentOrders },
       { data: chartTxData },
       { data: allTxAmounts },
@@ -309,11 +310,13 @@ export const getCachedDashboardStats = unstable_cache(
       allProductsRes,
       unpaidInvoicesRes,
       unpaidPurchaseOrdersRes,
+      soldItemsRes,
     ] = await Promise.all([
       supabase.from('sales_orders').select('*', { count: 'exact', head: true }),
       supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('customers').select('*', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('employees').select('*', { count: 'exact', head: true }).eq('is_active', true),
+      supabase.from('suppliers').select('*', { count: 'exact', head: true }),
       supabase
         .from('sales_orders')
         .select('id, order_number, status, total_amount, order_date, customers(name)')
@@ -331,6 +334,9 @@ export const getCachedDashboardStats = unstable_cache(
       supabase.from('products').select('stock, cost_price').eq('is_active', true),
       supabase.from('invoices').select('total_amount, paid_amount').not('status', 'in', '("paid","cancelled")'),
       supabase.from('purchase_orders').select('total_amount').not('status', 'in', '("received","cancelled")'),
+      supabase
+        .from('sales_order_items')
+        .select('quantity, total_price, products(cost_price), sales_orders(order_date)'),
     ])
 
     const incomeRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'income')
@@ -341,11 +347,19 @@ export const getCachedDashboardStats = unstable_cache(
     const totalReceivables = (unpaidInvoicesRes.data ?? []).reduce((sum: number, inv: any) => sum + ((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)), 0)
     const totalPayables = (unpaidPurchaseOrdersRes.data ?? []).reduce((sum: number, po: any) => sum + (Number(po.total_amount) || 0), 0)
 
+    // Sold items with cost data, used to compute real profit (sales - cost price) per period
+    const soldItems = (soldItemsRes.data ?? []).map((item: any) => ({
+      order_date: item.sales_orders?.order_date ?? null,
+      revenue: Number(item.total_price) || 0,
+      cost: (Number(item.products?.cost_price) || 0) * (Number(item.quantity) || 0),
+    })).filter((item: any) => item.order_date)
+
     return {
       totalOrders,
       totalProducts,
       totalCustomers,
       totalEmployees,
+      totalSuppliers,
       recentOrders: recentOrders ?? [],
       chartTxData: chartTxData ?? [],
       incomeRows,
@@ -356,6 +370,7 @@ export const getCachedDashboardStats = unstable_cache(
       warehouseValue,
       totalReceivables,
       totalPayables,
+      soldItems,
     }
   },
   ['dashboard-stats'],
@@ -366,6 +381,7 @@ export const getCachedDashboardStats = unstable_cache(
       CACHE_TAGS.products,
       CACHE_TAGS.customers,
       CACHE_TAGS.employees,
+      CACHE_TAGS.suppliers,
       CACHE_TAGS.transactions,
       CACHE_TAGS.invoices,
     ],
@@ -555,9 +571,42 @@ export const getCachedProductDetails = unstable_cache(
       supabase.from('sales_order_items').select('quantity, total_price, sales_orders(order_number, order_date, status, customers(name))').eq('product_id', id),
       supabase.from('purchase_order_items').select('quantity, total_cost, purchase_orders(po_number, order_date, status, suppliers(name))').eq('product_id', id),
     ])
+
+    // Resolve where each movement came from: purchase order (+ supplier) or sales order (+ customer)
+    const poIds = (movements ?? []).filter((m: any) => m.reference_type === 'purchase_order' && m.reference_id).map((m: any) => m.reference_id)
+    const orderIds = (movements ?? []).filter((m: any) => m.reference_type === 'sales_orders' && m.reference_id).map((m: any) => m.reference_id)
+
+    const [poRes, orderRes] = await Promise.all([
+      poIds.length
+        ? supabase.from('purchase_orders').select('id, po_number, suppliers(name)').in('id', poIds)
+        : Promise.resolve({ data: [] }),
+      orderIds.length
+        ? supabase.from('sales_orders').select('id, order_number, customers(name)').in('id', orderIds)
+        : Promise.resolve({ data: [] }),
+    ])
+
+    const poMap = new Map((poRes.data ?? []).map((po: any) => [po.id, po]))
+    const orderMap = new Map((orderRes.data ?? []).map((o: any) => [o.id, o]))
+
+    const enrichedMovements = (movements ?? []).map((m: any) => {
+      let source: { type: string; label: string; supplierOrCustomer?: string } | null = null
+      if (m.reference_type === 'purchase_order' && poMap.has(m.reference_id)) {
+        const po: any = poMap.get(m.reference_id)
+        source = { type: 'purchase_order', label: po.po_number, supplierOrCustomer: po.suppliers?.name }
+      } else if (m.reference_type === 'sales_orders' && orderMap.has(m.reference_id)) {
+        const o: any = orderMap.get(m.reference_id)
+        source = { type: 'sales_orders', label: o.order_number, supplierOrCustomer: o.customers?.name }
+      } else if (m.reference_type === 'initial_stock') {
+        source = { type: 'initial_stock', label: '' }
+      } else if (m.reference_type === 'product_adjustment') {
+        source = { type: 'product_adjustment', label: '' }
+      }
+      return { ...m, source }
+    })
+
     return {
       product,
-      movements: movements ?? [],
+      movements: enrichedMovements,
       sales: salesOrderItems ?? [],
       purchases: purchaseOrderItems ?? [],
     }
@@ -585,8 +634,7 @@ export const getCachedEmployeeDetails = unstable_cache(
       supabase
         .from('transactions')
         .select('*')
-        .eq('reference_type', 'employee')
-        .eq('reference_id', id)
+        .eq('employee_id', id)
         .order('transaction_date', { ascending: false }),
       profileId
         ? supabase

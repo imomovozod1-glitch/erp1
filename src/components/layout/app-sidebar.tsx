@@ -38,7 +38,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import type { Profile } from '@/types/database.types'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 
 interface NavItem {
   key: string
@@ -156,12 +156,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
     return map[parentKey]?.[subKey] ?? subKey
   }
 
-  const initials = profile?.full_name
-    ?.split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() ?? 'U'
+  const initials = getInitials(profile?.full_name) || 'U'
 
   return (
     <Sidebar variant="inset" collapsible="icon">

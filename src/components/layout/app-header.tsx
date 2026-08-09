@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Bell, Globe, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2 } from 'lucide-react'
+import { Bell, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,12 +17,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database.types'
 
 const LOCALES = [
-  { code: 'uz', label: "O'zbekcha", flag: '🇺🇿' },
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'uz' as const, label: "O'zbekcha" },
+  { code: 'ru' as const, label: 'Русский' },
+  { code: 'en' as const, label: 'English' },
 ]
 
 interface AppHeaderProps {
@@ -35,6 +35,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   const router = useRouter()
   const t = useTranslations('auth')
   const tSettings = useTranslations('settings')
+  const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
 
   const [notifications, setNotifications] = useState<any[]>([])
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -154,19 +155,14 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
     return () => clearInterval(interval)
   }, [lang])
 
-  const initials = profile?.full_name
-    ?.split(' ')
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase() ?? 'U'
+  const initials = getInitials(profile?.full_name) || 'U'
 
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push(`/${lang}/login`)
     router.refresh()
-    toast.success('Logged out successfully')
+    toast.success(lang === 'uz' ? 'Muvaffaqiyatli chiqildi' : lang === 'ru' ? 'Вы успешно вышли' : 'Logged out successfully')
   }
 
   useEffect(() => {
@@ -233,9 +229,12 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   const hasOverdueInvoices = notifications.some((n) => n.type === 'overdue_invoice')
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white/80 backdrop-blur-sm px-4 sticky top-0 z-30">
+    <header
+      className={`flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4 fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
+        isSidebarMobile ? 'left-0' : sidebarState === 'expanded' ? 'left-0 md:left-(--sidebar-width)' : 'left-0 md:left-(--sidebar-width-icon)'
+      }`}
+    >
       <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mr-2 h-4" />
 
       <div className="flex-1" />
 
@@ -254,23 +253,35 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
       {/* Language Switcher */}
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="gap-2 text-slate-600" />}>
-            <Globe className="h-4 w-4" />
-            <span className="text-sm font-medium">{currentLocale?.flag} {currentLocale?.code.toUpperCase()}</span>
+        <DropdownMenuTrigger
+          render={
+            <button
+              type="button"
+              className="flex items-center gap-1.5 h-8 pl-1.5 pr-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer shadow-2xs"
+            />
+          }
+        >
+          <Languages className="h-3.5 w-3.5 text-slate-500" />
+          <span className="text-xs font-semibold text-slate-700">{currentLocale?.code.toUpperCase()}</span>
+          <ChevronDown className="h-3 w-3 text-slate-400" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuLabel className="text-xs text-muted-foreground">{tSettings('language')}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {LOCALES.map((locale) => (
-            <DropdownMenuItem
-              key={locale.code}
-              onClick={() => handleLocaleChange(locale.code)}
-              className={lang === locale.code ? 'bg-indigo-50 text-indigo-700 font-medium' : ''}
-            >
-              <span className="mr-2">{locale.flag}</span>
-              {locale.label}
-            </DropdownMenuItem>
-          ))}
+        <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
+          <DropdownMenuLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-1 pb-1.5">
+            {tSettings('language')}
+          </DropdownMenuLabel>
+          {LOCALES.map((locale) => {
+            const isActive = lang === locale.code
+            return (
+              <DropdownMenuItem
+                key={locale.code}
+                onClick={() => handleLocaleChange(locale.code)}
+                className={`rounded-lg gap-2 py-2 cursor-pointer ${isActive ? 'bg-indigo-50 text-indigo-700 font-semibold' : ''}`}
+              >
+                <span className="flex-1 text-sm">{locale.label}</span>
+                {isActive && <Check className="h-3.5 w-3.5 text-indigo-600" />}
+              </DropdownMenuItem>
+            )
+          })}
         </DropdownMenuContent>
       </DropdownMenu>
 

@@ -146,7 +146,7 @@
     "warehouseValue": "Warehouse Inventory Value",
     "topProducts": "Top Selling Products",
     "sales": "Total Sales",
-    "profit": "Net Profit",
+    "profit": "Profit",
     "expenses": "Expenses",
     "avgCheck": "Average Check",
     "activeCustomers": "Active Customers",
@@ -163,6 +163,7 @@
     "lowStockCountText": "{count} low stock",
     "customersCountText": "{count} active customers",
     "employeesCountText": "{count} employees",
+    "suppliersCountText": "{count} suppliers",
     "revenueChartTitle": "Revenue and Expenses Analysis",
     "soldText": "Sold: {count} units"
   },

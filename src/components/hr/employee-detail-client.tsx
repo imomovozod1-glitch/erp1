@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -11,7 +13,7 @@ import {
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
-  Download, DollarSign, ShoppingCart
+  Download, DollarSign, ShoppingCart, Calendar, X
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
@@ -26,6 +28,15 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   const t = useTranslations('hr')
   const tc = useTranslations('common')
   const [activeTab, setActiveTab] = useState<'payouts' | 'sales'>('payouts')
+  const [payoutsFrom, setPayoutsFrom] = useState('')
+  const [payoutsTo, setPayoutsTo] = useState('')
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const txDate = tx.transaction_date?.split('T')[0]
+    if (payoutsFrom && txDate < payoutsFrom) return false
+    if (payoutsTo && txDate > payoutsTo) return false
+    return true
+  })
 
   // Calculate Tenure
   const hiredDate = new Date(employee.hired_at)
@@ -213,40 +224,85 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
             <div className="p-0">
               {activeTab === 'payouts' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50/50">
-                      <TableHead className="w-10 text-center">#</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Kategoriya' : 'Категория'}</TableHead>
-                      <TableHead className="text-right">{tc('amount')}</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Izoh' : 'Комментарий'}</TableHead>
-                      <TableHead>{tc('date')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-slate-400">
-                          {tc('noData')}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      transactions.map((tx, idx) => (
-                        <TableRow key={tx.id} className="hover:bg-slate-50/50">
-                          <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                          <TableCell className="font-semibold text-slate-800">
-                            {tx.category}
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-rose-600">
-                            -{formatCurrency(tx.amount)}
-                          </TableCell>
-                          <TableCell className="text-slate-600 text-sm">{tx.description || '—'}</TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDate(tx.transaction_date)}</TableCell>
-                        </TableRow>
-                      ))
+                <>
+                  <div className="flex flex-wrap items-end gap-3 p-4 border-b bg-slate-50/30">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-semibold text-slate-500 uppercase flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {lang === 'uz' ? 'Sanadan' : lang === 'ru' ? 'С даты' : 'From'}
+                      </Label>
+                      <Input
+                        type="date"
+                        value={payoutsFrom}
+                        onChange={(e) => setPayoutsFrom(e.target.value)}
+                        className="h-9 text-xs w-40"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-semibold text-slate-500 uppercase flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {lang === 'uz' ? 'Sanagacha' : lang === 'ru' ? 'По дату' : 'To'}
+                      </Label>
+                      <Input
+                        type="date"
+                        value={payoutsTo}
+                        onChange={(e) => setPayoutsTo(e.target.value)}
+                        className="h-9 text-xs w-40"
+                      />
+                    </div>
+                    {(payoutsFrom || payoutsTo) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setPayoutsFrom(''); setPayoutsTo('') }}
+                        className="h-9 text-xs text-slate-500 gap-1"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        {lang === 'uz' ? 'Tozalash' : lang === 'ru' ? 'Сбросить' : 'Clear'}
+                      </Button>
                     )}
-                  </TableBody>
-                </Table>
+                    <div className="ml-auto text-xs text-slate-500 font-medium pb-2">
+                      {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}:{' '}
+                      <span className="font-bold text-rose-600">
+                        {formatCurrency(filteredTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0))}
+                      </span>
+                    </div>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50/50">
+                        <TableHead className="w-10 text-center">#</TableHead>
+                        <TableHead>{lang === 'uz' ? 'Kategoriya' : 'Категория'}</TableHead>
+                        <TableHead className="text-right">{tc('amount')}</TableHead>
+                        <TableHead>{lang === 'uz' ? 'Izoh' : 'Комментарий'}</TableHead>
+                        <TableHead>{tc('date')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTransactions.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-12 text-slate-400">
+                            {tc('noData')}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredTransactions.map((tx, idx) => (
+                          <TableRow key={tx.id} className="hover:bg-slate-50/50">
+                            <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
+                            <TableCell className="font-semibold text-slate-800">
+                              {tx.category}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-rose-600">
+                              -{formatCurrency(tx.amount)}
+                            </TableCell>
+                            <TableCell className="text-slate-600 text-sm">{tx.description || '—'}</TableCell>
+                            <TableCell className="text-slate-500 text-xs">{formatDate(tx.transaction_date)}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </>
               )}
 
               {activeTab === 'sales' && (

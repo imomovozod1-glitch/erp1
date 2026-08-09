@@ -46,7 +46,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
 
   const innerFormSchema = z.object({
     employee_code: z.string().min(1, tCommon('required')),
-    position: z.string().min(1, tCommon('required')),
+    position: z.string().optional().or(z.literal('')),
     salary: z.coerce.number().min(0, tCommon('invalidAmount')),
     hired_at: z.string().min(1, tCommon('required')),
     is_active: z.boolean().default(true),

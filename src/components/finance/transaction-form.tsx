@@ -108,12 +108,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
       
       await invalidateTransactions()
       clearPersistedForm('transaction-form-v3')
-      if (initialData?.type || defaultType) {
-        const redirectType = initialData?.type || defaultType
-        router.push(`/${lang}/finance/${redirectType === 'income' ? 'income' : 'expenses'}`)
-      } else {
-        router.push(`/${lang}/finance/transactions`)
-      }
+      router.push(`/${lang}/finance/transactions`)
     } catch (error: any) {
       toast.error(error.message || t('common.error'))
     } finally {
@@ -184,10 +179,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => {
-            const redirectType = initialData?.type || defaultType
-            router.push(`/${lang}/finance/${redirectType === 'income' ? 'income' : 'expenses'}`)
-          }}
+          onClick={() => router.push(`/${lang}/finance/transactions`)}
           disabled={isSubmitting}
         >
           {t('common.cancel')}

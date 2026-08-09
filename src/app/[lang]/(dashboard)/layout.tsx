@@ -30,7 +30,7 @@ export default async function DashboardLayout({
       <AppSidebar lang={lang} profile={profile} />
       <SidebarInset>
         <AppHeader profile={profile} lang={lang} />
-        <main className="flex-1 p-6 bg-slate-50/50 min-h-[calc(100vh-4rem)]">
+        <main className="flex-1 p-6 pt-22 bg-slate-50/50 min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </SidebarInset>

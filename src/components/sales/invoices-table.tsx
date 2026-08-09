@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Search, MoreHorizontal, Pencil, FileText, Eye, Loader2, Calendar, ShoppingBag, Receipt, User, CheckCircle2 } from 'lucide-react'
+import { Search, MoreHorizontal, Pencil, FileText, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
@@ -17,8 +16,6 @@ import {
   TableHeader, TableRow,
 } from '@/components/ui/table'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-600',
@@ -38,7 +35,6 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
   const t = useTranslations('sales')
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [isProcessingPayment, setIsProcessingPayment] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -47,41 +43,6 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
       setCurrentPage(1)
     }, 0)
   }, [search])
-
-  const handleAcceptPayment = async (invoice: any) => {
-    setIsProcessingPayment(invoice.id)
-    try {
-      const supabase = createClient() as any
-      const amountToPay = (Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0)
-      
-      if (amountToPay <= 0) {
-        toast.error("Ushbu invoys bo'yicha to'lanadigan qarz mavjud emas")
-        return
-      }
-
-      const { error } = await supabase
-        .from('invoices')
-        .update({
-          status: 'paid',
-          paid_amount: invoice.total_amount,
-          paid_at: new Date().toISOString().split('T')[0]
-        })
-        .eq('id', invoice.id)
-
-      if (error) throw error
-
-      const { adjustCashboxBalance } = await import('@/lib/finance-helpers')
-      await adjustCashboxBalance(amountToPay, 'income', supabase)
-
-      toast.success(lang === 'uz' ? "To'lov muvaffaqiyatli qabul qilindi" : "Оплата успешно принята")
-      
-      router.refresh()
-    } catch (err: any) {
-      toast.error(err.message || 'Xatolik yuz berdi')
-    } finally {
-      setIsProcessingPayment(null)
-    }
-  }
 
   const filtered = invoices.filter(
     (i) =>
@@ -199,27 +160,13 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                             {tCommon('edit')}
                           </DropdownMenuItem>
                           {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-                            <>
-                              <DropdownMenuItem 
-                                onClick={() => handleAcceptPayment(invoice)}
-                                disabled={isProcessingPayment === invoice.id}
-                                className="text-emerald-600 focus:text-emerald-700"
-                              >
-                                {isProcessingPayment === invoice.id ? (
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                                )}
-                                To&apos;lovni qabul qilish (Tezkor)
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
-                                className="text-indigo-600 focus:text-indigo-700 font-medium"
-                              >
-                                <CheckCircle2 className="h-4 w-4 mr-2" />
-                                To&apos;lov qilish (Kassa orqali)
-                              </DropdownMenuItem>
-                            </>
+                            <DropdownMenuItem
+                              onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
+                              className="text-indigo-600 focus:text-indigo-700 font-medium"
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                              To&apos;lov qilish (Kassa orqali)
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

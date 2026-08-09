@@ -11,14 +11,19 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
 export default async function NewTransactionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ lang: string }>
+  searchParams: Promise<{ type?: string }>
 }) {
   const { lang } = await params
+  const { type } = await searchParams
   const [t, tCommon] = await Promise.all([
     getTranslations('finance'),
     getTranslations('common'),
   ])
+
+  const defaultType = type === 'expense' ? 'expense' : 'income'
 
   return (
     <div className="space-y-6">
@@ -32,7 +37,7 @@ export default async function NewTransactionPage({
         ]}
       />
       <div className="px-4 md:px-8">
-        <TransactionForm lang={lang} />
+        <TransactionForm lang={lang} defaultType={defaultType} />
       </div>
     </div>
   )

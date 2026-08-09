@@ -301,20 +301,7 @@ export function UnitsList({ lang }: UnitsListProps) {
         </CardContent>
       </Card>
 
-      {/* Informative footer card */}
-      <Card className="border-slate-100 bg-slate-50/50">
-        <CardContent className="p-4 flex items-start gap-3">
-          <div className="p-1.5 bg-white rounded border border-slate-100 text-indigo-600 mt-0.5">
-            <Info className="h-4 w-4" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-slate-700">Dynamic Product Unit Binding</p>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Any custom measurement unit added here will automatically populate the unit options dropdown inside the product creation and editing forms.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   )
 }

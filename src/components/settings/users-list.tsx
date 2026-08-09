@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database.types'
 
 interface UsersListProps {
@@ -141,7 +142,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
             <UserCheck className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tCommon('status') || 'Active'}</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{tCommon('active')}</p>
             <p className="text-2xl font-bold text-slate-800">{activeCount}</p>
           </div>
         </Card>
@@ -164,8 +165,8 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
             <CardTitle className="text-xl font-bold text-slate-800">{t('users')}</CardTitle>
             <CardDescription>
               {isAdmin
-                ? t('roles') || 'Manage employee roles and permissions'
-                : 'View directory of active workspace users'}
+                ? (t('roles') || (lang === 'uz' ? 'Xodimlar rollari va ruxsatlarini boshqarish' : lang === 'ru' ? 'Управление ролями и правами сотрудников' : 'Manage employee roles and permissions'))
+                : (lang === 'uz' ? 'Faol foydalanuvchilar ro\'yxatini ko\'ring' : lang === 'ru' ? 'Просмотр списка активных пользователей' : 'View directory of active workspace users')}
             </CardDescription>
           </div>
           <div className="relative w-full sm:w-72">
@@ -184,28 +185,23 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
               <TableHeader className="bg-slate-50/50">
                 <TableRow>
                   <TableHead className="w-10 text-center font-semibold text-slate-600">#</TableHead>
-                  <TableHead className="w-[280px] font-semibold text-slate-600">User</TableHead>
-                  <TableHead className="font-semibold text-slate-600">Email</TableHead>
-                  <TableHead className="font-semibold text-slate-600">Role</TableHead>
-                  <TableHead className="w-[120px] font-semibold text-slate-600">Status</TableHead>
-                  {isAdmin && <TableHead className="w-[140px] font-semibold text-slate-600 text-right">Actions</TableHead>}
+                  <TableHead className="w-[280px] font-semibold text-slate-600">{t('users')}</TableHead>
+                  <TableHead className="font-semibold text-slate-600">{tCommon('email')}</TableHead>
+                  <TableHead className="font-semibold text-slate-600">{lang === 'uz' ? 'Rol' : lang === 'ru' ? 'Роль' : 'Role'}</TableHead>
+                  <TableHead className="w-[120px] font-semibold text-slate-600">{tCommon('status')}</TableHead>
+                  {isAdmin && <TableHead className="w-[140px] font-semibold text-slate-600 text-right">{tCommon('actions')}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProfiles.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={isAdmin ? 6 : 5} className="h-24 text-center text-slate-400">
-                      No results found
+                      {tCommon('noData')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginated.map((p, index) => {
-                    const initials = p.full_name
-                      ?.split(' ')
-                      .map((n) => n[0])
-                      .slice(0, 2)
-                      .join('')
-                      .toUpperCase() ?? 'U'
+                    const initials = getInitials(p.full_name) || 'U'
 
                     const isSelf = p.id === currentUserProfile?.id
 
@@ -226,12 +222,12 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                                 {p.full_name}
                                 {isSelf && (
                                   <Badge className="ml-2 bg-indigo-50 text-indigo-700 border-indigo-100 text-[10px] font-medium py-0 px-1.5">
-                                    You
+                                    {lang === 'uz' ? 'Siz' : lang === 'ru' ? 'Вы' : 'You'}
                                   </Badge>
                                 )}
                               </p>
                               <p className="text-xs text-slate-500 font-normal capitalize">
-                                {p.phone || 'No phone'}
+                                {p.phone || (lang === 'uz' ? 'Telefon yo\'q' : lang === 'ru' ? 'Нет телефона' : 'No phone')}
                               </p>
                             </div>
                           </div>
@@ -270,13 +266,13 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                                 : 'bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-50'
                             }`}
                           >
-                            {p.is_active ? 'Active' : 'Inactive'}
+                            {p.is_active ? tCommon('active') : tCommon('inactive')}
                           </Badge>
                         </TableCell>
                         {isAdmin && (
                           <TableCell className="text-right">
                             {isSelf ? (
-                              <span className="text-xs text-slate-400 font-normal italic">Self-management disabled</span>
+                              <span className="text-xs text-slate-400 font-normal italic">{lang === 'uz' ? "O'zini boshqarish o'chirilgan" : lang === 'ru' ? 'Самоуправление отключено' : 'Self-management disabled'}</span>
                             ) : (
                               <div className="flex justify-end items-center gap-2">
                                 <button
@@ -339,9 +335,15 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
             <Shield className="h-4 w-4" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-slate-700">Account Registration Security</p>
+            <p className="text-sm font-semibold text-slate-700">
+              {lang === 'uz' ? "Ro'yxatdan o'tish xavfsizligi" : lang === 'ru' ? 'Безопасность регистрации' : 'Account Registration Security'}
+            </p>
             <p className="text-xs text-slate-500 leading-relaxed">
-              For security, users must register accounts individually via signup. Once registered, administrators can manage access permissions, roles, and status levels in the table above.
+              {lang === 'uz'
+                ? "Xavfsizlik uchun foydalanuvchilar ro'yxatdan alohida o'tishlari kerak. Ro'yxatdan o'tgandan so'ng, administratorlar yuqoridagi jadvalda ruxsatlar, rollar va holatlarni boshqarishlari mumkin."
+                : lang === 'ru'
+                ? 'В целях безопасности пользователи должны регистрироваться самостоятельно. После регистрации администраторы могут управлять правами доступа, ролями и статусами в таблице выше.'
+                : 'For security, users must register accounts individually via signup. Once registered, administrators can manage access permissions, roles, and status levels in the table above.'}
             </p>
           </div>
         </CardContent>

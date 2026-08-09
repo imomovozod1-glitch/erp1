@@ -37,6 +37,23 @@ export function generateCode(prefix: string, id: number): string {
   return `${prefix}-${String(id).padStart(6, "0")}`
 }
 
+/**
+ * Derives avatar initials from a name, ignoring parenthetical suffixes
+ * (e.g. "Administrator (Owner)") and any word that doesn't start with a letter.
+ */
+export function getInitials(name: string | null | undefined, maxLength: number = 2): string {
+  if (!name) return ''
+  const cleaned = name.replace(/\([^)]*\)/g, ' ')
+  const initials = cleaned
+    .split(/\s+/)
+    .map((word) => word.match(/[\p{L}\p{N}]/u)?.[0] ?? '')
+    .filter(Boolean)
+    .slice(0, maxLength)
+    .join('')
+    .toUpperCase()
+  return initials
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

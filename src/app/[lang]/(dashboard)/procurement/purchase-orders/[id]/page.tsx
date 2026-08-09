@@ -63,7 +63,7 @@ export default function PurchaseOrderDetailPage() {
         setOrder(orderData)
         setItems(itemsData || [])
       } catch (err: any) {
-        toast.error(err.message || 'Xatolik yuz berdi')
+        toast.error(err.message || tCommon('error'))
         router.push(`/${lang}/procurement/purchase-orders`)
       } finally {
         setIsLoading(false)

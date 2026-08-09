@@ -146,7 +146,7 @@
     "warehouseValue": "Ombor tovar qiymati",
     "topProducts": "Eng ko'p sotilgan tovarlar",
     "sales": "Jami savdo",
-    "profit": "Sof foyda",
+    "profit": "Foyda",
     "expenses": "Xarajatlar",
     "avgCheck": "O'rtacha chek",
     "activeCustomers": "Aktiv mijozlar",
@@ -163,6 +163,7 @@
     "lowStockCountText": "{count} ta kam qolgan",
     "customersCountText": "{count} ta faol mijoz",
     "employeesCountText": "{count} ta xodim",
+    "suppliersCountText": "{count} ta yetkazib beruvchi",
     "revenueChartTitle": "Daromadlar va xarajatlar tahlili",
     "soldText": "Sotildi: {count} ta"
   },

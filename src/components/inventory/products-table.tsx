@@ -544,6 +544,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
       <AIStockScannerModal
         open={isScanModalOpen}
         onOpenChange={setIsScanModalOpen}
+        lang={lang}
       />
     </TooltipProvider>
   );

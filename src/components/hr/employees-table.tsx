@@ -103,7 +103,6 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
               <TableHead>{tCommon('name')}</TableHead>
               <TableHead>{t('employeeCode')}</TableHead>
               <TableHead>{t('position')}</TableHead>
-              <TableHead>{t('department')}</TableHead>
               <TableHead className="text-right">{t('salary')}</TableHead>
               <TableHead>{t('hiredAt')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
@@ -113,7 +112,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
+                <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -154,8 +153,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                     <TableCell>
                       <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">{emp.employee_code}</code>
                     </TableCell>
-                    <TableCell className="text-sm">{emp.position}</TableCell>
-                    <TableCell className="text-muted-foreground">{emp.profiles?.departments?.name ?? '—'}</TableCell>
+                    <TableCell className="text-sm">{emp.position || '—'}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(emp.salary)}</TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(emp.hired_at)}</TableCell>
                     <TableCell>

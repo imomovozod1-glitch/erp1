@@ -84,6 +84,7 @@ export function RevenueChart({ data, title }: RevenueChartProps) {
             />
             <Tooltip
               formatter={(value: any) => formatCurrency(value as number)}
+              itemSorter={(item) => item.dataKey === 'income' ? 0 : 1}
               contentStyle={{
                 borderRadius: '8px',
                 border: '1px solid #e2e8f0',
@@ -92,8 +93,28 @@ export function RevenueChart({ data, title }: RevenueChartProps) {
               }}
             />
             <Legend
-              formatter={(value) => value === 'income' ? t('finance.income') : t('finance.expenses')}
-              wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }}
+              content={() => (
+                <div className="flex items-center justify-center gap-4 pt-3" style={{ fontSize: '12px' }}>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: '#6366f1' }} />
+                    {t('finance.income')}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: '#f43f5e' }} />
+                    {t('finance.expenses')}
+                  </span>
+                </div>
+              )}
+            />
+            {/* Expense is drawn first (underneath) so the income area stays on top and visually primary */}
+            <Area
+              type="monotone"
+              dataKey="expense"
+              stroke="#f43f5e"
+              strokeWidth={2.5}
+              fill="url(#colorExpense)"
+              dot={false}
+              activeDot={{ r: 4, strokeWidth: 2 }}
             />
             <Area
               type="monotone"
@@ -101,15 +122,6 @@ export function RevenueChart({ data, title }: RevenueChartProps) {
               stroke="#6366f1"
               strokeWidth={2.5}
               fill="url(#colorIncome)"
-              dot={false}
-              activeDot={{ r: 4, strokeWidth: 2 }}
-            />
-            <Area
-              type="monotone"
-              dataKey="expense"
-              stroke="#f43f5e"
-              strokeWidth={2.5}
-              fill="url(#colorExpense)"
               dot={false}
               activeDot={{ r: 4, strokeWidth: 2 }}
             />

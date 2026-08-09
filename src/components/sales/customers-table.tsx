@@ -5,7 +5,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { MoreHorizontal, Pencil, Trash2, Search, Users } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Search, Users, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateCustomers } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,6 +21,7 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { CustomerMapDialog } from '@/components/sales/customer-map-dialog'
 
 interface CustomersTableProps {
   customers: any[]
@@ -34,6 +35,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
   const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [mapCustomer, setMapCustomer] = useState<{ name: string; address: string } | null>(null)
   const itemsPerPage = 10
 
   useEffect(() => {
@@ -164,6 +166,12 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                         <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/customers/${customer.id}/edit`)}>
                           <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
                         </DropdownMenuItem>
+                        {customer.address && (
+                          <DropdownMenuItem onClick={() => setMapCustomer({ name: customer.name, address: customer.address })}>
+                            <MapPin className="mr-2 h-3.5 w-3.5" />
+                            {lang === 'uz' ? 'Xaritada ko\'rish' : lang === 'ru' ? 'Показать на карте' : 'View on map'}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={() => handleDelete(customer.id)}
                           className="text-red-600 focus:text-red-600 focus:bg-red-50"
@@ -205,6 +213,15 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
         )}
       </CardContent>
     </Card>
+    {mapCustomer && (
+      <CustomerMapDialog
+        open={!!mapCustomer}
+        onOpenChange={(open) => { if (!open) setMapCustomer(null) }}
+        address={mapCustomer.address}
+        customerName={mapCustomer.name}
+        lang={lang}
+      />
+    )}
     </TooltipProvider>
   )
 }
