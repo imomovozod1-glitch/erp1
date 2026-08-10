@@ -39,7 +39,8 @@ import {
   invalidateOrderItems,
   invalidateTransactions,
   invalidateMovements,
-  invalidateCustomers
+  invalidateCustomers,
+  invalidateInvoices
 } from '@/lib/data/revalidate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -69,6 +70,10 @@ function generatePOSInvoiceNumber(): string {
 
 function getPOSDateString(): string {
   return new Date().toISOString().split('T')[0]
+}
+
+function getPOSDueDateString(daysFromNow: number): string {
+  return new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 }
 
 interface POSClientProps {
@@ -359,38 +364,46 @@ export function POSClient({
         ]
       })
 
-      const generatedInvoiceNumber = paymentMethod !== 'debt' ? generatePOSInvoiceNumber() : null
+      const isDebtSale = paymentMethod === 'debt'
+      const generatedInvoiceNumber = generatePOSInvoiceNumber()
+      // Trade credit term for debt sales — customer has 14 days to pay before the invoice is overdue.
+      const dueDateStr = isDebtSale ? getPOSDueDateString(14) : orderDateStr
 
       await Promise.all([
         supabase.from('sales_order_items').insert(itemsToInsert).then(({ error }: any) => { if (error) throw error }),
-        supabase.from('transactions').insert({
-          type: 'income',
-          amount: totalPayable,
-          category: 'Sales',
-          description: `POS Sale - Order #${orderData.order_number}`,
-          reference_type: 'sales_orders',
-          reference_id: orderData.id,
-          transaction_date: orderDateStr,
+        // Only record cash-basis income when money actually changed hands.
+        // Debt sales don't create an income transaction here — that happens
+        // later when the debt is collected (see cashbox debt_collection flow),
+        // otherwise the revenue would be double-counted (once here, once on collection).
+        isDebtSale
+          ? Promise.resolve()
+          : supabase.from('transactions').insert({
+              type: 'income',
+              amount: totalPayable,
+              category: 'Sales',
+              description: `POS Sale - Order #${orderData.order_number}`,
+              reference_type: 'sales_orders',
+              reference_id: orderData.id,
+              transaction_date: orderDateStr,
+              created_by: user.id
+            }).then(({ error }: any) => { if (error) throw error }),
+        ...stockAndMovementUpdates,
+        // Always create an invoice: 'paid' immediately for cash/card/transfer,
+        // 'sent' (unpaid) for debt sales so the customer's outstanding debt is tracked.
+        supabase.from('invoices').insert({
+          invoice_number: generatedInvoiceNumber,
+          order_id: orderData.id,
+          customer_id: selectedCustomer ? selectedCustomer.id : null,
+          status: isDebtSale ? 'sent' : 'paid',
+          total_amount: totalPayable,
+          paid_amount: isDebtSale ? 0 : totalPayable,
+          issued_at: orderDateStr,
+          due_at: dueDateStr,
+          paid_at: isDebtSale ? null : orderDateStr,
+          notes: isDebtSale ? `Qarzga sotildi - POS Order #${orderData.order_number}` : `Paid instantly on POS via ${paymentMethod}`,
           created_by: user.id
         }).then(({ error }: any) => { if (error) throw error }),
-        ...stockAndMovementUpdates,
-        // Auto-create Invoice if paid (Cash, Card, Transfer) and update cash register balance
-        generatedInvoiceNumber
-          ? supabase.from('invoices').insert({
-              invoice_number: generatedInvoiceNumber,
-              order_id: orderData.id,
-              customer_id: selectedCustomer ? selectedCustomer.id : null,
-              status: 'paid',
-              total_amount: totalPayable,
-              paid_amount: totalPayable,
-              issued_at: orderDateStr,
-              due_at: orderDateStr,
-              paid_at: orderDateStr,
-              notes: `Paid instantly on POS via ${paymentMethod}`,
-              created_by: user.id
-            }).then(({ error }: any) => { if (error) throw error })
-          : Promise.resolve(),
-        paymentMethod !== 'debt' ? adjustCashboxBalance(totalPayable, 'income', supabase) : Promise.resolve(),
+        isDebtSale ? Promise.resolve() : adjustCashboxBalance(totalPayable, 'income', supabase),
       ])
 
       // Success
@@ -433,7 +446,8 @@ export function POSClient({
         invalidateOrderItems(),
         invalidateTransactions(),
         invalidateMovements(),
-        invalidateCustomers()
+        invalidateCustomers(),
+        invalidateInvoices()
       ])
 
       // Reset cart
