@@ -29,6 +29,11 @@ export function formatDate(dateStr: string, fmt: string = "dd.MM.yyyy"): string 
   }
 }
 
+/** Same as formatDate, but includes hour:minute — use for timestamps where the exact time matters (e.g. stock movements). */
+export function formatDateTime(dateStr: string, fmt: string = "dd.MM.yyyy HH:mm"): string {
+  return formatDate(dateStr, fmt)
+}
+
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("uz-UZ").format(value)
 }

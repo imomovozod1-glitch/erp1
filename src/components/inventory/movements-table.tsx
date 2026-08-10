@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
-import { format } from 'date-fns'
 import { Search, ArrowDownRight, ArrowUpRight, Settings2, Activity } from 'lucide-react'
-import { formatNumber } from '@/lib/utils'
+import { formatNumber, formatDateTime } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -106,7 +105,7 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
                   <TableCell className="text-sm text-slate-600">
-                    {format(new Date(movement.created_at), 'MMM d, yyyy HH:mm')}
+                    {formatDateTime(movement.created_at)}
                   </TableCell>
                   <TableCell>
                     <p className="font-medium text-slate-800">{movement.products?.name || '—'}</p>

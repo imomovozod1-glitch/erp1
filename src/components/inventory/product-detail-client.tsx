@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { formatCurrency, formatNumber, formatDate } from '@/lib/utils'
+import { formatCurrency, formatNumber, formatDate, formatDateTime } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
   TrendingUp, Download, Package, RefreshCw, ShoppingCart, Truck
@@ -56,7 +56,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
       Before: m.quantity_before,
       After: m.quantity_after,
       Reason: m.reason || '—',
-      Date: formatDate(m.created_at)
+      Date: formatDateTime(m.created_at)
     }))
     const movementsWS = XLSX.utils.json_to_sheet(movementsData)
     XLSX.utils.book_append_sheet(workbook, movementsWS, "Movements")
@@ -247,7 +247,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                         )}
                       </TableCell>
                       <TableCell className="text-slate-600 text-sm">{m.reason || '—'}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">{formatDate(m.created_at)}</TableCell>
+                      <TableCell className="text-slate-500 text-xs">{formatDateTime(m.created_at)}</TableCell>
                     </TableRow>
                   ))
                 )}
