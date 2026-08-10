@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,7 +13,7 @@ import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
-  Download, ShoppingCart, Phone, Mail, MapPin, DollarSign, Landmark, FileText
+  Download, ShoppingCart, Phone, Mail, MapPin, Landmark, FileText
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
@@ -43,8 +44,18 @@ interface CustomerDetailClientProps {
 export function CustomerDetailClient({ lang, customer, salesOrders, invoices }: CustomerDetailClientProps) {
   const tSales = useTranslations('sales')
   const tc = useTranslations('common')
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'orders' | 'invoices'>('orders')
   const [isMapOpen, setIsMapOpen] = useState(false)
+
+  // Force a fresh server fetch on every visit — the browser's client-side
+  // router cache can otherwise show a stale balance right after a payment
+  // was made on a different page (Next.js reuses cached RSC payloads on
+  // back/forward navigation regardless of server-side cache invalidation).
+  useEffect(() => {
+    router.refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Calculate Metrics
   const totalPurchases = salesOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
