@@ -15,7 +15,6 @@ const STATUS_COLORS = {
 }
 
 interface RecentOrdersProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   orders: any[]
   lang: string
   title: string

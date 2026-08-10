@@ -678,3 +678,26 @@ export const getCachedSupplierDetails = unstable_cache(
   { tags: [CACHE_TAGS.suppliers, CACHE_TAGS.purchaseOrders, CACHE_TAGS.transactions], revalidate: 30 }
 )
 
+export const getCachedCustomerDetails = unstable_cache(
+  async (id: string) => {
+    const supabase = getCacheClient()
+    const [
+      { data: customer },
+      { data: salesOrders },
+      { data: invoices },
+    ] = await Promise.all([
+      supabase.from('customers').select('*').eq('id', id).single(),
+      supabase.from('sales_orders').select('*').eq('customer_id', id).order('order_date', { ascending: false }),
+      supabase.from('invoices').select('*').eq('customer_id', id).order('issued_at', { ascending: false }),
+    ])
+
+    return {
+      customer,
+      salesOrders: salesOrders ?? [],
+      invoices: invoices ?? [],
+    }
+  },
+  ['customer-details-by-id'],
+  { tags: [CACHE_TAGS.customers, CACHE_TAGS.orders, CACHE_TAGS.invoices], revalidate: 30 }
+)
+

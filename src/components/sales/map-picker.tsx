@@ -3,66 +3,65 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Search, MapPin, Loader2, Navigation } from 'lucide-react'
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-declare global {
-  interface Window {
-    L: any
-  }
-}
+const DEFAULT_CENTER: [number, number] = [41.2995, 69.2401] // Tashkent
+
+const pinIcon = L.divIcon({
+  html: `<div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 shadow-lg border-2 border-white transform transition-transform duration-200 hover:scale-110">
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+         </div>`,
+  className: '',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+})
 
 interface MapPickerProps {
   onLocationSelect: (address: string, lat: number, lng: number) => void
   initialAddress?: string
+  /** Precise saved coordinates — when present, the map centers exactly here instead of the default city view. */
+  initialLat?: number | null
+  initialLng?: number | null
 }
 
-function loadLeaflet(callback: () => void) {
-  if (typeof window === 'undefined') return
+/** Bridges imperative Leaflet map events (click, programmatic pan) into the parent's React state. */
+function MapController({
+  onMove,
+  onMapClick,
+}: {
+  onMove: (map: L.Map) => void
+  onMapClick: (lat: number, lng: number) => void
+}) {
+  const map = useMap()
 
-  if (window.L) {
-    callback()
-    return
-  }
+  useEffect(() => {
+    onMove(map)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map])
 
-  // Load stylesheet if not already there
-  if (!document.getElementById('leaflet-css')) {
-    const link = document.createElement('link')
-    link.id = 'leaflet-css'
-    link.rel = 'stylesheet'
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-    document.head.appendChild(link)
-  }
+  useMapEvents({
+    click(e) {
+      onMapClick(e.latlng.lat, e.latlng.lng)
+    },
+  })
 
-  // Load script if not already there
-  if (!document.getElementById('leaflet-js')) {
-    const script = document.createElement('script')
-    script.id = 'leaflet-js'
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-    script.onload = () => {
-      setTimeout(callback, 100)
-    }
-    document.head.appendChild(script)
-  } else {
-    const checkL = setInterval(() => {
-      if (window.L) {
-        clearInterval(checkL)
-        callback()
-      }
-    }, 100)
-  }
+  return null
 }
 
-export function MapPicker({ onLocationSelect, initialAddress }: MapPickerProps) {
+export function MapPicker({ onLocationSelect, initialAddress, initialLat, initialLng }: MapPickerProps) {
   const t = useTranslations('sales.locationPicker')
-  const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<any>(null)
-  const markerRef = useRef<any>(null)
-  const [isLoaded, setIsLoaded] = useState(false)
+  const mapRef = useRef<L.Map | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [isResolving, setIsResolving] = useState(false)
-  const [coords, setCoords] = useState<{ lat: number; lng: number }>({ lat: 41.2995, lng: 69.2401 }) // Default: Tashkent
+  const hasInitialCoords = typeof initialLat === 'number' && typeof initialLng === 'number'
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>(
+    hasInitialCoords ? { lat: initialLat as number, lng: initialLng as number } : { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] }
+  )
   const [resolvedAddress, setResolvedAddress] = useState(initialAddress || '')
 
   // Reverse geocoding (coordinates to address)
@@ -74,96 +73,41 @@ export function MapPicker({ onLocationSelect, initialAddress }: MapPickerProps) 
       )
       const data = await response.json()
       if (data && data.display_name) {
-        const cleanAddress = data.display_name
-        setResolvedAddress(cleanAddress)
-        onLocationSelect(cleanAddress, lat, lng)
+        setResolvedAddress(data.display_name)
+        onLocationSelect(data.display_name, lat, lng)
       }
     } catch (err) {
-      console.error("Reverse geocoding failed", err)
+      console.error('Reverse geocoding failed', err)
     } finally {
       setIsResolving(false)
     }
   }
 
-  // 1. Load Leaflet and initialize map
+  // Resolve an address label for the initial saved coordinates once, on mount
   useEffect(() => {
-    loadLeaflet(() => {
-      setIsLoaded(true)
-    })
+    if (!hasInitialCoords || initialAddress) return
+    const timer = setTimeout(() => {
+      reverseGeocode(initialLat as number, initialLng as number)
+    }, 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => {
-    if (!isLoaded || !mapContainerRef.current || mapRef.current) return
+  const handleMapClick = (lat: number, lng: number) => {
+    setCoords({ lat, lng })
+    reverseGeocode(lat, lng)
+  }
 
-    const L = window.L
-
-    // Initialize Map centered at default coordinates
-    const map = L.map(mapContainerRef.current, {
-      zoomControl: true,
-      attributionControl: false,
-    }).setView([coords.lat, coords.lng], 13)
-
-    mapRef.current = map
-
-    // OpenStreetMap tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-    }).addTo(map)
-
-    // Custom bounce marker pin icon
-    const customPinIcon = L.divIcon({
-      html: `<div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 shadow-lg border-2 border-white transform transition-transform duration-200 hover:scale-110">
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-             </div>`,
-      className: '',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-    })
-
-    // Create marker
-    const marker = L.marker([coords.lat, coords.lng], {
-      icon: customPinIcon,
-      draggable: true,
-    }).addTo(map)
-
-    markerRef.current = marker
-
-    // Reverse geocode default coords if no initial address
-    if (!initialAddress) {
-      Promise.resolve().then(() => {
-        reverseGeocode(coords.lat, coords.lng)
-      })
-    }
-
-
-    // Handle marker drag end
-    marker.on('dragend', () => {
-      const latLng = marker.getLatLng()
-      setCoords({ lat: latLng.lat, lng: latLng.lng })
-      reverseGeocode(latLng.lat, latLng.lng)
-    })
-
-    // Handle click on map
-    map.on('click', (e: any) => {
-      const { lat, lng } = e.latlng
-      marker.setLatLng([lat, lng])
-      setCoords({ lat, lng })
-      reverseGeocode(lat, lng)
-    })
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = null
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded])
+  const handleMarkerDragEnd = (e: L.DragEndEvent) => {
+    const latLng = (e.target as L.Marker).getLatLng()
+    setCoords({ lat: latLng.lat, lng: latLng.lng })
+    reverseGeocode(latLng.lat, latLng.lng)
+  }
 
   // Geocode address search
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    if (!searchQuery.trim() || !mapRef.current || !markerRef.current) return
+    if (!searchQuery.trim()) return
 
     setIsSearching(true)
     try {
@@ -176,39 +120,33 @@ export function MapPicker({ onLocationSelect, initialAddress }: MapPickerProps) 
         const latitude = parseFloat(lat)
         const longitude = parseFloat(lon)
 
-        // Center map & update marker
-        mapRef.current.setView([latitude, longitude], 15)
-        markerRef.current.setLatLng([latitude, longitude])
+        mapRef.current?.setView([latitude, longitude], 15)
         setCoords({ lat: latitude, lng: longitude })
         setResolvedAddress(display_name)
-
-        // Trigger callback
         onLocationSelect(display_name, latitude, longitude)
       } else {
         alert(t('notFound'))
       }
     } catch (err) {
-      console.error("Geocoding failed", err)
+      console.error('Geocoding failed', err)
     } finally {
       setIsSearching(false)
     }
   }
 
-
   // Locate current position
   const handleLocateMe = () => {
-    if (navigator.geolocation && mapRef.current && markerRef.current) {
+    if (navigator.geolocation) {
       setIsResolving(true)
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords
-          mapRef.current.setView([latitude, longitude], 16)
-          markerRef.current.setLatLng([latitude, longitude])
+          mapRef.current?.setView([latitude, longitude], 16)
           setCoords({ lat: latitude, lng: longitude })
           reverseGeocode(latitude, longitude)
         },
         (error) => {
-          console.error("Geolocation failed", error)
+          console.error('Geolocation failed', error)
           setIsResolving(false)
           alert(t('geoError'))
         },
@@ -253,13 +191,26 @@ export function MapPicker({ onLocationSelect, initialAddress }: MapPickerProps) 
 
       {/* Map display */}
       <div className="relative rounded-xl overflow-hidden border border-slate-200/80 shadow-sm bg-slate-100">
-        {!isLoaded && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 z-10 space-y-2">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-            <span className="text-xs font-semibold text-slate-600">{t('loading')}</span>
-          </div>
-        )}
-        <div ref={mapContainerRef} className="w-full h-[280px]" style={{ zIndex: 1 }} />
+        <MapContainer
+          center={[coords.lat, coords.lng]}
+          zoom={hasInitialCoords ? 15 : 13}
+          zoomControl
+          attributionControl={false}
+          className="w-full h-70"
+          style={{ zIndex: 1 }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+          />
+          <Marker
+            position={[coords.lat, coords.lng]}
+            icon={pinIcon}
+            draggable
+            eventHandlers={{ dragend: handleMarkerDragEnd }}
+          />
+          <MapController onMove={(map) => { mapRef.current = map }} onMapClick={handleMapClick} />
+        </MapContainer>
       </div>
 
       {/* Geolocation info display */}

@@ -7,6 +7,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { LocationMapDialog } from '@/components/shared/location-map-dialog'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
@@ -33,6 +34,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
   const t = useTranslations('procurement')
   const tc = useTranslations('common')
   const [activeTab, setActiveTab] = useState<'purchases' | 'payments'>('purchases')
+  const [isMapOpen, setIsMapOpen] = useState(false)
 
   // Calculate Metrics
   const totalPurchases = purchaseOrders.reduce((sum, po) => sum + (po.total_amount || 0), 0)
@@ -181,9 +183,16 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
             {supplier.address && (
               <div className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4 text-slate-450 text-slate-400 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <span className="text-xs text-slate-400 block">{tc('address')}</span>
                   <span className="font-medium text-slate-800">{supplier.address}</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsMapOpen(true)}
+                    className="block mt-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline cursor-pointer"
+                  >
+                    {lang === 'uz' ? "Xaritada ko'rish" : lang === 'ru' ? 'Показать на карте' : 'View on map'}
+                  </button>
                 </div>
               </div>
             )}
@@ -301,6 +310,16 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
           </div>
         </div>
       </div>
+
+      <LocationMapDialog
+        open={isMapOpen}
+        onOpenChange={setIsMapOpen}
+        address={supplier.address}
+        latitude={supplier.latitude}
+        longitude={supplier.longitude}
+        title={supplier.name}
+        lang={lang}
+      />
     </div>
   )
 }

@@ -5,11 +5,12 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { MoreHorizontal, Pencil, Search, Truck } from 'lucide-react'
+import { MoreHorizontal, Pencil, Search, Truck, MapPin } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { LocationMapDialog } from '@/components/shared/location-map-dialog'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -28,6 +29,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [mapSupplier, setMapSupplier] = useState<{ name: string; address: string; latitude?: number | null; longitude?: number | null } | null>(null)
   const itemsPerPage = 10
 
   useEffect(() => {
@@ -138,6 +140,12 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                               <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
                               {tCommon('edit')}
                             </DropdownMenuItem>
+                            {(supplier.address || (supplier.latitude && supplier.longitude)) && (
+                              <DropdownMenuItem onClick={() => setMapSupplier({ name: supplier.name, address: supplier.address, latitude: supplier.latitude, longitude: supplier.longitude })}>
+                                <MapPin className="mr-2 h-3.5 w-3.5 text-slate-500" />
+                                {lang === 'uz' ? "Xaritada ko'rish" : lang === 'ru' ? 'Показать на карте' : 'View on map'}
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -174,6 +182,17 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
         )}
       </CardContent>
     </Card>
+    {mapSupplier && (
+      <LocationMapDialog
+        open={!!mapSupplier}
+        onOpenChange={(open) => { if (!open) setMapSupplier(null) }}
+        address={mapSupplier.address}
+        latitude={mapSupplier.latitude}
+        longitude={mapSupplier.longitude}
+        title={mapSupplier.name}
+        lang={lang}
+      />
+    )}
     </TooltipProvider>
   )
 }

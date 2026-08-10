@@ -16,8 +16,21 @@ import {
   Percent,
   CheckCircle2,
   ShoppingBag,
-  Scale
+  Scale,
+  MapPin,
+  Loader2
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+// Load MapPicker dynamically for Next.js SSR compatibility
+const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod => mod.MapPicker), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-70 bg-slate-50 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
+      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+    </div>
+  )
+})
 import { createClient } from '@/lib/supabase/client'
 import { adjustCashboxBalance } from '@/lib/finance-helpers'
 import {
@@ -31,7 +44,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -41,6 +53,8 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useSidebar } from '@/components/ui/sidebar'
+import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
 
@@ -78,6 +92,7 @@ export function POSClient({
 }: POSClientProps) {
   const t = useTranslations('pos')
   const tCommon = useTranslations('common')
+  const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
 
   // State
   const [products, setProducts] = useState(initialProducts)
@@ -101,6 +116,9 @@ export function POSClient({
   const [newCustomerName, setNewCustomerName] = useState('')
   const [newCustomerPhone, setNewCustomerPhone] = useState('')
   const [newCustomerAddress, setNewCustomerAddress] = useState('')
+  const [newCustomerLat, setNewCustomerLat] = useState<number | null>(null)
+  const [newCustomerLng, setNewCustomerLng] = useState<number | null>(null)
+  const [isCustomerMapOpen, setIsCustomerMapOpen] = useState(false)
 
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -226,6 +244,8 @@ export function POSClient({
         name: newCustomerName.trim(),
         phone: newCustomerPhone.trim() || null,
         address: newCustomerAddress.trim() || null,
+        latitude: newCustomerLat,
+        longitude: newCustomerLng,
         is_active: true
       })
       .select()
@@ -241,6 +261,8 @@ export function POSClient({
       setNewCustomerName('')
       setNewCustomerPhone('')
       setNewCustomerAddress('')
+      setNewCustomerLat(null)
+      setNewCustomerLng(null)
       await invalidateCustomers()
     }
   }
@@ -434,7 +456,11 @@ export function POSClient({
   }
 
   return (
-    <div className="md:h-[calc(100vh-7rem)] md:flex md:flex-col md:min-h-0 md:overflow-hidden select-none">
+    <div
+      className={`relative select-none md:fixed md:top-16 md:right-0 md:bottom-0 md:flex md:flex-col md:overflow-hidden md:p-6 transition-[left] duration-200 ease-linear ${
+        isSidebarMobile ? 'md:left-0' : sidebarState === 'expanded' ? 'md:left-(--sidebar-width)' : 'md:left-(--sidebar-width-icon)'
+      }`}
+    >
       {/* Print & Scrollbar Style Injection */}
       <style jsx global>{`
         @media print {
@@ -483,7 +509,7 @@ export function POSClient({
       `}</style>
 
       {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 no-print items-stretch md:h-full md:min-h-0 md:flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 no-print items-stretch md:h-full md:min-h-0 md:flex-1 overflow-hidden">
         {/* Left Side: Product catalog and search — the ONLY area that scrolls */}
         <div className="md:col-span-2 md:h-full md:flex md:flex-col md:min-h-0 space-y-5">
           <div className="shrink-0 space-y-4">
@@ -569,45 +595,34 @@ export function POSClient({
                     <Card
                       key={p.id}
                       onClick={() => !isOutOfStock && addToCart(p)}
-                      className={`border border-slate-100/50 hover:border-indigo-150 hover:-translate-y-1 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-300 rounded-2xl cursor-pointer bg-white overflow-hidden group select-none ${
-                        isOutOfStock ? 'opacity-40 pointer-events-none' : ''
+                      className={`border border-slate-200 hover:border-indigo-300 hover:-translate-y-0.5 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl cursor-pointer bg-white overflow-hidden group select-none py-0 ${
+                        isOutOfStock ? 'opacity-50 pointer-events-none' : ''
                       }`}
                     >
-                      <CardContent className="p-4 flex flex-col justify-between h-36">
+                      <CardContent className="p-3.5 flex flex-col justify-between h-34 gap-2">
                         <div className="space-y-1">
-                          <div className="flex justify-between items-start gap-2">
-                            <p className="font-semibold text-slate-805 text-xs sm:text-sm line-clamp-2 leading-tight group-hover:text-indigo-650 transition-colors">
-                              {p.name}
-                            </p>
-                          </div>
+                          <p className="font-semibold text-slate-800 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-indigo-700 transition-colors">
+                            {p.name}
+                          </p>
                           <code className="text-[10px] text-slate-400 font-mono tracking-wider">
                             {p.sku}
                           </code>
                         </div>
 
-                        <div className="flex items-end justify-between mt-2 pt-2 border-t border-slate-100/40">
-                          <p className="font-bold text-slate-850 text-sm md:text-base">
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                          <p className="font-bold text-indigo-700 text-sm md:text-base">
                             {formatCurrency(p.price)}
                           </p>
-                          
-                          <div>
-                            {isOutOfStock ? (
-                              <Badge variant="destructive" className="text-[10px] py-0.5 px-2 font-bold bg-rose-50 text-rose-600 border-0 hover:bg-rose-50 rounded-full">
-                                {t('outOfStock')}
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className={`text-[10px] py-0.5 px-2 font-bold border-0 rounded-full ${
-                                  isLowStock
-                                    ? 'bg-amber-50 text-amber-705'
-                                    : 'bg-emerald-50 text-emerald-705'
-                                }`}
-                              >
-                                {p.stock} {p.unit || tCommon('pieces')}
-                              </Badge>
-                            )}
-                          </div>
+
+                          {isOutOfStock ? (
+                            <StatusBadge tone="rose" label={t('outOfStock')} />
+                          ) : (
+                            <StatusBadge
+                              tone={isLowStock ? 'amber' : 'emerald'}
+                              label={`${p.stock} ${p.unit || tCommon('pieces')}`}
+                              className="px-1.5 py-0 text-[10px]"
+                            />
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -619,7 +634,7 @@ export function POSClient({
         </div>
 
         {/* Right Side: Cart, customer selector, checkout — fixed to the viewport, never scrolls as a whole */}
-        <div className="md:col-span-1 md:h-full md:flex md:flex-col md:min-h-0">
+        <div className="md:col-span-1 md:h-full md:flex md:flex-col md:min-h-0 overflow-hidden">
           <Card className="border border-slate-100/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] rounded-2xl bg-white flex flex-col h-full min-h-0 overflow-hidden">
             {/* Cart Header */}
             <CardHeader className="shrink-0 p-4 bg-gradient-to-br from-indigo-50/70 via-white to-white border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
@@ -646,14 +661,19 @@ export function POSClient({
               )}
             </CardHeader>
 
-            {/* Cart Items — the only part of this panel that scrolls, kept compact so it rarely needs to */}
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin p-3 space-y-2">
+            {/* Cart Items — reserved for at least 3 cards before this ever needs to scroll */}
+            <div className="flex-1 min-h-58 overflow-y-auto scrollbar-thin p-3 space-y-2">
               {cart.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center text-slate-400 space-y-3">
-                  <div className="p-5 rounded-full border-2 border-dashed border-slate-200">
+                <div className="h-full min-h-52 flex flex-col items-center justify-center text-center text-slate-400 gap-3">
+                  <div className="p-5 rounded-full border-2 border-dashed border-slate-200 animate-pulse">
                     <ShoppingBag className="h-7 w-7 text-slate-300" />
                   </div>
-                  <p className="text-xs font-semibold text-slate-400">{t('emptyCart')}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-slate-500">{t('emptyCart')}</p>
+                    <p className="text-[11px] text-slate-350">
+                      {lang === 'uz' ? "Mahsulotni bosing yoki SKU'ni skanerlang" : lang === 'ru' ? 'Нажмите на товар или отсканируйте SKU' : 'Click a product or scan its SKU'}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 cart.map((item) => {
@@ -744,23 +764,10 @@ export function POSClient({
               )}
             </div>
 
-            {/* Checkout Totals & Settings — fixed footer, never scrolls or shrinks */}
-            <div className="shrink-0 p-3.5 border-t border-slate-100 bg-slate-50/10 space-y-3">
-              {/* Linked Customer Selection */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold text-slate-500">{t('customer')}</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsAddCustomerOpen(true)}
-                    className="h-6 text-[10px] font-bold text-indigo-600 hover:text-indigo-850 hover:bg-indigo-50/50 px-2 rounded-lg cursor-pointer transition-all"
-                  >
-                    <UserPlus className="h-3 w-3 mr-1" />
-                    {t('addCustomer')}
-                  </Button>
-                </div>
-
+            {/* Checkout Totals & Settings — compact "options" style footer, fixed, never scrolls or shrinks */}
+            <div className="shrink-0 p-3 border-t border-slate-100 bg-slate-50/10 space-y-2">
+              {/* Linked Customer Selection — select + add button on one row, no separate label line */}
+              <div className="flex items-center gap-1.5">
                 <Select
                   value={selectedCustomer ? selectedCustomer.id : 'walk-in'}
                   onValueChange={(val) => {
@@ -772,7 +779,7 @@ export function POSClient({
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full h-9 bg-slate-100/50 border-0 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-2xs font-medium text-slate-700">
+                  <SelectTrigger className="flex-1 min-w-0 h-8 bg-slate-100/50 border-0 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-2xs font-medium text-slate-700">
                     <SelectValue placeholder={t('walkInCustomer')}>
                       {selectedCustomer
                         ? `${selectedCustomer.name}${selectedCustomer.phone ? ` (${selectedCustomer.phone})` : ''}`
@@ -788,33 +795,42 @@ export function POSClient({
                     ))}
                   </SelectContent>
                 </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddCustomerOpen(true)}
+                  title={t('addCustomer')}
+                  className="h-8 w-8 p-0 shrink-0 border-slate-200 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/50 rounded-lg cursor-pointer transition-all"
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                </Button>
               </div>
 
-              {/* General Discount */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-500">{t('generalDiscount')}</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min="0"
-                    value={generalDiscountValue || ''}
-                    onChange={(e) => setGeneralDiscountValue(Number(e.target.value))}
-                    placeholder="0"
-                    className="h-9 text-xs border-0 bg-slate-100/50 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 shadow-2xs text-slate-800"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setGeneralDiscountType(generalDiscountType === 'flat' ? 'percent' : 'flat')}
-                    className="h-9 px-3.5 text-xs border-0 bg-slate-100 hover:bg-slate-200/80 text-slate-600 rounded-xl transition-all cursor-pointer font-bold shadow-2xs"
-                  >
-                    {generalDiscountType === 'percent' ? '%' : 'so\'m'}
-                  </Button>
-                </div>
+              {/* General Discount — inline label, no separate row */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide w-14 shrink-0">
+                  {t('generalDiscount')}
+                </span>
+                <Input
+                  type="number"
+                  min="0"
+                  value={generalDiscountValue || ''}
+                  onChange={(e) => setGeneralDiscountValue(Number(e.target.value))}
+                  placeholder="0"
+                  className="h-8 flex-1 min-w-0 text-xs border-0 bg-slate-100/50 rounded-lg focus-visible:ring-2 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 shadow-2xs text-slate-800"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setGeneralDiscountType(generalDiscountType === 'flat' ? 'percent' : 'flat')}
+                  className="h-8 px-2.5 shrink-0 text-xs border-0 bg-slate-100 hover:bg-slate-200/80 text-slate-600 rounded-lg transition-all cursor-pointer font-bold shadow-2xs"
+                >
+                  {generalDiscountType === 'percent' ? '%' : 'so\'m'}
+                </Button>
               </div>
 
               {/* Totals Breakdown — receipt-style summary card */}
-              <div className="rounded-xl bg-slate-50/70 border border-slate-100 p-3 space-y-1.5">
+              <div className="rounded-lg bg-slate-50/70 border border-slate-100 p-2.5 space-y-1">
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>{t('subtotal')}</span>
                   <span className="font-medium text-slate-600">{formatCurrency(subtotal)}</span>
@@ -831,16 +847,16 @@ export function POSClient({
                     <span className="font-medium text-slate-600">{formatCurrency(calculatedTax)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center text-sm font-bold text-slate-800 pt-1.5 border-t border-dashed border-slate-200 mt-1.5">
+                <div className="flex justify-between items-center text-sm font-bold text-slate-800 pt-1 border-t border-dashed border-slate-200 mt-1">
                   <span>{t('total')}</span>
-                  <span className="text-indigo-600 text-lg font-extrabold">{formatCurrency(totalPayable)}</span>
+                  <span className="text-indigo-600 text-base font-extrabold">{formatCurrency(totalPayable)}</span>
                 </div>
               </div>
 
               {/* Payment Method — minimal segmented control */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-500">{t('paymentMethod')}</Label>
-                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100/70 rounded-xl">
+              <div className="space-y-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{t('paymentMethod')}</span>
+                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100/70 rounded-lg">
                   {[
                     { key: 'cash', label: t('cash'), icon: Wallet },
                     { key: 'card', label: t('card'), icon: CreditCard },
@@ -855,13 +871,13 @@ export function POSClient({
                         type="button"
                         onClick={() => setPaymentMethod(pm.key as any)}
                         title={pm.label}
-                        className={`flex flex-col items-center justify-center gap-0.5 h-11 rounded-lg text-[9px] font-bold transition-all duration-150 cursor-pointer ${
+                        className={`flex flex-col items-center justify-center gap-0.5 h-9 rounded-md text-[9px] font-bold transition-all duration-150 cursor-pointer ${
                           isSelected
                             ? 'bg-white text-indigo-700 shadow-[0_1px_4px_rgba(15,23,42,0.08)]'
                             : 'text-slate-500 hover:text-slate-700'
                         }`}
                       >
-                        <Icon className="h-3.5 w-3.5" />
+                        <Icon className="h-3 w-3" />
                         <span className="leading-none truncate max-w-full px-0.5">{pm.label}</span>
                       </button>
                     )
@@ -873,7 +889,7 @@ export function POSClient({
               <Button
                 onClick={handleCheckout}
                 disabled={cart.length === 0 || isLoadingCheckout}
-                className="w-full h-11 gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm rounded-2xl cursor-pointer transition-all duration-250 shadow-[0_6px_18px_rgba(16,185,129,0.3)] active:scale-[0.98] border-0"
+                className="w-full h-10 gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm rounded-xl cursor-pointer transition-all duration-250 shadow-[0_6px_18px_rgba(16,185,129,0.3)] active:scale-[0.98] border-0"
               >
                 {isLoadingCheckout ? tCommon('saving') : (
                   <>
@@ -916,14 +932,33 @@ export function POSClient({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="custAddress">{t('customerAddress')}</Label>
-              <Input
-                id="custAddress"
-                value={newCustomerAddress}
-                onChange={(e) => setNewCustomerAddress(e.target.value)}
-                placeholder="Toshkent sh., Chilonzor t."
-                className="border-slate-200 focus-visible:ring-indigo-500 rounded-lg"
-              />
+              <Label htmlFor="custAddress" className="flex items-center gap-1.5">
+                {t('customerAddress')}
+                {typeof newCustomerLat === 'number' && typeof newCustomerLng === 'number' && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                    <MapPin className="h-2.5 w-2.5" />
+                    {lang === 'uz' ? 'Xaritada belgilangan' : lang === 'ru' ? 'Отмечено на карте' : 'Pinned'}
+                  </span>
+                )}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="custAddress"
+                  value={newCustomerAddress}
+                  onChange={(e) => setNewCustomerAddress(e.target.value)}
+                  placeholder="Toshkent sh., Chilonzor t."
+                  className="border-slate-200 focus-visible:ring-indigo-500 rounded-lg flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCustomerMapOpen(true)}
+                  className="h-9 w-9 p-0 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 rounded-lg shrink-0"
+                  title={lang === 'uz' ? 'Xaritadan belgilash' : lang === 'ru' ? 'Отметить на карте' : 'Pick on map'}
+                >
+                  <MapPin className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <DialogFooter className="pt-2">
               <Button
@@ -944,6 +979,40 @@ export function POSClient({
           </form>
         </DialogContent>
       </Dialog>
+
+      {isCustomerMapOpen && (
+        <Dialog open={isCustomerMapOpen} onOpenChange={setIsCustomerMapOpen}>
+          <DialogContent className="max-w-2xl rounded-2xl bg-white border-0 shadow-xl p-6">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-indigo-600" />
+                {lang === 'uz' ? 'Manzilni xaritadan belgilang' : lang === 'ru' ? 'Отметьте адрес на карте' : 'Pick address on map'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-2">
+              <MapPicker
+                onLocationSelect={(address, lat, lng) => {
+                  setNewCustomerAddress(address)
+                  setNewCustomerLat(lat)
+                  setNewCustomerLng(lng)
+                }}
+                initialAddress={newCustomerAddress}
+                initialLat={newCustomerLat}
+                initialLng={newCustomerLng}
+              />
+            </div>
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                onClick={() => setIsCustomerMapOpen(false)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+              >
+                {tCommon('save')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* POS THERMAL RECEIPT SUCCESS DIALOG */}
       <Dialog

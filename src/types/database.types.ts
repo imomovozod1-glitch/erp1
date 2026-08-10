@@ -227,6 +227,8 @@ export type Database = {
           email: string | null
           phone: string | null
           address: string | null
+          latitude: number | null
+          longitude: number | null
           tin: string | null
           notes: string | null
           is_active: boolean
@@ -239,6 +241,8 @@ export type Database = {
           email?: string | null
           phone?: string | null
           address?: string | null
+          latitude?: number | null
+          longitude?: number | null
           tin?: string | null
           notes?: string | null
           is_active?: boolean
@@ -248,6 +252,8 @@ export type Database = {
           email?: string | null
           phone?: string | null
           address?: string | null
+          latitude?: number | null
+          longitude?: number | null
           tin?: string | null
           notes?: string | null
           is_active?: boolean
@@ -262,6 +268,8 @@ export type Database = {
           phone: string | null
           address: string | null
           city: string | null
+          latitude: number | null
+          longitude: number | null
           tin: string | null
           contact_person: string | null
           notes: string | null
@@ -276,6 +284,8 @@ export type Database = {
           phone?: string | null
           address?: string | null
           city?: string | null
+          latitude?: number | null
+          longitude?: number | null
           tin?: string | null
           contact_person?: string | null
           notes?: string | null
@@ -287,6 +297,8 @@ export type Database = {
           phone?: string | null
           address?: string | null
           city?: string | null
+          latitude?: number | null
+          longitude?: number | null
           tin?: string | null
           contact_person?: string | null
           notes?: string | null

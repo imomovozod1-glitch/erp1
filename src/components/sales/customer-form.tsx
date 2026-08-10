@@ -40,6 +40,11 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [tempAddress, setTempAddress] = useState('')
+  const [tempLat, setTempLat] = useState<number | null>(null)
+  const [tempLng, setTempLng] = useState<number | null>(null)
+  const [hasPreciseLocation, setHasPreciseLocation] = useState(
+    typeof initialData?.latitude === 'number' && typeof initialData?.longitude === 'number'
+  )
   const supabase = createClient() as any
 
   const innerFormSchema = z.object({
@@ -47,6 +52,8 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
     email: z.string().email(tCommon('invalidEmail')).optional().or(z.literal('')),
     phone: z.string().optional().or(z.literal('')),
     address: z.string().optional().or(z.literal('')),
+    latitude: z.number().nullable().optional(),
+    longitude: z.number().nullable().optional(),
     tin: z.string().optional().or(z.literal('')),
     notes: z.string().optional().or(z.literal('')),
   })
@@ -60,6 +67,8 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
       email: initialData?.email || '',
       phone: initialData?.phone || '',
       address: initialData?.address || '',
+      latitude: initialData?.latitude ?? null,
+      longitude: initialData?.longitude ?? null,
       tin: initialData?.tin || '',
       notes: initialData?.notes || '',
     },
@@ -98,17 +107,24 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
     }
   }
 
-  const handleLocationSelect = (address: string) => {
+  const handleLocationSelect = (address: string, lat: number, lng: number) => {
     setTempAddress(address)
+    setTempLat(lat)
+    setTempLng(lng)
   }
 
   const handleOpenMap = () => {
     setTempAddress(getValues('address') || '')
+    setTempLat(getValues('latitude') ?? null)
+    setTempLng(getValues('longitude') ?? null)
     setIsMapOpen(true)
   }
 
   const handleConfirmLocation = () => {
     setValue('address', tempAddress, { shouldDirty: true, shouldValidate: true })
+    setValue('latitude', tempLat, { shouldDirty: true })
+    setValue('longitude', tempLng, { shouldDirty: true })
+    setHasPreciseLocation(typeof tempLat === 'number' && typeof tempLng === 'number')
     setIsMapOpen(false)
   }
 
@@ -193,6 +209,12 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
               <Label htmlFor="address" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('address')}
+                {hasPreciseLocation && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full normal-case">
+                    <MapPin className="h-2.5 w-2.5" />
+                    {lang === 'uz' ? 'Xaritada belgilangan' : lang === 'ru' ? 'Отмечено на карте' : 'Pinned on map'}
+                  </span>
+                )}
               </Label>
               <div className="flex gap-2">
                 <Input
@@ -263,6 +285,8 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
               <MapPicker
                 onLocationSelect={handleLocationSelect}
                 initialAddress={tempAddress || getValues('address')}
+                initialLat={tempLat}
+                initialLng={tempLng}
               />
             </div>
             <DialogFooter className="pt-3 border-t border-slate-100 flex justify-end gap-2">

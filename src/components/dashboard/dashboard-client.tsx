@@ -14,7 +14,6 @@ import {
   Plus,
   Zap,
   Layers,
-  Sparkles,
   Truck,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
@@ -25,7 +24,6 @@ import { AnalyticsStats } from '@/components/analytics/analytics-stats'
 import { AnalyticsCharts } from '@/components/analytics/analytics-charts'
 import { SoldProductsTable } from '@/components/analytics/sold-products-table'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
-import { Clock } from 'lucide-react'
 
 const formatDateISO = (d: Date) => {
   const year = d.getFullYear()
@@ -381,7 +379,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl border shadow-sm">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-indigo-600 animate-pulse" />
+            {/* <Sparkles className="h-5 w-5 text-indigo-600 animate-pulse" /> */}
             {t.title}
           </h1>
           <p className="text-xs text-muted-foreground">
@@ -615,13 +613,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
               {td('analyticsTitle', { fallback: 'Analitika' })}
             </h2>
           </div>
-          {currentTime && (
-            <div className="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg font-medium shadow-sm border border-slate-200">
-              <Clock className="h-4 w-4 text-indigo-600" />
-              {currentTime.toLocaleDateString(lang === 'uz' ? 'uz-UZ' : 'ru-RU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}{' '}
-              {currentTime.toLocaleTimeString(lang === 'uz' ? 'uz-UZ' : 'ru-RU', { hour: '2-digit', minute: '2-digit' })}
-            </div>
-          )}
+
         </div>
 
         <AnalyticsStats

@@ -3,19 +3,20 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
-  Download, DollarSign, ShoppingCart, Calendar, X
+  Download, DollarSign, ShoppingCart, X
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
+
+type Period = 'all' | 'today' | 'week' | 'month' | 'custom'
 
 const ORDER_STATUS_TONES: Record<string, StatusTone> = {
   draft: 'blue',
@@ -38,15 +39,46 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   const tc = useTranslations('common')
   const tSales = useTranslations('sales')
   const [activeTab, setActiveTab] = useState<'payouts' | 'sales'>('payouts')
-  const [payoutsFrom, setPayoutsFrom] = useState('')
-  const [payoutsTo, setPayoutsTo] = useState('')
+  const [period, setPeriod] = useState<Period>('all')
+  const [customStart, setCustomStart] = useState('')
+  const [customEnd, setCustomEnd] = useState('')
 
-  const filteredTransactions = transactions.filter((tx) => {
-    const txDate = tx.transaction_date?.split('T')[0]
-    if (payoutsFrom && txDate < payoutsFrom) return false
-    if (payoutsTo && txDate > payoutsTo) return false
+  const handleApplyCustomRange = (start: string, end: string) => {
+    setCustomStart(start)
+    setCustomEnd(end)
+    setPeriod('custom')
+  }
+
+  const periodLabels: Record<Exclude<Period, 'custom'>, string> = {
+    all: lang === 'uz' ? 'Barchasi' : lang === 'ru' ? 'Все время' : 'All time',
+    today: lang === 'uz' ? 'Bugun' : lang === 'ru' ? 'Сегодня' : 'Today',
+    week: lang === 'uz' ? 'Bu hafta' : lang === 'ru' ? 'Эта неделя' : 'This week',
+    month: lang === 'uz' ? 'Bu oy' : lang === 'ru' ? 'Этот месяц' : 'This month',
+  }
+
+  const [now] = useState(() => new Date())
+  const todayStr = now.toISOString().split('T')[0]
+  const oneDayMs = 24 * 60 * 60 * 1000
+  const weekAgo = new Date(now.getTime() - 7 * oneDayMs)
+  const monthAgo = new Date(now.getTime() - 30 * oneDayMs)
+  const customStartDate = customStart ? new Date(customStart) : null
+  const customEndDate = customEnd ? new Date(customEnd) : null
+
+  const isWithinPeriod = (dateStr?: string | null) => {
+    if (!dateStr) return false
+    if (period === 'all') return true
+    if (period === 'today') return dateStr.split('T')[0] === todayStr
+    const d = new Date(dateStr)
+    if (period === 'week') return d >= weekAgo
+    if (period === 'month') return d >= monthAgo
+    if (period === 'custom') {
+      return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
+    }
     return true
-  })
+  }
+
+  const filteredTransactions = transactions.filter((tx) => isWithinPeriod(tx.transaction_date))
+  const filteredSalesOrders = salesOrders.filter((o) => isWithinPeriod(o.order_date))
 
   // Calculate Tenure
   const hiredDate = new Date(employee.hired_at)
@@ -55,7 +87,12 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   const tenureMonths = Math.floor(diffDays / 30)
 
-  const totalSalesAmount = salesOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+  const totalSalesAmount = filteredSalesOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+  const totalPaidAmount = filteredTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0)
+  const activePeriodLabel = period === 'custom'
+    ? (lang === 'uz' ? 'Tanlangan davr' : lang === 'ru' ? 'Выбранный период' : 'Selected period')
+    : periodLabels[period]
+  const periodSuffix = period !== 'all' ? ` · ${activePeriodLabel}` : ''
 
   // Export to Excel function
   const handleExport = () => {
@@ -118,6 +155,29 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
           </div>
         </div>
 
+        {/* Period Filter — drives salary/payout & sales figures below */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-lg bg-slate-100 p-0.5 shadow-inner border">
+            {(['all', 'today', 'week', 'month'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
+                  period === p ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {periodLabels[p]}
+              </button>
+            ))}
+          </div>
+          <CustomDateRangePicker
+            isActive={period === 'custom'}
+            start={customStart}
+            end={customEnd}
+            onApply={handleApplyCustomRange}
+          />
+        </div>
+
         <div className="flex items-center gap-2">
           <StatusBadge
             tone={employee.is_active ? 'emerald' : 'rose'}
@@ -157,7 +217,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Rasmiylashtirgan savdolar' : 'Оформленные продажи'}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(totalSalesAmount)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{salesOrders.length} {tc('count') || 'count'}</span>
+            <span className="text-xs text-slate-400 mt-2">{filteredSalesOrders.length} {tc('count') || 'count'}{periodSuffix}</span>
           </CardContent>
         </Card>
 
@@ -165,9 +225,9 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'To\'langan maoshlar' : 'Выплачено'}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
-              {formatCurrency(transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0))}
+              {formatCurrency(totalPaidAmount)}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{transactions.length} {tc('count') || 'count'}</span>
+            <span className="text-xs text-slate-400 mt-2">{filteredTransactions.length} {tc('count') || 'count'}{periodSuffix}</span>
           </CardContent>
         </Card>
       </div>
@@ -233,46 +293,26 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             <div className="p-0">
               {activeTab === 'payouts' && (
                 <>
-                  <div className="flex flex-wrap items-end gap-3 p-4 border-b bg-slate-50/30">
-                    <div className="space-y-1">
-                      <Label className="text-[10px] font-semibold text-slate-500 uppercase flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {lang === 'uz' ? 'Sanadan' : lang === 'ru' ? 'С даты' : 'From'}
-                      </Label>
-                      <Input
-                        type="date"
-                        value={payoutsFrom}
-                        onChange={(e) => setPayoutsFrom(e.target.value)}
-                        className="h-9 text-xs w-40"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] font-semibold text-slate-500 uppercase flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {lang === 'uz' ? 'Sanagacha' : lang === 'ru' ? 'По дату' : 'To'}
-                      </Label>
-                      <Input
-                        type="date"
-                        value={payoutsTo}
-                        onChange={(e) => setPayoutsTo(e.target.value)}
-                        className="h-9 text-xs w-40"
-                      />
-                    </div>
-                    {(payoutsFrom || payoutsTo) && (
+                  <div className="flex flex-wrap items-center gap-3 p-4 border-b bg-slate-50/30">
+                    <span className="text-xs text-slate-500 font-medium">
+                      {lang === 'uz' ? 'Davr' : lang === 'ru' ? 'Период' : 'Period'}:{' '}
+                      <span className="font-semibold text-slate-700">{activePeriodLabel}</span>
+                    </span>
+                    {period !== 'all' && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => { setPayoutsFrom(''); setPayoutsTo('') }}
-                        className="h-9 text-xs text-slate-500 gap-1"
+                        onClick={() => { setPeriod('all'); setCustomStart(''); setCustomEnd('') }}
+                        className="h-7 px-2 text-xs text-slate-500 gap-1"
                       >
                         <X className="h-3.5 w-3.5" />
                         {lang === 'uz' ? 'Tozalash' : lang === 'ru' ? 'Сбросить' : 'Clear'}
                       </Button>
                     )}
-                    <div className="ml-auto text-xs text-slate-500 font-medium pb-2">
+                    <div className="ml-auto text-xs text-slate-500 font-medium">
                       {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}:{' '}
                       <span className="font-bold text-rose-600">
-                        {formatCurrency(filteredTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0))}
+                        {formatCurrency(totalPaidAmount)}
                       </span>
                     </div>
                   </div>
@@ -326,14 +366,14 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {salesOrders.length === 0 ? (
+                    {filteredSalesOrders.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-12 text-slate-400">
                           {tc('noData')}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      salesOrders.map((o, idx) => (
+                      filteredSalesOrders.map((o, idx) => (
                         <TableRow key={o.id} className="hover:bg-slate-50/50">
                           <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
                           <TableCell className="font-semibold text-slate-900">{o.order_number}</TableCell>
