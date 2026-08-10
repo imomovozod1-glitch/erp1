@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { NumericInput } from '@/components/ui/numeric-input'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { invalidateTransactions, invalidateSuppliers, invalidateEmployees, invalidateCustomers } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 
 interface Cashbox {
@@ -348,6 +349,7 @@ export function CashboxClient({ lang }: { lang: string }) {
         const updatedTxs = [...newTxs, ...transactions]
         localStorage.setItem('erp_transactions', JSON.stringify(updatedTxs))
         setTransactions(updatedTxs)
+        await invalidateTransactions()
       }
       toast.success(tCommon('success'))
       setIsModalOpen(false)
@@ -393,6 +395,7 @@ export function CashboxClient({ lang }: { lang: string }) {
               created_by: userId,
             })
             if (txErr) throw txErr
+            await invalidateTransactions()
           }
         }
         toast.success(tCommon('success'))
@@ -631,6 +634,11 @@ export function CashboxClient({ lang }: { lang: string }) {
         localStorage.setItem('erp_transactions', JSON.stringify(updatedTxs));
         setTransactions(updatedTxs);
 
+        await invalidateTransactions()
+        if (txCategory === 'supplier_payment') await invalidateSuppliers()
+        if (txCategory === 'salary') await invalidateEmployees()
+        if (txCategory === 'debt_collection' || txCategory === 'sales') await invalidateCustomers()
+
         toast.success(tCommon('success'))
         setIsTransactionModalOpen(false)
       } else {
@@ -667,6 +675,11 @@ export function CashboxClient({ lang }: { lang: string }) {
           }])
         
         if (txErr) throw txErr
+
+        await invalidateTransactions()
+        if (txCategory === 'supplier_payment') await invalidateSuppliers()
+        if (txCategory === 'salary') await invalidateEmployees()
+        if (txCategory === 'debt_collection' || txCategory === 'sales') await invalidateCustomers()
 
         toast.success(tCommon('success'))
         setIsTransactionModalOpen(false)
@@ -708,6 +721,10 @@ export function CashboxClient({ lang }: { lang: string }) {
         localStorage.setItem('erp_transactions', JSON.stringify(updatedTxs));
         setTransactions(updatedTxs);
 
+        await invalidateTransactions()
+        if (tx.supplier_id) await invalidateSuppliers()
+        if (tx.employee_id) await invalidateEmployees()
+
         toast.success(tCommon('success'))
       } else {
         // Fetch cashbox balance
@@ -736,6 +753,10 @@ export function CashboxClient({ lang }: { lang: string }) {
           .eq('id', tx.id)
         
         if (txErr) throw txErr
+
+        await invalidateTransactions()
+        if (tx.supplier_id) await invalidateSuppliers()
+        if (tx.employee_id) await invalidateEmployees()
 
         toast.success(tCommon('success'))
         fetchCashboxes()

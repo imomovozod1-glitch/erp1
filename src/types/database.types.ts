@@ -44,6 +44,15 @@ export type Database = {
           department_id?: string | null
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "fk_profiles_department"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       departments: {
         Row: {
@@ -65,6 +74,15 @@ export type Database = {
           description?: string | null
           manager_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "departments_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       employees: {
         Row: {
@@ -99,6 +117,15 @@ export type Database = {
           is_active?: boolean
           notes?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "employees_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       categories: {
         Row: {
@@ -123,6 +150,15 @@ export type Database = {
           parent_id?: string | null
           description?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       products: {
         Row: {
@@ -174,6 +210,15 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
         }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       customers: {
         Row: {
@@ -207,6 +252,7 @@ export type Database = {
           notes?: string | null
           is_active?: boolean
         }
+        Relationships: []
       }
       suppliers: {
         Row: {
@@ -246,6 +292,7 @@ export type Database = {
           notes?: string | null
           is_active?: boolean
         }
+        Relationships: []
       }
       sales_orders: {
         Row: {
@@ -285,6 +332,22 @@ export type Database = {
           delivery_date?: string | null
           customer_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "sales_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       sales_order_items: {
         Row: {
@@ -312,6 +375,22 @@ export type Database = {
           discount_percent?: number
           total_price?: number
         }
+        Relationships: [
+          {
+            foreignKeyName: "sales_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       invoices: {
         Row: {
@@ -355,6 +434,29 @@ export type Database = {
           notes?: string | null
           customer_id?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       purchase_orders: {
         Row: {
@@ -387,6 +489,22 @@ export type Database = {
           notes?: string | null
           expected_date?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       purchase_order_items: {
         Row: {
@@ -411,6 +529,22 @@ export type Database = {
         Update: {
           received_qty?: number
         }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       stock_movements: {
         Row: {
@@ -439,6 +573,22 @@ export type Database = {
           created_by?: string | null
         }
         Update: never
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       transactions: {
         Row: {
@@ -475,8 +625,33 @@ export type Database = {
           description?: string | null
           transaction_date?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
+    Views: Record<string, never>
+    Functions: Record<string, never>
     Enums: {
       user_role: 'admin' | 'manager' | 'staff'
       order_status: 'draft' | 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
