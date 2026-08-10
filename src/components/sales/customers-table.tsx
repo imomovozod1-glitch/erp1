@@ -11,7 +11,7 @@ import { invalidateCustomers } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/status-badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -119,7 +119,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                 <TableRow 
                   key={customer.id} 
                   className="hover:bg-slate-50/80 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/${lang}/sales/customers/${customer.id}/edit`)}
+                  onClick={() => router.push(`/${lang}/customers/${customer.id}/edit`)}
                 >
                   <TableCell className="text-center font-medium text-slate-500 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
@@ -137,12 +137,10 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                   <TableCell className="text-muted-foreground">{customer.email ?? '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer.phone ?? '—'}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={customer.is_active ? 'default' : 'secondary'}
-                      className={customer.is_active ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : ''}
-                    >
-                      {customer.is_active ? tCommon('active') : tCommon('inactive')}
-                    </Badge>
+                    <StatusBadge
+                      tone={customer.is_active ? 'emerald' : 'slate'}
+                      label={customer.is_active ? tCommon('active') : tCommon('inactive')}
+                    />
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
@@ -163,7 +161,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                           </TooltipContent>
                         </Tooltip>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/customers/${customer.id}/edit`)}>
+                        <DropdownMenuItem onClick={() => router.push(`/${lang}/customers/${customer.id}/edit`)}>
                           <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
                         </DropdownMenuItem>
                         {customer.address && (

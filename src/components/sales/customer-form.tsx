@@ -90,7 +90,7 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
       
       await invalidateCustomers()
       clearPersistedForm('customer-form-v3')
-      router.push(`/${lang}/sales/customers`)
+      router.push(`/${lang}/customers`)
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -235,7 +235,7 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
           <Button 
             type="button" 
             variant="outline" 
-            onClick={() => router.push(`/${lang}/sales/customers`)}
+            onClick={() => router.push(`/${lang}/customers`)}
             disabled={isSubmitting}
           >
             {tCommon('cancel')}

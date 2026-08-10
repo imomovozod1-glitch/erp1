@@ -300,10 +300,15 @@ export function CashboxClient({ lang }: { lang: string }) {
     }
 
     const numBalance = Number(balance) || 0
+    const initialBalanceLabel = lang === 'uz' ? "Boshlang'ich balans" : lang === 'ru' ? 'Начальный баланс' : 'Initial balance'
 
     if (isLocalStorageFallback) {
       let updated: Cashbox[]
+      const newTxs: any[] = []
+
       if (editingCashbox) {
+        // Balance is intentionally not editable here — it may only change via a
+        // categorized kirim/chiqim transaction, which keeps a proper audit trail.
         updated = cashboxes.map((cb) =>
           cb.id === editingCashbox.id
             ? {
@@ -314,22 +319,46 @@ export function CashboxClient({ lang }: { lang: string }) {
             : cb
         )
       } else {
+        const newId = 'local-' + Math.random().toString(36).substr(2, 9)
         const newCb: Cashbox = {
-          id: 'local-' + Math.random().toString(36).substr(2, 9),
+          id: newId,
           name: name.trim(),
           balance: numBalance,
           description: description.trim(),
           created_at: new Date().toISOString(),
         }
         updated = [newCb, ...cashboxes]
+        if (numBalance > 0) {
+          newTxs.push({
+            id: 'local-tx-' + Math.random().toString(36).substr(2, 9),
+            type: 'income',
+            amount: numBalance,
+            category: initialBalanceLabel,
+            description: `${initialBalanceLabel} - ${name.trim()}`,
+            reference_type: 'cashbox',
+            reference_id: newId,
+            transaction_date: new Date().toISOString().split('T')[0],
+            created_at: new Date().toISOString(),
+          })
+        }
       }
       localStorage.setItem('erp_cashboxes', JSON.stringify(updated))
       setCashboxes(updated)
+      if (newTxs.length > 0) {
+        const updatedTxs = [...newTxs, ...transactions]
+        localStorage.setItem('erp_transactions', JSON.stringify(updatedTxs))
+        setTransactions(updatedTxs)
+      }
       toast.success(tCommon('success'))
       setIsModalOpen(false)
     } else {
       try {
+        const { data: userData } = await supabase.auth.getUser()
+        const userId = userData?.user?.id
+
         if (editingCashbox) {
+          // Balance is intentionally not editable here — it may only change via a
+          // categorized kirim/chiqim transaction, which keeps a proper audit trail.
           const { error } = await supabase
             .from('cashboxes')
             .update({
@@ -339,14 +368,32 @@ export function CashboxClient({ lang }: { lang: string }) {
             .eq('id', editingCashbox.id)
           if (error) throw error
         } else {
-          const { error } = await supabase.from('cashboxes').insert([
-            {
-              name: name.trim(),
-              balance: numBalance,
-              description: description.trim(),
-            },
-          ])
+          const { data: newCb, error } = await supabase
+            .from('cashboxes')
+            .insert([
+              {
+                name: name.trim(),
+                balance: numBalance,
+                description: description.trim(),
+              },
+            ])
+            .select()
+            .single()
           if (error) throw error
+
+          if (numBalance > 0 && userId && newCb) {
+            const { error: txErr } = await supabase.from('transactions').insert({
+              type: 'income',
+              amount: numBalance,
+              category: initialBalanceLabel,
+              description: `${initialBalanceLabel} - ${name.trim()}`,
+              reference_type: 'cashbox',
+              reference_id: newCb.id,
+              transaction_date: new Date().toISOString().split('T')[0],
+              created_by: userId,
+            })
+            if (txErr) throw txErr
+          }
         }
         toast.success(tCommon('success'))
         setIsModalOpen(false)
@@ -404,6 +451,17 @@ export function CashboxClient({ lang }: { lang: string }) {
     e.preventDefault()
     if (!selectedCashboxForTx || !txAmount || Number(txAmount) <= 0) {
       toast.error(tCommon('required'))
+      return
+    }
+
+    if (txType === 'expense' && Number(txAmount) > Number(selectedCashboxForTx.balance)) {
+      toast.error(
+        lang === 'uz'
+          ? `Yetarli mablag' yo'q. Kassada faqat ${formatCurrency(selectedCashboxForTx.balance)} mavjud`
+          : lang === 'ru'
+          ? `Недостаточно средств. В кассе доступно только ${formatCurrency(selectedCashboxForTx.balance)}`
+          : `Insufficient funds. Only ${formatCurrency(selectedCashboxForTx.balance)} available in this cashbox`
+      )
       return
     }
 
@@ -815,43 +873,7 @@ export function CashboxClient({ lang }: { lang: string }) {
         </div>
       </div>
 
-      {/* Top Main Buttons for quick Kirim/Chiqim */}
-      <div className="flex items-center justify-between p-5 bg-white rounded-3xl border border-slate-100 shadow-sm flex-wrap gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-semibold text-slate-800">{lang === 'uz' ? 'Tezkor tranzaksiya operatsiyalari' : 'Быстрые транзакционные операции'}</span>
-          <span className="text-xs text-muted-foreground">{lang === 'uz' ? 'Kassalarga tezkor ravishda kirim yoki chiqim kiritish' : 'Быстрое внесение прихода или расхода в кассы'}</span>
-        </div>
-        <div className="flex gap-3">
-          <Button
-            onClick={() => {
-              const targetCb = cashboxes.find(c => c.name.toLowerCase().includes('asosiy') || c.name.toLowerCase().includes('main')) || cashboxes[0];
-              if (targetCb) {
-                handleOpenTransactionModal(targetCb, 'income')
-              } else {
-                toast.error(lang === 'uz' ? "Kirim qilish uchun kassa yarating!" : "Создайте кассу для прихода!")
-              }
-            }}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl flex items-center gap-2 h-10 px-5 transition-all shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 hover:-translate-y-0.5"
-          >
-            <Plus className="h-4 w-4" />
-            {lang === 'uz' ? 'Kirim kiritish' : lang === 'ru' ? 'Внести приход' : 'Kirim'}
-          </Button>
-          <Button
-            onClick={() => {
-              const targetCb = cashboxes.find(c => c.name.toLowerCase().includes('asosiy') || c.name.toLowerCase().includes('main')) || cashboxes[0];
-              if (targetCb) {
-                handleOpenTransactionModal(targetCb, 'expense')
-              } else {
-                toast.error(lang === 'uz' ? "Chiqim qilish uchun kassa yarating!" : "Создайте кассу для расхода!")
-              }
-            }}
-            className="bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl flex items-center gap-2 h-10 px-5 transition-all shadow-md shadow-rose-500/10 hover:shadow-rose-500/20 hover:-translate-y-0.5"
-          >
-            <Minus className="h-4 w-4" />
-            {lang === 'uz' ? 'Chiqim kiritish' : lang === 'ru' ? 'Внести расход' : 'Chiqim'}
-          </Button>
-        </div>
-      </div>
+
 
       {/* Actions and List Grid */}
       <Card className="border border-slate-100 shadow-sm bg-white rounded-3xl overflow-hidden">
@@ -1122,7 +1144,23 @@ export function CashboxClient({ lang }: { lang: string }) {
                 />
               </div>
 
-              {!editingCashbox && (
+              {editingCashbox ? (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-600">
+                    {lang === 'uz' ? 'Joriy balans' : lang === 'ru' ? 'Текущий баланс' : 'Current balance'}
+                  </Label>
+                  <div className="h-9 px-3 flex items-center rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-500">
+                    {formatCurrency(editingCashbox.balance)}
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-snug">
+                    {lang === 'uz'
+                      ? "Balansni o'zgartirish uchun \"Kirim\" yoki \"Chiqim\" tugmasidan foydalaning"
+                      : lang === 'ru'
+                      ? 'Чтобы изменить баланс, используйте кнопку "Приход" или "Расход"'
+                      : 'To change the balance, use the "Income" or "Expense" button'}
+                  </p>
+                </div>
+              ) : (
                 <div className="space-y-1.5">
                   <Label htmlFor="cb_balance" className="text-xs font-semibold text-slate-600">{t('initialBalance')}</Label>
                   <NumericInput

@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { StatusBadge } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -157,17 +158,13 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                     <TableCell className="text-right font-semibold">{formatCurrency(emp.salary)}</TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(emp.hired_at)}</TableCell>
                     <TableCell>
-                      {emp.is_active ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          {lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed'}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:rose-400 border border-rose-200 dark:border-rose-900/50">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                          {lang === 'uz' ? 'Bo\'shatilgan' : lang === 'ru' ? 'Уволен' : 'Terminated'}
-                        </span>
-                      )}
+                      <StatusBadge
+                        tone={emp.is_active ? 'emerald' : 'rose'}
+                        pulse={emp.is_active}
+                        label={emp.is_active
+                          ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
+                          : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated')}
+                      />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>

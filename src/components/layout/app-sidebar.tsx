@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Store,
   LifeBuoy,
+  Contact,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -64,10 +65,10 @@ const NAV_ITEMS: NavItem[] = [
     key: 'sales', icon: ShoppingCart, href: 'sales',
     subItems: [
       { key: 'orders', href: 'sales/orders' },
-      { key: 'customers', href: 'sales/customers' },
       { key: 'invoices', href: 'sales/invoices' },
     ]
   },
+  { key: 'customers', icon: Contact, href: 'customers' },
   {
     key: 'procurement', icon: Truck, href: 'procurement',
     subItems: [
@@ -138,7 +139,6 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       },
       sales: {
         orders: tSales('orders'),
-        customers: tSales('customers'),
         invoices: tSales('invoices'),
       },
       procurement: {

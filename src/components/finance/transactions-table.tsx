@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, DollarSign, TrendingUp, TrendingDown, MoreHorizontal } from 'lucide-react'
+import { Search, DollarSign, MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import {
   DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { StatusBadge } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 
@@ -91,16 +92,10 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                   </TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(tx.transaction_date)}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1.5">
-                      {tx.type === 'income' ? (
-                        <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                      ) : (
-                        <TrendingDown className="h-3.5 w-3.5 text-red-500" />
-                      )}
-                      <span className={`text-xs font-semibold uppercase ${tx.type === 'income' ? 'text-emerald-700' : 'text-red-700'}`}>
-                        {tx.type}
-                      </span>
-                    </div>
+                    <StatusBadge
+                      tone={tx.type === 'income' ? 'emerald' : 'rose'}
+                      label={tx.type === 'income' ? t('incomeType') : t('expenseType')}
+                    />
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-700 font-medium">

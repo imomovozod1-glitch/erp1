@@ -18,11 +18,9 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
     <div>
       <PageHeader
         title={t('customers')}
-        subtitle={t('title')}
-        action={{ label: t('addCustomer'), href: `/${lang}/sales/customers/new`, icon: Plus }}
+        action={{ label: t('addCustomer'), href: `/${lang}/customers/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
-          { label: t('title') },
           { label: t('customers') },
         ]}
       />

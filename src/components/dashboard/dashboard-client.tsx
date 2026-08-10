@@ -24,7 +24,15 @@ import { LowStockAlert } from '@/components/dashboard/low-stock-alert'
 import { AnalyticsStats } from '@/components/analytics/analytics-stats'
 import { AnalyticsCharts } from '@/components/analytics/analytics-charts'
 import { SoldProductsTable } from '@/components/analytics/sold-products-table'
+import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 import { Clock } from 'lucide-react'
+
+const formatDateISO = (d: Date) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 interface DashboardClientProps {
   lang: string
@@ -58,21 +66,44 @@ interface DashboardClientProps {
 }
 
 export function DashboardClient({ lang, stats, analytics }: DashboardClientProps) {
-  const [period, setPeriod] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all'>(() => {
+  const [period, setPeriod] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('dashboard_period')
-      if (saved === 'today' || saved === 'yesterday' || saved === 'week' || saved === 'month' || saved === 'all') {
+      if (saved === 'today' || saved === 'yesterday' || saved === 'week' || saved === 'month' || saved === 'all' || saved === 'custom') {
         return saved
       }
     }
     return 'all'
   })
 
+  const [customStart, setCustomStart] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('dashboard_custom_start')
+      if (saved) return saved
+    }
+    return formatDateISO(new Date()) + 'T00:00'
+  })
+  const [customEnd, setCustomEnd] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('dashboard_custom_end')
+      if (saved) return saved
+    }
+    return formatDateISO(new Date()) + 'T23:59'
+  })
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('dashboard_period', period)
+      sessionStorage.setItem('dashboard_custom_start', customStart)
+      sessionStorage.setItem('dashboard_custom_end', customEnd)
     }
-  }, [period])
+  }, [period, customStart, customEnd])
+
+  const handleApplyCustomRange = (start: string, end: string) => {
+    setCustomStart(start)
+    setCustomEnd(end)
+    setPeriod('custom')
+  }
 
   const [currentTime, setCurrentTime] = useState<Date | null>(null)
   
@@ -112,60 +143,65 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
   const [realPayables, setRealPayables] = useState(totalPayables)
 
   useEffect(() => {
-    // If local storage contains data, we update balances to make them accurate for demo/local fallback too!
-    const localCash = localStorage.getItem('erp_cashboxes')
-    if (localCash) {
-      try {
-        const parsed = JSON.parse(localCash)
-        const sum = parsed.reduce((acc: number, c: any) => acc + (Number(c.balance) || 0), 0)
-        setRealCashboxBalance(sum)
-      } catch (e) {
-        console.error(e)
+    // Avoid calling setState synchronously within the effect body
+    const timer = setTimeout(() => {
+      // If local storage contains data, we update balances to make them accurate for demo/local fallback too!
+      const localCash = localStorage.getItem('erp_cashboxes')
+      if (localCash) {
+        try {
+          const parsed = JSON.parse(localCash)
+          const sum = parsed.reduce((acc: number, c: any) => acc + (Number(c.balance) || 0), 0)
+          setRealCashboxBalance(sum)
+        } catch (e) {
+          console.error(e)
+        }
+      } else {
+        setRealCashboxBalance(totalCashboxBalance)
       }
-    } else {
-      setRealCashboxBalance(totalCashboxBalance)
-    }
 
-    const localInv = localStorage.getItem('erp_invoices')
-    if (localInv) {
-      try {
-        const parsed = JSON.parse(localInv)
-        const unpaid = parsed.filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
-        const sum = unpaid.reduce((acc: number, i: any) => acc + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
-        setRealReceivables(sum)
-      } catch (e) {
-        console.error(e)
+      const localInv = localStorage.getItem('erp_invoices')
+      if (localInv) {
+        try {
+          const parsed = JSON.parse(localInv)
+          const unpaid = parsed.filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
+          const sum = unpaid.reduce((acc: number, i: any) => acc + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
+          setRealReceivables(sum)
+        } catch (e) {
+          console.error(e)
+        }
+      } else {
+        setRealReceivables(totalReceivables)
       }
-    } else {
-      setRealReceivables(totalReceivables)
-    }
 
-    const localProd = localStorage.getItem('erp_products')
-    if (localProd) {
-      try {
-        const parsed = JSON.parse(localProd)
-        const sum = parsed.reduce((acc: number, p: any) => acc + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
-        setRealWarehouseValue(sum)
-      } catch (e) {
-        console.error(e)
+      const localProd = localStorage.getItem('erp_products')
+      if (localProd) {
+        try {
+          const parsed = JSON.parse(localProd)
+          const sum = parsed.reduce((acc: number, p: any) => acc + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
+          setRealWarehouseValue(sum)
+        } catch (e) {
+          console.error(e)
+        }
+      } else {
+        setRealWarehouseValue(warehouseValue)
       }
-    } else {
-      setRealWarehouseValue(warehouseValue)
-    }
 
-    const localPo = localStorage.getItem('erp_purchase_orders')
-    if (localPo) {
-      try {
-        const parsed = JSON.parse(localPo)
-        const unpaid = parsed.filter((po: any) => po.status !== 'received' && po.status !== 'cancelled')
-        const sum = unpaid.reduce((acc: number, po: any) => acc + (Number(po.total_amount) || 0), 0)
-        setRealPayables(sum)
-      } catch (e) {
-        console.error(e)
+      const localPo = localStorage.getItem('erp_purchase_orders')
+      if (localPo) {
+        try {
+          const parsed = JSON.parse(localPo)
+          const unpaid = parsed.filter((po: any) => po.status !== 'received' && po.status !== 'cancelled')
+          const sum = unpaid.reduce((acc: number, po: any) => acc + (Number(po.total_amount) || 0), 0)
+          setRealPayables(sum)
+        } catch (e) {
+          console.error(e)
+        }
+      } else {
+        setRealPayables(totalPayables)
       }
-    } else {
-      setRealPayables(totalPayables)
-    }
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [totalCashboxBalance, totalReceivables, warehouseValue, totalPayables])
 
   // Date constants (initialized once to keep render pure)
@@ -175,6 +211,10 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
   const yesterdayStr = new Date(now.getTime() - oneDayMs).toISOString().split('T')[0]
   const weekAgo = new Date(now.getTime() - 7 * oneDayMs)
   const monthAgo = new Date(now.getTime() - 30 * oneDayMs)
+
+  // Custom range bounds (only meaningful when period === 'custom')
+  const customStartDate = customStart ? new Date(customStart) : null
+  const customEndDate = customEnd ? new Date(customEnd) : null
 
   // Dynamic filter function
   const getFilteredMetrics = () => {
@@ -193,6 +233,16 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     } else if (period === 'month') {
       filteredTx = chartTxData.filter((tx) => new Date(tx.transaction_date) >= monthAgo)
       filteredOrdersList = recentOrders.filter((o) => new Date(o.order_date) >= monthAgo)
+    } else if (period === 'custom') {
+      filteredTx = chartTxData.filter((tx) => {
+        const d = new Date(tx.transaction_date)
+        return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
+      })
+      filteredOrdersList = recentOrders.filter((o) => {
+        if (!o.order_date) return false
+        const d = new Date(o.order_date)
+        return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
+      })
     }
 
     let rev = 0
@@ -224,6 +274,12 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
       filteredSoldItems = soldItems.filter((si) => new Date(si.order_date) >= weekAgo)
     } else if (period === 'month') {
       filteredSoldItems = soldItems.filter((si) => new Date(si.order_date) >= monthAgo)
+    } else if (period === 'custom') {
+      filteredSoldItems = soldItems.filter((si) => {
+        if (!si.order_date) return false
+        const d = new Date(si.order_date)
+        return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
+      })
     }
     const salesRevenue = filteredSoldItems.reduce((sum, si) => sum + si.revenue, 0)
     const costOfGoods = filteredSoldItems.reduce((sum, si) => sum + si.cost, 0)
@@ -246,7 +302,9 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
         income: data.income,
         expense: data.expense,
       }))
-    } else if (period === 'month' || period === 'week') {
+    } else if (period === 'month' || period === 'week' || period === 'custom') {
+      // Transactions only carry a date (no time), so custom ranges get the same
+      // daily granularity as week/month rather than an hourly breakdown.
       const dailyData: Record<string, { income: number; expense: number }> = {}
       filteredTx.forEach((tx) => {
         const day = tx.transaction_date
@@ -332,20 +390,29 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
         </div>
 
         {/* Period Selector Tabs */}
-        <div className="flex rounded-lg bg-slate-100 p-0.5 shadow-inner border">
-          {(['today', 'yesterday', 'week', 'month', 'all'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
-                period === p
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {t[p]}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-lg bg-slate-100 p-0.5 shadow-inner border">
+            {(['today', 'yesterday', 'week', 'month', 'all'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
+                  period === p
+                    ? 'bg-white text-indigo-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {t[p]}
+              </button>
+            ))}
+          </div>
+
+          <CustomDateRangePicker
+            isActive={period === 'custom'}
+            start={customStart}
+            end={customEnd}
+            onApply={handleApplyCustomRange}
+          />
         </div>
       </div>
 

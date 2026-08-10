@@ -496,9 +496,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
                 </span>
               </div>
             </div>
-            <div className="hidden sm:block text-slate-400 text-xs italic">
-              * Auto-calculated based on Cost and Price
-            </div>
           </div>
         )}
 

@@ -16,17 +16,18 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-blue-50 text-blue-700 border-blue-200/60',
-  pending: 'bg-blue-50 text-blue-700 border-blue-200/60',
-  confirmed: 'bg-blue-50 text-blue-700 border-blue-200/60',
-  shipped: 'bg-blue-50 text-blue-700 border-blue-200/60',
-  delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
-  cancelled: 'bg-rose-50 text-rose-700 border-rose-200/60',
+const STATUS_TONES: Record<string, StatusTone> = {
+  draft: 'blue',
+  pending: 'blue',
+  confirmed: 'blue',
+  shipped: 'blue',
+  delivered: 'emerald',
+  cancelled: 'rose',
 }
 
 interface OrdersTableProps {
@@ -115,9 +116,7 @@ export function OrdersTable({ orders, lang }: OrdersTableProps) {
                    <TableCell className="text-muted-foreground">{formatDate(order.order_date)}</TableCell>
                    <TableCell className="text-right font-semibold">{formatCurrency(order.total_amount)}</TableCell>
                    <TableCell>
-                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 text-slate-600 border-slate-200/60'}`}>
-                       {t(`status.${order.status}`)}
-                     </span>
+                     <StatusBadge tone={STATUS_TONES[order.status] ?? 'slate'} label={t(`status.${order.status}`)} />
                    </TableCell>
                    <TableCell onClick={(e) => e.stopPropagation()}>
                      <DropdownMenu>

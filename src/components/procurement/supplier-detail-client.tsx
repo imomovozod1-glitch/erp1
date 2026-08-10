@@ -3,16 +3,24 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
   Download, Truck, Phone, Mail, Globe, MapPin, DollarSign, Landmark
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
+
+const PO_STATUS_TONES: Record<string, StatusTone> = {
+  draft: 'blue',
+  sent: 'blue',
+  received: 'emerald',
+  partially_received: 'blue',
+  cancelled: 'rose',
+}
 
 interface SupplierDetailClientProps {
   lang: string
@@ -89,9 +97,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge className={supplier.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-700"}>
-            {supplier.is_active ? tc('active') : tc('inactive')}
-          </Badge>
+          <StatusBadge tone={supplier.is_active ? 'emerald' : 'slate'} label={supplier.is_active ? tc('active') : tc('inactive')} />
           <Button onClick={handleExport} size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
             {tc('export') || 'Eksport'}
@@ -245,9 +251,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                           <TableCell className="font-semibold text-slate-900">{po.po_number}</TableCell>
                           <TableCell className="text-right font-bold text-rose-600">{formatCurrency(po.total_amount)}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={po.status === 'received' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-650'}>
-                              {po.status}
-                            </Badge>
+                            <StatusBadge tone={PO_STATUS_TONES[po.status] ?? 'slate'} label={t(`status.${po.status}`)} />
                           </TableCell>
                           <TableCell className="text-slate-500 text-xs">{formatDate(po.order_date)}</TableCell>
                         </TableRow>
@@ -282,8 +286,8 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                           <TableCell className="font-semibold text-slate-800">
                             {tx.category}
                           </TableCell>
-                          <TableCell className="text-right font-bold text-emerald-700">
-                            +{formatCurrency(tx.amount)}
+                          <TableCell className="text-right font-bold text-rose-600">
+                            -{formatCurrency(tx.amount)}
                           </TableCell>
                           <TableCell className="text-slate-600 text-sm">{tx.description || '—'}</TableCell>
                           <TableCell className="text-slate-500 text-xs">{formatDate(tx.transaction_date)}</TableCell>

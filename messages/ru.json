@@ -42,6 +42,7 @@
     "inactive": "Неактивен",
     "yes": "Да",
     "no": "Нет",
+    "count": "шт",
     "confirm": "Подтвердить",
     "close": "Закрыть",
     "back": "Назад",
@@ -87,7 +88,8 @@
     "reports": "Отчёты",
     "settings": "Настройки",
     "tools": "Инструменты",
-    "pos": "POS"
+    "pos": "POS",
+    "customers": "Клиенты"
   },
   "auth": {
     "loading": "Вход...",

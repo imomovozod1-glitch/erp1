@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -16,6 +16,15 @@ import {
   Download, DollarSign, ShoppingCart, Calendar, X
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
+
+const ORDER_STATUS_TONES: Record<string, StatusTone> = {
+  draft: 'blue',
+  pending: 'blue',
+  confirmed: 'blue',
+  shipped: 'blue',
+  delivered: 'emerald',
+  cancelled: 'rose',
+}
 
 interface EmployeeDetailClientProps {
   lang: string
@@ -27,6 +36,7 @@ interface EmployeeDetailClientProps {
 export function EmployeeDetailClient({ lang, employee, transactions, salesOrders }: EmployeeDetailClientProps) {
   const t = useTranslations('hr')
   const tc = useTranslations('common')
+  const tSales = useTranslations('sales')
   const [activeTab, setActiveTab] = useState<'payouts' | 'sales'>('payouts')
   const [payoutsFrom, setPayoutsFrom] = useState('')
   const [payoutsTo, setPayoutsTo] = useState('')
@@ -109,15 +119,13 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
         </div>
 
         <div className="flex items-center gap-2">
-          {employee.is_active ? (
-            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-              {lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed'}
-            </Badge>
-          ) : (
-            <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100">
-              {lang === 'uz' ? 'Bo\'shatilgan' : lang === 'ru' ? 'Уволен' : 'Terminated'}
-            </Badge>
-          )}
+          <StatusBadge
+            tone={employee.is_active ? 'emerald' : 'rose'}
+            pulse={employee.is_active}
+            label={employee.is_active
+              ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
+              : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated')}
+          />
           <Button onClick={handleExport} size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
             {tc('export') || 'Eksport'}
@@ -149,7 +157,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Rasmiylashtirgan savdolar' : 'Оформленные продажи'}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(totalSalesAmount)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{salesOrders.length} {tc('rows')}</span>
+            <span className="text-xs text-slate-400 mt-2">{salesOrders.length} {tc('count') || 'count'}</span>
           </CardContent>
         </Card>
 
@@ -159,7 +167,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
               {formatCurrency(transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0))}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{transactions.length} {tc('rows')}</span>
+            <span className="text-xs text-slate-400 mt-2">{transactions.length} {tc('count') || 'count'}</span>
           </CardContent>
         </Card>
       </div>
@@ -332,9 +340,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                           <TableCell>{o.customers?.name ?? '—'}</TableCell>
                           <TableCell className="text-right font-bold text-emerald-600">{formatCurrency(o.total_amount)}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={o.status === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-650'}>
-                              {o.status}
-                            </Badge>
+                            <StatusBadge tone={ORDER_STATUS_TONES[o.status] ?? 'slate'} label={tSales(`status.${o.status}`)} />
                           </TableCell>
                           <TableCell className="text-slate-500 text-xs">{formatDate(o.order_date)}</TableCell>
                         </TableRow>

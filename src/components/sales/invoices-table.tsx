@@ -15,14 +15,15 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 text-slate-600',
-  sent: 'bg-blue-100 text-blue-700',
-  paid: 'bg-emerald-100 text-emerald-700',
-  overdue: 'bg-red-100 text-red-700',
-  cancelled: 'bg-slate-200 text-slate-500',
+const STATUS_TONES: Record<string, StatusTone> = {
+  draft: 'slate',
+  sent: 'blue',
+  paid: 'emerald',
+  overdue: 'rose',
+  cancelled: 'slate',
 }
 
 interface InvoicesTableProps {
@@ -123,9 +124,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex flex-col items-start gap-1.5">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[invoice.status]}`}>
-                          {t(`status.${invoice.status}`)}
-                        </span>
+                        <StatusBadge tone={STATUS_TONES[invoice.status] ?? 'slate'} label={t(`status.${invoice.status}`)} />
                         {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.customer_id && (
                           <Button
                             variant="outline"

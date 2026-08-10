@@ -21,7 +21,7 @@ import { invalidateProducts } from "@/lib/data/revalidate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { AIStockScannerModal } from "@/components/inventory/ai-stock-scanner-modal";
 import {
   DropdownMenu,
@@ -460,16 +460,10 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={product.is_active ? "default" : "secondary"}
-                        className={
-                          product.is_active
-                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                            : ""
-                        }
-                      >
-                        {product.is_active ? t("common.active") : t("common.inactive")}
-                      </Badge>
+                      <StatusBadge
+                        tone={product.is_active ? "emerald" : "slate"}
+                        label={product.is_active ? t("common.active") : t("common.inactive")}
+                      />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>

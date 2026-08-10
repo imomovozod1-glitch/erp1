@@ -9,7 +9,7 @@ import { MoreHorizontal, Pencil, Search, Truck } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/status-badge'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -114,12 +114,10 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                       <TableCell className="text-muted-foreground">{supplier.contact_person ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{supplier.tin ?? '—'}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={supplier.is_active ? 'default' : 'secondary'}
-                          className={supplier.is_active ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : ''}
-                        >
-                          {supplier.is_active ? tCommon('active') : tCommon('inactive')}
-                        </Badge>
+                        <StatusBadge
+                          tone={supplier.is_active ? 'emerald' : 'slate'}
+                          label={supplier.is_active ? tCommon('active') : tCommon('inactive')}
+                        />
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>

@@ -29,6 +29,7 @@
     "actions": "Actions",
     "status": "Status",
     "date": "Date",
+    "count": "count",
     "amount": "Amount",
     "total": "Total",
     "name": "Name",
@@ -87,7 +88,8 @@
     "reports": "Reports",
     "settings": "Settings",
     "tools": "Tools",
-    "pos": "POS (Kassa)"
+    "pos": "POS (Kassa)",
+    "customers": "Customers"
   },
   "auth": {
     "loading": "Signing in...",
