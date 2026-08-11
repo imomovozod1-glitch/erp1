@@ -118,7 +118,9 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       { Parameter: t('department'), Value: employee.profiles?.departments?.name ?? '—' },
       { Parameter: t('salary'), Value: formatCurrency(employee.salary) },
       { Parameter: t('hiredAt'), Value: formatDate(employee.hired_at) },
-      { Parameter: tc('status'), Value: employee.is_active ? (lang === 'uz' ? 'Ishlamoqda' : 'Работает') : (lang === 'uz' ? 'Bo\'shatilgan' : 'Уволен') }
+      { Parameter: tc('status'), Value: employee.is_active
+        ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
+        : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated') }
     ]
     if (!employee.is_active && employee.terminated_at) {
       profileData.push({ Parameter: t('terminatedAt') || 'Bo\'shatilgan sana', Value: formatDate(employee.terminated_at) })

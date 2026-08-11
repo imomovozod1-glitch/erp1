@@ -51,7 +51,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
 
     // 2. Movements Sheet
     const movementsData = movements.map(m => ({
-      Type: m.type === 'incoming' ? (lang === 'uz' ? 'Kirim' : 'Приход') : (lang === 'uz' ? 'Chiqim' : 'Расход'),
+      Type: m.type === 'incoming' || m.type === 'in' ? t('stockIn') : t('stockOut'),
       Quantity: m.quantity,
       Before: m.quantity_before,
       After: m.quantity_after,
@@ -217,7 +217,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                             : 'bg-rose-50 text-rose-700 border border-rose-100'
                         }`}>
-                          {m.type === 'incoming' || m.type === 'in' ? (lang === 'uz' ? 'Kirim' : 'Приход') : (lang === 'uz' ? 'Chiqim' : 'Расход')}
+                          {m.type === 'incoming' || m.type === 'in' ? t('stockIn') : t('stockOut')}
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-semibold">

@@ -8,6 +8,7 @@ import { pickField, type ExcelColumn } from '@/lib/excel-io'
 
 interface EmployeeImportExportProps {
   employees: any[]
+  lang: string
 }
 
 const EXPORT_COLUMNS: ExcelColumn[] = [
@@ -29,15 +30,18 @@ const TEMPLATE_COLUMNS: ExcelColumn[] = [
   { header: 'Ishga qabul qilingan sana (YYYY-MM-DD)', key: 'hiredAtLabel', sample: '2026-01-15' },
 ]
 
-export function EmployeeImportExport({ employees }: EmployeeImportExportProps) {
+export function EmployeeImportExport({ employees, lang }: EmployeeImportExportProps) {
   const supabase = createClient() as any
+
+  const activeLabel = lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed'
+  const inactiveLabel = lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated'
 
   const exportRows = employees.map((e) => ({
     ...e,
     fullName: e.profiles?.full_name || '',
     email: e.profiles?.email || '',
     hiredAtLabel: e.hired_at ? formatDate(e.hired_at) : '',
-    statusLabel: e.is_active ? 'Ishlamoqda' : "Bo'shatilgan",
+    statusLabel: e.is_active ? activeLabel : inactiveLabel,
   }))
 
   const handleImport = async (rows: Record<string, any>[]) => {

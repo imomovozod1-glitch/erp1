@@ -25,7 +25,7 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
           { label: t('customers') },
         ]}
       >
-        <CustomerImportExport customers={customers} />
+        <CustomerImportExport customers={customers} lang={lang} />
       </PageHeader>
       <CustomersTable customers={customers} lang={lang} />
     </div>

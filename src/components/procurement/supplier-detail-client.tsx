@@ -150,9 +150,9 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">{tc('status')}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
-              {supplier.is_active ? (lang === 'uz' ? 'Faol' : 'Активен') : (lang === 'uz' ? 'Nofaol' : 'Неактивен')}
+              {supplier.is_active ? tc('active') : tc('inactive')}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{lang === 'uz' ? 'Kontakt' : 'Контакты'}: {supplier.phone || '—'}</span>
+            <span className="text-xs text-slate-400 mt-2">{lang === 'uz' ? 'Kontakt' : lang === 'ru' ? 'Контакты' : 'Contact'}: {supplier.phone || '—'}</span>
           </CardContent>
         </Card>
       </div>

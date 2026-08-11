@@ -90,7 +90,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
               onClick={() => setStatusFilter('not_hired')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'not_hired' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              {t("notHired", { fallback: "Ishdan bo'shatilgan" })}
+              {lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated'}
             </button>
           </div>
           <span className="text-xs text-muted-foreground font-medium">

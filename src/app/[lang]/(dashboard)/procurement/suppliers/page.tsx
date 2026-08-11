@@ -30,7 +30,7 @@ export default async function SuppliersPage({ params }: { params: Promise<{ lang
           { label: t('suppliers') },
         ]}
       >
-        <SupplierImportExport suppliers={suppliers ?? []} />
+        <SupplierImportExport suppliers={suppliers ?? []} lang={lang} />
       </PageHeader>
       <SuppliersTable suppliers={suppliers ?? []} lang={lang} />
     </div>

@@ -7,6 +7,7 @@ import { pickField, type ExcelColumn } from '@/lib/excel-io'
 
 interface CustomerImportExportProps {
   customers: any[]
+  lang: string
 }
 
 const EXPORT_COLUMNS: ExcelColumn[] = [
@@ -28,12 +29,15 @@ const TEMPLATE_COLUMNS: ExcelColumn[] = [
   { header: 'Izoh', key: 'notes', sample: '' },
 ]
 
-export function CustomerImportExport({ customers }: CustomerImportExportProps) {
+export function CustomerImportExport({ customers, lang }: CustomerImportExportProps) {
   const supabase = createClient() as any
+
+  const activeLabel = lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active'
+  const inactiveLabel = lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive'
 
   const exportRows = customers.map((c) => ({
     ...c,
-    statusLabel: c.is_active ? 'Faol' : 'Nofaol',
+    statusLabel: c.is_active ? activeLabel : inactiveLabel,
   }))
 
   const handleImport = async (rows: Record<string, any>[]) => {

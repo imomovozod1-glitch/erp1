@@ -105,6 +105,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
   const tFinance = useTranslations('finance')
   const tHr = useTranslations('hr')
   const tProcurement = useTranslations('procurement')
+  const tSettings = useTranslations('settings')
   const pathname = usePathname()
 
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(() => {
@@ -283,7 +284,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                   variant="outline"
                   className="ml-auto text-[10px] px-1.5 capitalize border-indigo-200 text-indigo-600"
                 >
-                  {profile?.role}
+                  {profile?.role ? tSettings(`role.${profile.role}`) : ''}
                 </Badge>
               </SidebarMenuButton>
             )}

@@ -1167,7 +1167,9 @@ export function CashboxClient({ lang }: { lang: string }) {
                               : 'bg-rose-50 text-rose-700 border border-rose-200/50'
                           }`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${isIncome ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                            {isIncome ? (lang === 'uz' ? 'Kirim' : 'Приход') : (lang === 'uz' ? 'Chiqim' : 'Расход')}
+                            {isIncome
+                              ? (lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income')
+                              : (lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense')}
                           </span>
                         </td>
                         <td className="p-4">

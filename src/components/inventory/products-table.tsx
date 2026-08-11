@@ -90,7 +90,9 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     const rows = products.map((p: any) => ({
       ...p,
       categoryName: p.categories?.name || '',
-      statusLabel: p.is_active ? (lang === 'uz' ? 'Faol' : 'Активен') : (lang === 'uz' ? 'Nofaol' : 'Неактивен'),
+      statusLabel: p.is_active
+        ? (lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active')
+        : (lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive'),
     }));
     exportRowsToExcel(rows, [
       { header: 'Nomi', key: 'name' },
