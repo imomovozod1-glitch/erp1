@@ -403,7 +403,7 @@ export function POSClient({
           notes: isDebtSale ? `Qarzga sotildi - POS Order #${orderData.order_number}` : `Paid instantly on POS via ${paymentMethod}`,
           created_by: user.id
         }).then(({ error }: any) => { if (error) throw error }),
-        isDebtSale ? Promise.resolve() : adjustCashboxBalance(totalPayable, 'income', supabase),
+        isDebtSale ? Promise.resolve() : adjustCashboxBalance(totalPayable, 'income', supabase, paymentMethod as 'cash' | 'card' | 'transfer'),
       ])
 
       // Success

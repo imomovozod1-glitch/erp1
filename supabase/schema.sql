@@ -16,6 +16,8 @@ CREATE TYPE invoice_status AS ENUM ('draft', 'sent', 'paid', 'overdue', 'cancell
 CREATE TYPE transaction_type AS ENUM ('income', 'expense');
 CREATE TYPE stock_movement_type AS ENUM ('in', 'out', 'adjustment');
 CREATE TYPE purchase_order_status AS ENUM ('draft', 'sent', 'received', 'partially_received', 'cancelled');
+CREATE TYPE transaction_person_type AS ENUM ('employee', 'supplier', 'customer', 'none');
+CREATE TYPE cashbox_type AS ENUM ('cash', 'card', 'transfer', 'other');
 
 -- =============================================
 -- PROFILES (extends auth.users)
@@ -266,6 +268,19 @@ CREATE TABLE transactions (
 );
 
 -- =============================================
+-- TRANSACTION CATEGORIES
+-- =============================================
+
+CREATE TABLE transaction_categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  type transaction_type NOT NULL,
+  person_type transaction_person_type NOT NULL DEFAULT 'none',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- =============================================
 -- AUTO-UPDATE TRIGGERS
 -- =============================================
 
@@ -287,6 +302,7 @@ CREATE TRIGGER update_sales_orders_updated_at BEFORE UPDATE ON sales_orders FOR 
 CREATE TRIGGER update_invoices_updated_at BEFORE UPDATE ON invoices FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER update_purchase_orders_updated_at BEFORE UPDATE ON purchase_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER update_transaction_categories_updated_at BEFORE UPDATE ON transaction_categories FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- =============================================
 -- AUTO-CREATE PROFILE ON SIGNUP
@@ -328,6 +344,7 @@ ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transaction_categories ENABLE ROW LEVEL SECURITY;
 
 -- Authenticated users can read all data
 CREATE POLICY "authenticated_read_all" ON profiles FOR SELECT TO authenticated USING (true);
@@ -344,6 +361,7 @@ CREATE POLICY "authenticated_read_po" ON purchase_orders FOR SELECT TO authentic
 CREATE POLICY "authenticated_read_po_items" ON purchase_order_items FOR SELECT TO authenticated USING (true);
 CREATE POLICY "authenticated_read_stock" ON stock_movements FOR SELECT TO authenticated USING (true);
 CREATE POLICY "authenticated_read_transactions" ON transactions FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_read_transaction_categories" ON transaction_categories FOR SELECT TO authenticated USING (true);
 
 -- Authenticated users can write data
 CREATE POLICY "authenticated_write_departments" ON departments FOR ALL TO authenticated USING (true) WITH CHECK (true);
@@ -359,6 +377,7 @@ CREATE POLICY "authenticated_write_po" ON purchase_orders FOR ALL TO authenticat
 CREATE POLICY "authenticated_write_po_items" ON purchase_order_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "authenticated_write_stock" ON stock_movements FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "authenticated_write_transactions" ON transactions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "authenticated_write_transaction_categories" ON transaction_categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Profiles: users can update their own, admins can update all
 CREATE POLICY "users_update_own_profile" ON profiles FOR UPDATE TO authenticated 
@@ -390,6 +409,7 @@ CREATE TABLE cashboxes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   balance DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  type cashbox_type NOT NULL DEFAULT 'cash',
   description TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -410,4 +430,21 @@ CREATE INDEX idx_cashboxes_name ON cashboxes(name);
 
 -- Option to link transactions to a specific cashbox
 -- ALTER TABLE transactions ADD COLUMN cashbox_id UUID REFERENCES cashboxes(id) ON DELETE SET NULL;
+
+-- =============================================
+-- DEFAULT TRANSACTION CATEGORIES
+-- =============================================
+
+INSERT INTO transaction_categories (name, type, person_type) VALUES
+  ('Sotuv', 'income', 'none'),
+  ('Xizmat', 'income', 'none'),
+  ('Mijozdan qarz undirish', 'income', 'customer'),
+  ('Boshqa daromad', 'income', 'none'),
+  ('Maosh', 'expense', 'employee'),
+  ('Yetkazib beruvchiga to''lov', 'expense', 'supplier'),
+  ('Ijara', 'expense', 'none'),
+  ('Kommunal xizmatlar', 'expense', 'none'),
+  ('Marketing', 'expense', 'none'),
+  ('Ta''minotlar', 'expense', 'none'),
+  ('Boshqa xarajat', 'expense', 'none');
 

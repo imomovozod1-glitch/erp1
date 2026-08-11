@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmployeesTable } from '@/components/hr/employees-table'
+import { EmployeeImportExport } from '@/components/hr/employee-import-export'
 import { getCachedEmployees } from '@/lib/data/queries'
 
 export const metadata: Metadata = { title: 'Employees' }
@@ -25,7 +26,9 @@ export default async function EmployeesPage({ params }: { params: Promise<{ lang
           { label: t('title') },
           { label: t('employees') },
         ]}
-      />
+      >
+        <EmployeeImportExport employees={employees} />
+      </PageHeader>
       <EmployeesTable employees={employees} lang={lang} />
     </div>
   )

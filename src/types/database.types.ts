@@ -661,6 +661,28 @@ export type Database = {
           }
         ]
       }
+      transaction_categories: {
+        Row: {
+          id: string
+          name: string
+          type: 'income' | 'expense'
+          person_type: 'employee' | 'supplier' | 'customer' | 'none'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          type: 'income' | 'expense'
+          person_type?: 'employee' | 'supplier' | 'customer' | 'none'
+        }
+        Update: {
+          name?: string
+          type?: 'income' | 'expense'
+          person_type?: 'employee' | 'supplier' | 'customer' | 'none'
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -671,6 +693,8 @@ export type Database = {
       transaction_type: 'income' | 'expense'
       stock_movement_type: 'in' | 'out' | 'adjustment'
       purchase_order_status: 'draft' | 'sent' | 'received' | 'partially_received' | 'cancelled'
+      transaction_person_type: 'employee' | 'supplier' | 'customer' | 'none'
+      cashbox_type: 'cash' | 'card' | 'transfer' | 'other'
     }
   }
 }

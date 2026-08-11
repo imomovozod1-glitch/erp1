@@ -31,6 +31,7 @@ export const CACHE_TAGS = {
   suppliers: 'suppliers',
   purchaseOrders: 'purchase_orders',
   transactions: 'transactions',
+  transactionCategories: 'transaction_categories',
   dashboard: 'dashboard',
   analytics: 'analytics',
   cashbox: 'cashbox',
@@ -187,6 +188,19 @@ export const getCachedTransactions = unstable_cache(
   },
   ['transactions-list'],
   { tags: [CACHE_TAGS.transactions], revalidate: 30 }
+)
+
+export const getCachedTransactionCategories = unstable_cache(
+  async () => {
+    const supabase = getCacheClient()
+    const { data } = await supabase
+      .from('transaction_categories')
+      .select('*')
+      .order('name')
+    return data ?? []
+  },
+  ['transaction-categories-list'],
+  { tags: [CACHE_TAGS.transactionCategories], revalidate: 120 }
 )
 
 // ─── Analytics ─────────────────────────────────────────────────────────────────

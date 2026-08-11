@@ -7,7 +7,20 @@ class InsufficientFundsError extends Error {
   }
 }
 
-function updateLocalCashboxes(change: number, amount: number, type: 'income' | 'expense') {
+/** Picks which cashbox a payment should land in: prefer one matching `cashboxType`
+ *  (e.g. a card payment goes into the "card" cashbox), then the main/first cashbox. */
+function pickTargetCashbox(cashboxes: any[], cashboxType?: string) {
+  if (cashboxType) {
+    const typed = cashboxes.find((c: any) => c.type === cashboxType);
+    if (typed) return typed;
+  }
+  return cashboxes.find((c: any) =>
+    c.name.toLowerCase().includes('asosiy') ||
+    c.name.toLowerCase().includes('main')
+  ) || cashboxes[0];
+}
+
+function updateLocalCashboxes(change: number, amount: number, type: 'income' | 'expense', cashboxType?: string) {
   if (typeof window === 'undefined') return;
 
   const localData = localStorage.getItem('erp_cashboxes');
@@ -17,11 +30,8 @@ function updateLocalCashboxes(change: number, amount: number, type: 'income' | '
     const localCashboxes = JSON.parse(localData);
     if (localCashboxes.length === 0) return;
 
-    const mainIndex = localCashboxes.findIndex((c: any) =>
-      c.name.toLowerCase().includes('asosiy') ||
-      c.name.toLowerCase().includes('main')
-    );
-    const index = mainIndex !== -1 ? mainIndex : 0;
+    const target = pickTargetCashbox(localCashboxes, cashboxType);
+    const index = localCashboxes.findIndex((c: any) => c.id === target.id);
     const currentBalance = Number(localCashboxes[index].balance) || 0;
 
     // A cashbox can never go negative — block any expense larger than what's actually in it
@@ -37,7 +47,7 @@ function updateLocalCashboxes(change: number, amount: number, type: 'income' | '
   }
 }
 
-export async function adjustCashboxBalance(amount: number, type: 'income' | 'expense', supabaseInput?: any) {
+export async function adjustCashboxBalance(amount: number, type: 'income' | 'expense', supabaseInput?: any, cashboxType?: 'cash' | 'card' | 'transfer' | 'other') {
   const supabase = supabaseInput || createClient();
   const change = type === 'income' ? amount : -amount;
 
@@ -57,13 +67,11 @@ export async function adjustCashboxBalance(amount: number, type: 'income' | 'exp
     let currentBalance = 0;
 
     if (cashboxes && cashboxes.length > 0) {
-      // Find the primary or main cashbox, or use the first one
-      const mainCb = cashboxes.find((c: any) =>
-        c.name.toLowerCase().includes('asosiy') ||
-        c.name.toLowerCase().includes('main')
-      ) || cashboxes[0];
-      targetCashboxId = mainCb.id;
-      currentBalance = Number(mainCb.balance) || 0;
+      // Prefer a cashbox matching the payment method (e.g. card payment → the "card" cashbox),
+      // falling back to the primary/first cashbox when none matches.
+      const targetCb = pickTargetCashbox(cashboxes, cashboxType);
+      targetCashboxId = targetCb.id;
+      currentBalance = Number(targetCb.balance) || 0;
     }
 
     // A cashbox can never go negative — block any expense larger than what's actually in it
@@ -101,11 +109,8 @@ export async function adjustCashboxBalance(amount: number, type: 'income' | 'exp
         try {
           const localCashboxes = JSON.parse(localData);
           if (localCashboxes.length > 0) {
-            const mainIndex = localCashboxes.findIndex((c: any) =>
-              c.name.toLowerCase().includes('asosiy') ||
-              c.name.toLowerCase().includes('main')
-            );
-            const index = mainIndex !== -1 ? mainIndex : 0;
+            const target = pickTargetCashbox(localCashboxes, cashboxType);
+            const index = localCashboxes.findIndex((c: any) => c.id === target.id);
             localCashboxes[index].balance = (Number(localCashboxes[index].balance) || 0) + change;
             localStorage.setItem('erp_cashboxes', JSON.stringify(localCashboxes));
           }
@@ -123,6 +128,6 @@ export async function adjustCashboxBalance(amount: number, type: 'income' | 'exp
 
     console.warn('Supabase cashboxes update failed, falling back to LocalStorage:', err);
     // If Supabase failed or table doesn't exist, we fall back to updating localStorage
-    updateLocalCashboxes(change, amount, type);
+    updateLocalCashboxes(change, amount, type, cashboxType);
   }
 }

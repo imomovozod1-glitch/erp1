@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { SuppliersTable } from '@/components/procurement/suppliers-table'
+import { SupplierImportExport } from '@/components/procurement/supplier-import-export'
 
 export const metadata: Metadata = { title: 'Suppliers' }
 
@@ -28,7 +29,9 @@ export default async function SuppliersPage({ params }: { params: Promise<{ lang
           { label: t('title') },
           { label: t('suppliers') },
         ]}
-      />
+      >
+        <SupplierImportExport suppliers={suppliers ?? []} />
+      </PageHeader>
       <SuppliersTable suppliers={suppliers ?? []} lang={lang} />
     </div>
   )

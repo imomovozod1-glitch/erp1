@@ -76,6 +76,10 @@ export async function invalidateTransactions() {
   updateTag(CACHE_TAGS.dashboard)
 }
 
+export async function invalidateTransactionCategories() {
+  updateTag(CACHE_TAGS.transactionCategories)
+}
+
 export async function invalidateAnalytics() {
   updateTag(CACHE_TAGS.analytics)
   updateTag(CACHE_TAGS.orderItems)

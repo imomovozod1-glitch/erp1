@@ -38,6 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, formatNumber } from "@/lib/utils";
+import { exportRowsToExcel } from "@/lib/excel-io";
 import * as XLSX from "xlsx";
 import React from "react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
@@ -83,6 +84,25 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
     XLSX.writeFile(workbook, "mahsulotlar_shablon.xlsx");
+  };
+
+  const handleExportProducts = () => {
+    const rows = products.map((p: any) => ({
+      ...p,
+      categoryName: p.categories?.name || '',
+      statusLabel: p.is_active ? (lang === 'uz' ? 'Faol' : 'Активен') : (lang === 'uz' ? 'Nofaol' : 'Неактивен'),
+    }));
+    exportRowsToExcel(rows, [
+      { header: 'Nomi', key: 'name' },
+      { header: 'SKU', key: 'sku' },
+      { header: 'Kategoriya', key: 'categoryName' },
+      { header: 'Sotuv narxi', key: 'price' },
+      { header: 'Tannarx', key: 'cost_price' },
+      { header: 'Zaxira', key: 'stock' },
+      { header: 'Minimal zaxira', key: 'min_stock' },
+      { header: "O'lchov birligi", key: 'unit' },
+      { header: 'Holat', key: 'statusLabel' },
+    ], 'mahsulotlar.xlsx');
   };
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
@@ -313,6 +333,17 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
               </button>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleExportProducts}
+                disabled={products.length === 0}
+                className="h-9 gap-2 border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs rounded-lg"
+              >
+                <Download className="h-4 w-4" />
+                {t("common.export", { fallback: "Eksport" })}
+              </Button>
               <input
                 type="file"
                 accept=".xlsx, .xls"
