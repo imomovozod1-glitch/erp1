@@ -22,7 +22,9 @@ import {
   Coins,
   Receipt,
   CreditCard,
-  ArrowLeftRight
+  ArrowLeftRight,
+  AlertTriangle,
+  Users
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -93,6 +95,9 @@ export function CashboxClient({ lang }: { lang: string }) {
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [customerDebt, setCustomerDebt] = useState<number | null>(null)
   const [isLoadingDebt, setIsLoadingDebt] = useState(false)
+
+  // Total outstanding debt across all customers (unpaid invoices — mostly debt sales) for the KPI card
+  const [totalCustomerDebt, setTotalCustomerDebt] = useState(0)
 
   // Employee payroll states
   const [employees, setEmployees] = useState<any[]>([])
@@ -174,6 +179,32 @@ export function CashboxClient({ lang }: { lang: string }) {
       }
     } catch (err: any) {
       console.warn('Failed to fetch transaction categories:', err.message)
+    }
+  }
+
+  // Total outstanding debt across all customers (unpaid invoices) — mostly debt sales
+  const fetchTotalDebt = async (fallback: boolean) => {
+    try {
+      if (fallback) {
+        const localInvoicesStr = localStorage.getItem('erp_invoices')
+        if (localInvoicesStr) {
+          const localInvoices = JSON.parse(localInvoicesStr)
+          const unpaid = localInvoices.filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
+          const debt = unpaid.reduce((sum: number, i: any) => sum + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
+          setTotalCustomerDebt(debt)
+        }
+      } else {
+        const { data, error } = await supabase
+          .from('invoices')
+          .select('total_amount, paid_amount')
+          .not('status', 'in', '("paid","cancelled")')
+        if (!error) {
+          const debt = (data || []).reduce((sum: number, i: any) => sum + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
+          setTotalCustomerDebt(debt)
+        }
+      }
+    } catch (err: any) {
+      console.warn('Failed to fetch total customer debt:', err.message)
     }
   }
 
@@ -271,6 +302,7 @@ export function CashboxClient({ lang }: { lang: string }) {
         fetchEmployees(fallback)
         fetchSuppliers(fallback)
         fetchCategories(fallback)
+        fetchTotalDebt(fallback)
       })
     }, 0)
     
@@ -676,6 +708,7 @@ export function CashboxClient({ lang }: { lang: string }) {
         if (personType === 'customer') {
           await invalidateCustomers()
           await invalidateInvoices()
+          fetchTotalDebt(isLocalStorageFallback)
         }
 
         toast.success(tCommon('success'))
@@ -721,6 +754,7 @@ export function CashboxClient({ lang }: { lang: string }) {
         if (personType === 'customer') {
           await invalidateCustomers()
           await invalidateInvoices()
+          fetchTotalDebt(isLocalStorageFallback)
         }
 
         toast.success(tCommon('success'))
@@ -869,7 +903,7 @@ export function CashboxClient({ lang }: { lang: string }) {
       )}
 
       {/* Aggregate Stats Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Balance Card */}
         <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white rounded-3xl p-6 shadow-xl shadow-indigo-500/10 relative overflow-hidden group hover:scale-[1.02] hover:shadow-indigo-500/20 transition-all duration-300">
           <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-white/10 blur-xl group-hover:scale-110 transition-transform duration-300" />
@@ -906,7 +940,7 @@ export function CashboxClient({ lang }: { lang: string }) {
           </div>
           <div className="mt-6 flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
             <TrendingUp className="h-4 w-4" />
-            <span>{lang === 'uz' ? 'Moliya oqimi' : 'Денежный приток'}</span>
+            <span>{lang === 'uz' ? 'Moliya oqimi' : lang === 'ru' ? 'Денежный приток' : 'Cash inflow'}</span>
           </div>
         </div>
 
@@ -926,7 +960,27 @@ export function CashboxClient({ lang }: { lang: string }) {
           </div>
           <div className="mt-6 flex items-center gap-1.5 text-xs text-rose-600 font-semibold">
             <TrendingDown className="h-4 w-4" />
-            <span>{lang === 'uz' ? 'Moliya chiqishi' : 'Денежный отток'}</span>
+            <span>{lang === 'uz' ? 'Moliya chiqishi' : lang === 'ru' ? 'Денежный отток' : 'Cash outflow'}</span>
+          </div>
+        </div>
+
+        {/* Total Debt (Sold on Credit) Card */}
+        <div className="bg-gradient-to-br from-amber-50 via-amber-100/80 to-orange-50 text-amber-955 rounded-3xl p-6 border border-amber-250/50 shadow-md relative overflow-hidden group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+          <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-amber-500/5 blur-xl group-hover:scale-110 transition-transform duration-300" />
+          <div className="flex justify-between items-start">
+            <div className="space-y-2.5">
+              <span className="text-xs uppercase tracking-wider font-semibold text-amber-700">{lang === 'uz' ? "Qarzga sotilgan" : lang === 'ru' ? 'Продано в долг' : 'Sold on credit'}</span>
+              <h3 className="text-2xl font-extrabold tracking-tight text-amber-900">
+                {formatCurrency(totalCustomerDebt)}
+              </h3>
+            </div>
+            <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-700 border border-amber-500/10">
+              <AlertTriangle className="h-6 w-6 text-amber-600" />
+            </div>
+          </div>
+          <div className="mt-6 flex items-center gap-1.5 text-xs text-amber-600 font-semibold">
+            <Users className="h-4 w-4" />
+            <span>{lang === 'uz' ? "Mijozlardan kutilayotgan to'lov" : lang === 'ru' ? 'Ожидаемая оплата от клиентов' : 'Expected from customers'}</span>
           </div>
         </div>
       </div>

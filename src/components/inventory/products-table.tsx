@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { exportRowsToExcel } from "@/lib/excel-io";
+import { getMeasurementUnits, resolveMeasurementUnit } from "@/lib/units";
 import * as XLSX from "xlsx";
 import React from "react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
@@ -67,6 +68,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
 
  
   const downloadExcelTemplate = () => {
+    const systemUnits = getMeasurementUnits(lang);
     const templateData = [
       {
         "Nomi": "Mahsulot A",
@@ -76,13 +78,23 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
         "Kirim narxi": 9500,
         "Zaxira": 100,
         "Minimal zaxira": 10,
-        "O'lchov birligi": "dona",
+        "O'lchov birligi": systemUnits[0] || "Dona",
         "Tavsif": "Namuna mahsulot tavsifi"
       }
     ];
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
     XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+
+    // Reference-only sheet — the import only reads the first sheet, so this never
+    // gets treated as product data, it's just documentation for the user.
+    const unitsSheet = XLSX.utils.json_to_sheet(
+      systemUnits.map((u) => ({
+        [lang === 'uz' ? "Ruxsat etilgan o'lchov birliklari" : lang === 'ru' ? 'Разрешённые единицы измерения' : 'Allowed units']: u,
+      }))
+    );
+    XLSX.utils.book_append_sheet(workbook, unitsSheet, lang === 'uz' ? 'Birliklar' : lang === 'ru' ? 'Единицы' : 'Units');
+
     XLSX.writeFile(workbook, "mahsulotlar_shablon.xlsx");
   };
 
@@ -196,11 +208,14 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
         };
 
         // Map Excel columns to products table columns (supporting multi-language headers)
+        const systemUnits = getMeasurementUnits(lang);
+        const invalidUnitRows: { name: string; unit: string }[] = [];
+
         const newProducts = data
           .map((row: any) => {
             const name =
               row.Nomi || row.name || row.Name || row["Наименование"] || "";
-            
+
             const lowerName = String(name).toLowerCase().trim();
             if (!name || lowerName === "jami" || lowerName === "jami:" || lowerName === "total" || lowerName === "итого" || lowerName === "итого:") {
               return null;
@@ -241,12 +256,18 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
             const min_stock = parseNumber(
               row["Minimal zaxira"] || row.min_stock || row["Мин. запас"] || 0,
             );
-            const unit =
+            const rawUnit = String(
               row["O'lchov birligi"] ||
               row.unit ||
               row.Unit ||
               row["Ед. изм."] ||
-              "dona";
+              "",
+            ).trim();
+            const unit = rawUnit ? resolveMeasurementUnit(rawUnit, systemUnits) : null;
+            if (!unit) {
+              invalidUnitRows.push({ name: String(name), unit: rawUnit });
+              return null;
+            }
             const description =
               row.Tavsif ||
               row.description ||
@@ -268,6 +289,24 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
             };
           })
           .filter((p) => p !== null && p.name);
+
+        // Unit of measurement must exactly match one of the system's configured units
+        // (the same list shown in the product form's dropdown) — reject the whole
+        // import rather than silently defaulting or importing a mismatched unit.
+        if (invalidUnitRows.length > 0) {
+          const rowList = invalidUnitRows
+            .map((r) => `${r.name} ("${r.unit || (lang === 'uz' ? "bo'sh" : lang === 'ru' ? 'пусто' : 'empty')}")`)
+            .join(', ');
+          toast.error(
+            lang === 'uz'
+              ? `O'lchov birligi tizimdagilarga mos kelmadi: ${rowList}. Ruxsat etilgan birliklar: ${systemUnits.join(', ')}`
+              : lang === 'ru'
+              ? `Единица измерения не совпадает с системными: ${rowList}. Разрешённые единицы: ${systemUnits.join(', ')}`
+              : `Unit of measurement doesn't match the system's units: ${rowList}. Allowed units: ${systemUnits.join(', ')}`,
+            { duration: 8000 }
+          );
+          return;
+        }
 
         if (newProducts.length === 0) {
           toast.error(t("inventory.noValidProducts"));

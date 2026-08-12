@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller } from 'react-hook-form'
 import { formatCurrency } from '@/lib/utils'
+import { getMeasurementUnits } from '@/lib/units'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -64,31 +65,10 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
   const [units, setUnits] = useState<string[]>([])
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('measurement_units')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) {
-          setTimeout(() => {
-            setUnits(parsed)
-          }, 0)
-          return
-        }
-      }
-    } catch (e) {
-      console.error(e)
-    }
-    const defaultUnits = [
-      lang === 'uz' ? 'Dona' : lang === 'ru' ? 'Шт' : 'Pcs',
-      lang === 'uz' ? 'Kg' : lang === 'ru' ? 'Кг' : 'Kg',
-      lang === 'uz' ? 'Litr' : lang === 'ru' ? 'Литр' : 'Liter',
-      lang === 'uz' ? 'Metr' : lang === 'ru' ? 'Метр' : 'Meter',
-      lang === 'uz' ? 'Qop' : lang === 'ru' ? 'Мешок' : 'Bag',
-      lang === 'uz' ? 'Tonna' : lang === 'ru' ? 'Тонна' : 'Ton'
-    ]
-    setTimeout(() => {
-      setUnits(defaultUnits)
+    const timer = setTimeout(() => {
+      setUnits(getMeasurementUnits(lang))
     }, 0)
+    return () => clearTimeout(timer)
   }, [lang])
 
   const [defaultSku] = useState(() => initialData?.sku || '')

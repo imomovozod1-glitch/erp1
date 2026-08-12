@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateOrders, invalidateOrderItems, invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
+import { adjustCashboxBalance } from '@/lib/finance-helpers'
+import { invalidateOrders, invalidateOrderItems, invalidateProducts, invalidateMovements, invalidateTransactions, invalidateInvoices, invalidateCustomers } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Plus, Trash2, ShoppingCart } from 'lucide-react'
+import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface SaleFormProps {
@@ -32,18 +33,34 @@ interface SaleItem {
   totalPrice: number
 }
 
+type PaymentMethod = 'cash' | 'card' | 'transfer' | 'debt'
+
 function generateOrderNumber() {
   return `SO-${Date.now().toString().slice(-8)}`
+}
+
+function generateInvoiceNumber() {
+  return `INV-${Date.now().toString().slice(-8)}`
+}
+
+function getDueDateString(daysFromNow: number): string {
+  return new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+}
+
+function getTodayString(): string {
+  return new Date().toISOString().split('T')[0]
 }
 
 export function SaleForm({ products, customers, lang }: SaleFormProps) {
   const t = useTranslations('sales')
   const tCommon = useTranslations('common')
+  const tPos = useTranslations('pos')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [customerId, setCustomerId] = useState('')
   const [items, setItems] = useState<SaleItem[]>([])
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
 
   // Temp selection
   const [selectedProductId, setSelectedProductId] = useState('')
@@ -105,6 +122,12 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
       return
     }
 
+    const isDebtSale = paymentMethod === 'debt'
+    if (isDebtSale && !customerId) {
+      toast.error(lang === 'uz' ? 'Qarzga sotish uchun mijozni tanlang!' : lang === 'ru' ? 'Выберите клиента для продажи в долг!' : 'Select a customer for a debt sale!')
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const supabase = createClient() as any
@@ -112,6 +135,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
       if (!user) throw new Error('Not authenticated')
 
       const orderNumber = generateOrderNumber()
+      const orderDateStr = getTodayString()
 
       // Create sales order
       const { data: order, error: orderError } = await supabase
@@ -171,7 +195,51 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
           } as any])
       }
 
-      await Promise.all([invalidateOrders(), invalidateOrderItems(), invalidateProducts(), invalidateMovements()])
+      // Always create an invoice — 'paid' immediately for cash/card/transfer,
+      // 'sent' (unpaid) for debt sales so the customer's debt is tracked.
+      const { error: invoiceError } = await supabase.from('invoices').insert({
+        invoice_number: generateInvoiceNumber(),
+        order_id: order.id,
+        customer_id: customerId || null,
+        status: isDebtSale ? 'sent' : 'paid',
+        total_amount: totalAmount,
+        paid_amount: isDebtSale ? 0 : totalAmount,
+        issued_at: orderDateStr,
+        due_at: isDebtSale ? getDueDateString(14) : orderDateStr,
+        paid_at: isDebtSale ? null : orderDateStr,
+        notes: isDebtSale ? `Qarzga sotildi - Order #${orderNumber}` : `Paid via ${paymentMethod}`,
+        created_by: user.id,
+      })
+      if (invoiceError) throw invoiceError
+
+      // Only record cash-basis income when money actually changed hands — debt sales
+      // create the income transaction later, when the debt is collected via the
+      // cashbox's debt collection flow (avoids double-counting revenue).
+      if (!isDebtSale) {
+        const { error: txError } = await supabase.from('transactions').insert({
+          type: 'income',
+          amount: totalAmount,
+          category: 'Sales',
+          description: `Sale - Order #${orderNumber}`,
+          reference_type: 'sales_orders',
+          reference_id: order.id,
+          transaction_date: orderDateStr,
+          created_by: user.id,
+        })
+        if (txError) throw txError
+
+        await adjustCashboxBalance(totalAmount, 'income', supabase, paymentMethod as 'cash' | 'card' | 'transfer')
+      }
+
+      await Promise.all([
+        invalidateOrders(),
+        invalidateOrderItems(),
+        invalidateProducts(),
+        invalidateMovements(),
+        invalidateTransactions(),
+        invalidateInvoices(),
+        invalidateCustomers(),
+      ])
       toast.success(t('saleCreated'))
       router.push(`/${lang}/sales/orders`)
     } catch (error: any) {
@@ -199,6 +267,47 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+        </CardContent>
+      </Card>
+
+      {/* Payment Method */}
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{tPos('paymentMethod')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-2xl">
+            {([
+              { key: 'cash', label: tPos('cash'), icon: Wallet },
+              { key: 'card', label: tPos('card'), icon: CreditCard },
+              { key: 'transfer', label: tPos('transfer'), icon: ArrowRightLeft },
+              { key: 'debt', label: tPos('debt'), icon: AlertTriangle },
+            ] as const).map((pm) => {
+              const isSelected = paymentMethod === pm.key
+              return (
+                <button
+                  key={pm.key}
+                  type="button"
+                  onClick={() => setPaymentMethod(pm.key)}
+                  className={`flex items-center justify-center gap-1.5 h-10 rounded-lg border text-xs font-semibold transition-all ${
+                    isSelected
+                      ? pm.key === 'debt'
+                        ? 'bg-amber-50 border-amber-300 text-amber-700'
+                        : 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <pm.icon className="h-3.5 w-3.5" />
+                  {pm.label}
+                </button>
+              )
+            })}
+          </div>
+          {paymentMethod === 'debt' && !customerId && (
+            <p className="text-xs text-amber-600 font-medium mt-2">
+              {lang === 'uz' ? 'Qarzga sotish uchun mijozni tanlang' : lang === 'ru' ? 'Выберите клиента для продажи в долг' : 'Select a customer for a debt sale'}
+            </p>
+          )}
         </CardContent>
       </Card>
 
