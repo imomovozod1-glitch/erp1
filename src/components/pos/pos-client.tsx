@@ -661,9 +661,9 @@ export function POSClient({
 
         {/* Right Side: Cart, customer selector, checkout — fixed to the viewport, never scrolls as a whole */}
         <div className="md:col-span-1 md:h-full md:flex md:flex-col md:min-h-0 overflow-hidden">
-          <Card className="border border-slate-100/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] rounded-2xl bg-white flex flex-col h-full min-h-0 overflow-hidden">
+          <Card className="border pt-0 border-slate-100/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] rounded-2xl bg-white flex flex-col h-full min-h-0 overflow-hidden">
             {/* Cart Header */}
-            <CardHeader className="shrink-0 p-4 bg-gradient-to-br from-indigo-50/70 via-white to-white border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="shrink-0  p-4 bg-gradient-to-br from-indigo-50/70 via-white to-white border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-xl shadow-[0_4px_10px_rgba(99,102,241,0.25)]">
                   <ShoppingBag className="h-4.5 w-4.5" />
