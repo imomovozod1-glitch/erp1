@@ -13,7 +13,7 @@ import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
-  Download, ShoppingCart, Phone, Mail, MapPin, Landmark, FileText
+  Download, ShoppingCart, Phone, Mail, MapPin, Landmark, FileText, Wallet, History
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
@@ -39,13 +39,14 @@ interface CustomerDetailClientProps {
   customer: any
   salesOrders: any[]
   invoices: any[]
+  transactions: any[]
 }
 
-export function CustomerDetailClient({ lang, customer, salesOrders, invoices }: CustomerDetailClientProps) {
+export function CustomerDetailClient({ lang, customer, salesOrders, invoices, transactions }: CustomerDetailClientProps) {
   const tSales = useTranslations('sales')
   const tc = useTranslations('common')
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'orders' | 'invoices'>('orders')
+  const [activeTab, setActiveTab] = useState<'orders' | 'invoices' | 'transactions'>('orders')
   const [isMapOpen, setIsMapOpen] = useState(false)
 
   // Force a fresh server fetch on every visit — the browser's client-side
@@ -63,6 +64,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices }: 
   const outstandingDebt = invoices
     .filter((inv) => inv.status !== 'paid' && inv.status !== 'cancelled')
     .reduce((sum, inv) => sum + ((inv.total_amount || 0) - (inv.paid_amount || 0)), 0)
+  const creditBalance = Number(customer.credit_balance) || 0
 
   // Export to Excel function
   const handleExport = () => {
@@ -103,6 +105,17 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices }: 
     const invoicesWS = XLSX.utils.json_to_sheet(invoicesData)
     XLSX.utils.book_append_sheet(workbook, invoicesWS, "Invoices")
 
+    // 4. Transactions (Payment History) Sheet
+    const transactionsData = transactions.map(tx => ({
+      Type: tx.type,
+      Category: tx.category,
+      Amount: tx.amount,
+      Date: formatDate(tx.transaction_date),
+      Note: tx.description || '—'
+    }))
+    const transactionsWS = XLSX.utils.json_to_sheet(transactionsData)
+    XLSX.utils.book_append_sheet(workbook, transactionsWS, "Payment History")
+
     XLSX.writeFile(workbook, `${customer.name.replace(/\s+/g, '_')}_details.xlsx`)
   }
 
@@ -134,7 +147,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices }: 
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : lang === 'ru' ? 'Всего покупок' : 'Total purchases'}</span>
@@ -158,6 +171,16 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices }: 
               {formatCurrency(outstandingDebt)}
             </h3>
             <span className="text-xs text-slate-400 mt-2">{tSales('tin')}: {customer.tin || '—'}</span>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-5 flex flex-col justify-between">
+            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Haqdorlik' : lang === 'ru' ? 'Депозит клиента' : 'Customer credit'}</span>
+            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${creditBalance > 0 ? 'text-emerald-700' : 'text-slate-900'}`}>
+              {formatCurrency(creditBalance)}
+            </h3>
+            <span className="text-xs text-slate-400 mt-2">{lang === 'uz' ? 'Ortiqcha to\'lovdan' : lang === 'ru' ? 'От переплаты' : 'From overpayment'}</span>
           </CardContent>
         </Card>
 
@@ -253,6 +276,15 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices }: 
                 <FileText className="h-4 w-4" />
                 {lang === 'uz' ? 'Hisob-fakturalar' : lang === 'ru' ? 'Счета' : 'Invoices'}
               </button>
+              <button
+                onClick={() => setActiveTab('transactions')}
+                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'transactions' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <History className="h-4 w-4" />
+                {lang === 'uz' ? "To'lov tarixi" : lang === 'ru' ? 'История платежей' : 'Payment history'}
+              </button>
             </div>
 
             <div className="p-0">
@@ -323,6 +355,51 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices }: 
                           <TableCell className="text-slate-500 text-xs">{formatDate(inv.due_at)}</TableCell>
                         </TableRow>
                       ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+
+              {activeTab === 'transactions' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50/50">
+                      <TableHead className="w-10 text-center">#</TableHead>
+                      <TableHead>{lang === 'uz' ? 'Turi' : lang === 'ru' ? 'Тип' : 'Type'}</TableHead>
+                      <TableHead>{lang === 'uz' ? 'Kategoriya' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
+                      <TableHead className="text-right">{tc('amount')}</TableHead>
+                      <TableHead>{tc('date')}</TableHead>
+                      <TableHead>{lang === 'uz' ? 'Izoh' : lang === 'ru' ? 'Примечание' : 'Note'}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                          {tc('noData')}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      transactions.map((tx, idx) => {
+                        const isIncome = tx.type === 'income'
+                        return (
+                          <TableRow key={tx.id} className="hover:bg-slate-50/50">
+                            <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
+                            <TableCell>
+                              <StatusBadge
+                                tone={isIncome ? 'emerald' : 'rose'}
+                                label={isIncome ? (lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income') : (lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense')}
+                              />
+                            </TableCell>
+                            <TableCell className="text-slate-700 text-xs">{tx.category}</TableCell>
+                            <TableCell className={`text-right font-bold ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
+                            </TableCell>
+                            <TableCell className="text-slate-500 text-xs">{formatDate(tx.transaction_date)}</TableCell>
+                            <TableCell className="text-slate-500 text-xs max-w-50 truncate">{tx.description || '—'}</TableCell>
+                          </TableRow>
+                        )
+                      })
                     )}
                   </TableBody>
                 </Table>

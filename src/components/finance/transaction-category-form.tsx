@@ -87,7 +87,9 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
         <Label htmlFor="type">{t('type')} *</Label>
         <Select value={typeValue} onValueChange={(val: any) => setValue('type', val)}>
           <SelectTrigger>
-            <SelectValue placeholder={t('selectType')} />
+            <SelectValue placeholder={t('selectType')}>
+              {typeValue === 'income' ? t('incomeType') : typeValue === 'expense' ? t('expenseType') : ''}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="income">{t('incomeType')}</SelectItem>
@@ -100,7 +102,13 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
         <Label htmlFor="person_type">{t('personType')}</Label>
         <Select value={personTypeValue} onValueChange={(val: any) => setValue('person_type', val)}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue>
+              {personTypeValue === 'none' ? t('personTypeNone')
+                : personTypeValue === 'employee' ? t('personTypeEmployee')
+                : personTypeValue === 'supplier' ? t('personTypeSupplier')
+                : personTypeValue === 'customer' ? t('personTypeCustomer')
+                : ''}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">{t('personTypeNone')}</SelectItem>

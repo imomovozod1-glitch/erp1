@@ -18,7 +18,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
     notFound()
   }
 
-  const { customer, salesOrders, invoices } = details
+  const { customer, salesOrders, invoices, transactions } = details
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-8 pt-6">
@@ -38,6 +38,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         customer={customer}
         salesOrders={salesOrders}
         invoices={invoices}
+        transactions={transactions}
       />
     </div>
   )
