@@ -231,6 +231,7 @@ export type Database = {
           longitude: number | null
           tin: string | null
           notes: string | null
+          credit_balance: number
           is_active: boolean
           created_at: string
           updated_at: string
@@ -245,6 +246,7 @@ export type Database = {
           longitude?: number | null
           tin?: string | null
           notes?: string | null
+          credit_balance?: number
           is_active?: boolean
         }
         Update: {
@@ -256,6 +258,7 @@ export type Database = {
           longitude?: number | null
           tin?: string | null
           notes?: string | null
+          credit_balance?: number
           is_active?: boolean
         }
         Relationships: []
@@ -613,6 +616,7 @@ export type Database = {
           reference_id: string | null
           employee_id: string | null
           supplier_id: string | null
+          customer_id: string | null
           transaction_date: string
           created_by: string
           created_at: string
@@ -628,6 +632,7 @@ export type Database = {
           reference_id?: string | null
           employee_id?: string | null
           supplier_id?: string | null
+          customer_id?: string | null
           transaction_date?: string
           created_by: string
         }
@@ -650,6 +655,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
           {

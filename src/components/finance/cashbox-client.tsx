@@ -22,9 +22,7 @@ import {
   Coins,
   Receipt,
   CreditCard,
-  ArrowLeftRight,
-  AlertTriangle,
-  Users
+  ArrowLeftRight
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -77,6 +75,7 @@ export function CashboxClient({ lang }: { lang: string }) {
   const [balance, setBalance] = useState('')
   const [cbType, setCbType] = useState<CashboxType>('cash')
   const [description, setDescription] = useState('')
+  const [isSavingCashbox, setIsSavingCashbox] = useState(false)
 
   // Transaction categories (manageable, like inventory categories — see /finance/categories)
   const [categories, setCategories] = useState<TransactionCategory[]>([])
@@ -95,9 +94,6 @@ export function CashboxClient({ lang }: { lang: string }) {
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [customerDebt, setCustomerDebt] = useState<number | null>(null)
   const [isLoadingDebt, setIsLoadingDebt] = useState(false)
-
-  // Total outstanding debt across all customers (unpaid invoices — mostly debt sales) for the KPI card
-  const [totalCustomerDebt, setTotalCustomerDebt] = useState(0)
 
   // Employee payroll states
   const [employees, setEmployees] = useState<any[]>([])
@@ -182,31 +178,6 @@ export function CashboxClient({ lang }: { lang: string }) {
     }
   }
 
-  // Total outstanding debt across all customers (unpaid invoices) — mostly debt sales
-  const fetchTotalDebt = async (fallback: boolean) => {
-    try {
-      if (fallback) {
-        const localInvoicesStr = localStorage.getItem('erp_invoices')
-        if (localInvoicesStr) {
-          const localInvoices = JSON.parse(localInvoicesStr)
-          const unpaid = localInvoices.filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
-          const debt = unpaid.reduce((sum: number, i: any) => sum + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
-          setTotalCustomerDebt(debt)
-        }
-      } else {
-        const { data, error } = await supabase
-          .from('invoices')
-          .select('total_amount, paid_amount')
-          .not('status', 'in', '("paid","cancelled")')
-        if (!error) {
-          const debt = (data || []).reduce((sum: number, i: any) => sum + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
-          setTotalCustomerDebt(debt)
-        }
-      }
-    } catch (err: any) {
-      console.warn('Failed to fetch total customer debt:', err.message)
-    }
-  }
 
   const fetchCustomerDebt = async (cId: string, fallback: boolean) => {
     setIsLoadingDebt(true)
@@ -302,7 +273,6 @@ export function CashboxClient({ lang }: { lang: string }) {
         fetchEmployees(fallback)
         fetchSuppliers(fallback)
         fetchCategories(fallback)
-        fetchTotalDebt(fallback)
       })
     }, 0)
     
@@ -368,11 +338,13 @@ export function CashboxClient({ lang }: { lang: string }) {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSavingCashbox) return
     if (!name.trim()) {
       toast.error(tCommon('required'))
       return
     }
 
+    setIsSavingCashbox(true)
     const numBalance = Number(balance) || 0
     const initialBalanceLabel = lang === 'uz' ? "Boshlang'ich balans" : lang === 'ru' ? 'Начальный баланс' : 'Initial balance'
 
@@ -428,6 +400,7 @@ export function CashboxClient({ lang }: { lang: string }) {
       }
       toast.success(tCommon('success'))
       setIsModalOpen(false)
+      setIsSavingCashbox(false)
     } else {
       try {
         const { data: userData } = await supabase.auth.getUser()
@@ -480,6 +453,8 @@ export function CashboxClient({ lang }: { lang: string }) {
         fetchCashboxes()
       } catch (err: any) {
         toast.error(err.message || tCommon('error'))
+      } finally {
+        setIsSavingCashbox(false)
       }
     }
   }
@@ -532,6 +507,10 @@ export function CashboxClient({ lang }: { lang: string }) {
   // Save transaction and adjust balance
   const handleSaveTransaction = async (e: React.FormEvent) => {
     e.preventDefault()
+    // Guard against double-submit (double-click, slow network + repeat click) creating
+    // the same income/expense twice — isLoading is set below, but the button's own
+    // disabled state can lag a render behind the click, so re-check it here too.
+    if (isLoading) return
     if (!selectedCashboxForTx || !txAmount || Number(txAmount) <= 0) {
       toast.error(tCommon('required'))
       return
@@ -632,6 +611,19 @@ export function CashboxClient({ lang }: { lang: string }) {
             }
             localStorage.setItem('erp_invoices', JSON.stringify(localInvoices))
           }
+
+          // Overpayment beyond all debt accrues as the customer's credit/deposit balance (haqdorlik)
+          if (paymentRemaining > 0) {
+            const localCustStr = localStorage.getItem('erp_customers')
+            if (localCustStr) {
+              const localCustomers = JSON.parse(localCustStr)
+              const idx = localCustomers.findIndex((c: any) => c.id === selectedCustomerId)
+              if (idx !== -1) {
+                localCustomers[idx].credit_balance = (Number(localCustomers[idx].credit_balance) || 0) + paymentRemaining
+                localStorage.setItem('erp_customers', JSON.stringify(localCustomers))
+              }
+            }
+          }
         } else {
           // Fetch unpaid invoices
           const { data: unpaidInvoices, error: fetchInvErr } = await supabase
@@ -673,6 +665,22 @@ export function CashboxClient({ lang }: { lang: string }) {
               paymentRemaining = 0
             }
           }
+
+          // Overpayment beyond all debt accrues as the customer's credit/deposit balance (haqdorlik)
+          if (paymentRemaining > 0) {
+            const { data: custRow, error: custFetchErr } = await supabase
+              .from('customers')
+              .select('credit_balance')
+              .eq('id', selectedCustomerId)
+              .single()
+            if (!custFetchErr && custRow) {
+              const { error: custUpdateErr } = await supabase
+                .from('customers')
+                .update({ credit_balance: (Number(custRow.credit_balance) || 0) + paymentRemaining })
+                .eq('id', selectedCustomerId)
+              if (custUpdateErr) throw custUpdateErr
+            }
+          }
         }
       }
 
@@ -695,6 +703,7 @@ export function CashboxClient({ lang }: { lang: string }) {
           reference_id: selectedCashboxForTx.id,
           employee_id: personType === 'employee' ? selectedEmployeeId : null,
           supplier_id: personType === 'supplier' ? selectedSupplierId : null,
+          customer_id: personType === 'customer' ? selectedCustomerId : null,
           transaction_date: txDate,
           created_at: new Date().toISOString(),
         }
@@ -708,7 +717,6 @@ export function CashboxClient({ lang }: { lang: string }) {
         if (personType === 'customer') {
           await invalidateCustomers()
           await invalidateInvoices()
-          fetchTotalDebt(isLocalStorageFallback)
         }
 
         toast.success(tCommon('success'))
@@ -742,6 +750,7 @@ export function CashboxClient({ lang }: { lang: string }) {
             reference_id: selectedCashboxForTx.id,
             employee_id: personType === 'employee' ? selectedEmployeeId : null,
             supplier_id: personType === 'supplier' ? selectedSupplierId : null,
+          customer_id: personType === 'customer' ? selectedCustomerId : null,
             transaction_date: txDate,
             created_by: userId
           }])
@@ -754,7 +763,6 @@ export function CashboxClient({ lang }: { lang: string }) {
         if (personType === 'customer') {
           await invalidateCustomers()
           await invalidateInvoices()
-          fetchTotalDebt(isLocalStorageFallback)
         }
 
         toast.success(tCommon('success'))
@@ -903,7 +911,7 @@ export function CashboxClient({ lang }: { lang: string }) {
       )}
 
       {/* Aggregate Stats Card */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Balance Card */}
         <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white rounded-3xl p-6 shadow-xl shadow-indigo-500/10 relative overflow-hidden group hover:scale-[1.02] hover:shadow-indigo-500/20 transition-all duration-300">
           <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-white/10 blur-xl group-hover:scale-110 transition-transform duration-300" />
@@ -961,26 +969,6 @@ export function CashboxClient({ lang }: { lang: string }) {
           <div className="mt-6 flex items-center gap-1.5 text-xs text-rose-600 font-semibold">
             <TrendingDown className="h-4 w-4" />
             <span>{lang === 'uz' ? 'Moliya chiqishi' : lang === 'ru' ? 'Денежный отток' : 'Cash outflow'}</span>
-          </div>
-        </div>
-
-        {/* Total Debt (Sold on Credit) Card */}
-        <div className="bg-gradient-to-br from-amber-50 via-amber-100/80 to-orange-50 text-amber-955 rounded-3xl p-6 border border-amber-250/50 shadow-md relative overflow-hidden group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-          <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-amber-500/5 blur-xl group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-2.5">
-              <span className="text-xs uppercase tracking-wider font-semibold text-amber-700">{lang === 'uz' ? "Qarzga sotilgan" : lang === 'ru' ? 'Продано в долг' : 'Sold on credit'}</span>
-              <h3 className="text-2xl font-extrabold tracking-tight text-amber-900">
-                {formatCurrency(totalCustomerDebt)}
-              </h3>
-            </div>
-            <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-700 border border-amber-500/10">
-              <AlertTriangle className="h-6 w-6 text-amber-600" />
-            </div>
-          </div>
-          <div className="mt-6 flex items-center gap-1.5 text-xs text-amber-600 font-semibold">
-            <Users className="h-4 w-4" />
-            <span>{lang === 'uz' ? "Mijozlardan kutilayotgan to'lov" : lang === 'ru' ? 'Ожидаемая оплата от клиентов' : 'Expected from customers'}</span>
           </div>
         </div>
       </div>
@@ -1346,15 +1334,17 @@ export function CashboxClient({ lang }: { lang: string }) {
                   type="button"
                   variant="outline"
                   onClick={() => setIsModalOpen(false)}
+                  disabled={isSavingCashbox}
                   className="rounded-xl h-10 px-4 font-semibold text-xs"
                 >
                   {tCommon('cancel')}
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-10 px-5 font-semibold text-xs shadow-sm shadow-indigo-500/10 hover:shadow-indigo-500/25"
+                  disabled={isSavingCashbox}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-10 px-5 font-semibold text-xs shadow-sm shadow-indigo-500/10 hover:shadow-indigo-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {tCommon('save')}
+                  {isSavingCashbox ? tCommon('saving') : tCommon('save')}
                 </Button>
               </div>
             </form>
@@ -1564,15 +1554,17 @@ export function CashboxClient({ lang }: { lang: string }) {
                   type="button"
                   variant="outline"
                   onClick={() => setIsTransactionModalOpen(false)}
+                  disabled={isLoading}
                   className="rounded-xl h-10 px-4 font-semibold text-xs"
                 >
                   {tCommon('cancel')}
                 </Button>
                 <Button
                   type="submit"
-                  className={`${txType === 'income' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/10'} text-white rounded-xl h-10 px-5 font-semibold text-xs shadow-md transition-all hover:scale-[1.01]`}
+                  disabled={isLoading}
+                  className={`${txType === 'income' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/10'} text-white rounded-xl h-10 px-5 font-semibold text-xs shadow-md transition-all hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed`}
                 >
-                  {tCommon('save')}
+                  {isLoading ? tCommon('saving') : tCommon('save')}
                 </Button>
               </div>
             </form>

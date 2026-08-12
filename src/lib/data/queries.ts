@@ -96,14 +96,22 @@ export const getCachedOrders = unstable_cache(
 export const getCachedCustomers = unstable_cache(
   async () => {
     const supabase = getCacheClient()
-    const { data } = await supabase
-      .from('customers')
-      .select('*')
-      .order('created_at', { ascending: false })
-    return data ?? []
+    const [{ data: customers }, { data: unpaidInvoices }] = await Promise.all([
+      supabase.from('customers').select('*').order('created_at', { ascending: false }),
+      supabase.from('invoices').select('customer_id, total_amount, paid_amount').not('status', 'in', '("paid","cancelled")'),
+    ])
+
+    const debtByCustomer = new Map<string, number>()
+    for (const inv of unpaidInvoices ?? []) {
+      if (!inv.customer_id) continue
+      const outstanding = (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)
+      debtByCustomer.set(inv.customer_id, (debtByCustomer.get(inv.customer_id) || 0) + outstanding)
+    }
+
+    return (customers ?? []).map((c) => ({ ...c, total_debt: debtByCustomer.get(c.id) || 0 }))
   },
   ['customers-list'],
-  { tags: [CACHE_TAGS.customers], revalidate: 60 }
+  { tags: [CACHE_TAGS.customers, CACHE_TAGS.invoices], revalidate: 60 }
 )
 
 export const getCachedInvoices = unstable_cache(

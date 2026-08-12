@@ -47,6 +47,48 @@ function updateLocalCashboxes(change: number, amount: number, type: 'income' | '
   }
 }
 
+/**
+ * Consumes a customer's existing credit/deposit balance (haqdorlik) against a new
+ * purchase, before any of it is allowed to become new debt (qarz). This is what
+ * makes "customer overpaid last time, now buys on credit" net out correctly instead
+ * of showing both a credit balance and a fresh debt at the same time.
+ *
+ * Returns how much of the purchase was covered by existing credit, and how much
+ * remains to be invoiced as new debt. Does NOT touch the cashbox or create a
+ * transaction — the credit was already recorded as income when it first accrued,
+ * so spending it down here must not double-count that revenue.
+ */
+export async function applyCustomerCredit(supabase: any, customerId: string, amount: number): Promise<{ appliedCredit: number; remainingAmount: number }> {
+  const { data: customer, error } = await supabase
+    .from('customers')
+    .select('credit_balance')
+    .eq('id', customerId)
+    .single();
+
+  if (error || !customer) {
+    console.warn('Failed to fetch customer credit balance:', error?.message);
+    return { appliedCredit: 0, remainingAmount: amount };
+  }
+
+  const currentCredit = Number(customer.credit_balance) || 0;
+  if (currentCredit <= 0) {
+    return { appliedCredit: 0, remainingAmount: amount };
+  }
+
+  const appliedCredit = Math.min(currentCredit, amount);
+  const { error: updateErr } = await supabase
+    .from('customers')
+    .update({ credit_balance: currentCredit - appliedCredit })
+    .eq('id', customerId);
+
+  if (updateErr) {
+    console.warn('Failed to deduct customer credit balance:', updateErr.message);
+    return { appliedCredit: 0, remainingAmount: amount };
+  }
+
+  return { appliedCredit, remainingAmount: amount - appliedCredit };
+}
+
 export async function adjustCashboxBalance(amount: number, type: 'income' | 'expense', supabaseInput?: any, cashboxType?: 'cash' | 'card' | 'transfer' | 'other') {
   const supabase = supabaseInput || createClient();
   const change = type === 'income' ? amount : -amount;

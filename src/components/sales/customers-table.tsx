@@ -22,6 +22,7 @@ import {
   TableHeader, TableRow,
 } from '@/components/ui/table'
 import { LocationMapDialog } from '@/components/shared/location-map-dialog'
+import { formatCurrency } from '@/lib/utils'
 
 interface CustomersTableProps {
   customers: any[]
@@ -100,6 +101,8 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
               <TableHead>{tCommon('name')}</TableHead>
               <TableHead>{tCommon('email')}</TableHead>
               <TableHead>{tCommon('phone')}</TableHead>
+              <TableHead className="text-right">{lang === 'uz' ? 'Qarz' : lang === 'ru' ? 'Долг' : 'Debt'}</TableHead>
+              <TableHead className="text-right">{lang === 'uz' ? 'Haqdorlik' : lang === 'ru' ? 'Депозит' : 'Credit'}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
@@ -107,7 +110,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12">
+                <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -136,6 +139,20 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{customer.email ?? '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer.phone ?? '—'}</TableCell>
+                  <TableCell className="text-right">
+                    {customer.total_debt > 0 ? (
+                      <span className="font-semibold text-rose-600">{formatCurrency(customer.total_debt)}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {customer.credit_balance > 0 ? (
+                      <span className="font-semibold text-emerald-600">{formatCurrency(customer.credit_balance)}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge
                       tone={customer.is_active ? 'emerald' : 'slate'}

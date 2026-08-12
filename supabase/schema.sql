@@ -121,6 +121,9 @@ CREATE TABLE customers (
   longitude DOUBLE PRECISION,
   tin TEXT,
   notes TEXT,
+  -- Haqdorlik: running credit/deposit balance — accrues when a customer pays more
+  -- than their outstanding debt (overpayment), usable against future purchases.
+  credit_balance DECIMAL(12, 2) NOT NULL DEFAULT 0,
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -261,6 +264,7 @@ CREATE TABLE transactions (
   reference_id UUID,
   employee_id UUID REFERENCES employees(id) ON DELETE SET NULL,
   supplier_id UUID REFERENCES suppliers(id) ON DELETE SET NULL,
+  customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
   transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
   created_by UUID NOT NULL REFERENCES profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

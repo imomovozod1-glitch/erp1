@@ -32,7 +32,7 @@ const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod
   )
 })
 import { createClient } from '@/lib/supabase/client'
-import { adjustCashboxBalance } from '@/lib/finance-helpers'
+import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers'
 import {
   invalidateProducts,
   invalidateOrders,
@@ -369,6 +369,16 @@ export function POSClient({
       // Trade credit term for debt sales — customer has 14 days to pay before the invoice is overdue.
       const dueDateStr = isDebtSale ? getPOSDueDateString(14) : orderDateStr
 
+      // If this is a debt sale and the customer already has credit (haqdorlik) on file,
+      // spend it down against this purchase first — otherwise they'd show a credit
+      // balance and a fresh debt at the same time for the same money.
+      let appliedCredit = 0
+      if (isDebtSale && selectedCustomer) {
+        const result = await applyCustomerCredit(supabase, selectedCustomer.id, totalPayable)
+        appliedCredit = result.appliedCredit
+      }
+      const debtFullyCoveredByCredit = isDebtSale && appliedCredit >= totalPayable
+
       await Promise.all([
         supabase.from('sales_order_items').insert(itemsToInsert).then(({ error }: any) => { if (error) throw error }),
         // Only record cash-basis income when money actually changed hands.
@@ -394,13 +404,15 @@ export function POSClient({
           invoice_number: generatedInvoiceNumber,
           order_id: orderData.id,
           customer_id: selectedCustomer ? selectedCustomer.id : null,
-          status: isDebtSale ? 'sent' : 'paid',
+          status: isDebtSale ? (debtFullyCoveredByCredit ? 'paid' : 'sent') : 'paid',
           total_amount: totalPayable,
-          paid_amount: isDebtSale ? 0 : totalPayable,
+          paid_amount: isDebtSale ? appliedCredit : totalPayable,
           issued_at: orderDateStr,
           due_at: dueDateStr,
-          paid_at: isDebtSale ? null : orderDateStr,
-          notes: isDebtSale ? `Qarzga sotildi - POS Order #${orderData.order_number}` : `Paid instantly on POS via ${paymentMethod}`,
+          paid_at: isDebtSale ? (debtFullyCoveredByCredit ? orderDateStr : null) : orderDateStr,
+          notes: isDebtSale
+            ? `Qarzga sotildi - POS Order #${orderData.order_number}${appliedCredit > 0 ? ` (${formatCurrency(appliedCredit)} haqdorlikdan to'landi)` : ''}`
+            : `Paid instantly on POS via ${paymentMethod}`,
           created_by: user.id
         }).then(({ error }: any) => { if (error) throw error }),
         isDebtSale ? Promise.resolve() : adjustCashboxBalance(totalPayable, 'income', supabase, paymentMethod as 'cash' | 'card' | 'transfer'),
@@ -897,12 +909,18 @@ export function POSClient({
                     )
                   })}
                 </div>
+                {paymentMethod === 'debt' && !selectedCustomer && (
+                  <p className="text-[10px] font-semibold text-amber-600 flex items-center gap-1 pt-0.5">
+                    <AlertTriangle className="h-3 w-3 shrink-0" />
+                    {lang === 'uz' ? "Noma'lum mijozga qarzga sotib bo'lmaydi — mijozni tanlang" : lang === 'ru' ? 'Нельзя продать в долг неизвестному клиенту — выберите клиента' : "Can't sell on credit to an unknown customer — select a customer"}
+                  </p>
+                )}
               </div>
 
               {/* Checkout Button */}
               <Button
                 onClick={handleCheckout}
-                disabled={cart.length === 0 || isLoadingCheckout}
+                disabled={cart.length === 0 || isLoadingCheckout || (paymentMethod === 'debt' && !selectedCustomer)}
                 className="w-full h-10 gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-sm rounded-xl cursor-pointer transition-all duration-250 shadow-[0_6px_18px_rgba(16,185,129,0.3)] active:scale-[0.98] border-0"
               >
                 {isLoadingCheckout ? tCommon('saving') : (

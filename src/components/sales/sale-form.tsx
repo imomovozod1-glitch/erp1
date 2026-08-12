@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import { adjustCashboxBalance } from '@/lib/finance-helpers'
+import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers'
 import { invalidateOrders, invalidateOrderItems, invalidateProducts, invalidateMovements, invalidateTransactions, invalidateInvoices, invalidateCustomers } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -195,19 +195,31 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
           } as any])
       }
 
+      // If this is a debt sale and the customer already has credit (haqdorlik) on file,
+      // spend it down against this purchase first — otherwise they'd show a credit
+      // balance and a fresh debt at the same time for the same money.
+      let appliedCredit = 0
+      if (isDebtSale && customerId) {
+        const result = await applyCustomerCredit(supabase, customerId, totalAmount)
+        appliedCredit = result.appliedCredit
+      }
+      const debtFullyCoveredByCredit = isDebtSale && appliedCredit >= totalAmount
+
       // Always create an invoice — 'paid' immediately for cash/card/transfer,
       // 'sent' (unpaid) for debt sales so the customer's debt is tracked.
       const { error: invoiceError } = await supabase.from('invoices').insert({
         invoice_number: generateInvoiceNumber(),
         order_id: order.id,
         customer_id: customerId || null,
-        status: isDebtSale ? 'sent' : 'paid',
+        status: isDebtSale ? (debtFullyCoveredByCredit ? 'paid' : 'sent') : 'paid',
         total_amount: totalAmount,
-        paid_amount: isDebtSale ? 0 : totalAmount,
+        paid_amount: isDebtSale ? appliedCredit : totalAmount,
         issued_at: orderDateStr,
         due_at: isDebtSale ? getDueDateString(14) : orderDateStr,
-        paid_at: isDebtSale ? null : orderDateStr,
-        notes: isDebtSale ? `Qarzga sotildi - Order #${orderNumber}` : `Paid via ${paymentMethod}`,
+        paid_at: isDebtSale ? (debtFullyCoveredByCredit ? orderDateStr : null) : orderDateStr,
+        notes: isDebtSale
+          ? `Qarzga sotildi - Order #${orderNumber}${appliedCredit > 0 ? ` (${formatCurrency(appliedCredit)} haqdorlikdan to'landi)` : ''}`
+          : `Paid via ${paymentMethod}`,
         created_by: user.id,
       })
       if (invoiceError) throw invoiceError
@@ -427,7 +439,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
         </Button>
         <Button
           type="submit"
-          disabled={isSubmitting || items.length === 0}
+          disabled={isSubmitting || items.length === 0 || (paymentMethod === 'debt' && !customerId)}
           className="bg-indigo-600 hover:bg-indigo-500"
         >
           {isSubmitting ? tCommon('loading') : tCommon('save')}

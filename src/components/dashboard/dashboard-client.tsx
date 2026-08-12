@@ -15,6 +15,7 @@ import {
   Zap,
   Layers,
   Truck,
+  AlertTriangle,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
@@ -456,7 +457,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
       </div>
 
       {/* Main KPI Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {/* Sales Card */}
         <div className="bg-white p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-indigo-50 opacity-40 group-hover:scale-110 transition-transform duration-300" />
@@ -540,6 +541,25 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
             <span>{td('productsCountText', { count: totalProducts ?? 0 })}</span>
             <span className="text-orange-600 font-semibold">{td('lowStockCountText', { count: lowStock.length })}</span>
+          </div>
+        </div>
+
+        {/* Sold on Credit (Customer Debt) Card */}
+        <div className="bg-white p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-amber-50 opacity-40 group-hover:scale-110 transition-transform duration-300" />
+          <div className="flex justify-between items-start">
+            <div className="space-y-1">
+              <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Qarzga sotilgan' : lang === 'ru' ? 'Продано в долг' : 'Sold on credit'}</span>
+              <h3 className="text-2xl font-extrabold text-amber-700 tracking-tight">
+                {formatCurrency(realReceivables)}
+              </h3>
+            </div>
+            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-center text-xs text-slate-500">
+            <span>{lang === 'uz' ? "Mijozlardan kutilayotgan to'lov" : lang === 'ru' ? 'Ожидаемая оплата от клиентов' : 'Expected from customers'}</span>
           </div>
         </div>
       </div>
