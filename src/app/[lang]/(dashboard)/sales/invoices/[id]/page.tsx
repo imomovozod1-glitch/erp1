@@ -20,7 +20,6 @@ import { toast } from "sonner";
 import {
   FileText,
   User,
-  Calendar,
   ArrowLeft,
   Pencil,
   Loader2,
@@ -36,6 +35,34 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-rose-50 text-rose-700 border-rose-200/50",
 };
 
+// Pure data fetch, no React state involved — kept outside the component so both
+// the mount effect and the post-payment refresh can await it and each apply
+// setState on their own terms (calling a state-setting function from inside an
+// effect trips the react-hooks/set-state-in-effect rule).
+async function fetchInvoiceData(supabase: any, id: string) {
+  const { data: invoiceData, error: invoiceErr } = await supabase
+    .from("invoices")
+    .select("*, customers(name), sales_orders(order_number)")
+    .eq("id", id)
+    .single();
+
+  if (invoiceErr) throw invoiceErr;
+
+  let items: any[] = [];
+  if (invoiceData.order_id) {
+    const { data: itemsData, error: itemsErr } = await supabase
+      .from("sales_order_items")
+      .select("*, products(name)")
+      .eq("order_id", invoiceData.order_id);
+
+    if (!itemsErr) {
+      items = itemsData || [];
+    }
+  }
+
+  return { invoice: invoiceData, items };
+}
+
 export default function InvoiceDetailPage() {
   const params = useParams() as any;
   const router = useRouter();
@@ -50,42 +77,23 @@ export default function InvoiceDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const fetchInvoiceDetails = async () => {
-    try {
-      const supabase = createClient() as any;
-      const { data: invoiceData, error: invoiceErr } = await supabase
-        .from("invoices")
-        .select("*, customers(name), sales_orders(order_number)")
-        .eq("id", id)
-        .single();
-
-      if (invoiceErr) throw invoiceErr;
-
-      setInvoice(invoiceData);
-
-      if (invoiceData.order_id) {
-        const { data: itemsData, error: itemsErr } = await supabase
-          .from("sales_order_items")
-          .select("*, products(name)")
-          .eq("order_id", invoiceData.order_id);
-
-        if (!itemsErr) {
-          setItems(itemsData || []);
-        }
-      }
-    } catch (err: any) {
-      toast.error(err.message || tCommon("error"));
-      router.push(`/${lang}/sales/invoices`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (id) {
-      fetchInvoiceDetails();
+    async function load() {
+      if (!id) return;
+      try {
+        const supabase = createClient() as any;
+        const { invoice: invoiceData, items: itemsData } = await fetchInvoiceData(supabase, id);
+        setInvoice(invoiceData);
+        setItems(itemsData);
+      } catch (err: any) {
+        toast.error(err.message || tCommon("error"));
+        router.push(`/${lang}/sales/invoices`);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, [id, lang, router]);
+    load();
+  }, [id, lang, router, tCommon]);
 
   const handleAcceptPayment = async () => {
     if (!invoice) return;
@@ -125,7 +133,9 @@ export default function InvoiceDetailPage() {
       }
 
       toast.success(tCommon("success"));
-      await fetchInvoiceDetails();
+      const { invoice: refreshedInvoice, items: refreshedItems } = await fetchInvoiceData(supabase, id);
+      setInvoice(refreshedInvoice);
+      setItems(refreshedItems);
     } catch (err: any) {
       toast.error(err.message || tCommon("error"));
     } finally {
