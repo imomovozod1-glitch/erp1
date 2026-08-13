@@ -17,6 +17,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { formatCurrency } from '@/lib/utils'
 
 interface SuppliersTableProps {
   suppliers: any[]
@@ -76,6 +77,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                 <TableHead>{tCommon('phone')}</TableHead>
                 <TableHead>{t('contactPerson')}</TableHead>
                 <TableHead>{t('tin')}</TableHead>
+                <TableHead className="text-right">{lang === 'uz' ? 'Qarzimiz' : lang === 'ru' ? 'Наш долг' : 'Debt owed'}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
@@ -83,7 +85,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12">
+                  <TableCell colSpan={8} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Truck className="h-8 w-8 opacity-40" />
                       <p className="text-sm">{tCommon('noData')}</p>
@@ -115,6 +117,9 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                       <TableCell className="text-muted-foreground">{supplier.phone ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{supplier.contact_person ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{supplier.tin ?? '—'}</TableCell>
+                      <TableCell className={`text-right font-semibold ${(Number(supplier.total_debt) || 0) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                        {(Number(supplier.total_debt) || 0) > 0 ? formatCurrency(supplier.total_debt) : '—'}
+                      </TableCell>
                       <TableCell>
                         <StatusBadge
                           tone={supplier.is_active ? 'emerald' : 'slate'}

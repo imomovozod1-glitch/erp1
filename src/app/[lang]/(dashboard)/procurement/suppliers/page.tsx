@@ -13,10 +13,26 @@ export default async function SuppliersPage({ params }: { params: Promise<{ lang
   const t = await getTranslations('procurement')
   const supabase = await createClient()
 
-  const { data: suppliers } = await supabase
-    .from('suppliers')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [{ data: suppliers }, { data: purchaseOrders }, { data: supplierPayments }] = await Promise.all([
+    supabase.from('suppliers').select('*').order('created_at', { ascending: false }),
+    supabase.from('purchase_orders').select('supplier_id, total_amount').neq('status', 'cancelled'),
+    supabase.from('transactions').select('supplier_id, amount').eq('type', 'expense').not('supplier_id', 'is', null),
+  ])
+
+  const purchasesBySupplier = new Map<string, number>()
+  for (const po of purchaseOrders ?? []) {
+    if (!po.supplier_id) continue
+    purchasesBySupplier.set(po.supplier_id, (purchasesBySupplier.get(po.supplier_id) || 0) + (Number(po.total_amount) || 0))
+  }
+  const paymentsBySupplier = new Map<string, number>()
+  for (const tx of supplierPayments ?? []) {
+    if (!tx.supplier_id) continue
+    paymentsBySupplier.set(tx.supplier_id, (paymentsBySupplier.get(tx.supplier_id) || 0) + (Number(tx.amount) || 0))
+  }
+  const suppliersWithDebt = (suppliers ?? []).map((s) => ({
+    ...s,
+    total_debt: (purchasesBySupplier.get(s.id) || 0) - (paymentsBySupplier.get(s.id) || 0),
+  }))
 
   return (
     <div>
@@ -32,7 +48,7 @@ export default async function SuppliersPage({ params }: { params: Promise<{ lang
       >
         <SupplierImportExport suppliers={suppliers ?? []} lang={lang} />
       </PageHeader>
-      <SuppliersTable suppliers={suppliers ?? []} lang={lang} />
+      <SuppliersTable suppliers={suppliersWithDebt} lang={lang} />
     </div>
   )
 }

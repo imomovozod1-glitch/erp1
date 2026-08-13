@@ -21,7 +21,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
   const { supplier, purchaseOrders, transactions } = details
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-8 pt-6">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title={supplier.name}
         breadcrumbs={[

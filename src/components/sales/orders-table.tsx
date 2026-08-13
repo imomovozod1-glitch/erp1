@@ -120,10 +120,8 @@ export function OrdersTable({ orders, lang }: OrdersTableProps) {
                    </TableCell>
                    <TableCell onClick={(e) => e.stopPropagation()}>
                      <DropdownMenu>
-                       <DropdownMenuTrigger>
-                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                           <MoreHorizontal className="h-4 w-4" />
-                         </Button>
+                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
+                         <MoreHorizontal className="h-4 w-4" />
                        </DropdownMenuTrigger>
                        <DropdownMenuContent align="end">
                          <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}>

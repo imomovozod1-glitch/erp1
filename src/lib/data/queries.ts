@@ -332,6 +332,7 @@ export const getCachedDashboardStats = unstable_cache(
       allProductsRes,
       unpaidInvoicesRes,
       unpaidPurchaseOrdersRes,
+      supplierPaymentsRes,
       soldItemsRes,
     ] = await Promise.all([
       supabase.from('sales_orders').select('*', { count: 'exact', head: true }),
@@ -355,7 +356,8 @@ export const getCachedDashboardStats = unstable_cache(
       supabase.from('cashboxes').select('balance'),
       supabase.from('products').select('stock, cost_price').eq('is_active', true),
       supabase.from('invoices').select('total_amount, paid_amount').not('status', 'in', '("paid","cancelled")'),
-      supabase.from('purchase_orders').select('total_amount').not('status', 'in', '("received","cancelled")'),
+      supabase.from('purchase_orders').select('total_amount').neq('status', 'cancelled'),
+      supabase.from('transactions').select('amount').eq('type', 'expense').not('supplier_id', 'is', null),
       supabase
         .from('sales_order_items')
         .select('quantity, total_price, products(cost_price), sales_orders(order_date)'),
@@ -367,7 +369,12 @@ export const getCachedDashboardStats = unstable_cache(
     const totalCashboxBalance = (cashboxesRes.data ?? []).reduce((sum: number, cb: any) => sum + (Number(cb.balance) || 0), 0)
     const warehouseValue = (allProductsRes.data ?? []).reduce((sum: number, p: any) => sum + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
     const totalReceivables = (unpaidInvoicesRes.data ?? []).reduce((sum: number, inv: any) => sum + ((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)), 0)
-    const totalPayables = (unpaidPurchaseOrdersRes.data ?? []).reduce((sum: number, po: any) => sum + (Number(po.total_amount) || 0), 0)
+    // purchase_orders has no paid_amount column (unlike invoices), so "what we still
+    // owe suppliers" is every non-cancelled PO's total minus every supplier payment
+    // ever made — the same formula used on the supplier detail page.
+    const totalPurchaseOrders = (unpaidPurchaseOrdersRes.data ?? []).reduce((sum: number, po: any) => sum + (Number(po.total_amount) || 0), 0)
+    const totalSupplierPayments = (supplierPaymentsRes.data ?? []).reduce((sum: number, tx: any) => sum + (Number(tx.amount) || 0), 0)
+    const totalPayables = totalPurchaseOrders - totalSupplierPayments
 
     // Sold items with cost data, used to compute real profit (sales - cost price) per period
     const soldItems = (soldItemsRes.data ?? []).map((item: any) => ({

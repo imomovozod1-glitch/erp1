@@ -13,7 +13,7 @@ import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
-  Download, ShoppingCart, Phone, Mail, MapPin, Landmark, FileText, Wallet, History
+  Download, ShoppingCart, Phone, Mail, MapPin, Landmark, FileText, History
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
@@ -308,7 +308,11 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                       </TableRow>
                     ) : (
                       salesOrders.map((o, idx) => (
-                        <TableRow key={o.id} className="hover:bg-slate-50/50">
+                        <TableRow
+                          key={o.id}
+                          className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                          onClick={() => router.push(`/${lang}/sales/orders/${o.id}`)}
+                        >
                           <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
                           <TableCell className="font-semibold text-slate-900">{o.order_number}</TableCell>
                           <TableCell className="text-right font-bold text-emerald-600">{formatCurrency(o.total_amount)}</TableCell>
@@ -344,7 +348,11 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                       </TableRow>
                     ) : (
                       invoices.map((inv, idx) => (
-                        <TableRow key={inv.id} className="hover:bg-slate-50/50">
+                        <TableRow
+                          key={inv.id}
+                          className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                          onClick={() => router.push(`/${lang}/sales/invoices/${inv.id}`)}
+                        >
                           <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
                           <TableCell className="font-semibold text-slate-900">{inv.invoice_number}</TableCell>
                           <TableCell className="text-right font-bold text-slate-800">{formatCurrency(inv.total_amount)}</TableCell>

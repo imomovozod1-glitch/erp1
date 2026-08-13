@@ -21,7 +21,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   const { employee, transactions, salesOrders } = details
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-8 pt-6">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title={employee?.profiles?.full_name ?? '—'}
         breadcrumbs={[

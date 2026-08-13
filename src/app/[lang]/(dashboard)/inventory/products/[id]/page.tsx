@@ -19,7 +19,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-8 pt-6">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title={product.name}
         breadcrumbs={[

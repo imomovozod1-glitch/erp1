@@ -99,6 +99,9 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
   }
 
   const onSubmit = async (data: FormData) => {
+    // The button's own disabled state can lag a render behind the click,
+    // so re-check synchronously before doing any work.
+    if (isSubmitting) return
     setIsSubmitting(true)
     try {
       const supabase = createClient() as any

@@ -147,6 +147,11 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    // The button's own disabled state can lag a render behind the click,
+    // so re-check synchronously before doing any work — this form writes to
+    // purchase_orders, purchase_order_items, and increments product stock in
+    // a loop with no atomic transaction, so a double-fire would double-credit stock.
+    if (isSubmitting) return
     if (!supplierId || items.length === 0) {
       toast.error(tCommon('required'))
       return

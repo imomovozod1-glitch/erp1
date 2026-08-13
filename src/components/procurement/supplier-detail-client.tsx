@@ -47,9 +47,15 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Calculate Metrics
-  const totalPurchases = purchaseOrders.reduce((sum, po) => sum + (po.total_amount || 0), 0)
-  const totalPayments = transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0)
+  // Calculate Metrics — a cancelled PO never owed us anything, and only expense
+  // transactions represent money actually paid out to this supplier (a stray
+  // non-expense transaction tagged with this supplier_id must not net against debt).
+  const totalPurchases = purchaseOrders
+    .filter((po) => po.status !== 'cancelled')
+    .reduce((sum, po) => sum + (po.total_amount || 0), 0)
+  const totalPayments = transactions
+    .filter((tx) => tx.type === 'expense')
+    .reduce((sum, tx) => sum + (tx.amount || 0), 0)
   const outstandingDebt = totalPurchases - totalPayments
 
   // Export to Excel function

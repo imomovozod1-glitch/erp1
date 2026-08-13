@@ -188,10 +188,24 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
       const localPo = localStorage.getItem('erp_purchase_orders')
       if (localPo) {
         try {
-          const parsed = JSON.parse(localPo)
-          const unpaid = parsed.filter((po: any) => po.status !== 'received' && po.status !== 'cancelled')
-          const sum = unpaid.reduce((acc: number, po: any) => acc + (Number(po.total_amount) || 0), 0)
-          setRealPayables(sum)
+          const parsedPo = JSON.parse(localPo)
+          const nonCancelled = parsedPo.filter((po: any) => po.status !== 'cancelled')
+          const purchasesSum = nonCancelled.reduce((acc: number, po: any) => acc + (Number(po.total_amount) || 0), 0)
+
+          let paymentsSum = 0
+          const localTx = localStorage.getItem('erp_transactions')
+          if (localTx) {
+            try {
+              const parsedTx = JSON.parse(localTx)
+              paymentsSum = parsedTx
+                .filter((tx: any) => tx.type === 'expense' && tx.supplier_id)
+                .reduce((acc: number, tx: any) => acc + (Number(tx.amount) || 0), 0)
+            } catch (e) {
+              console.error(e)
+            }
+          }
+
+          setRealPayables(purchasesSum - paymentsSum)
         } catch (e) {
           console.error(e)
         }
