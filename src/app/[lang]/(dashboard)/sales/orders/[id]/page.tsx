@@ -21,6 +21,28 @@ import {
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
+// sales_orders.notes is free-form text; the only system-generated template written
+// to it (pos-client.tsx) is "POS Sale - Paid via CASH/CARD/TRANSFER/DEBT" — translate
+// that known template, same approach as translateReason on the product detail page.
+// Anything else is either null or text the user typed themselves, so it passes through.
+function translateOrderNotes(notes: string | null | undefined, lang: string): string {
+  if (!notes) return ''
+  const posMatch = notes.match(/^POS Sale - Paid via (CASH|CARD|TRANSFER|DEBT)$/)
+  if (posMatch) {
+    const methodLabels: Record<string, { uz: string; ru: string }> = {
+      CASH: { uz: 'Naqd pul', ru: 'Наличные' },
+      CARD: { uz: 'Karta', ru: 'Карта' },
+      TRANSFER: { uz: "O'tkazma", ru: 'Перевод' },
+      DEBT: { uz: 'Qarz', ru: 'Долг' },
+    }
+    const method = methodLabels[posMatch[1]]
+    return lang === 'uz'
+      ? `POS sotuvi - to'lov usuli: ${method.uz}`
+      : `Продажа через POS - способ оплаты: ${method.ru}`
+  }
+  return notes
+}
+
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-700 border-slate-200',
   pending: 'bg-amber-50 text-amber-700 border-amber-200/60',
@@ -168,7 +190,7 @@ export default function OrderDetailPage() {
                   <FileText className="h-3.5 w-3.5" />
                   {tCommon('notes')}
                 </span>
-                <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">{order.notes}</p>
+                <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">{translateOrderNotes(order.notes, lang)}</p>
               </div>
             )}
           </CardContent>

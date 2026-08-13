@@ -128,7 +128,7 @@ export function UnitsList({ lang }: UnitsListProps) {
           <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
             <Scale className="h-6 w-6" />
           </div>
-          <div>
+          <div className="text-center">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               {lang === 'uz' ? 'Jami o\'lchov birliklari' : lang === 'ru' ? 'Всего единиц' : 'Total Units'}
             </p>

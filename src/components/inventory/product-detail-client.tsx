@@ -22,6 +22,32 @@ interface ProductDetailClientProps {
   purchases: any[]
 }
 
+// Stock movement `reason` is free-form English text written at insert time
+// (see product-form.tsx, sale-form.tsx, pos-client.tsx, purchase-order-form.tsx),
+// not a fixed enum — so translation here has to pattern-match the known
+// templates and localize them, preserving any interpolated order number/supplier.
+function translateReason(reason: string | null | undefined, lang: string): string {
+  if (!reason) return '—'
+  if (reason === 'Manual adjustment in product form') {
+    return lang === 'uz' ? "Mahsulot shaklida qo'lda tuzatish" : lang === 'ru' ? 'Ручная корректировка в форме товара' : reason
+  }
+  if (reason === 'Initial stock on product creation') {
+    return lang === 'uz' ? "Mahsulot yaratilganda boshlang'ich zaxira" : lang === 'ru' ? 'Начальный запас при создании товара' : reason
+  }
+  if (reason === 'POS Sale') {
+    return lang === 'uz' ? 'POS sotuvi' : lang === 'ru' ? 'Продажа через POS' : reason
+  }
+  if (reason.startsWith('Sale ')) {
+    const orderNumber = reason.slice('Sale '.length)
+    return lang === 'uz' ? `Sotuv ${orderNumber}` : lang === 'ru' ? `Продажа ${orderNumber}` : reason
+  }
+  if (reason.startsWith('Purchase from ')) {
+    const supplier = reason.slice('Purchase from '.length)
+    return lang === 'uz' ? `Xarid: ${supplier}` : lang === 'ru' ? `Закупка: ${supplier}` : reason
+  }
+  return reason
+}
+
 export function ProductDetailClient({ lang, product, movements, sales, purchases }: ProductDetailClientProps) {
   const t = useTranslations('inventory')
   const tc = useTranslations('common')
@@ -55,7 +81,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
       Quantity: m.quantity,
       Before: m.quantity_before,
       After: m.quantity_after,
-      Reason: m.reason || '—',
+      Reason: translateReason(m.reason, lang),
       Date: formatDateTime(m.created_at)
     }))
     const movementsWS = XLSX.utils.json_to_sheet(movementsData)
@@ -246,7 +272,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                           <span className="text-slate-400">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-slate-600 text-sm">{m.reason || '—'}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{translateReason(m.reason, lang)}</TableCell>
                       <TableCell className="text-slate-500 text-xs">{formatDateTime(m.created_at)}</TableCell>
                     </TableRow>
                   ))

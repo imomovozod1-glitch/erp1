@@ -28,7 +28,7 @@ export default async function TransactionsPage({ params }: { params: Promise<{ l
       <PageHeader
         title={t('transactions')}
         subtitle={t('title')}
-        action={{ label: t('addTransaction'), href: `/${lang}/finance/transactions/new`, icon: Plus }}
+        // action={{ label: t('addTransaction'), href: `/${lang}/finance/transactions/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') },
