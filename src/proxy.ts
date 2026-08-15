@@ -8,7 +8,6 @@ const intlMiddleware = createMiddleware(routing)
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password']
 
 function getTenantSubdomain(host: string): string | null {
-  // Exclude port if present (e.g. localhost:3000 -> localhost)
   const hostname = host.split(':')[0]
 
   // If local development, check for subdomain before "localhost"
