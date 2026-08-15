@@ -398,7 +398,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
             {t.title}
           </h1>
           <p className="text-xs text-muted-foreground">
-            {t.subtitle}
+            {/* {t.subtitle} */}
           </p>
         </div>
 
