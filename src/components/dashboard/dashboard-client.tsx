@@ -433,7 +433,7 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
       <div className="bg-white p-5 rounded-xl border shadow-sm space-y-3">
         <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
           <Zap className="h-4 w-4 text-indigo-600" />
-          {t.quickActions}
+          {/* {t.quickActions} */}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Link
