@@ -31,12 +31,22 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { NumericInput } from '@/components/ui/numeric-input'
+import { PageHeader } from '@/components/shared/page-header'
+import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateTransactions, invalidateSuppliers, invalidateEmployees, invalidateCustomers, invalidateInvoices } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 
 type CashboxType = 'cash' | 'card' | 'transfer' | 'other'
+type Period = 'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'
+
+const formatDateISO = (d: Date) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 interface Cashbox {
   id: string
@@ -57,6 +67,7 @@ interface TransactionCategory {
 export function CashboxClient({ lang }: { lang: string }) {
   const t = useTranslations('finance')
   const tCommon = useTranslations('common')
+  const tDash = useTranslations('dashboard')
   const supabase = createClient() as any
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -67,6 +78,47 @@ export function CashboxClient({ lang }: { lang: string }) {
   const [isLocalStorageFallback, setIsLocalStorageFallback] = useState(false)
   const [search, setSearch] = useState('')
   const [txSearch, setTxSearch] = useState('')
+
+  // Time filter for the transaction history (and the Income/Expense stat cards),
+  // same tab-style preset + CustomDateRangePicker combo as the dashboard.
+  // `now` is captured once via a lazy initializer, not called bare in the render body,
+  // since a fresh `new Date()` on every render trips the project's purity lint rule.
+  const [now] = useState(() => new Date())
+  const [period, setPeriod] = useState<Period>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('cashbox_period')
+      if (saved === 'today' || saved === 'yesterday' || saved === 'week' || saved === 'month' || saved === 'all' || saved === 'custom') {
+        return saved
+      }
+    }
+    return 'all'
+  })
+  const [customStart, setCustomStart] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('cashbox_custom_start')
+      if (saved) return saved
+    }
+    return formatDateISO(new Date()) + 'T00:00'
+  })
+  const [customEnd, setCustomEnd] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('cashbox_custom_end')
+      if (saved) return saved
+    }
+    return formatDateISO(new Date()) + 'T23:59'
+  })
+
+  useEffect(() => {
+    sessionStorage.setItem('cashbox_period', period)
+    sessionStorage.setItem('cashbox_custom_start', customStart)
+    sessionStorage.setItem('cashbox_custom_end', customEnd)
+  }, [period, customStart, customEnd])
+
+  const handleApplyCustomRange = (start: string, end: string) => {
+    setCustomStart(start)
+    setCustomEnd(end)
+    setPeriod('custom')
+  }
 
   // Modal form states for cashbox management
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -857,8 +909,30 @@ export function CashboxClient({ lang }: { lang: string }) {
   const expenseCategories = categories.filter(c => c.type === 'expense')
 
   const totalBalance = cashboxes.reduce((sum, cb) => sum + (Number(cb.balance) || 0), 0)
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0)
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0)
+
+  // Time-filtered transactions (period only, independent of the text search box below) —
+  // drives both the Income/Expense stat cards and the transaction history table.
+  const todayStr = formatDateISO(now)
+  const yesterdayStr = formatDateISO(new Date(now.getTime() - 24 * 60 * 60 * 1000))
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  const customStartDate = customStart ? new Date(customStart) : null
+  const customEndDate = customEnd ? new Date(customEnd) : null
+
+  const periodTransactions = transactions.filter((tx) => {
+    if (period === 'today') return tx.transaction_date === todayStr
+    if (period === 'yesterday') return tx.transaction_date === yesterdayStr
+    if (period === 'week') return new Date(tx.transaction_date) >= weekAgo
+    if (period === 'month') return new Date(tx.transaction_date) >= monthAgo
+    if (period === 'custom') {
+      const d = new Date(tx.transaction_date)
+      return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
+    }
+    return true
+  })
+
+  const totalIncome = periodTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0)
+  const totalExpense = periodTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0)
 
   const CASHBOX_TYPES: { key: CashboxType; label: string; icon: typeof Coins }[] = [
     { key: 'cash', label: t('cashboxTypeCash'), icon: Coins },
@@ -877,7 +951,7 @@ export function CashboxClient({ lang }: { lang: string }) {
     cb.description.toLowerCase().includes(search.toLowerCase())
   )
 
-  const filteredTransactions = transactions.filter((tx) => {
+  const filteredTransactions = periodTransactions.filter((tx) => {
     const cbName = cashboxes.find(c => c.id === tx.reference_id)?.name || ''
     return (
       (tx.description ?? '').toLowerCase().includes(txSearch.toLowerCase()) ||
@@ -888,6 +962,39 @@ export function CashboxClient({ lang }: { lang: string }) {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title={t('cashbox')}
+        subtitle={t('title')}
+        breadcrumbs={[
+          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: t('title') },
+          { label: t('cashbox') },
+        ]}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-lg bg-slate-100 p-0.5 shadow-inner border">
+            {(['today', 'yesterday', 'week', 'month', 'all'] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
+                  period === p ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {tDash(p)}
+              </button>
+            ))}
+          </div>
+          <CustomDateRangePicker
+            isActive={period === 'custom'}
+            start={customStart}
+            end={customEnd}
+            onApply={handleApplyCustomRange}
+          />
+        </div>
+      </PageHeader>
+
       {isLocalStorageFallback && (
         <div className="flex gap-3 bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl text-sm animate-in fade-in slide-in-from-top-1 duration-200">
           <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
@@ -1135,8 +1242,8 @@ export function CashboxClient({ lang }: { lang: string }) {
               {t('transactions')}
             </CardTitle>
             <CardDescription className="text-xs">
-              {lang === 'uz' 
-                ? "Kassalar bo'yicha kirim va chiqim operatsiyalari tarixi" 
+              {lang === 'uz'
+                ? "Kassalar bo'yicha kirim va chiqim operatsiyalari tarixi"
                 : lang === 'ru'
                 ? "История приходных и расходных операций по кассам"
                 : "History of incoming and outgoing operations across cash registers"}

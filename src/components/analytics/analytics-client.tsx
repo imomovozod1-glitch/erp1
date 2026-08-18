@@ -175,7 +175,9 @@ export function AnalyticsClient({ stats, lang }: AnalyticsClientProps) {
     const productMap: Record<string, { name: string; costPrice: number; sellingPrice: number; quantity: number; totalSum: number }> = {}
     filteredItems.forEach((item: any) => {
       const productName = item.products?.name ?? 'Unknown'
-      const costPrice = item.products?.cost_price ?? 0
+      // Realized cost at time of sale (FIFO/LIFO/AVECO) when available; falls back to
+      // the product's current cost_price for sales made before this column existed.
+      const costPrice = item.unit_cost ?? item.products?.cost_price ?? 0
       const sellingPrice = item.unit_price ?? item.products?.price ?? 0
 
       if (!productMap[productName]) {

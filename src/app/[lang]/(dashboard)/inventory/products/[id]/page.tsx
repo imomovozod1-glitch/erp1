@@ -12,7 +12,7 @@ interface ProductDetailPageProps {
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id, lang } = await params
   const t = await getTranslations('inventory')
-  const { product, movements, sales, purchases } = await getCachedProductDetails(id)
+  const { product, movements, sales, purchases, costLayers, effectiveCostingMethod, nextSaleCost } = await getCachedProductDetails(id)
 
   if (!product) {
     notFound()
@@ -37,6 +37,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         movements={movements}
         sales={sales}
         purchases={purchases}
+        costLayers={costLayers}
+        effectiveCostingMethod={effectiveCostingMethod}
+        nextSaleCost={nextSaleCost}
       />
     </div>
   )

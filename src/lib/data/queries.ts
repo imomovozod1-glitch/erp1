@@ -35,6 +35,7 @@ export const CACHE_TAGS = {
   dashboard: 'dashboard',
   analytics: 'analytics',
   cashbox: 'cashbox',
+  companySettings: 'company_settings',
 } as const
 
 // ─── Inventory ─────────────────────────────────────────────────────────────────
@@ -218,7 +219,7 @@ export const getCachedSoldProducts = unstable_cache(
     const supabase = getCacheClient()
     const { data } = await supabase
       .from('sales_order_items')
-      .select('id, quantity, unit_price, total_price, products(id, name, cost_price, price, sku), sales_orders(id, order_number, status, order_date)')
+      .select('id, quantity, unit_price, unit_cost, total_price, products(id, name, cost_price, price, sku), sales_orders(id, order_number, status, order_date)')
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -236,7 +237,7 @@ export const getCachedAnalyticsStats = unstable_cache(
     ] = await Promise.all([
       supabase
         .from('sales_order_items')
-        .select('quantity, unit_price, total_price, products(name, cost_price, price), sales_orders(order_date, status)'),
+        .select('quantity, unit_price, unit_cost, total_price, products(name, cost_price, price), sales_orders(order_date, status)'),
       supabase
         .from('sales_orders')
         .select('id, total_amount, order_date, status')
@@ -249,7 +250,9 @@ export const getCachedAnalyticsStats = unstable_cache(
     const productMap: Record<string, { name: string; costPrice: number; sellingPrice: number; quantity: number; totalSum: number }> = {}
     ;(orderItems ?? []).forEach((item: any) => {
       const productName = item.products?.name ?? 'Unknown'
-      const costPrice = item.products?.cost_price ?? 0
+      // Realized cost at time of sale (FIFO/LIFO/AVECO) when available; falls back to
+      // the product's current cost_price for sales made before this column existed.
+      const costPrice = item.unit_cost ?? item.products?.cost_price ?? 0
       const sellingPrice = item.unit_price ?? item.products?.price ?? 0
 
       if (!productMap[productName]) {
@@ -334,6 +337,7 @@ export const getCachedDashboardStats = unstable_cache(
       unpaidPurchaseOrdersRes,
       supplierPaymentsRes,
       soldItemsRes,
+      costLayersRes,
     ] = await Promise.all([
       supabase.from('sales_orders').select('*', { count: 'exact', head: true }),
       supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -360,14 +364,21 @@ export const getCachedDashboardStats = unstable_cache(
       supabase.from('transactions').select('amount').eq('type', 'expense').not('supplier_id', 'is', null),
       supabase
         .from('sales_order_items')
-        .select('quantity, total_price, products(cost_price), sales_orders(order_date)'),
+        .select('quantity, total_price, unit_cost, products(cost_price), sales_orders(order_date)'),
+      supabase.from('inventory_cost_layers').select('remaining_qty, unit_cost').gt('remaining_qty', 0),
     ])
 
     const incomeRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'income')
     const expenseRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'expense')
 
     const totalCashboxBalance = (cashboxesRes.data ?? []).reduce((sum: number, cb: any) => sum + (Number(cb.balance) || 0), 0)
-    const warehouseValue = (allProductsRes.data ?? []).reduce((sum: number, p: any) => sum + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
+    // FIFO/LIFO-correct valuation: sum what's actually left in each cost layer, not
+    // stock * today's average cost_price (those can legitimately diverge once methods
+    // differ per product). Falls back to the naive formula if no layers exist yet
+    // (e.g. right before the costing migration has been run).
+    const warehouseValue = (costLayersRes.data?.length ?? 0) > 0
+      ? (costLayersRes.data ?? []).reduce((sum: number, l: any) => sum + (Number(l.remaining_qty) || 0) * (Number(l.unit_cost) || 0), 0)
+      : (allProductsRes.data ?? []).reduce((sum: number, p: any) => sum + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
     const totalReceivables = (unpaidInvoicesRes.data ?? []).reduce((sum: number, inv: any) => sum + ((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)), 0)
     // purchase_orders has no paid_amount column (unlike invoices), so "what we still
     // owe suppliers" is every non-cancelled PO's total minus every supplier payment
@@ -376,11 +387,13 @@ export const getCachedDashboardStats = unstable_cache(
     const totalSupplierPayments = (supplierPaymentsRes.data ?? []).reduce((sum: number, tx: any) => sum + (Number(tx.amount) || 0), 0)
     const totalPayables = totalPurchaseOrders - totalSupplierPayments
 
-    // Sold items with cost data, used to compute real profit (sales - cost price) per period
+    // Sold items with cost data, used to compute real profit (sales - cost price) per period.
+    // Prefers the realized unit_cost charged at sale time (FIFO/LIFO/AVECO); falls back
+    // to the product's current cost_price for sales made before that column existed.
     const soldItems = (soldItemsRes.data ?? []).map((item: any) => ({
       order_date: item.sales_orders?.order_date ?? null,
       revenue: Number(item.total_price) || 0,
-      cost: (Number(item.products?.cost_price) || 0) * (Number(item.quantity) || 0),
+      cost: (Number(item.unit_cost ?? item.products?.cost_price) || 0) * (Number(item.quantity) || 0),
     })).filter((item: any) => item.order_date)
 
     return {
@@ -418,6 +431,23 @@ export const getCachedDashboardStats = unstable_cache(
   }
 )
 
+// ─── Company settings (single row) ────────────────────────────────────────────
+
+export const getCachedCompanySettings = unstable_cache(
+  async () => {
+    const supabase = getCacheClient()
+    const { data } = await supabase
+      .from('company_settings')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single()
+    return data ?? { default_costing_method: 'fifo' }
+  },
+  ['company-settings'],
+  { tags: [CACHE_TAGS.companySettings], revalidate: 300 }
+)
+
 // ─── Form select options (very stable data) ───────────────────────────────────
 
 export const getCachedCategoriesForSelect = unstable_cache(
@@ -436,12 +466,15 @@ export const getCachedCategoriesForSelect = unstable_cache(
 export const getCachedProductsForSelect = unstable_cache(
   async () => {
     const supabase = getCacheClient()
-    const { data } = await supabase
+    // `costing_method` postdates the generated Supabase types (only exists once the
+    // costing migration has been run) — cast to `any` until `database.types.ts` is
+    // regenerated against the live schema.
+    const { data } = await (supabase as any)
       .from('products')
-      .select('id, name, price, cost_price, stock, unit, sku')
+      .select('id, name, price, cost_price, stock, unit, sku, costing_method')
       .eq('is_active', true)
       .order('name')
-    return data ?? []
+    return (data ?? []) as { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; costing_method: string | null }[]
   },
   ['products-select'],
   { tags: [CACHE_TAGS.products], revalidate: 60 }
@@ -594,11 +627,20 @@ export const getCachedProductDetails = unstable_cache(
       { data: movements },
       { data: salesOrderItems },
       { data: purchaseOrderItems },
+      { data: costLayers },
+      { data: companySettings },
     ] = await Promise.all([
       supabase.from('products').select('*, categories(name)').eq('id', id).single(),
       supabase.from('stock_movements').select('*').eq('product_id', id).order('created_at', { ascending: false }),
       supabase.from('sales_order_items').select('quantity, total_price, sales_orders(order_number, order_date, status, customers(name))').eq('product_id', id),
       supabase.from('purchase_order_items').select('quantity, total_cost, purchase_orders(po_number, order_date, status, suppliers(name))').eq('product_id', id),
+      supabase
+        .from('inventory_cost_layers')
+        .select('id, quantity, remaining_qty, unit_cost, source_type, received_at')
+        .eq('product_id', id)
+        .gt('remaining_qty', 0)
+        .order('received_at', { ascending: true }),
+      supabase.from('company_settings').select('default_costing_method').limit(1).single(),
     ])
 
     // Resolve where each movement came from: purchase order (+ supplier) or sales order (+ customer)
@@ -633,15 +675,43 @@ export const getCachedProductDetails = unstable_cache(
       return { ...m, source }
     })
 
+    // `inventory_cost_layers`/`company_settings` postdate the generated Supabase types
+    // (they only exist once the costing migration has been run), so these are `any`
+    // until `database.types.ts` is regenerated against the live schema.
+    const layers: any[] = costLayers ?? []
+    const effectiveMethod: string = (product as any)?.costing_method ?? (companySettings as any)?.default_costing_method ?? 'fifo'
+
+    // What the *next* sale would actually be charged under the active method — can
+    // differ from products.cost_price (a blended average) under FIFO/LIFO.
+    let nextSaleCost: number | null = null
+    if (layers.length > 0) {
+      if (effectiveMethod === 'lifo') {
+        nextSaleCost = Number(layers[layers.length - 1].unit_cost)
+      } else if (effectiveMethod === 'fifo') {
+        nextSaleCost = Number(layers[0].unit_cost)
+      } else {
+        const totalQty = layers.reduce((sum: number, l: any) => sum + Number(l.remaining_qty), 0)
+        nextSaleCost = totalQty > 0
+          ? layers.reduce((sum: number, l: any) => sum + Number(l.remaining_qty) * Number(l.unit_cost), 0) / totalQty
+          : null
+      }
+    }
+
     return {
       product,
       movements: enrichedMovements,
       sales: salesOrderItems ?? [],
       purchases: purchaseOrderItems ?? [],
+      costLayers: layers,
+      effectiveCostingMethod: effectiveMethod,
+      nextSaleCost,
     }
   },
   ['product-details-by-id'],
-  { tags: [CACHE_TAGS.products, CACHE_TAGS.movements, CACHE_TAGS.orders, CACHE_TAGS.purchaseOrders], revalidate: 30 }
+  {
+    tags: [CACHE_TAGS.products, CACHE_TAGS.movements, CACHE_TAGS.orders, CACHE_TAGS.purchaseOrders, CACHE_TAGS.companySettings],
+    revalidate: 30,
+  }
 )
 
 export const getCachedEmployeeDetails = unstable_cache(

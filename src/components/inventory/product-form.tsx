@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
+import { recordCostLayer, consumeCostLayers, getEffectiveCostingMethod, type CostingMethod } from '@/lib/inventory-costing'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,6 +57,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       z.number({ message: tCommon('required') }).min(0, tCommon('required'))
     ),
     category_id: z.string().optional().nullable(),
+    costing_method: z.string().optional().nullable(),
     description: z.string().optional(),
     is_active: z.boolean().default(true),
   })
@@ -79,6 +81,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       name: initialData?.name || '',
       sku: defaultSku,
       category_id: initialData?.category_id || '',
+      costing_method: initialData?.costing_method || '',
       unit: initialData?.unit || '',
       price: initialData?.price ?? '' as any,
       cost_price: initialData?.cost_price ?? '' as any,
@@ -164,6 +167,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       const payload = {
         ...data,
         category_id: data.category_id || null, // convert empty string to null
+        costing_method: data.costing_method || null, // empty string = inherit the global default
       }
 
       let userId: string | null = null
@@ -183,14 +187,44 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
 
         if (stockBefore !== stockAfter) {
           const diff = stockAfter - stockBefore
+          const isIncrease = diff > 0
+
+          // Cost this movement: an increase opens a new layer at the entered cost_price;
+          // a decrease draws down existing layers under whichever method now applies.
+          let unitCost = Number(payload.cost_price) || 0
+          let totalCost = Math.abs(diff) * unitCost
+          if (isIncrease) {
+            await recordCostLayer(supabase, {
+              productId: initialData.id,
+              quantity: diff,
+              unitCost,
+              sourceType: 'adjustment',
+            })
+          } else {
+            const { data: settings } = await supabase
+              .from('company_settings')
+              .select('default_costing_method')
+              .limit(1)
+              .single()
+            const method = getEffectiveCostingMethod(
+              { costing_method: payload.costing_method as CostingMethod | null },
+              settings
+            )
+            const consumed = await consumeCostLayers(supabase, initialData.id, Math.abs(diff), method)
+            unitCost = consumed.unitCost
+            totalCost = consumed.totalCost
+          }
+
           const { error: moveErr } = await supabase.from('stock_movements').insert({
             product_id: initialData.id,
-            type: diff > 0 ? 'in' : 'out',
+            type: isIncrease ? 'in' : 'out',
             quantity: Math.abs(diff),
             quantity_before: stockBefore,
             quantity_after: stockAfter,
             reference_type: 'product_adjustment',
             reason: 'Manual adjustment in product form',
+            unit_cost: unitCost,
+            total_cost: totalCost,
             created_by: userId
           })
           if (moveErr) console.error('Error inserting stock movement:', moveErr)
@@ -208,6 +242,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         const newProd = newProds?.[0]
         const initialStock = Number(payload.stock) || 0
         if (initialStock > 0 && newProd) {
+          const unitCost = Number(payload.cost_price) || 0
           const { error: moveErr } = await supabase.from('stock_movements').insert({
             product_id: newProd.id,
             type: 'in',
@@ -216,9 +251,18 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
             quantity_after: initialStock,
             reference_type: 'initial_stock',
             reason: 'Initial stock on product creation',
+            unit_cost: unitCost,
+            total_cost: initialStock * unitCost,
             created_by: userId
           })
           if (moveErr) console.error('Error inserting initial stock movement:', moveErr)
+
+          await recordCostLayer(supabase, {
+            productId: newProd.id,
+            quantity: initialStock,
+            unitCost,
+            sourceType: 'initial_stock',
+          })
         }
 
         toast.success(tCommon('success'))
@@ -262,6 +306,21 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
             ))}
           </select>
           {errors.category_id && <p className="text-sm text-red-500">{errors.category_id.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="costing_method">{t('costingMethod')}</Label>
+          <select
+            id="costing_method"
+            {...register('costing_method')}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            <option value="">{t('inheritGlobalDefault')}</option>
+            <option value="fifo">{t('fifo')}</option>
+            <option value="lifo">{t('lifo')}</option>
+            <option value="aveco">{t('aveco')}</option>
+          </select>
+          {errors.costing_method && <p className="text-sm text-red-500">{errors.costing_method.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -476,6 +535,11 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
                 </span>
               </div>
             </div>
+            {watch('costing_method') !== 'aveco' && (
+              <p className="text-[11px] text-slate-400 leading-snug basis-full">
+                {t('averageCostEstimate')}
+              </p>
+            )}
           </div>
         )}
 

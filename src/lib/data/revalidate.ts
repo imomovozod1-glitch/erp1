@@ -89,6 +89,10 @@ export async function invalidateProfile(userId: string) {
   updateTag(`profile:${userId}`)
 }
 
+export async function invalidateCompanySettings() {
+  updateTag(CACHE_TAGS.companySettings)
+}
+
 export async function invalidateAll() {
   Object.values(CACHE_TAGS).forEach((tag) => updateTag(tag))
 }

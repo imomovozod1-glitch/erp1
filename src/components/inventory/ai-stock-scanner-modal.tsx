@@ -15,7 +15,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateProducts } from '@/lib/data/revalidate'
+import { invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
+import { recordCostLayer } from '@/lib/inventory-costing'
 import {
   Dialog,
   DialogContent,
@@ -292,11 +293,41 @@ export function AIStockScannerModal({
         }
       })
 
-      const { error } = await supabase.from('products').insert(payload)
+      const { data: { user } } = await supabase.auth.getUser()
+      const { data: newProducts, error } = await supabase.from('products').insert(payload).select()
       if (error) throw error
+
+      // Every scanned line is a brand-new product, so its stock movement/cost layer is
+      // always an "in" from zero — same shape as a manual create in the product form.
+      for (const product of newProducts ?? []) {
+        const initialStock = Number(product.stock) || 0
+        if (initialStock <= 0) continue
+
+        const unitCost = Number(product.cost_price) || 0
+        await supabase.from('stock_movements').insert({
+          product_id: product.id,
+          type: 'in',
+          quantity: initialStock,
+          quantity_before: 0,
+          quantity_after: initialStock,
+          reference_type: 'ai_scan',
+          reason: 'AI stock scanner — new product',
+          unit_cost: unitCost,
+          total_cost: initialStock * unitCost,
+          created_by: user?.id ?? null,
+        })
+
+        await recordCostLayer(supabase, {
+          productId: product.id,
+          quantity: initialStock,
+          unitCost,
+          sourceType: 'ai_scan',
+        })
+      }
 
       toast.success(lang === 'uz' ? `${items.length} ta mahsulot omborga muvaffaqiyatli saqlandi!` : lang === 'ru' ? `${items.length} товаров успешно сохранено на склад!` : `${items.length} products successfully saved to warehouse!`)
       await invalidateProducts()
+      await invalidateMovements()
       router.refresh()
       onOpenChange(false)
       handleReset()

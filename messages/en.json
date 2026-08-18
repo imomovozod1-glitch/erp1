@@ -226,7 +226,18 @@
     "importingData": "Loading data...",
     "productsImported": "{count} products successfully imported!",
     "productDeactivatedInsteadOfDeleted": "The product is used in sales or other documents and cannot be deleted. It has been deactivated.",
-    "nameExists": "A product with this name already exists."
+    "nameExists": "A product with this name already exists.",
+    "costingMethod": "Costing method",
+    "inheritGlobalDefault": "Inherit global default",
+    "fifo": "FIFO (first in, first out)",
+    "lifo": "LIFO (last in, first out)",
+    "aveco": "AVECO (weighted average cost)",
+    "averageCostEstimate": "This is an average-cost estimate; under FIFO/LIFO the next sale may be charged a different amount depending on the cost layers.",
+    "costLayers": "Cost layers",
+    "remainingQty": "Remaining qty",
+    "unitCost": "Unit cost",
+    "receivedAt": "Received at",
+    "nextSaleCost": "Next sale cost"
   },
   "sales": {
     "title": "Sales",
@@ -481,7 +492,12 @@
       "admin": "Administrator",
       "manager": "Manager",
       "staff": "Staff"
-    }
+    },
+    "inventoryCosting": "Inventory costing",
+    "inventoryCostingDesc": "Choose the default costing method for all products (FIFO, LIFO, or AVECO). Individual products can override it.",
+    "companySettingsTableMissing": "The 'company_settings' table was not found in your Supabase database. Run supabase/migration_inventory_costing.sql in your Supabase SQL Editor to create it.",
+    "costingMethodSaved": "Costing method saved",
+    "costingMethodSaveFailed": "Failed to save costing method"
   },
   "tools": {
     "title": "Tools",

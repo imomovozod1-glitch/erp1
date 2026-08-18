@@ -53,7 +53,7 @@
     "details": "Tafsilotlar",
     "of": "dan",
     "rows": "qator",
-    "count":"ta",
+    "count": "ta",
     "noData": "Ma'lumot topilmadi",
     "noResults": "Natija topilmadi",
     "required": "Majburiy maydon",
@@ -226,7 +226,18 @@
     "importingData": "Ma'lumotlar yuklanmoqda...",
     "productsImported": "{count} ta mahsulot muvaffaqiyatli yuklandi!",
     "productDeactivatedInsteadOfDeleted": "Mahsulot sotuvlar yoki boshqa hujjatlarda ishlatilgani uchun butunlay o'chirilmaydi. U faolsizlantirildi (arxivlandi).",
-    "nameExists": "Ushbu nomdagi mahsulot allaqachon mavjud."
+    "nameExists": "Ushbu nomdagi mahsulot allaqachon mavjud.",
+    "costingMethod": "Tannarx hisoblash usuli",
+    "inheritGlobalDefault": "Umumiy standart (meros)",
+    "fifo": "FIFO (birinchi kirim — birinchi chiqim)",
+    "lifo": "LIFO (oxirgi kirim — birinchi chiqim)",
+    "aveco": "AVECO (o'rtacha tannarx)",
+    "averageCostEstimate": "Bu — o'rtacha tannarx taxmini; FIFO/LIFO usulida keyingi sotuv narxi qatlamlarga qarab farq qilishi mumkin.",
+    "costLayers": "Tannarx qatlamlari",
+    "remainingQty": "Qolgan miqdor",
+    "unitCost": "Birlik tannarxi",
+    "receivedAt": "Kirim sanasi",
+    "nextSaleCost": "Keyingi sotuv tannarxi"
   },
   "sales": {
     "title": "Sotuv",
@@ -480,7 +491,12 @@
       "admin": "Administrator",
       "manager": "Menejer",
       "staff": "Xodim"
-    }
+    },
+    "inventoryCosting": "Ombor tannarxini hisoblash",
+    "inventoryCostingDesc": "Barcha mahsulotlar uchun standart tannarx hisoblash usulini tanlang (FIFO, LIFO yoki AVECO). Har bir mahsulot uchun alohida usul belgilash mumkin.",
+    "companySettingsTableMissing": "Supabase ma'lumotlar bazasida 'company_settings' jadvali topilmadi. Uni yaratish uchun supabase/migration_inventory_costing.sql faylini Supabase SQL Editor orqali ishga tushiring.",
+    "costingMethodSaved": "Tannarx hisoblash usuli saqlandi",
+    "costingMethodSaveFailed": "Tannarx hisoblash usulini saqlab bo'lmadi"
   },
   "tools": {
     "title": "Vositalar",
@@ -521,7 +537,6 @@
     "generalDiscount": "Umumiy chegirma",
     "itemDiscount": "Mahsulot chegirmasi"
   },
-
   "support": {
     "title": "Qo'llab-quvvatlash xizmati",
     "description": "Muammolar yuzaga kelsa, biz bilan bog'laning. Biz har doim yordam berishga tayyormiz.",

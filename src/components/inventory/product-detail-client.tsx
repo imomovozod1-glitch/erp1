@@ -10,7 +10,7 @@ import {
 import { formatCurrency, formatNumber, formatDate, formatDateTime } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
-  TrendingUp, Download, Package, RefreshCw, ShoppingCart, Truck
+  TrendingUp, Download, Package, RefreshCw, ShoppingCart, Truck, Layers
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
@@ -20,6 +20,9 @@ interface ProductDetailClientProps {
   movements: any[]
   sales: any[]
   purchases: any[]
+  costLayers?: any[]
+  effectiveCostingMethod?: string
+  nextSaleCost?: number | null
 }
 
 // Stock movement `reason` is free-form English text written at insert time
@@ -48,10 +51,24 @@ function translateReason(reason: string | null | undefined, lang: string): strin
   return reason
 }
 
-export function ProductDetailClient({ lang, product, movements, sales, purchases }: ProductDetailClientProps) {
+const SOURCE_TYPE_LABELS: Record<string, { uz: string; ru: string; en: string }> = {
+  purchase_order: { uz: 'Xarid', ru: 'Закупка', en: 'Purchase order' },
+  initial_stock: { uz: "Boshlang'ich zaxira", ru: 'Начальный запас', en: 'Initial stock' },
+  adjustment: { uz: "Qo'lda tuzatish", ru: 'Ручная корректировка', en: 'Adjustment' },
+  ai_scan: { uz: 'AI skaner', ru: 'AI-сканер', en: 'AI scan' },
+  opening_balance: { uz: 'Boshlang\'ich qoldiq', ru: 'Начальный остаток', en: 'Opening balance' },
+}
+
+function translateSourceType(sourceType: string, lang: string): string {
+  const entry = SOURCE_TYPE_LABELS[sourceType]
+  if (!entry) return sourceType
+  return lang === 'uz' ? entry.uz : lang === 'ru' ? entry.ru : entry.en
+}
+
+export function ProductDetailClient({ lang, product, movements, sales, purchases, costLayers = [], effectiveCostingMethod, nextSaleCost }: ProductDetailClientProps) {
   const t = useTranslations('inventory')
   const tc = useTranslations('common')
-  const [activeTab, setActiveTab] = useState<'movements' | 'sales' | 'purchases'>('movements')
+  const [activeTab, setActiveTab] = useState<'movements' | 'sales' | 'purchases' | 'costLayers'>('movements')
 
   const profitMarginPercent = product.price > 0 
     ? ((product.price - product.cost_price) / product.price * 100).toFixed(1) 
@@ -144,6 +161,12 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
             <span className="text-xs text-slate-500 font-semibold uppercase">{t('costPrice')}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(product.cost_price)}</h3>
             <span className="text-xs text-slate-400 mt-2">{t('incomingCost', { fallback: 'Kirim narxi' })}: {formatCurrency(product.incoming_cost || product.cost_price)}</span>
+            {effectiveCostingMethod && nextSaleCost != null && (
+              <span className="text-xs text-indigo-600 font-semibold mt-1 flex items-center gap-1">
+                <Layers className="h-3 w-3" />
+                {t(effectiveCostingMethod)} · {t('nextSaleCost')}: {formatCurrency(nextSaleCost)}
+              </span>
+            )}
           </CardContent>
         </Card>
 
@@ -208,6 +231,15 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           >
             <Truck className="h-4 w-4" />
             {lang === 'uz' ? 'Xaridlar tarixi' : 'История закупок'}
+          </button>
+          <button
+            onClick={() => setActiveTab('costLayers')}
+            className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+              activeTab === 'costLayers' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Layers className="h-4 w-4" />
+            {t('costLayers')}
           </button>
         </div>
 
@@ -348,6 +380,41 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                       <TableCell className="text-slate-500 text-xs">
                         {p.purchase_orders?.order_date ? formatDate(p.purchase_orders.order_date) : '—'}
                       </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+
+          {activeTab === 'costLayers' && (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/50">
+                  <TableHead className="w-10 text-center">#</TableHead>
+                  <TableHead>{t('receivedAt')}</TableHead>
+                  <TableHead>{lang === 'uz' ? 'Manba' : 'Источник'}</TableHead>
+                  <TableHead className="text-right">{t('remainingQty')}</TableHead>
+                  <TableHead className="text-right">{t('unitCost')}</TableHead>
+                  <TableHead className="text-right">{lang === 'uz' ? 'Qiymati' : 'Стоимость'}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {costLayers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                      {tc('noData')}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  costLayers.map((l, idx) => (
+                    <TableRow key={l.id} className="hover:bg-slate-50/50">
+                      <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
+                      <TableCell className="text-slate-500 text-xs">{formatDateTime(l.received_at)}</TableCell>
+                      <TableCell className="text-sm text-slate-600">{translateSourceType(l.source_type, lang)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatNumber(l.remaining_qty)} / {formatNumber(l.quantity)}</TableCell>
+                      <TableCell className="text-right text-slate-700">{formatCurrency(l.unit_cost)}</TableCell>
+                      <TableCell className="text-right font-bold text-slate-900">{formatCurrency(l.remaining_qty * l.unit_cost)}</TableCell>
                     </TableRow>
                   ))
                 )}

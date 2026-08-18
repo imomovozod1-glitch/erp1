@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers'
+import { consumeCostLayers, getEffectiveCostingMethod } from '@/lib/inventory-costing'
 import { invalidateOrders, invalidateOrderItems, invalidateProducts, invalidateMovements, invalidateTransactions, invalidateInvoices, invalidateCustomers } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -19,7 +20,7 @@ import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTr
 import { formatCurrency } from '@/lib/utils'
 
 interface SaleFormProps {
-  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
+  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; costing_method?: string | null }[]
   customers: { id: string; name: string }[]
   lang: string
 }
@@ -152,12 +153,29 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
       if (orderError) throw orderError
 
+      // Cost each line at whatever FIFO/LIFO/AVECO charges right now, before deducting
+      // stock, so the realized cost can be stored alongside the order item and movement.
+      const { data: companySettings } = await supabase
+        .from('company_settings')
+        .select('default_costing_method')
+        .limit(1)
+        .single()
+
+      const costByProductId = new Map<string, { unitCost: number; totalCost: number }>()
+      for (const item of items) {
+        const product = products.find(p => p.id === item.productId)
+        const method = getEffectiveCostingMethod(product as any, companySettings)
+        const consumed = await consumeCostLayers(supabase, item.productId, item.quantity, method)
+        costByProductId.set(item.productId, consumed)
+      }
+
       // Create sales order items
       const orderItems = items.map(item => ({
         order_id: order.id,
         product_id: item.productId,
         quantity: item.quantity,
         unit_price: item.unitPrice,
+        unit_cost: costByProductId.get(item.productId)?.unitCost ?? null,
         total_price: item.totalPrice,
       }))
 
@@ -174,6 +192,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
         const quantityBefore = product.stock
         const quantityAfter = quantityBefore - item.quantity
+        const cost = costByProductId.get(item.productId)
 
         await supabase
           .from('products')
@@ -188,9 +207,11 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
             quantity: item.quantity,
             quantity_before: quantityBefore,
             quantity_after: quantityAfter,
-            reference_type: 'sales_order',
+            reference_type: 'sales_orders',
             reference_id: order.id,
             reason: `Sale ${orderNumber}`,
+            unit_cost: cost?.unitCost ?? null,
+            total_cost: cost?.totalCost ?? null,
             created_by: user.id,
           } as any])
       }

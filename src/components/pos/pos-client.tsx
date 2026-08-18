@@ -33,6 +33,7 @@ const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod
 })
 import { createClient } from '@/lib/supabase/client'
 import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers'
+import { consumeCostLayers, getEffectiveCostingMethod } from '@/lib/inventory-costing'
 import {
   invalidateProducts,
   invalidateOrders,
@@ -331,6 +332,22 @@ export function POSClient({
 
       if (orderErr) throw orderErr
 
+      // Cost each cart line at whatever FIFO/LIFO/AVECO charges right now — has to happen
+      // before the parallel batch below since both the order item and the stock movement
+      // need the realized cost, and layer consumption isn't safe to run twice per line.
+      const { data: companySettings } = await supabase
+        .from('company_settings')
+        .select('default_costing_method')
+        .limit(1)
+        .single()
+
+      const costByProductId = new Map<string, { unitCost: number; totalCost: number }>()
+      for (const item of cart) {
+        const method = getEffectiveCostingMethod(item.product, companySettings)
+        const consumed = await consumeCostLayers(supabase, item.product.id, item.quantity, method)
+        costByProductId.set(item.product.id, consumed)
+      }
+
       // 4-7. Everything below only depends on orderData.id, not on each other —
       // fire them all in parallel instead of awaiting one round-trip at a time.
       const itemsToInsert = cart.map((item) => ({
@@ -338,12 +355,14 @@ export function POSClient({
         product_id: item.product.id,
         quantity: item.quantity,
         unit_price: item.product.price,
+        unit_cost: costByProductId.get(item.product.id)?.unitCost ?? null,
         discount_percent: item.discountPercent,
         total_price: (item.product.price * (1 - item.discountPercent / 100)) * item.quantity
       }))
 
       const stockAndMovementUpdates = cart.flatMap((item) => {
         const newStock = item.product.stock - item.quantity
+        const cost = costByProductId.get(item.product.id)
         return [
           supabase
             .from('products')
@@ -359,6 +378,8 @@ export function POSClient({
             reference_type: 'sales_orders',
             reference_id: orderData.id,
             reason: 'POS Sale',
+            unit_cost: cost?.unitCost ?? null,
+            total_cost: cost?.totalCost ?? null,
             created_by: user.id
           }).then(({ error }: any) => { if (error) throw error }),
         ]

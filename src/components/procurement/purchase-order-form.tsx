@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { invalidatePurchaseOrders, invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
+import { recordCostLayer } from '@/lib/inventory-costing'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -228,8 +229,20 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
             reference_type: 'purchase_order',
             reference_id: po.id,
             reason: `Purchase from ${suppliers.find(s => s.id === supplierId)?.name ?? 'supplier'}`,
+            unit_cost: item.unitCost,
+            total_cost: item.totalCost,
             created_by: user.id,
           } as any])
+
+        // Record a cost layer at the price actually paid for this receipt, so
+        // FIFO/LIFO/AVECO have real data to consume from on future sales.
+        await recordCostLayer(supabase, {
+          productId: item.productId,
+          quantity: item.quantity,
+          unitCost: item.unitCost,
+          sourceType: 'purchase_order',
+          sourceId: po.id,
+        })
       }
 
       await Promise.all([invalidatePurchaseOrders(), invalidateProducts(), invalidateMovements()])
