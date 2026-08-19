@@ -1,4 +1,5 @@
 import { getCachedSupplierDetails } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { SupplierDetailClient } from '@/components/procurement/supplier-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { PageClock } from '@/components/shared/page-clock'
@@ -11,8 +12,9 @@ interface SupplierDetailPageProps {
 
 export default async function SupplierDetailPage({ params }: SupplierDetailPageProps) {
   const { id, lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const t = await getTranslations('procurement')
-  const details = await getCachedSupplierDetails(id)
+  const details = await getCachedSupplierDetails(id, tenantId)
 
   if (!details || !details.supplier) {
     notFound()

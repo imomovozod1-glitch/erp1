@@ -7,15 +7,16 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2, Loader2, Lock, Mail } from 'lucide-react'
+import { Building2, Loader2, Lock, Phone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  phone: z.string().min(7).regex(/^\+?\d[\d\s-]*\d$/),
   password: z.string().min(6),
 })
 type LoginForm = z.infer<typeof loginSchema>
@@ -34,7 +35,7 @@ export function LoginForm({ lang }: { lang: string }) {
     try {
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
+        email: phoneToSyntheticEmail(data.phone),
         password: data.password,
       })
       if (error) {
@@ -73,22 +74,22 @@ export function LoginForm({ lang }: { lang: string }) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-slate-300 text-sm">{t('email')}</Label>
+            <Label htmlFor="phone" className="text-slate-300 text-sm">{t('phone')}</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
-                id="email"
-                type="email"
-                placeholder="name@company.com"
-                {...register('email')}
+                id="phone"
+                type="tel"
+                placeholder="+998 90 123 45 67"
+                {...register('phone')}
                 className={cn(
                   'pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 h-11',
-                  errors.email && 'border-red-500/50'
+                  errors.phone && 'border-red-500/50'
                 )}
               />
             </div>
-            {errors.email && (
-              <p className="text-red-400 text-xs">{t('invalidEmail')}</p>
+            {errors.phone && (
+              <p className="text-red-400 text-xs">{t('invalidPhone')}</p>
             )}
           </div>
 

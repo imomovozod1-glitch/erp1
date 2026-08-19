@@ -5,14 +5,16 @@ import { PageHeader } from '@/components/shared/page-header'
 import { EmployeesTable } from '@/components/hr/employees-table'
 import { EmployeeImportExport } from '@/components/hr/employee-import-export'
 import { getCachedEmployees } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export const metadata: Metadata = { title: 'Employees' }
 
 export default async function EmployeesPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, employees] = await Promise.all([
     getTranslations('hr'),
-    getCachedEmployees(),
+    getCachedEmployees(tenantId),
   ])
 
   return (

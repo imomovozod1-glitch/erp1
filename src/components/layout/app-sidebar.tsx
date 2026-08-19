@@ -68,7 +68,13 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'invoices', href: 'sales/invoices' },
     ]
   },
-  { key: 'customers', icon: Contact, href: 'customers' },
+  {
+    key: 'customers', icon: Contact, href: 'customers',
+    subItems: [
+      { key: 'list', href: 'customers' },
+      { key: 'categories', href: 'customers/categories' },
+    ]
+  },
   {
     key: 'procurement', icon: Truck, href: 'procurement',
     subItems: [
@@ -143,6 +149,10 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
         orders: tSales('orders'),
         invoices: tSales('invoices'),
       },
+      customers: {
+        list: tSales('customers'),
+        categories: tSales('customerCategories'),
+      },
       procurement: {
         purchases: tProcurement('purchases'),
         suppliers: tProcurement('suppliers'),
@@ -205,10 +215,18 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 }
 
                 const isExpanded = expandedItems[item.key]
-                const isParentActive = item.subItems.some(sub => {
+                // A subItem whose href IS the parent's own bare route (e.g. "customers")
+                // would otherwise also prefix-match a sibling nested one level deeper
+                // (e.g. "customers/categories"), highlighting both at once. Only the
+                // most specific (longest href) match among the subItems wins.
+                const matchingSubs = item.subItems.filter(sub => {
                   const subFullHref = `/${lang}/${sub.href}`
                   return pathname === subFullHref || pathname.startsWith(`${subFullHref}/`)
                 })
+                const isParentActive = matchingSubs.length > 0
+                const bestSubKey = matchingSubs.length > 0
+                  ? matchingSubs.reduce((best, sub) => (sub.href.length > best.href.length ? sub : best)).key
+                  : null
 
                 return (
                   <SidebarMenuItem key={item.key}>
@@ -230,7 +248,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                       <SidebarMenuSub>
                         {item.subItems.map((sub) => {
                           const subFullHref = `/${lang}/${sub.href}`
-                          const isSubActive = pathname === subFullHref || pathname.startsWith(`${subFullHref}/`)
+                          const isSubActive = sub.key === bestSubKey
                           return (
                             <SidebarMenuSubItem key={sub.key}>
                               <SidebarMenuSubButton render={<Link href={subFullHref} prefetch={true} />} isActive={isSubActive}>

@@ -50,6 +50,11 @@ export async function invalidateCustomers() {
   updateTag(CACHE_TAGS.customers)
 }
 
+export async function invalidateCustomerCategories() {
+  updateTag(CACHE_TAGS.customerCategories)
+  updateTag(CACHE_TAGS.customers)
+}
+
 export async function invalidateInvoices() {
   updateTag(CACHE_TAGS.invoices)
   updateTag(CACHE_TAGS.dashboard)
@@ -89,8 +94,9 @@ export async function invalidateProfile(userId: string) {
   updateTag(`profile:${userId}`)
 }
 
-export async function invalidateCompanySettings() {
-  updateTag(CACHE_TAGS.companySettings)
+export async function invalidateTenant(tenantId: string) {
+  updateTag(CACHE_TAGS.tenants)
+  updateTag(`tenant:${tenantId}`)
 }
 
 export async function invalidateAll() {

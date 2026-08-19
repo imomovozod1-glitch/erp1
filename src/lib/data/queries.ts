@@ -9,9 +9,21 @@
  * - TTL (revalidate) is set conservatively so stale data is never shown for
  *   long even if a revalidation call is missed.
  *
+ * Multi-tenancy: `getCacheClient()` uses the Supabase *service-role* key
+ * (RLS bypassed) because `unstable_cache` callbacks can't call `cookies()`
+ * to carry a user's JWT. That means every function below must filter by
+ * `tenant_id` explicitly — RLS alone does not protect these reads. Every
+ * exported function therefore takes a `tenantId` argument, which Next.js
+ * automatically folds into the cache key (no manual key editing needed —
+ * see `getCachedProfile` in `src/lib/auth.ts` for the established pattern
+ * this follows). Callers resolve it via `getCurrentTenantId()` in
+ * `src/lib/tenant.ts`.
+ *
  * Usage in Server Components:
  *   import { getCachedProducts } from '@/lib/data/queries'
- *   const products = await getCachedProducts()
+ *   import { getCurrentTenantId } from '@/lib/tenant'
+ *   const tenantId = await getCurrentTenantId()
+ *   const products = await getCachedProducts(tenantId)
  */
 
 import { unstable_cache } from 'next/cache'
@@ -32,20 +44,22 @@ export const CACHE_TAGS = {
   purchaseOrders: 'purchase_orders',
   transactions: 'transactions',
   transactionCategories: 'transaction_categories',
+  customerCategories: 'customer_categories',
   dashboard: 'dashboard',
   analytics: 'analytics',
   cashbox: 'cashbox',
-  companySettings: 'company_settings',
+  tenants: 'tenants',
 } as const
 
 // ─── Inventory ─────────────────────────────────────────────────────────────────
 
 export const getCachedProducts = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('products')
       .select('*, categories(name)')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -54,11 +68,12 @@ export const getCachedProducts = unstable_cache(
 )
 
 export const getCachedCategories = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('categories')
       .select('*')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -67,11 +82,12 @@ export const getCachedCategories = unstable_cache(
 )
 
 export const getCachedMovements = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('stock_movements')
       .select('*, products(name)')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -82,11 +98,12 @@ export const getCachedMovements = unstable_cache(
 // ─── Sales ─────────────────────────────────────────────────────────────────────
 
 export const getCachedOrders = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('sales_orders')
       .select('*, customers(name)')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -95,11 +112,14 @@ export const getCachedOrders = unstable_cache(
 )
 
 export const getCachedCustomers = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    // `customer_categories` postdates the generated Supabase types (only exists once
+    // the customer-categories migration has been run) — cast to `any` until
+    // `database.types.ts` is regenerated against the live schema.
+    const supabase = getCacheClient() as any
     const [{ data: customers }, { data: unpaidInvoices }] = await Promise.all([
-      supabase.from('customers').select('*').order('created_at', { ascending: false }),
-      supabase.from('invoices').select('customer_id, total_amount, paid_amount').not('status', 'in', '("paid","cancelled")'),
+      supabase.from('customers').select('*, customer_categories(name)').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+      supabase.from('invoices').select('customer_id, total_amount, paid_amount').eq('tenant_id', tenantId).not('status', 'in', '("paid","cancelled")'),
     ])
 
     const debtByCustomer = new Map<string, number>()
@@ -109,18 +129,19 @@ export const getCachedCustomers = unstable_cache(
       debtByCustomer.set(inv.customer_id, (debtByCustomer.get(inv.customer_id) || 0) + outstanding)
     }
 
-    return (customers ?? []).map((c) => ({ ...c, total_debt: debtByCustomer.get(c.id) || 0 }))
+    return (customers ?? []).map((c: any) => ({ ...c, total_debt: debtByCustomer.get(c.id) || 0 }))
   },
   ['customers-list'],
-  { tags: [CACHE_TAGS.customers, CACHE_TAGS.invoices], revalidate: 60 }
+  { tags: [CACHE_TAGS.customers, CACHE_TAGS.invoices, CACHE_TAGS.customerCategories], revalidate: 60 }
 )
 
 export const getCachedInvoices = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('invoices')
       .select('*, customers(name), sales_orders(order_number)')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -131,11 +152,12 @@ export const getCachedInvoices = unstable_cache(
 // ─── HR ────────────────────────────────────────────────────────────────────────
 
 export const getCachedEmployees = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('employees')
       .select('*, profiles(full_name, email, avatar_url, departments!fk_profiles_department(name))')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -144,11 +166,12 @@ export const getCachedEmployees = unstable_cache(
 )
 
 export const getCachedDepartments = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('departments')
       .select('*')
+      .eq('tenant_id', tenantId)
       .order('name')
     return data ?? []
   },
@@ -159,11 +182,12 @@ export const getCachedDepartments = unstable_cache(
 // ─── Procurement ───────────────────────────────────────────────────────────────
 
 export const getCachedSuppliers = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('suppliers')
       .select('*')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -172,11 +196,12 @@ export const getCachedSuppliers = unstable_cache(
 )
 
 export const getCachedPurchaseOrders = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('purchase_orders')
       .select('*, suppliers(name)')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -187,11 +212,12 @@ export const getCachedPurchaseOrders = unstable_cache(
 // ─── Finance ───────────────────────────────────────────────────────────────────
 
 export const getCachedTransactions = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('transactions')
       .select('*')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -200,11 +226,12 @@ export const getCachedTransactions = unstable_cache(
 )
 
 export const getCachedTransactionCategories = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('transaction_categories')
       .select('*')
+      .eq('tenant_id', tenantId)
       .order('name')
     return data ?? []
   },
@@ -215,11 +242,12 @@ export const getCachedTransactionCategories = unstable_cache(
 // ─── Analytics ─────────────────────────────────────────────────────────────────
 
 export const getCachedSoldProducts = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('sales_order_items')
       .select('id, quantity, unit_price, unit_cost, total_price, products(id, name, cost_price, price, sku), sales_orders(id, order_number, status, order_date)')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
     return data ?? []
   },
@@ -228,8 +256,8 @@ export const getCachedSoldProducts = unstable_cache(
 )
 
 export const getCachedAnalyticsStats = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
 
     const [
       { data: orderItems },
@@ -237,10 +265,12 @@ export const getCachedAnalyticsStats = unstable_cache(
     ] = await Promise.all([
       supabase
         .from('sales_order_items')
-        .select('quantity, unit_price, unit_cost, total_price, products(name, cost_price, price), sales_orders(order_date, status)'),
+        .select('quantity, unit_price, unit_cost, total_price, products(name, cost_price, price), sales_orders(order_date, status)')
+        .eq('tenant_id', tenantId),
       supabase
         .from('sales_orders')
         .select('id, total_amount, order_date, status')
+        .eq('tenant_id', tenantId)
         .order('order_date', { ascending: true }),
     ])
 
@@ -314,8 +344,8 @@ export const getCachedAnalyticsStats = unstable_cache(
 // ─── Dashboard stats (heavier query, shorter cache) ───────────────────────────
 
 export const getCachedDashboardStats = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const sixMonthsAgo = new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split('T')[0]
@@ -339,33 +369,36 @@ export const getCachedDashboardStats = unstable_cache(
       soldItemsRes,
       costLayersRes,
     ] = await Promise.all([
-      supabase.from('sales_orders').select('*', { count: 'exact', head: true }),
-      supabase.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true),
-      supabase.from('customers').select('*', { count: 'exact', head: true }).eq('is_active', true),
-      supabase.from('employees').select('*', { count: 'exact', head: true }).eq('is_active', true),
-      supabase.from('suppliers').select('*', { count: 'exact', head: true }),
+      supabase.from('sales_orders').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      supabase.from('products').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
+      supabase.from('customers').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
+      supabase.from('employees').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
+      supabase.from('suppliers').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       supabase
         .from('sales_orders')
         .select('id, order_number, status, total_amount, order_date, customers(name)')
+        .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
         .limit(5),
       supabase
         .from('transactions')
         .select('amount, type, transaction_date')
+        .eq('tenant_id', tenantId)
         .gte('transaction_date', sixMonthsAgo)
         .order('transaction_date', { ascending: true }),
-      supabase.from('transactions').select('amount, type, transaction_date'),
-      supabase.from('products').select('id, name, sku, stock, min_stock').order('stock', { ascending: true }).limit(10),
-      supabase.from('invoices').select('*', { count: 'exact', head: true }).in('status', ['sent', 'overdue']),
-      supabase.from('cashboxes').select('balance'),
-      supabase.from('products').select('stock, cost_price').eq('is_active', true),
-      supabase.from('invoices').select('total_amount, paid_amount').not('status', 'in', '("paid","cancelled")'),
-      supabase.from('purchase_orders').select('total_amount').neq('status', 'cancelled'),
-      supabase.from('transactions').select('amount').eq('type', 'expense').not('supplier_id', 'is', null),
+      supabase.from('transactions').select('amount, type, transaction_date').eq('tenant_id', tenantId),
+      supabase.from('products').select('id, name, sku, stock, min_stock').eq('tenant_id', tenantId).order('stock', { ascending: true }).limit(10),
+      supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['sent', 'overdue']),
+      supabase.from('cashboxes').select('balance').eq('tenant_id', tenantId),
+      supabase.from('products').select('stock, cost_price').eq('tenant_id', tenantId).eq('is_active', true),
+      supabase.from('invoices').select('total_amount, paid_amount').eq('tenant_id', tenantId).not('status', 'in', '("paid","cancelled")'),
+      supabase.from('purchase_orders').select('total_amount').eq('tenant_id', tenantId).neq('status', 'cancelled'),
+      supabase.from('transactions').select('amount').eq('tenant_id', tenantId).eq('type', 'expense').not('supplier_id', 'is', null),
       supabase
         .from('sales_order_items')
-        .select('quantity, total_price, unit_cost, products(cost_price), sales_orders(order_date)'),
-      supabase.from('inventory_cost_layers').select('remaining_qty, unit_cost').gt('remaining_qty', 0),
+        .select('quantity, total_price, unit_cost, products(cost_price), sales_orders(order_date)')
+        .eq('tenant_id', tenantId),
+      supabase.from('inventory_cost_layers').select('remaining_qty, unit_cost').eq('tenant_id', tenantId).gt('remaining_qty', 0),
     ])
 
     const incomeRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'income')
@@ -431,31 +464,15 @@ export const getCachedDashboardStats = unstable_cache(
   }
 )
 
-// ─── Company settings (single row) ────────────────────────────────────────────
-
-export const getCachedCompanySettings = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
-    const { data } = await supabase
-      .from('company_settings')
-      .select('*')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .single()
-    return data ?? { default_costing_method: 'fifo' }
-  },
-  ['company-settings'],
-  { tags: [CACHE_TAGS.companySettings], revalidate: 300 }
-)
-
 // ─── Form select options (very stable data) ───────────────────────────────────
 
 export const getCachedCategoriesForSelect = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('categories')
       .select('id, name')
+      .eq('tenant_id', tenantId)
       .order('name')
     return data ?? []
   },
@@ -463,29 +480,33 @@ export const getCachedCategoriesForSelect = unstable_cache(
   { tags: [CACHE_TAGS.categories], revalidate: 120 }
 )
 
-export const getCachedProductsForSelect = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
-    // `costing_method` postdates the generated Supabase types (only exists once the
-    // costing migration has been run) — cast to `any` until `database.types.ts` is
-    // regenerated against the live schema.
-    const { data } = await (supabase as any)
-      .from('products')
-      .select('id, name, price, cost_price, stock, unit, sku, costing_method')
-      .eq('is_active', true)
-      .order('name')
-    return (data ?? []) as { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; costing_method: string | null }[]
-  },
-  ['products-select'],
-  { tags: [CACHE_TAGS.products], revalidate: 60 }
-)
+// Deliberately NOT wrapped in unstable_cache: this only powers the product picker on
+// the rarely-visited "new sales order"/"new purchase order" pages, where a stale list
+// (e.g. missing a product created seconds ago) is actively harmful and an extra DB
+// round-trip is free. Tag-based invalidation of a cached version of this exact query
+// was observed to not reliably pick up a just-created product, so it's simplest and
+// most reliable to just not cache it at all here.
+export async function getCachedProductsForSelect(tenantId: string) {
+  const supabase = getCacheClient() as any
+  // `costing_method` postdates the generated Supabase types (only exists once the
+  // costing migration has been run) — cast to `any` until `database.types.ts` is
+  // regenerated against the live schema.
+  const { data } = await (supabase as any)
+    .from('products')
+    .select('id, name, price, cost_price, stock, unit, sku, costing_method')
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true)
+    .order('name')
+  return (data ?? []) as { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; costing_method: string | null }[]
+}
 
 export const getCachedDepartmentsForSelect = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('departments')
       .select('id, name')
+      .eq('tenant_id', tenantId)
       .order('name')
     return data ?? []
   },
@@ -494,11 +515,12 @@ export const getCachedDepartmentsForSelect = unstable_cache(
 )
 
 export const getCachedSuppliersForSelect = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('suppliers')
       .select('id, name')
+      .eq('tenant_id', tenantId)
       .order('name')
     return data ?? []
   },
@@ -507,11 +529,12 @@ export const getCachedSuppliersForSelect = unstable_cache(
 )
 
 export const getCachedCustomersForSelect = unstable_cache(
-  async () => {
-    const supabase = getCacheClient()
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('customers')
       .select('id, name')
+      .eq('tenant_id', tenantId)
       .order('name')
     return data ?? []
   },
@@ -519,27 +542,43 @@ export const getCachedCustomersForSelect = unstable_cache(
   { tags: [CACHE_TAGS.customers], revalidate: 120 }
 )
 
+export const getCachedCustomerCategories = unstable_cache(
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const { data } = await supabase
+      .from('customer_categories')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('name')
+    return data ?? []
+  },
+  ['customer-categories-list'],
+  { tags: [CACHE_TAGS.customerCategories], revalidate: 60 }
+)
+
 export const getCachedCustomerById = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('customers')
-      .select('*')
+      .select('*, customer_categories(name)')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
     return data
   },
   ['customer-by-id'],
-  { tags: [CACHE_TAGS.customers], revalidate: 60 }
+  { tags: [CACHE_TAGS.customers, CACHE_TAGS.customerCategories], revalidate: 60 }
 )
 
 export const getCachedOrderById = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('sales_orders')
       .select('*, customers(name)')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
     return data
   },
@@ -548,12 +587,13 @@ export const getCachedOrderById = unstable_cache(
 )
 
 export const getCachedInvoiceById = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('invoices')
       .select('*, customers(name), sales_orders(order_number)')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
     return data
   },
@@ -562,12 +602,13 @@ export const getCachedInvoiceById = unstable_cache(
 )
 
 export const getCachedTransactionById = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('transactions')
       .select('*')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
     return data
   },
@@ -576,42 +617,45 @@ export const getCachedTransactionById = unstable_cache(
 )
 
 export const getCachedEmployeeById = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data, error } = await supabase
       .from('employees')
       .select('*')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
     if (error) throw error
     return data
   },
   ['employee-by-id'],
-  { tags: ['employees'], revalidate: 3600 }
+  { tags: [CACHE_TAGS.employees], revalidate: 3600 }
 )
 
 export const getCachedDepartmentById = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data, error } = await supabase
       .from('departments')
       .select('*')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
     if (error) throw error
     return data
   },
   ['department-by-id'],
-  { tags: ['departments'], revalidate: 3600 }
+  { tags: [CACHE_TAGS.departments], revalidate: 3600 }
 )
 
 export const getCachedSupplierById = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('suppliers')
       .select('*')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
     return data
   },
@@ -620,27 +664,30 @@ export const getCachedSupplierById = unstable_cache(
 )
 
 export const getCachedProductDetails = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    // `costing_method` on tenants postdates the generated Supabase types until
+    // `database.types.ts` is regenerated — cast to `any` for that one column.
+    const supabase = getCacheClient() as any
     const [
       { data: product },
       { data: movements },
       { data: salesOrderItems },
       { data: purchaseOrderItems },
       { data: costLayers },
-      { data: companySettings },
+      { data: tenant },
     ] = await Promise.all([
-      supabase.from('products').select('*, categories(name)').eq('id', id).single(),
-      supabase.from('stock_movements').select('*').eq('product_id', id).order('created_at', { ascending: false }),
-      supabase.from('sales_order_items').select('quantity, total_price, sales_orders(order_number, order_date, status, customers(name))').eq('product_id', id),
-      supabase.from('purchase_order_items').select('quantity, total_cost, purchase_orders(po_number, order_date, status, suppliers(name))').eq('product_id', id),
+      supabase.from('products').select('*, categories(name)').eq('id', id).eq('tenant_id', tenantId).single(),
+      supabase.from('stock_movements').select('*').eq('product_id', id).eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+      supabase.from('sales_order_items').select('quantity, total_price, sales_orders(order_number, order_date, status, customers(name))').eq('product_id', id).eq('tenant_id', tenantId),
+      supabase.from('purchase_order_items').select('quantity, total_cost, purchase_orders(po_number, order_date, status, suppliers(name))').eq('product_id', id).eq('tenant_id', tenantId),
       supabase
         .from('inventory_cost_layers')
         .select('id, quantity, remaining_qty, unit_cost, source_type, received_at')
         .eq('product_id', id)
+        .eq('tenant_id', tenantId)
         .gt('remaining_qty', 0)
         .order('received_at', { ascending: true }),
-      supabase.from('company_settings').select('default_costing_method').limit(1).single(),
+      supabase.from('tenants').select('costing_method').eq('id', tenantId).single(),
     ])
 
     // Resolve where each movement came from: purchase order (+ supplier) or sales order (+ customer)
@@ -649,10 +696,10 @@ export const getCachedProductDetails = unstable_cache(
 
     const [poRes, orderRes] = await Promise.all([
       poIds.length
-        ? supabase.from('purchase_orders').select('id, po_number, suppliers(name)').in('id', poIds)
+        ? supabase.from('purchase_orders').select('id, po_number, suppliers(name)').in('id', poIds).eq('tenant_id', tenantId)
         : Promise.resolve({ data: [] }),
       orderIds.length
-        ? supabase.from('sales_orders').select('id, order_number, customers(name)').in('id', orderIds)
+        ? supabase.from('sales_orders').select('id, order_number, customers(name)').in('id', orderIds).eq('tenant_id', tenantId)
         : Promise.resolve({ data: [] }),
     ])
 
@@ -675,11 +722,8 @@ export const getCachedProductDetails = unstable_cache(
       return { ...m, source }
     })
 
-    // `inventory_cost_layers`/`company_settings` postdate the generated Supabase types
-    // (they only exist once the costing migration has been run), so these are `any`
-    // until `database.types.ts` is regenerated against the live schema.
     const layers: any[] = costLayers ?? []
-    const effectiveMethod: string = (product as any)?.costing_method ?? (companySettings as any)?.default_costing_method ?? 'fifo'
+    const effectiveMethod: string = (product as any)?.costing_method ?? (tenant as any)?.costing_method ?? 'fifo'
 
     // What the *next* sale would actually be charged under the active method — can
     // differ from products.cost_price (a blended average) under FIFO/LIFO.
@@ -709,18 +753,19 @@ export const getCachedProductDetails = unstable_cache(
   },
   ['product-details-by-id'],
   {
-    tags: [CACHE_TAGS.products, CACHE_TAGS.movements, CACHE_TAGS.orders, CACHE_TAGS.purchaseOrders, CACHE_TAGS.companySettings],
+    tags: [CACHE_TAGS.products, CACHE_TAGS.movements, CACHE_TAGS.orders, CACHE_TAGS.purchaseOrders, CACHE_TAGS.tenants],
     revalidate: 30,
   }
 )
 
 export const getCachedEmployeeDetails = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const { data: employee } = await supabase
       .from('employees')
       .select('*, profiles(*, departments!fk_profiles_department(name))')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
 
     if (!employee) return null
@@ -734,12 +779,14 @@ export const getCachedEmployeeDetails = unstable_cache(
         .from('transactions')
         .select('*')
         .eq('employee_id', id)
+        .eq('tenant_id', tenantId)
         .order('transaction_date', { ascending: false }),
       profileId
         ? supabase
             .from('sales_orders')
             .select('*, customers(name)')
             .eq('created_by', profileId)
+            .eq('tenant_id', tenantId)
             .order('order_date', { ascending: false })
         : Promise.resolve({ data: [] })
     ])
@@ -755,16 +802,16 @@ export const getCachedEmployeeDetails = unstable_cache(
 )
 
 export const getCachedSupplierDetails = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const [
       { data: supplier },
       { data: purchaseOrders },
       { data: transactions },
     ] = await Promise.all([
-      supabase.from('suppliers').select('*').eq('id', id).single(),
-      supabase.from('purchase_orders').select('*').eq('supplier_id', id).order('order_date', { ascending: false }),
-      supabase.from('transactions').select('*').eq('supplier_id', id).order('transaction_date', { ascending: false }),
+      supabase.from('suppliers').select('*').eq('id', id).eq('tenant_id', tenantId).single(),
+      supabase.from('purchase_orders').select('*').eq('supplier_id', id).eq('tenant_id', tenantId).order('order_date', { ascending: false }),
+      supabase.from('transactions').select('*').eq('supplier_id', id).eq('tenant_id', tenantId).order('transaction_date', { ascending: false }),
     ])
 
     return {
@@ -778,18 +825,18 @@ export const getCachedSupplierDetails = unstable_cache(
 )
 
 export const getCachedCustomerDetails = unstable_cache(
-  async (id: string) => {
-    const supabase = getCacheClient()
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
     const [
       { data: customer },
       { data: salesOrders },
       { data: invoices },
       { data: transactions },
     ] = await Promise.all([
-      supabase.from('customers').select('*').eq('id', id).single(),
-      supabase.from('sales_orders').select('*').eq('customer_id', id).order('order_date', { ascending: false }),
-      supabase.from('invoices').select('*').eq('customer_id', id).order('issued_at', { ascending: false }),
-      supabase.from('transactions').select('*').eq('customer_id', id).order('transaction_date', { ascending: false }),
+      supabase.from('customers').select('*, customer_categories(name)').eq('id', id).eq('tenant_id', tenantId).single(),
+      supabase.from('sales_orders').select('*').eq('customer_id', id).eq('tenant_id', tenantId).order('order_date', { ascending: false }),
+      supabase.from('invoices').select('*').eq('customer_id', id).eq('tenant_id', tenantId).order('issued_at', { ascending: false }),
+      supabase.from('transactions').select('*').eq('customer_id', id).eq('tenant_id', tenantId).order('transaction_date', { ascending: false }),
     ])
 
     return {
@@ -800,6 +847,5 @@ export const getCachedCustomerDetails = unstable_cache(
     }
   },
   ['customer-details-by-id'],
-  { tags: [CACHE_TAGS.customers, CACHE_TAGS.orders, CACHE_TAGS.invoices, CACHE_TAGS.transactions], revalidate: 30 }
+  { tags: [CACHE_TAGS.customers, CACHE_TAGS.orders, CACHE_TAGS.invoices, CACHE_TAGS.transactions, CACHE_TAGS.customerCategories], revalidate: 30 }
 )
-

@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { ProductsTable } from '@/components/inventory/products-table'
 import { getCachedProducts } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 // Cache the full page response for 60 seconds
 export const revalidate = 60
@@ -20,9 +21,10 @@ export default async function ProductsPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, products] = await Promise.all([
     getTranslations('inventory'),
-    getCachedProducts(),
+    getCachedProducts(tenantId),
   ])
 
   return (

@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   Package,
   Users,
-  TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
   Plus,
@@ -16,14 +15,14 @@ import {
   Layers,
   Truck,
   AlertTriangle,
+  FileText,
+  Contact,
+  Tag,
+  Building2,
+  FolderPlus,
+  UserPlus,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import { RevenueChart } from '@/components/dashboard/revenue-chart'
-import { RecentOrders } from '@/components/dashboard/recent-orders'
-import { LowStockAlert } from '@/components/dashboard/low-stock-alert'
-import { AnalyticsStats } from '@/components/analytics/analytics-stats'
-import { AnalyticsCharts } from '@/components/analytics/analytics-charts'
-import { SoldProductsTable } from '@/components/analytics/sold-products-table'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 
 const formatDateISO = (d: Date) => {
@@ -53,18 +52,9 @@ interface DashboardClientProps {
     totalPayables?: number
     soldItems?: { order_date: string; revenue: number; cost: number }[]
   }
-  analytics: {
-    aggregatedProducts: any[]
-    totalRevenue: number
-    totalProfit: number
-    totalSold: number
-    totalOrders: number
-    avgOrderValue: number
-    chartData: any[]
-  }
 }
 
-export function DashboardClient({ lang, stats, analytics }: DashboardClientProps) {
+export function DashboardClient({ lang, stats }: DashboardClientProps) {
   const [period, setPeriod] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('dashboard_period')
@@ -116,6 +106,11 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
   }, [])
 
   const td = useTranslations('dashboard')
+  const tSales = useTranslations('sales')
+  const tInventory = useTranslations('inventory')
+  const tProcurement = useTranslations('procurement')
+  const tFinance = useTranslations('finance')
+  const tHr = useTranslations('hr')
 
   const {
     totalOrders,
@@ -123,7 +118,6 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     totalCustomers,
     totalEmployees,
     totalSuppliers,
-    recentOrders,
     chartTxData,
     incomeRows,
     expenseRows,
@@ -232,28 +226,18 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
   // Dynamic filter function
   const getFilteredMetrics = () => {
     let filteredTx = chartTxData
-    let filteredOrdersList = recentOrders
 
     if (period === 'today') {
       filteredTx = chartTxData.filter((tx) => tx.transaction_date === todayStr)
-      filteredOrdersList = recentOrders.filter((o) => o.order_date?.split('T')[0] === todayStr)
     } else if (period === 'yesterday') {
       filteredTx = chartTxData.filter((tx) => tx.transaction_date === yesterdayStr)
-      filteredOrdersList = recentOrders.filter((o) => o.order_date?.split('T')[0] === yesterdayStr)
     } else if (period === 'week') {
       filteredTx = chartTxData.filter((tx) => new Date(tx.transaction_date) >= weekAgo)
-      filteredOrdersList = recentOrders.filter((o) => new Date(o.order_date) >= weekAgo)
     } else if (period === 'month') {
       filteredTx = chartTxData.filter((tx) => new Date(tx.transaction_date) >= monthAgo)
-      filteredOrdersList = recentOrders.filter((o) => new Date(o.order_date) >= monthAgo)
     } else if (period === 'custom') {
       filteredTx = chartTxData.filter((tx) => {
         const d = new Date(tx.transaction_date)
-        return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
-      })
-      filteredOrdersList = recentOrders.filter((o) => {
-        if (!o.order_date) return false
-        const d = new Date(o.order_date)
         return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
       })
     }
@@ -299,57 +283,12 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     const profit = salesRevenue - costOfGoods
     const avgCheck = saleCount > 0 ? rev / saleCount : 0
 
-    // Construct Chart Data
-    let revenueChartData: { month: string; income: number; expense: number }[] = []
-    
-    if (period === 'all') {
-      const monthlyData: Record<string, { income: number; expense: number }> = {}
-      chartTxData.forEach((tx) => {
-        const month = tx.transaction_date.slice(0, 7)
-        if (!monthlyData[month]) monthlyData[month] = { income: 0, expense: 0 }
-        if (tx.type === 'income') monthlyData[month].income += tx.amount
-        else monthlyData[month].expense += tx.amount
-      })
-      revenueChartData = Object.entries(monthlyData).map(([month, data]) => ({
-        month,
-        income: data.income,
-        expense: data.expense,
-      }))
-    } else if (period === 'month' || period === 'week' || period === 'custom') {
-      // Transactions only carry a date (no time), so custom ranges get the same
-      // daily granularity as week/month rather than an hourly breakdown.
-      const dailyData: Record<string, { income: number; expense: number }> = {}
-      filteredTx.forEach((tx) => {
-        const day = tx.transaction_date
-        if (!dailyData[day]) dailyData[day] = { income: 0, expense: 0 }
-        if (tx.type === 'income') dailyData[day].income += tx.amount
-        else dailyData[day].expense += tx.amount
-      })
-      revenueChartData = Object.entries(dailyData)
-        .map(([day, data]) => ({
-          month: day,
-          income: data.income,
-          expense: data.expense,
-        }))
-        .sort((a, b) => a.month.localeCompare(b.month))
-    } else {
-      // Today & Yesterday: Hourly distribution
-      revenueChartData = [
-        { month: '09:00', income: rev * 0.15, expense: exp * 0.2 },
-        { month: '12:00', income: rev * 0.35, expense: exp * 0.3 },
-        { month: '15:00', income: rev * 0.25, expense: exp * 0.4 },
-        { month: '18:00', income: rev * 0.25, expense: exp * 0.1 },
-      ]
-    }
-
     return {
       revenue: rev,
       expenses: exp,
       profit,
       avgCheck,
       ordersCount: saleCount,
-      revenueChartData,
-      filteredOrdersList,
     }
   }
 
@@ -367,7 +306,6 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     all: td('all'),
     quickActions: td('quickActions'),
     financialHealth: td('financialHealth'),
-    topProducts: td('topProducts'),
     sales: td('sales'),
     profit: td('profit'),
     expenses: td('expenses'),
@@ -380,7 +318,6 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
     addIncome: td('addIncome'),
     addExpense: td('addExpense'),
     // scanner: td('scanner'),
-    recentOrdersTitle: td('recentOrdersTitle'),
     lowStockTitle: td('lowStockTitle'),
     activeCustomers: td('activeCustomers'),
     activeEmployees: td('activeEmployees'),
@@ -429,44 +366,46 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
         </div>
       </div>
 
-      {/* Quick Action Launchpad */}
+      {/* Quick Action Launchpad — every "create new" page in the sidebar, one tap away */}
       <div className="bg-white p-5 rounded-xl border shadow-sm space-y-3">
         <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
           <Zap className="h-4 w-4 text-indigo-600" />
-          {/* {t.quickActions} */}
+          {t.quickActions}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Link
-            href={`/${lang}/sales/orders/new`}
-            className="flex items-center justify-start gap-2 h-12 px-4 py-2 border border-indigo-100 bg-indigo-50/20 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 transition-colors text-sm font-semibold rounded-lg"
-          >
-            <Plus className="h-4 w-4" />
-            <span>{t.newSale}</span>
-          </Link>
-
-          <Link
-            href={`/${lang}/finance/transactions/new?type=income`}
-            className="flex items-center justify-start gap-2 h-12 px-4 py-2 border border-emerald-100 bg-emerald-50/20 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 transition-colors text-sm font-semibold rounded-lg"
-          >
-            <ArrowUpRight className="h-4 w-4" />
-            <span>{t.addIncome}</span>
-          </Link>
-
-          <Link
-            href={`/${lang}/finance/transactions/new?type=expense`}
-            className="flex items-center justify-start gap-2 h-12 px-4 py-2 border border-rose-100 bg-rose-50/20 text-rose-700 hover:bg-rose-50 hover:text-rose-800 transition-colors text-sm font-semibold rounded-lg"
-          >
-            <ArrowDownRight className="h-4 w-4" />
-            <span>{t.addExpense}</span>
-          </Link>
-
-          {/* <Link
-            href={`/${lang}/tools/scanner`}
-            className="flex items-center justify-start gap-2 h-12 px-4 py-2 border border-amber-100 bg-amber-50/20 text-amber-700 hover:bg-amber-50 hover:text-amber-800 transition-colors text-sm font-semibold rounded-lg"
-          >
-            <Package className="h-4 w-4" />
-            <span>{t.scanner}</span>
-          </Link> */}
+          {[
+            { href: 'sales/orders/new', label: t.newSale, icon: Plus, tone: 'indigo' },
+            { href: 'finance/transactions/new?type=income', label: t.addIncome, icon: ArrowUpRight, tone: 'emerald' },
+            { href: 'finance/transactions/new?type=expense', label: t.addExpense, icon: ArrowDownRight, tone: 'rose' },
+            { href: 'sales/invoices/new', label: tSales('addInvoice'), icon: FileText, tone: 'blue' },
+            { href: 'customers/new', label: tSales('addCustomer'), icon: Contact, tone: 'slate' },
+            { href: 'inventory/products/new', label: tInventory('addProduct'), icon: Package, tone: 'amber' },
+            { href: 'inventory/categories/new', label: tInventory('addCategory'), icon: Tag, tone: 'amber' },
+            { href: 'procurement/purchase-orders/new', label: tProcurement('addPurchase'), icon: Truck, tone: 'indigo' },
+            { href: 'procurement/suppliers/new', label: tProcurement('addSupplier'), icon: Building2, tone: 'blue' },
+            { href: 'finance/categories/new', label: tFinance('addTxCategory'), icon: FolderPlus, tone: 'slate' },
+            { href: 'hr/employees/new', label: tHr('addEmployee'), icon: UserPlus, tone: 'emerald' },
+          ].map((action) => {
+            const Icon = action.icon
+            const toneClasses: Record<string, string> = {
+              indigo: 'border-indigo-100 bg-indigo-50/20 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800',
+              emerald: 'border-emerald-100 bg-emerald-50/20 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800',
+              rose: 'border-rose-100 bg-rose-50/20 text-rose-700 hover:bg-rose-50 hover:text-rose-800',
+              blue: 'border-blue-100 bg-blue-50/20 text-blue-700 hover:bg-blue-50 hover:text-blue-800',
+              amber: 'border-amber-100 bg-amber-50/20 text-amber-700 hover:bg-amber-50 hover:text-amber-800',
+              slate: 'border-slate-200 bg-slate-50/40 text-slate-700 hover:bg-slate-100 hover:text-slate-900',
+            }
+            return (
+              <Link
+                key={action.href}
+                href={`/${lang}/${action.href}`}
+                className={`flex items-center justify-start gap-2 h-12 px-4 py-2 border transition-colors text-sm font-semibold rounded-lg ${toneClasses[action.tone]}`}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="truncate">{action.label}</span>
+              </Link>
+            )
+          })}
         </div>
       </div>
 
@@ -594,80 +533,6 @@ export function DashboardClient({ lang, stats, analytics }: DashboardClientProps
         </div>
       </div>
 
-      {/* Charts + Side Panels */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Area (Chart + Table) */}
-        <div className="lg:col-span-2 space-y-6">
-          <RevenueChart data={metrics.revenueChartData} title={td('revenueChartTitle')} />
-          <RecentOrders orders={metrics.filteredOrdersList} lang={lang} title={t.recentOrdersTitle} />
-        </div>
-
-        {/* Right Side Widgets (Top Products + Low Stock) */}
-        <div className="space-y-6">
-          {/* Top Selling Products Widget */}
-          <div className="bg-white p-5 rounded-xl border shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-slate-800 tracking-tight flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-emerald-600" />
-              {t.topProducts}
-            </h3>
-            
-            <div className="space-y-3.5">
-              {analytics.aggregatedProducts.slice(0, 5).map((p, idx) => (
-                <div key={p.name} className="flex flex-col gap-1.5 p-3 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold text-slate-800 truncate pr-2">{idx + 1}. {p.name}</span>
-                    <span className="font-bold text-indigo-600 whitespace-nowrap">{formatCurrency(p.totalSum)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{td('soldText', { count: p.quantity })}</span>
-                    <span>{t.profit}: {formatCurrency(p.profit)}</span>
-                  </div>
-                  {/* progress indicator */}
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1">
-                    <div 
-                      className="bg-indigo-500 h-full rounded-full transition-all duration-500" 
-                      style={{ width: `${Math.min(100, (p.totalSum / (analytics.aggregatedProducts[0]?.totalSum || 1)) * 100)}%` }} 
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <LowStockAlert products={lowStock} lang={lang} />
-        </div>
-      </div>
-
-      {/* Analytics Section Integrated */}
-      <div className="pt-8 mt-8 border-t space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-indigo-600" />
-              {td('analyticsTitle', { fallback: 'Analitika' })}
-            </h2>
-          </div>
-
-        </div>
-
-        <AnalyticsStats
-          totalRevenue={analytics.totalRevenue}
-          totalProfit={analytics.totalProfit}
-          totalSold={analytics.totalSold}
-          totalOrders={analytics.totalOrders}
-          avgOrderValue={analytics.avgOrderValue}
-        />
-
-        <AnalyticsCharts
-          chartData={analytics.chartData}
-          topProducts={analytics.aggregatedProducts.slice(0, 7)}
-        />
-
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-3">{td('soldProducts', { fallback: 'Sotilgan maxsulotlar' })}</h2>
-          <SoldProductsTable products={analytics.aggregatedProducts} lang={lang} />
-        </div>
-      </div>
     </div>
   )
 }

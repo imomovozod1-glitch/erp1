@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { TransactionsTable } from '@/components/finance/transactions-table'
 import { FinanceSummary } from '@/components/finance/finance-summary'
 import { getCachedTransactions } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export const revalidate = 30
 
@@ -12,8 +13,9 @@ export const metadata: Metadata = { title: 'Finance' }
 
 export default async function TransactionsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const t = await getTranslations('finance')
-  const transactions = await getCachedTransactions()
+  const transactions = await getCachedTransactions(tenantId)
 
   const totalIncome = transactions
     .filter((t: any) => t.type === 'income')

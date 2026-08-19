@@ -96,7 +96,7 @@
     "settings": "Настройки",
     "tools": "Инструменты",
     "pos": "POS",
-    "customers": "Клиенты"
+    "customers": "CRM"
   },
   "auth": {
     "loading": "Вход...",
@@ -104,6 +104,9 @@
     "logout": "Выйти",
     "register": "Регистрация",
     "email": "Электронная почта",
+    "phone": "Номер телефона",
+    "phoneRequired": "Введите номер телефона",
+    "invalidPhone": "Неверный номер телефона",
     "password": "Пароль",
     "confirmPassword": "Подтвердите пароль",
     "fullName": "Полное имя",
@@ -120,6 +123,15 @@
     "passwordRequired": "Пароль обязателен",
     "invalidEmail": "Неверный адрес электронной почты",
     "invalidCredentials": "Неверная почта или пароль"
+  },
+  "tenantStatus": {
+    "notFoundTitle": "Организация не найдена",
+    "notFoundMessage": "По этому домену не зарегистрирована ни одна организация. Проверьте адрес или свяжитесь с администратором.",
+    "blockedTitle": "Ваш аккаунт заблокирован",
+    "blockedMessage": "Аккаунт заблокирован из-за неоплаты. Свяжитесь с администратором, чтобы продолжить работу.",
+    "inactiveTitle": "Аккаунт неактивен",
+    "inactiveMessage": "Ваш аккаунт пока не активен. Свяжитесь с администратором для активации.",
+    "contactSupport": "Связаться с администратором"
   },
   "dashboard": {
     "title": "Панель управления",
@@ -318,7 +330,11 @@
       "sent": "Новый",
       "paid": "Завершен",
       "overdue": "Просрочен"
-    }
+    },
+    "category": "Категория",
+    "customerCategories": "Категории клиентов",
+    "addCustomerCategory": "Добавить категорию",
+    "editCustomerCategory": "Редактировать категорию"
   },
   "finance": {
     "title": "Финансы",
@@ -544,5 +560,115 @@
     "ticketSuccess": "Ваше обращение успешно отправлено. Мы свяжемся с вами в ближайшее время!",
     "liveStatus": "Наши операторы онлайн",
     "liveStatusDesc": "Среднее время ответа: 5 минут"
+  },
+  "admin": {
+    "login": {
+      "brandTitle": "ERP Admin",
+      "brandSubtitle": "Консоль супер-администратора",
+      "heading": "Вход в систему",
+      "subheading": "Доступ вендора для управления аккаунтами арендаторов",
+      "email": "Электронная почта",
+      "emailPlaceholder": "admin@company.com",
+      "emailInvalid": "Введите корректный адрес электронной почты",
+      "password": "Пароль",
+      "passwordRequired": "Введите пароль",
+      "signingIn": "Выполняется вход...",
+      "signIn": "Войти",
+      "invalidCredentials": "Неверный email или пароль"
+    },
+    "shell": {
+      "tenants": "Арендаторы",
+      "logout": "Выйти"
+    },
+    "tenants": {
+      "title": "Арендаторы",
+      "count": "{count, plural, one {# аккаунт} few {# аккаунта} many {# аккаунтов} other {# аккаунта}}",
+      "searchPlaceholder": "Поиск по компании, субдомену или телефону...",
+      "newTenant": "Новый арендатор",
+      "colCompany": "Компания",
+      "colSubdomain": "Субдомен",
+      "colPhone": "Телефон",
+      "colStatus": "Статус",
+      "colCosting": "Метод учёта",
+      "colSubscriptionEnds": "Окончание подписки",
+      "colPricePaid": "Оплачено",
+      "empty": "Арендаторы не найдены",
+      "statusActive": "Активен",
+      "statusBlocked": "Заблокирован",
+      "statusInactive": "Неактивен",
+      "filterAll": "Все",
+      "prev": "Назад",
+      "next": "Вперёд",
+      "statTotal": "Всего арендаторов",
+      "statActive": "Активных",
+      "statBlocked": "Заблокировано",
+      "statRevenue": "Общий доход",
+      "new": {
+        "title": "Новый арендатор",
+        "subtitle": "Создайте новый аккаунт компании со своим субдоменом и данными для входа"
+      },
+      "detail": {
+        "back": "Назад к арендаторам",
+        "ownerLogin": "Данные для входа владельца",
+        "dangerZone": "Опасная зона",
+        "dangerZoneDesc": "Удаление арендатора необратимо и разрешено только после 180 дней неактивности"
+      }
+    },
+    "form": {
+      "companyName": "Название компании",
+      "companyNameRequired": "Введите название компании",
+      "subdomain": "Субдомен",
+      "subdomainHint": "Только строчные латинские буквы, цифры и дефис",
+      "subdomainInvalid": "Используйте только строчные латинские буквы, цифры и дефис",
+      "phone": "Телефон (для входа)",
+      "phoneInvalid": "Введите корректный номер телефона",
+      "password": "Пароль",
+      "passwordRequired": "Пароль должен содержать не менее 6 символов",
+      "status": "Статус",
+      "statusActive": "Активен",
+      "statusBlocked": "Заблокирован (нет оплаты)",
+      "statusInactive": "Неактивен",
+      "costingMethod": "Метод учёта (FIFO/LIFO/AVECO)",
+      "subscriptionStart": "Начало подписки",
+      "subscriptionEnd": "Окончание подписки",
+      "subscriptionEndBeforeStart": "Дата окончания должна быть позже даты начала",
+      "subscriptionStartRequired": "Введите дату начала подписки",
+      "pricePaid": "Оплаченная сумма",
+      "pricePaidRequired": "Введите оплаченную сумму",
+      "pricePaidNegative": "Сумма не может быть отрицательной",
+      "details": "Детали",
+      "create": "Создать арендатора",
+      "save": "Сохранить",
+      "cancel": "Отмена",
+      "createSuccess": "Арендатор создан",
+      "updateSuccess": "Арендатор обновлён",
+      "genericError": "Что-то пошло не так",
+      "companyNamePlaceholder": "Например: Online Market",
+      "subdomainPlaceholder": "acme",
+      "phonePlaceholder": "+998 90 123 45 67",
+      "passwordPlaceholder": "••••••••",
+      "detailsPlaceholder": "Дополнительные заметки, номер договора и т.д.",
+      "sectionBasics": "Компания и вход",
+      "sectionSubscription": "Подписка и оплата",
+      "sectionNotes": "Дополнительно"
+    },
+    "password": {
+      "show": "Показать пароль",
+      "hide": "Скрыть пароль"
+    },
+    "resetPassword": {
+      "newPassword": "Новый пароль",
+      "submit": "Обновить",
+      "success": "Пароль обновлён",
+      "error": "Не удалось обновить пароль",
+      "tooShort": "Пароль должен содержать не менее 6 символов"
+    },
+    "delete": {
+      "button": "Удалить арендатора",
+      "confirm": "Полностью удалить «{name}»? Это действие необратимо.",
+      "enabledAfter": "Станет доступно после 180 дней неактивности — осталось {days} дн.",
+      "success": "Арендатор удалён",
+      "error": "Не удалось удалить арендатора"
+    }
   }
 }

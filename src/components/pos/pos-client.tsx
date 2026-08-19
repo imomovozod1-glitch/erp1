@@ -335,15 +335,16 @@ export function POSClient({
       // Cost each cart line at whatever FIFO/LIFO/AVECO charges right now — has to happen
       // before the parallel batch below since both the order item and the stock movement
       // need the realized cost, and layer consumption isn't safe to run twice per line.
-      const { data: companySettings } = await supabase
-        .from('company_settings')
-        .select('default_costing_method')
+      // RLS scopes this to the caller's own tenant row — no explicit filter needed.
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('costing_method')
         .limit(1)
         .single()
 
       const costByProductId = new Map<string, { unitCost: number; totalCost: number }>()
       for (const item of cart) {
-        const method = getEffectiveCostingMethod(item.product, companySettings)
+        const method = getEffectiveCostingMethod(item.product, tenant)
         const consumed = await consumeCostLayers(supabase, item.product.id, item.quantity, method)
         costByProductId.set(item.product.id, consumed)
       }

@@ -96,7 +96,7 @@
     "settings": "Settings",
     "tools": "Tools",
     "pos": "POS (Kassa)",
-    "customers": "Customers"
+    "customers": "CRM"
   },
   "auth": {
     "loading": "Signing in...",
@@ -104,6 +104,9 @@
     "logout": "Logout",
     "register": "Register",
     "email": "Email",
+    "phone": "Phone number",
+    "phoneRequired": "Phone number is required",
+    "invalidPhone": "Invalid phone number",
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "fullName": "Full Name",
@@ -120,6 +123,15 @@
     "passwordRequired": "Password is required",
     "invalidEmail": "Invalid email address",
     "invalidCredentials": "Invalid email or password"
+  },
+  "tenantStatus": {
+    "notFoundTitle": "Organization not found",
+    "notFoundMessage": "No organization is registered under this domain. Check the address or contact your administrator.",
+    "blockedTitle": "Your account is blocked",
+    "blockedMessage": "This account has been blocked due to non-payment. Contact your administrator to continue.",
+    "inactiveTitle": "Account inactive",
+    "inactiveMessage": "Your account is not currently active. Contact your administrator to activate it.",
+    "contactSupport": "Contact administrator"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -318,7 +330,11 @@
       "sent": "New",
       "paid": "Completed",
       "overdue": "Overdue"
-    }
+    },
+    "category": "Category",
+    "customerCategories": "Customer categories",
+    "addCustomerCategory": "Add category",
+    "editCustomerCategory": "Edit category"
   },
   "finance": {
     "title": "Finance",
@@ -553,5 +569,115 @@
     "ticketSuccess": "Your ticket has been submitted successfully. We will contact you soon!",
     "liveStatus": "Our operators are online",
     "liveStatusDesc": "Average response time: 5 minutes"
+  },
+  "admin": {
+    "login": {
+      "brandTitle": "ERP Admin",
+      "brandSubtitle": "Super-admin console",
+      "heading": "Sign in",
+      "subheading": "Vendor-level access to tenant accounts",
+      "email": "Email",
+      "emailPlaceholder": "admin@company.com",
+      "emailInvalid": "Enter a valid email address",
+      "password": "Password",
+      "passwordRequired": "Password is required",
+      "signingIn": "Signing in...",
+      "signIn": "Sign in",
+      "invalidCredentials": "Invalid email or password"
+    },
+    "shell": {
+      "tenants": "Tenants",
+      "logout": "Log out"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "count": "{count, plural, one {# account} other {# accounts}}",
+      "searchPlaceholder": "Search by company, subdomain, or phone...",
+      "newTenant": "New tenant",
+      "colCompany": "Company",
+      "colSubdomain": "Subdomain",
+      "colPhone": "Phone",
+      "colStatus": "Status",
+      "colCosting": "Costing",
+      "colSubscriptionEnds": "Subscription ends",
+      "colPricePaid": "Price paid",
+      "empty": "No tenants found",
+      "statusActive": "Active",
+      "statusBlocked": "Blocked",
+      "statusInactive": "Inactive",
+      "filterAll": "All",
+      "prev": "Prev",
+      "next": "Next",
+      "statTotal": "Total tenants",
+      "statActive": "Active tenants",
+      "statBlocked": "Blocked",
+      "statRevenue": "Total revenue",
+      "new": {
+        "title": "New tenant",
+        "subtitle": "Provision a new company account with its own subdomain and owner login"
+      },
+      "detail": {
+        "back": "Back to tenants",
+        "ownerLogin": "Owner login",
+        "dangerZone": "Danger zone",
+        "dangerZoneDesc": "Deleting a tenant is permanent and only allowed after 180 days of inactivity"
+      }
+    },
+    "form": {
+      "companyName": "Company name",
+      "companyNameRequired": "Company name is required",
+      "subdomain": "Subdomain",
+      "subdomainHint": "Lowercase letters, digits, and hyphens only",
+      "subdomainInvalid": "Use lowercase letters, digits, and hyphens only",
+      "phone": "Phone (for login)",
+      "phoneInvalid": "Enter a valid phone number",
+      "password": "Password",
+      "passwordRequired": "Password must be at least 6 characters",
+      "status": "Status",
+      "statusActive": "Active",
+      "statusBlocked": "Blocked (non-payment)",
+      "statusInactive": "Inactive",
+      "costingMethod": "Costing method (FIFO/LIFO/AVECO)",
+      "subscriptionStart": "Subscription start",
+      "subscriptionEnd": "Subscription end",
+      "subscriptionEndBeforeStart": "End date must be after the start date",
+      "subscriptionStartRequired": "Subscription start date is required",
+      "pricePaid": "Price paid",
+      "pricePaidRequired": "Price paid is required",
+      "pricePaidNegative": "Amount cannot be negative",
+      "details": "Details",
+      "create": "Create tenant",
+      "save": "Save changes",
+      "cancel": "Cancel",
+      "createSuccess": "Tenant created",
+      "updateSuccess": "Tenant updated",
+      "genericError": "Something went wrong",
+      "companyNamePlaceholder": "e.g. Online Market",
+      "subdomainPlaceholder": "acme",
+      "phonePlaceholder": "+998 90 123 45 67",
+      "passwordPlaceholder": "••••••••",
+      "detailsPlaceholder": "Additional notes, contract number, etc.",
+      "sectionBasics": "Company & login",
+      "sectionSubscription": "Subscription & pricing",
+      "sectionNotes": "Additional"
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "resetPassword": {
+      "newPassword": "New password",
+      "submit": "Reset",
+      "success": "Password updated",
+      "error": "Failed to update password",
+      "tooShort": "Password must be at least 6 characters"
+    },
+    "delete": {
+      "button": "Delete tenant",
+      "confirm": "Permanently delete \"{name}\"? This cannot be undone.",
+      "enabledAfter": "Enabled after 180 days of inactivity — {days} day(s) remaining",
+      "success": "Tenant deleted",
+      "error": "Failed to delete tenant"
+    }
   }
 }

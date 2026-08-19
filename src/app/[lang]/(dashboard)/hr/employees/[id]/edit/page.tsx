@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { EmployeeForm } from '@/components/hr/employee-form'
 import { Metadata } from 'next'
 import { getCachedEmployeeById } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { notFound } from 'next/navigation'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -17,9 +18,10 @@ export default async function EditEmployeePage({
   params: Promise<{ lang: string, id: string }>
 }) {
   const { lang, id } = await params
-  
+  const tenantId = await getCurrentTenantId() as string
+
   try {
-    const employee = await getCachedEmployeeById(id)
+    const employee = await getCachedEmployeeById(id, tenantId)
     if (!employee) return notFound()
 
     const [t, tCommon] = await Promise.all([

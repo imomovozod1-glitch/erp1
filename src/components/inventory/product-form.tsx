@@ -201,14 +201,15 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
               sourceType: 'adjustment',
             })
           } else {
-            const { data: settings } = await supabase
-              .from('company_settings')
-              .select('default_costing_method')
+            // RLS scopes this to the caller's own tenant row — no explicit filter needed.
+            const { data: tenant } = await supabase
+              .from('tenants')
+              .select('costing_method')
               .limit(1)
               .single()
             const method = getEffectiveCostingMethod(
               { costing_method: payload.costing_method as CostingMethod | null },
-              settings
+              tenant
             )
             const consumed = await consumeCostLayers(supabase, initialData.id, Math.abs(diff), method)
             unitCost = consumed.unitCost

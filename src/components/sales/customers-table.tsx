@@ -101,8 +101,8 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
               <TableHead>{tCommon('name')}</TableHead>
               <TableHead>{tCommon('email')}</TableHead>
               <TableHead>{tCommon('phone')}</TableHead>
-              <TableHead className="text-right">{lang === 'uz' ? 'Qarz' : lang === 'ru' ? 'Долг' : 'Debt'}</TableHead>
-              <TableHead className="text-right">{lang === 'uz' ? 'Haqdorlik' : lang === 'ru' ? 'Депозит' : 'Credit'}</TableHead>
+              <TableHead>{lang === 'uz' ? 'Toifa' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
+              <TableHead className="text-right">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
@@ -139,19 +139,17 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{customer.email ?? '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer.phone ?? '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">{customer.customer_categories?.name ?? '—'}</TableCell>
                   <TableCell className="text-right">
-                    {customer.total_debt > 0 ? (
-                      <span className="font-semibold text-rose-600">{formatCurrency(customer.total_debt)}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {customer.credit_balance > 0 ? (
-                      <span className="font-semibold text-emerald-600">{formatCurrency(customer.credit_balance)}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    {(() => {
+                      const balance = (Number(customer.credit_balance) || 0) - (Number(customer.total_debt) || 0)
+                      if (balance === 0) return <span className="text-muted-foreground">—</span>
+                      return (
+                        <span className={`font-semibold ${balance > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {balance > 0 ? '+' : '-'}{formatCurrency(Math.abs(balance))}
+                        </span>
+                      )
+                    })()}
                   </TableCell>
                   <TableCell>
                     <StatusBadge

@@ -32,16 +32,16 @@ interface ProductLike {
   costing_method?: CostingMethod | null
 }
 
-interface CompanySettingsLike {
-  default_costing_method?: CostingMethod | null
+interface TenantLike {
+  costing_method?: CostingMethod | null
 }
 
-/** `null` on a product means "inherit the company-wide default"; `'fifo'` is the last-resort default. */
+/** `null` on a product means "inherit the tenant's own default"; `'fifo'` is the last-resort default. */
 export function getEffectiveCostingMethod(
   product?: ProductLike | null,
-  companySettings?: CompanySettingsLike | null
+  tenant?: TenantLike | null
 ): CostingMethod {
-  return product?.costing_method ?? companySettings?.default_costing_method ?? 'fifo'
+  return product?.costing_method ?? tenant?.costing_method ?? 'fifo'
 }
 
 interface RecordCostLayerInput {

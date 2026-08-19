@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { InvoicesTable } from '@/components/sales/invoices-table'
 import { getCachedInvoices } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export const revalidate = 30
 
@@ -11,9 +12,10 @@ export const metadata: Metadata = { title: 'Invoices' }
 
 export default async function InvoicesPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, invoices] = await Promise.all([
     getTranslations('sales'),
-    getCachedInvoices(),
+    getCachedInvoices(tenantId),
   ])
 
   return (

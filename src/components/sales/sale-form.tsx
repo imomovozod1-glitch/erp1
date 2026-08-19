@@ -155,16 +155,17 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
       // Cost each line at whatever FIFO/LIFO/AVECO charges right now, before deducting
       // stock, so the realized cost can be stored alongside the order item and movement.
-      const { data: companySettings } = await supabase
-        .from('company_settings')
-        .select('default_costing_method')
+      // RLS scopes this to the caller's own tenant row — no explicit filter needed.
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('costing_method')
         .limit(1)
         .single()
 
       const costByProductId = new Map<string, { unitCost: number; totalCost: number }>()
       for (const item of items) {
         const product = products.find(p => p.id === item.productId)
-        const method = getEffectiveCostingMethod(product as any, companySettings)
+        const method = getEffectiveCostingMethod(product as any, tenant)
         const consumed = await consumeCostLayers(supabase, item.productId, item.quantity, method)
         costByProductId.set(item.productId, consumed)
       }

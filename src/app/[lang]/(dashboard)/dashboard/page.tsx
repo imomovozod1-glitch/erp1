@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { getCachedDashboardStats, getCachedAnalyticsStats } from '@/lib/data/queries'
+import { getCachedDashboardStats } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { DashboardClient } from '@/components/dashboard/dashboard-client'
 
 export const metadata: Metadata = { title: 'Dashboard' }
@@ -11,17 +12,14 @@ export default async function DashboardPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
 
-  const [stats, analytics] = await Promise.all([
-    getCachedDashboardStats(),
-    getCachedAnalyticsStats(),
-  ])
+  const stats = await getCachedDashboardStats(tenantId)
 
   return (
     <DashboardClient
       lang={lang}
       stats={stats}
-      analytics={analytics}
     />
   )
 }

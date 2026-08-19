@@ -13,7 +13,7 @@ import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
-  Download, ShoppingCart, Phone, Mail, MapPin, Landmark, FileText, History
+  Download, ShoppingCart, Phone, Mail, MapPin, Landmark, FileText, History, Tags
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
@@ -65,6 +65,9 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
     .filter((inv) => inv.status !== 'paid' && inv.status !== 'cancelled')
     .reduce((sum, inv) => sum + ((inv.total_amount || 0) - (inv.paid_amount || 0)), 0)
   const creditBalance = Number(customer.credit_balance) || 0
+  // Net balance: credit (haqdorlik) minus debt (qarz) — positive means the customer
+  // holds credit with us, negative means they owe us.
+  const balance = creditBalance - outstandingDebt
 
   // Export to Excel function
   const handleExport = () => {
@@ -147,7 +150,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : lang === 'ru' ? 'Всего покупок' : 'Total purchases'}</span>
@@ -166,21 +169,13 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Balans (Uning qarzi)' : lang === 'ru' ? 'Баланс (Долг клиента)' : 'Balance (Owed to us)'}</span>
-            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${outstandingDebt > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
-              {formatCurrency(outstandingDebt)}
+            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</span>
+            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${balance > 0 ? 'text-emerald-600' : balance < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+              {balance > 0 ? '+' : balance < 0 ? '-' : ''}{formatCurrency(Math.abs(balance))}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{tSales('tin')}: {customer.tin || '—'}</span>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Haqdorlik' : lang === 'ru' ? 'Депозит клиента' : 'Customer credit'}</span>
-            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${creditBalance > 0 ? 'text-emerald-700' : 'text-slate-900'}`}>
-              {formatCurrency(creditBalance)}
-            </h3>
-            <span className="text-xs text-slate-400 mt-2">{lang === 'uz' ? 'Ortiqcha to\'lovdan' : lang === 'ru' ? 'От переплаты' : 'From overpayment'}</span>
+            <span className="text-xs text-slate-400 mt-2">
+              {lang === 'uz' ? 'Qarz' : lang === 'ru' ? 'Долг' : 'Debt'}: {formatCurrency(outstandingDebt)} · {lang === 'uz' ? 'Haqdorlik' : lang === 'ru' ? 'Депозит' : 'Credit'}: {formatCurrency(creditBalance)}
+            </span>
           </CardContent>
         </Card>
 
@@ -202,6 +197,15 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
             <CardTitle className="text-base font-bold text-slate-800">{lang === 'uz' ? "Mijoz ma'lumotlari" : lang === 'ru' ? 'Профиль клиента' : 'Customer profile'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
+            {customer.customer_categories?.name && (
+              <div className="flex items-start gap-2.5">
+                <Tags className="h-4 w-4 text-slate-400 mt-0.5" />
+                <div>
+                  <span className="text-xs text-slate-400 block">{tSales('category')}</span>
+                  <span className="font-medium text-slate-800">{customer.customer_categories.name}</span>
+                </div>
+              </div>
+            )}
             {customer.phone && (
               <div className="flex items-start gap-2.5">
                 <Phone className="h-4 w-4 text-slate-400 mt-0.5" />

@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import dynamic from 'next/dynamic'
-import { User, Mail, Phone, MapPin, FileText, CreditCard, Loader2 } from 'lucide-react'
+import { User, Mail, Phone, MapPin, FileText, CreditCard, Loader2, Tags } from 'lucide-react'
 
 // Load MapPicker dynamically for Next.js SSR compatibility
 const MapPicker = dynamic(() => import('./map-picker').then(mod => mod.MapPicker), {
@@ -30,10 +30,11 @@ const MapPicker = dynamic(() => import('./map-picker').then(mod => mod.MapPicker
 
 interface CustomerFormProps {
   initialData?: any
+  categories?: { id: string; name: string }[]
   lang: string
 }
 
-export function CustomerForm({ initialData, lang }: CustomerFormProps) {
+export function CustomerForm({ initialData, categories = [], lang }: CustomerFormProps) {
   const tCommon = useTranslations('common')
   const tSales = useTranslations('sales')
   const router = useRouter()
@@ -56,6 +57,7 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
     longitude: z.number().nullable().optional(),
     tin: z.string().optional().or(z.literal('')),
     notes: z.string().optional().or(z.literal('')),
+    category_id: z.string().optional().nullable(),
   })
 
   type FormData = z.infer<typeof innerFormSchema>
@@ -71,6 +73,7 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
       longitude: initialData?.longitude ?? null,
       tin: initialData?.tin || '',
       notes: initialData?.notes || '',
+      category_id: initialData?.category_id || '',
     },
   })
 
@@ -80,6 +83,7 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
       const payload = {
         ...data,
         name: data.name || '',
+        category_id: data.category_id || null, // empty string = uncategorized
       }
 
       if (initialData?.id) {
@@ -202,6 +206,24 @@ export function CustomerForm({ initialData, lang }: CustomerFormProps) {
                 placeholder={tSales('tinPlaceholder')}
                 className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
               />
+            </div>
+
+            {/* Category */}
+            <div className="space-y-2">
+              <Label htmlFor="category_id" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <Tags className="h-3.5 w-3.5 text-slate-400" />
+                {tSales('category')}
+              </Label>
+              <select
+                id="category_id"
+                {...register('category_id')}
+                className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-sm shadow-sm transition-colors focus:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">{tCommon('select')}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
 
             {/* Address Field */}

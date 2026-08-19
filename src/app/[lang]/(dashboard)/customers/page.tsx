@@ -1,24 +1,30 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { Plus, AlertTriangle, Wallet } from 'lucide-react'
+import { Plus, Scale } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatsCard } from '@/components/shared/stats-card'
 import { CustomersTable } from '@/components/sales/customers-table'
 import { CustomerImportExport } from '@/components/sales/customer-import-export'
 import { getCachedCustomers } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { formatCurrency } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Customers' }
 
 export default async function CustomersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
-  const [t, customers] = await Promise.all([
+  const tenantId = await getCurrentTenantId() as string
+  const [t, tNav, customers] = await Promise.all([
     getTranslations('sales'),
-    getCachedCustomers(),
+    getTranslations('nav'),
+    getCachedCustomers(tenantId),
   ])
 
   const totalDebt = customers.reduce((sum, c: any) => sum + (Number(c.total_debt) || 0), 0)
   const totalCredit = customers.reduce((sum, c: any) => sum + (Number(c.credit_balance) || 0), 0)
+  // Net balance across all customers: credit (haqdorlik) minus debt (qarz) — positive
+  // means customers collectively hold credit with us, negative means they owe us.
+  const totalBalance = totalCredit - totalDebt
 
   return (
     <div>
@@ -27,26 +33,27 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
         action={{ label: t('addCustomer'), href: `/${lang}/customers/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: tNav('customers'), href: `/${lang}/customers` },
           { label: t('customers') },
         ]}
       >
         <CustomerImportExport customers={customers} lang={lang} />
       </PageHeader>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 mb-6">
         <StatsCard
-          title={lang === 'uz' ? 'Umumiy qarzdorlik' : lang === 'ru' ? 'Общая задолженность' : 'Total debt'}
-          value={formatCurrency(totalDebt)}
-          subtitle={lang === 'uz' ? "Mijozlardan kutilayotgan to'lov" : lang === 'ru' ? 'Ожидаемая оплата от клиентов' : 'Expected from customers'}
-          icon={AlertTriangle}
-          iconClassName="bg-amber-500"
-        />
-        <StatsCard
-          title={lang === 'uz' ? 'Umumiy haqdorlik' : lang === 'ru' ? 'Общий депозит клиентов' : 'Total customer credit'}
-          value={formatCurrency(totalCredit)}
-          subtitle={lang === 'uz' ? "Mijozlarning oldindan to'lagan puli" : lang === 'ru' ? 'Предоплата клиентов' : 'Customer prepayments'}
-          icon={Wallet}
-          iconClassName="bg-emerald-500"
+          title={lang === 'uz' ? 'Balans qoldig\'i' : lang === 'ru' ? 'Остаток баланса' : 'Balance'}
+          value={`${totalBalance > 0 ? '+' : totalBalance < 0 ? '-' : ''}${formatCurrency(Math.abs(totalBalance))}`}
+          valueClassName={totalBalance > 0 ? 'text-emerald-600' : totalBalance < 0 ? 'text-rose-600' : undefined}
+          subtitle={
+            lang === 'uz'
+              ? `Qarz: ${formatCurrency(totalDebt)} · Haqdorlik: ${formatCurrency(totalCredit)}`
+              : lang === 'ru'
+              ? `Долг: ${formatCurrency(totalDebt)} · Депозит: ${formatCurrency(totalCredit)}`
+              : `Debt: ${formatCurrency(totalDebt)} · Credit: ${formatCurrency(totalCredit)}`
+          }
+          icon={Scale}
+          iconClassName={totalBalance > 0 ? 'bg-emerald-500' : totalBalance < 0 ? 'bg-rose-500' : 'bg-slate-400'}
         />
       </div>
 

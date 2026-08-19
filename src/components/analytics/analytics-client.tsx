@@ -18,6 +18,8 @@ import { TrendingUp, Calendar, ChevronDown, Check, ArrowRight } from 'lucide-rea
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { SoldProductsTable } from './sold-products-table'
+import { RecentOrders } from '@/components/dashboard/recent-orders'
+import { LowStockAlert } from '@/components/dashboard/low-stock-alert'
 
 interface AnalyticsClientProps {
   lang: string
@@ -32,6 +34,8 @@ interface AnalyticsClientProps {
     rawItems?: any[]
     rawOrders?: any[]
   }
+  recentOrders?: any[]
+  lowStockRows?: any[]
 }
 
 const KPICard = ({ title, value, subtitle, icon: Icon, color }: any) => (
@@ -60,7 +64,7 @@ const formatDateISO = (d: Date) => {
   return `${year}-${month}-${day}`;
 }
 
-export function AnalyticsClient({ stats, lang }: AnalyticsClientProps) {
+export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows = [] }: AnalyticsClientProps) {
   const t = useTranslations('analytics')
   const tc = useTranslations('common')
   const td = useTranslations('dashboard')
@@ -314,6 +318,8 @@ export function AnalyticsClient({ stats, lang }: AnalyticsClientProps) {
 
   // Top 5 products
   const topProducts = aggregatedProducts.slice(0, 5)
+
+  const lowStock = (lowStockRows ?? []).filter((p) => p.stock < p.min_stock).slice(0, 5)
 
   const PRESETS = [
     { value: 'today', label: t('presets.today') },
@@ -758,6 +764,14 @@ export function AnalyticsClient({ stats, lang }: AnalyticsClientProps) {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Recent Orders + Low Stock — moved here from the dashboard */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <RecentOrders orders={recentOrders} lang={lang} title={td('recentOrdersTitle')} />
+        </div>
+        <LowStockAlert products={lowStock} lang={lang} />
       </div>
 
       {/* Sold Products Table */}

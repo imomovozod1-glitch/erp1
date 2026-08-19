@@ -1,4 +1,5 @@
 import { getCachedCustomerDetails } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { CustomerDetailClient } from '@/components/sales/customer-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { PageClock } from '@/components/shared/page-clock'
@@ -11,8 +12,12 @@ interface CustomerDetailPageProps {
 
 export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
   const { id, lang } = await params
-  const t = await getTranslations('sales')
-  const details = await getCachedCustomerDetails(id)
+  const tenantId = await getCurrentTenantId() as string
+  const [t, tNav, details] = await Promise.all([
+    getTranslations('sales'),
+    getTranslations('nav'),
+    getCachedCustomerDetails(id, tenantId),
+  ])
 
   if (!details || !details.customer) {
     notFound()
@@ -26,6 +31,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         title={customer.name}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: tNav('customers'), href: `/${lang}/customers` },
           { label: t('customers', { fallback: 'Mijozlar' }), href: `/${lang}/customers` },
           { label: customer.name }
         ]}

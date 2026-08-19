@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { TransactionCategoriesTable } from '@/components/finance/transaction-categories-table'
 import { getCachedTransactionCategories } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export const revalidate = 120
 
@@ -19,9 +20,10 @@ export default async function TransactionCategoriesPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, categories] = await Promise.all([
     getTranslations('finance'),
-    getCachedTransactionCategories(),
+    getCachedTransactionCategories(tenantId),
   ])
 
   return (

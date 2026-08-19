@@ -1,4 +1,5 @@
-import { getCachedAnalyticsStats } from '@/lib/data/queries'
+import { getCachedAnalyticsStats, getCachedDashboardStats } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { AnalyticsClient } from '@/components/analytics/analytics-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { getTranslations } from 'next-intl/server'
@@ -9,9 +10,16 @@ interface AnalyticsPageProps {
 
 export default async function AnalyticsPage({ params: { lang } }: AnalyticsPageProps) {
   const t = await getTranslations('analytics')
-  
-  // We fetch the stats server-side
-  const stats = await getCachedAnalyticsStats()
+  const tenantId = await getCurrentTenantId()
+
+  // getCachedDashboardStats() shares the same underlying cache entry as the
+  // dashboard page, so calling it here too costs nothing extra when both
+  // pages are viewed within the cache window — it's just where recentOrders/
+  // lowStockRows (moved here from the dashboard) already live.
+  const [stats, dashboardStats] = await Promise.all([
+    getCachedAnalyticsStats(tenantId as string),
+    getCachedDashboardStats(tenantId as string),
+  ])
 
   return (
     <div className="flex flex-col gap-4">
@@ -24,7 +32,12 @@ export default async function AnalyticsPage({ params: { lang } }: AnalyticsPageP
         ]}
       />
 
-      <AnalyticsClient lang={lang} stats={stats} />
+      <AnalyticsClient
+        lang={lang}
+        stats={stats}
+        recentOrders={dashboardStats.recentOrders}
+        lowStockRows={dashboardStats.lowStockRows}
+      />
     </div>
   )
 }

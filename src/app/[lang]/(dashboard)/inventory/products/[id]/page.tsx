@@ -1,4 +1,5 @@
 import { getCachedProductDetails } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { ProductDetailClient } from '@/components/inventory/product-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { PageClock } from '@/components/shared/page-clock'
@@ -11,8 +12,9 @@ interface ProductDetailPageProps {
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id, lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const t = await getTranslations('inventory')
-  const { product, movements, sales, purchases, costLayers, effectiveCostingMethod, nextSaleCost } = await getCachedProductDetails(id)
+  const { product, movements, sales, purchases, costLayers, effectiveCostingMethod, nextSaleCost } = await getCachedProductDetails(id, tenantId)
 
   if (!product) {
     notFound()

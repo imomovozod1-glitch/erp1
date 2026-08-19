@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { OrdersTable } from '@/components/sales/orders-table'
 import { getCachedOrders } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export const revalidate = 30
 
@@ -11,9 +12,10 @@ export const metadata: Metadata = { title: 'Orders' }
 
 export default async function OrdersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, orders] = await Promise.all([
     getTranslations('sales'),
-    getCachedOrders(),
+    getCachedOrders(tenantId),
   ])
 
   return (

@@ -96,7 +96,7 @@
     "settings": "Sozlamalar",
     "tools": "Vositalar",
     "pos": "POS",
-    "customers": "Mijozlar"
+    "customers": "CRM"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -104,6 +104,9 @@
     "logout": "Chiqish",
     "register": "Ro'yxatdan o'tish",
     "email": "Elektron pochta",
+    "phone": "Telefon raqam",
+    "phoneRequired": "Telefon raqam kiritilishi shart",
+    "invalidPhone": "Noto'g'ri telefon raqam",
     "password": "Parol",
     "confirmPassword": "Parolni tasdiqlang",
     "fullName": "To'liq ism",
@@ -120,6 +123,15 @@
     "passwordRequired": "Parol kiritilishi shart",
     "invalidEmail": "Noto'g'ri elektron pochta manzili",
     "invalidCredentials": "Elektron pochta yoki parol noto'g'ri"
+  },
+  "tenantStatus": {
+    "notFoundTitle": "Tashkilot topilmadi",
+    "notFoundMessage": "Bu domen bo'yicha hech qanday tashkilot ro'yxatdan o'tmagan. Manzilni tekshiring yoki administrator bilan bog'laning.",
+    "blockedTitle": "Hisobingiz bloklangan",
+    "blockedMessage": "Hisobingiz to'lov amalga oshirilmaganligi sababli bloklangan. Davom etish uchun administrator bilan bog'laning.",
+    "inactiveTitle": "Hisobingiz faol emas",
+    "inactiveMessage": "Hisobingiz hozircha faol emas. Faollashtirish uchun administrator bilan bog'laning.",
+    "contactSupport": "Administrator bilan bog'lanish"
   },
   "dashboard": {
     "title": "Boshqaruv paneli",
@@ -318,7 +330,11 @@
       "sent": "Yangi",
       "paid": "Yakunlangan",
       "overdue": "Muddati o'tgan"
-    }
+    },
+    "category": "Toifa",
+    "customerCategories": "Mijozlar toifalari",
+    "addCustomerCategory": "Toifa qo'shish",
+    "editCustomerCategory": "Toifani tahrirlash"
   },
   "finance": {
     "title": "Moliya",
@@ -552,5 +568,115 @@
     "ticketSuccess": "Murojaatingiz muvaffaqiyatli yuborildi. Tez orada siz bilan bog'lanamiz!",
     "liveStatus": "Operatorlarimiz tarmoqda",
     "liveStatusDesc": "O'rtacha javob berish vaqti: 5 daqiqa"
+  },
+  "admin": {
+    "login": {
+      "brandTitle": "ERP Admin",
+      "brandSubtitle": "Super-admin konsoli",
+      "heading": "Tizimga kirish",
+      "subheading": "Tenant hisoblarini boshqarish uchun vendor darajasidagi kirish",
+      "email": "Elektron pochta",
+      "emailPlaceholder": "admin@company.com",
+      "emailInvalid": "To'g'ri elektron pochta manzilini kiriting",
+      "password": "Parol",
+      "passwordRequired": "Parol kiritilishi shart",
+      "signingIn": "Kirilmoqda...",
+      "signIn": "Kirish",
+      "invalidCredentials": "Elektron pochta yoki parol noto'g'ri"
+    },
+    "shell": {
+      "tenants": "Tenantlar",
+      "logout": "Chiqish"
+    },
+    "tenants": {
+      "title": "Tenantlar",
+      "count": "{count, plural, other {# ta hisob}}",
+      "searchPlaceholder": "Kompaniya, subdomen yoki telefon bo'yicha qidirish...",
+      "newTenant": "Yangi tenant",
+      "colCompany": "Kompaniya",
+      "colSubdomain": "Subdomen",
+      "colPhone": "Telefon",
+      "colStatus": "Holati",
+      "colCosting": "Hisoblash turi",
+      "colSubscriptionEnds": "Obuna tugashi",
+      "colPricePaid": "To'langan summa",
+      "empty": "Tenantlar topilmadi",
+      "statusActive": "Faol",
+      "statusBlocked": "Bloklangan",
+      "statusInactive": "Nofaol",
+      "filterAll": "Barchasi",
+      "prev": "Oldingi",
+      "next": "Keyingi",
+      "statTotal": "Jami tenantlar",
+      "statActive": "Faol tenantlar",
+      "statBlocked": "Bloklangan",
+      "statRevenue": "Jami tushum",
+      "new": {
+        "title": "Yangi tenant",
+        "subtitle": "Yangi kompaniya hisobini o'z subdomeni va login ma'lumotlari bilan yarating"
+      },
+      "detail": {
+        "back": "Tenantlarga qaytish",
+        "ownerLogin": "Egasining login ma'lumotlari",
+        "dangerZone": "Xavfli zona",
+        "dangerZoneDesc": "Tenantni o'chirish qaytarib bo'lmaydi va faqat 180 kunlik faolsizlikdan keyin ruxsat etiladi"
+      }
+    },
+    "form": {
+      "companyName": "Kompaniya nomi",
+      "companyNameRequired": "Kompaniya nomi kiritilishi shart",
+      "subdomain": "Subdomen",
+      "subdomainHint": "Faqat kichik lotin harflari, raqamlar va chiziqcha",
+      "subdomainInvalid": "Faqat kichik lotin harflari, raqamlar va chiziqchadan foydalaning",
+      "phone": "Telefon (login uchun)",
+      "phoneInvalid": "To'g'ri telefon raqamini kiriting",
+      "password": "Parol",
+      "passwordRequired": "Parol kamida 6 ta belgidan iborat bo'lishi kerak",
+      "status": "Holati",
+      "statusActive": "Faol",
+      "statusBlocked": "Bloklangan (to'lov qilinmagan)",
+      "statusInactive": "Nofaol",
+      "costingMethod": "Hisoblash turi (FIFO/LIFO/AVECO)",
+      "subscriptionStart": "Obuna boshlanishi",
+      "subscriptionEnd": "Obuna tugashi",
+      "subscriptionEndBeforeStart": "Tugash sanasi boshlanish sanasidan keyin bo'lishi kerak",
+      "subscriptionStartRequired": "Obuna boshlanish sanasi kiritilishi shart",
+      "pricePaid": "To'langan summa",
+      "pricePaidRequired": "To'langan summa kiritilishi shart",
+      "pricePaidNegative": "Summa manfiy bo'la olmaydi",
+      "details": "Tafsilotlar",
+      "create": "Tenant yaratish",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish",
+      "createSuccess": "Tenant yaratildi",
+      "updateSuccess": "Tenant yangilandi",
+      "genericError": "Nimadir xato ketdi",
+      "companyNamePlaceholder": "Masalan: Online Market",
+      "subdomainPlaceholder": "acme",
+      "phonePlaceholder": "+998 90 123 45 67",
+      "passwordPlaceholder": "••••••••",
+      "detailsPlaceholder": "Qo'shimcha eslatmalar, shartnoma raqami va h.k.",
+      "sectionBasics": "Kompaniya va login",
+      "sectionSubscription": "Obuna va narx",
+      "sectionNotes": "Qo'shimcha"
+    },
+    "password": {
+      "show": "Parolni ko'rsatish",
+      "hide": "Parolni yashirish"
+    },
+    "resetPassword": {
+      "newPassword": "Yangi parol",
+      "submit": "Yangilash",
+      "success": "Parol yangilandi",
+      "error": "Parolni yangilab bo'lmadi",
+      "tooShort": "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
+    },
+    "delete": {
+      "button": "Tenantni o'chirish",
+      "confirm": "\"{name}\" ni butunlay o'chirmoqchimisiz? Bu amalni bekor qilib bo'lmaydi.",
+      "enabledAfter": "180 kunlik faolsizlikdan keyin faollashadi — {days} kun qoldi",
+      "success": "Tenant o'chirildi",
+      "error": "Tenantni o'chirib bo'lmadi"
+    }
   }
 }

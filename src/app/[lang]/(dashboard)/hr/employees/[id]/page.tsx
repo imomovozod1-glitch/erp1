@@ -1,4 +1,5 @@
 import { getCachedEmployeeDetails } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { EmployeeDetailClient } from '@/components/hr/employee-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { PageClock } from '@/components/shared/page-clock'
@@ -11,8 +12,9 @@ interface EmployeeDetailPageProps {
 
 export default async function EmployeeDetailPage({ params }: EmployeeDetailPageProps) {
   const { id, lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const t = await getTranslations('hr')
-  const details = await getCachedEmployeeDetails(id)
+  const details = await getCachedEmployeeDetails(id, tenantId)
 
   if (!details || !details.employee) {
     notFound()

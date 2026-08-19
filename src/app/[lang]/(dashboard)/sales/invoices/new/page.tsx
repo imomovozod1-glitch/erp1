@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { InvoiceForm } from '@/components/sales/invoice-form'
 import { getCachedCustomersForSelect, getCachedOrders } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -16,11 +17,12 @@ export default async function NewInvoicePage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, tCommon, customers, orders] = await Promise.all([
     getTranslations('sales'),
     getTranslations('common'),
-    getCachedCustomersForSelect(),
-    getCachedOrders(),
+    getCachedCustomersForSelect(tenantId),
+    getCachedOrders(tenantId),
   ])
 
   return (

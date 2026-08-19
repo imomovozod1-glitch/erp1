@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { TransactionForm } from '@/components/finance/transaction-form'
 import { getCachedTransactionById } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
@@ -17,10 +18,11 @@ export default async function EditTransactionPage({
   params: Promise<{ lang: string; id: string }>
 }) {
   const { lang, id } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, tCommon, transaction] = await Promise.all([
     getTranslations('finance'),
     getTranslations('common'),
-    getCachedTransactionById(id),
+    getCachedTransactionById(id, tenantId),
   ])
 
   if (!transaction) {

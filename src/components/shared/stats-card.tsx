@@ -10,6 +10,7 @@ interface StatsCardProps {
   trend?: { value: number; label: string }
   className?: string
   iconClassName?: string
+  valueClassName?: string
 }
 
 export function StatsCard({
@@ -20,6 +21,7 @@ export function StatsCard({
   trend,
   className,
   iconClassName,
+  valueClassName,
 }: StatsCardProps) {
   const isPositiveTrend = trend && trend.value >= 0
 
@@ -32,7 +34,7 @@ export function StatsCard({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-slate-900">{value}</div>
+        <div className={cn('text-2xl font-bold text-slate-900', valueClassName)}>{value}</div>
         {subtitle && (
           <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
         )}

@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { MovementsTable } from '@/components/inventory/movements-table'
 import { getCachedMovements } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export const revalidate = 30
 
@@ -18,9 +19,10 @@ export default async function MovementsPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, movements] = await Promise.all([
     getTranslations('inventory'),
-    getCachedMovements(),
+    getCachedMovements(tenantId),
   ])
 
   return (

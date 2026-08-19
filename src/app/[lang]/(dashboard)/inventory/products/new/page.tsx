@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { ProductForm } from '@/components/inventory/product-form'
 import { Metadata } from 'next'
 import { getCachedCategoriesForSelect } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -16,10 +17,11 @@ export default async function NewProductPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  const tenantId = await getCurrentTenantId() as string
   const [t, tCommon, categories] = await Promise.all([
     getTranslations('inventory'),
     getTranslations('common'),
-    getCachedCategoriesForSelect(),
+    getCachedCategoriesForSelect(tenantId),
   ])
 
   return (
