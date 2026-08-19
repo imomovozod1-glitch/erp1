@@ -79,17 +79,10 @@ export function ProfileForm({ profile }: ProfileFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-slate-600 font-medium">Email</Label>
-              <Input value={profile?.email || ''} disabled className="bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed" />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-slate-600 font-medium">{t('role.admin') || 'Role'}</Label>
-              <div className="h-9 flex items-center px-3 rounded-md bg-indigo-50/50 border border-indigo-100 text-indigo-700 text-sm font-semibold capitalize w-fit">
-                {roleLabels[profile?.role || ''] || profile?.role || 'Staff'}
-              </div>
+          <div className="space-y-2">
+            <Label className="text-slate-600 font-medium">{t('role.admin') || 'Role'}</Label>
+            <div className="h-9 flex items-center px-3 rounded-md bg-indigo-50/50 border border-indigo-100 text-indigo-700 text-sm font-semibold capitalize w-fit">
+              {roleLabels[profile?.role || ''] || profile?.role || 'Staff'}
             </div>
           </div>
 
@@ -100,7 +93,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-slate-600 font-medium">{t('companyPhone') || 'Phone'}</Label>
+            <Label htmlFor="phone" className="text-slate-600 font-medium">{t('phone')}</Label>
             <Input id="phone" {...register('phone')} placeholder="+998901234567" className="border-slate-200" />
             {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
           </div>

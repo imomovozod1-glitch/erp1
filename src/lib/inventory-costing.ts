@@ -28,20 +28,19 @@ export type CostLayerSourceType =
   | 'ai_scan'
   | 'opening_balance'
 
-interface ProductLike {
-  costing_method?: CostingMethod | null
-}
-
 interface TenantLike {
   costing_method?: CostingMethod | null
 }
 
-/** `null` on a product means "inherit the tenant's own default"; `'fifo'` is the last-resort default. */
-export function getEffectiveCostingMethod(
-  product?: ProductLike | null,
-  tenant?: TenantLike | null
-): CostingMethod {
-  return product?.costing_method ?? tenant?.costing_method ?? 'fifo'
+/**
+ * Costing method is a tenant-wide policy set only by the super-admin
+ * (/admin/tenants/[id]) — there is deliberately no per-product override
+ * anywhere in the app, so every stock movement for a tenant is costed the
+ * same way. `'fifo'` is the last-resort default if the tenant row is
+ * somehow unavailable.
+ */
+export function getEffectiveCostingMethod(tenant?: TenantLike | null): CostingMethod {
+  return tenant?.costing_method ?? 'fifo'
 }
 
 interface RecordCostLayerInput {

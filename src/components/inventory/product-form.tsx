@@ -57,7 +57,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       z.number({ message: tCommon('required') }).min(0, tCommon('required'))
     ),
     category_id: z.string().optional().nullable(),
-    costing_method: z.string().optional().nullable(),
     description: z.string().optional(),
     is_active: z.boolean().default(true),
   })
@@ -65,6 +64,10 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
   type FormData = z.infer<typeof innerFormSchema>
 
   const [units, setUnits] = useState<string[]>([])
+  // Costing method is a tenant-wide policy set only by the super-admin — there is
+  // no per-product override, so this is fetched once just to drive the "average
+  // cost estimate" hint below, not to let the user pick anything here.
+  const [tenantCostingMethod, setTenantCostingMethod] = useState<CostingMethod>('fifo')
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,6 +75,19 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     }, 0)
     return () => clearTimeout(timer)
   }, [lang])
+
+  useEffect(() => {
+    // RLS scopes this to the caller's own tenant row — no explicit filter needed.
+    supabase
+      .from('tenants')
+      .select('costing_method')
+      .limit(1)
+      .single()
+      .then(({ data }: any) => {
+        if (data?.costing_method) setTenantCostingMethod(data.costing_method)
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [defaultSku] = useState(() => initialData?.sku || '')
 
@@ -81,7 +97,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       name: initialData?.name || '',
       sku: defaultSku,
       category_id: initialData?.category_id || '',
-      costing_method: initialData?.costing_method || '',
       unit: initialData?.unit || '',
       price: initialData?.price ?? '' as any,
       cost_price: initialData?.cost_price ?? '' as any,
@@ -167,7 +182,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       const payload = {
         ...data,
         category_id: data.category_id || null, // convert empty string to null
-        costing_method: data.costing_method || null, // empty string = inherit the global default
       }
 
       let userId: string | null = null
@@ -207,10 +221,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
               .select('costing_method')
               .limit(1)
               .single()
-            const method = getEffectiveCostingMethod(
-              { costing_method: payload.costing_method as CostingMethod | null },
-              tenant
-            )
+            const method = getEffectiveCostingMethod(tenant)
             const consumed = await consumeCostLayers(supabase, initialData.id, Math.abs(diff), method)
             unitCost = consumed.unitCost
             totalCost = consumed.totalCost
@@ -307,21 +318,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
             ))}
           </select>
           {errors.category_id && <p className="text-sm text-red-500">{errors.category_id.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="costing_method">{t('costingMethod')}</Label>
-          <select
-            id="costing_method"
-            {...register('costing_method')}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          >
-            <option value="">{t('inheritGlobalDefault')}</option>
-            <option value="fifo">{t('fifo')}</option>
-            <option value="lifo">{t('lifo')}</option>
-            <option value="aveco">{t('aveco')}</option>
-          </select>
-          {errors.costing_method && <p className="text-sm text-red-500">{errors.costing_method.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -536,7 +532,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
                 </span>
               </div>
             </div>
-            {watch('costing_method') !== 'aveco' && (
+            {tenantCostingMethod !== 'aveco' && (
               <p className="text-[11px] text-slate-400 leading-snug basis-full">
                 {t('averageCostEstimate')}
               </p>

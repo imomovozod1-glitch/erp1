@@ -1,28 +1,22 @@
-const DEFAULT_UNITS: Record<string, string[]> = {
-  uz: ['Dona', 'Kg', 'Litr', 'Metr', 'Qop', 'Tonna'],
-  ru: ['Шт', 'Кг', 'Литр', 'Метр', 'Мешок', 'Тонна'],
-  en: ['Pcs', 'Kg', 'Liter', 'Meter', 'Bag', 'Ton'],
-}
-
 /**
  * The system's configured measurement units — the same list shown in the
- * product form's unit dropdown (admin-editable, persisted in localStorage
- * under 'measurement_units'). Falls back to a sensible per-language default
- * when nothing has been customized yet.
+ * product form's unit dropdown (tenant-editable via Settings → Units,
+ * persisted in localStorage under 'measurement_units'). Returns an empty
+ * list until the tenant has actually created at least one unit — no
+ * hardcoded defaults are silently shown as if they already existed.
  */
-export function getMeasurementUnits(lang: string): string[] {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem('measurement_units')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed
-      }
-    } catch {
-      // malformed localStorage value — fall through to defaults
+export function getMeasurementUnits(_lang: string): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem('measurement_units')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed)) return parsed
     }
+  } catch {
+    // malformed localStorage value — fall through to empty
   }
-  return DEFAULT_UNITS[lang] || DEFAULT_UNITS.en
+  return []
 }
 
 /** Case/whitespace-insensitive match of a raw unit string against the system's configured units. Returns the canonical (correctly-cased) unit, or null if it doesn't match any. */

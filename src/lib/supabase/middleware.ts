@@ -38,6 +38,29 @@ export async function updateSession(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
+    if (user) {
+      // Force-logout check: if a super-admin reset this user's password more
+      // recently than their last actual sign-in, their still-valid access
+      // token (stateless JWT, up to ~1h TTL) would otherwise keep working
+      // until it expires on its own. See supabase/migration_force_logout.sql
+      // and src/app/api/admin/tenants/[id]/reset-password/route.ts.
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('force_logout_at')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      const forceLogoutAt = (profile as any)?.force_logout_at
+      if (
+        forceLogoutAt &&
+        user.last_sign_in_at &&
+        new Date(forceLogoutAt).getTime() > new Date(user.last_sign_in_at).getTime()
+      ) {
+        await supabase.auth.signOut()
+        return { supabaseResponse, user: null }
+      }
+    }
+
     return { supabaseResponse, user }
   } catch (err) {
     console.error('Failed to get user session in middleware:', err)

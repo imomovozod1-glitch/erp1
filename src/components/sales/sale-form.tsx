@@ -20,7 +20,7 @@ import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTr
 import { formatCurrency } from '@/lib/utils'
 
 interface SaleFormProps {
-  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; costing_method?: string | null }[]
+  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
   customers: { id: string; name: string }[]
   lang: string
 }
@@ -162,10 +162,9 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
         .limit(1)
         .single()
 
+      const method = getEffectiveCostingMethod(tenant)
       const costByProductId = new Map<string, { unitCost: number; totalCost: number }>()
       for (const item of items) {
-        const product = products.find(p => p.id === item.productId)
-        const method = getEffectiveCostingMethod(product as any, tenant)
         const consumed = await consumeCostLayers(supabase, item.productId, item.quantity, method)
         costByProductId.set(item.productId, consumed)
       }

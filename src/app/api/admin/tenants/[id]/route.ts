@@ -59,12 +59,14 @@ export async function PATCH(
     return NextResponse.json({ error: message }, { status: 409 })
   }
 
-  // Keep the owner's login in sync if the phone number (and therefore the
-  // synthetic login email — see src/lib/tenant-auth.ts) changed.
+  // Keep the owner's login — and their profile's displayed phone — in sync
+  // if the phone number (and therefore the synthetic login email, see
+  // src/lib/tenant-auth.ts) changed.
   if (input.phone !== undefined && input.phone !== existing.phone && existing.owner_user_id) {
     await supabase.auth.admin.updateUserById(existing.owner_user_id, {
       email: phoneToSyntheticEmail(input.phone),
     })
+    await supabase.from('profiles').update({ phone: input.phone }).eq('id', existing.owner_user_id)
   }
 
   return NextResponse.json({ tenant })

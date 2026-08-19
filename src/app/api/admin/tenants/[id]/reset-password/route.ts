@@ -30,5 +30,12 @@ export async function POST(
   })
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
+  // Kick any currently-open session for this user immediately — see
+  // supabase/migration_force_logout.sql and src/lib/supabase/middleware.ts.
+  await supabase
+    .from('profiles')
+    .update({ force_logout_at: new Date().toISOString() })
+    .eq('id', tenant.owner_user_id)
+
   return NextResponse.json({ success: true })
 }

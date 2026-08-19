@@ -225,7 +225,9 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger className="w-full">
-                        <SelectValue />
+                        <SelectValue>
+                          {(value: string) => (value === 'blocked' ? t('statusBlocked') : t('statusActive'))}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="active">{t('statusActive')}</SelectItem>
@@ -246,7 +248,9 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger className="w-full">
-                        <SelectValue />
+                        <SelectValue>
+                          {(value: 'fifo' | 'lifo' | 'aveco') => tCosting(value)}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="fifo">{tCosting('fifo')}</SelectItem>

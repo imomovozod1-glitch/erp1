@@ -488,16 +488,13 @@ export const getCachedCategoriesForSelect = unstable_cache(
 // most reliable to just not cache it at all here.
 export async function getCachedProductsForSelect(tenantId: string) {
   const supabase = getCacheClient() as any
-  // `costing_method` postdates the generated Supabase types (only exists once the
-  // costing migration has been run) — cast to `any` until `database.types.ts` is
-  // regenerated against the live schema.
-  const { data } = await (supabase as any)
+  const { data } = await supabase
     .from('products')
-    .select('id, name, price, cost_price, stock, unit, sku, costing_method')
+    .select('id, name, price, cost_price, stock, unit, sku')
     .eq('tenant_id', tenantId)
     .eq('is_active', true)
     .order('name')
-  return (data ?? []) as { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; costing_method: string | null }[]
+  return (data ?? []) as { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
 }
 
 export const getCachedDepartmentsForSelect = unstable_cache(
@@ -723,7 +720,7 @@ export const getCachedProductDetails = unstable_cache(
     })
 
     const layers: any[] = costLayers ?? []
-    const effectiveMethod: string = (product as any)?.costing_method ?? (tenant as any)?.costing_method ?? 'fifo'
+    const effectiveMethod: string = (tenant as any)?.costing_method ?? 'fifo'
 
     // What the *next* sale would actually be charged under the active method — can
     // differ from products.cost_price (a blended average) under FIFO/LIFO.

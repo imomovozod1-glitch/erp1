@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isSuperAdmin } from '@/lib/admin-auth'
 
 export default async function AuthLayout({
   children,
@@ -13,7 +14,9 @@ export default async function AuthLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    redirect(`/${lang}/dashboard`)
+    // Super-admin and tenant sessions share the same auth cookies — send a
+    // signed-in super-admin to their own console, not the tenant dashboard.
+    redirect((await isSuperAdmin(user.id)) ? '/admin/tenants' : `/${lang}/dashboard`)
   }
 
   return (

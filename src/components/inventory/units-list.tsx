@@ -32,25 +32,15 @@ export function UnitsList({ lang }: UnitsListProps) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true)
     try {
+      // No auto-seeded defaults on first visit — the list only ever contains
+      // units the tenant actually created via "Add unit" below, so the
+      // product form's unit dropdown never shows a value nobody set up.
       const saved = localStorage.getItem('measurement_units')
-      if (saved) {
-        setCustomUnits(JSON.parse(saved))
-      } else {
-        const defaults = [
-          lang === 'uz' ? 'Dona' : lang === 'ru' ? 'Шт' : 'Pcs',
-          lang === 'uz' ? 'Kg' : lang === 'ru' ? 'Кг' : 'Kg',
-          lang === 'uz' ? 'Litr' : lang === 'ru' ? 'Литр' : 'Liter',
-          lang === 'uz' ? 'Metr' : lang === 'ru' ? 'Метр' : 'Meter',
-          lang === 'uz' ? 'Qop' : lang === 'ru' ? 'Мешок' : 'Bag',
-          lang === 'uz' ? 'Tonna' : lang === 'ru' ? 'Тонна' : 'Ton'
-        ]
-        setCustomUnits(defaults)
-        localStorage.setItem('measurement_units', JSON.stringify(defaults))
-      }
+      if (saved) setCustomUnits(JSON.parse(saved))
     } catch (e) {
       console.error(e)
     }
-  }, [lang])
+  }, [])
 
   const handleAddUnit = (e: React.FormEvent) => {
     e.preventDefault()

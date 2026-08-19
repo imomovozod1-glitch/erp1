@@ -1,18 +1,19 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2, Loader2, Lock, Phone } from 'lucide-react'
+import { Building2, Loader2, Phone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { phoneToSyntheticEmail, formatPhoneInput } from '@/lib/tenant-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { cn } from '@/lib/utils'
 
 const loginSchema = z.object({
@@ -26,7 +27,7 @@ export function LoginForm({ lang }: { lang: string }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   })
 
@@ -77,14 +78,21 @@ export function LoginForm({ lang }: { lang: string }) {
             <Label htmlFor="phone" className="text-slate-300 text-sm">{t('phone')}</Label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+998 90 123 45 67"
-                {...register('phone')}
-                className={cn(
-                  'pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 h-11',
-                  errors.phone && 'border-red-500/50'
+              <Controller
+                control={control}
+                name="phone"
+                render={({ field }) => (
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+998 90 123 45 67"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
+                    className={cn(
+                      'pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 h-11',
+                      errors.phone && 'border-red-500/50'
+                    )}
+                  />
                 )}
               />
             </div>
@@ -95,19 +103,17 @@ export function LoginForm({ lang }: { lang: string }) {
 
           <div className="space-y-1.5">
             <Label htmlFor="password" className="text-slate-300 text-sm">{t('password')}</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                className={cn(
-                  'pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 h-11',
-                  errors.password && 'border-red-500/50'
-                )}
-              />
-            </div>
+            <PasswordInput
+              id="password"
+              placeholder="••••••••"
+              showLabel={t('showPassword')}
+              hideLabel={t('hidePassword')}
+              {...register('password')}
+              className={cn(
+                'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 h-11',
+                errors.password && 'border-red-500/50'
+              )}
+            />
             {errors.password && (
               <p className="text-red-400 text-xs">{t('passwordRequired')}</p>
             )}

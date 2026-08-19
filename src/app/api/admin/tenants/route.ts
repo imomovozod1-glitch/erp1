@@ -76,9 +76,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: authError?.message || 'Failed to create login' }, { status: 400 })
   }
 
-  // handle_new_user() inserts the profile with role='staff' by default —
-  // the tenant's first user needs 'admin' so they can manage their own team.
-  await supabase.from('profiles').update({ role: 'admin' }).eq('id', authData.user.id)
+  // handle_new_user() inserts the profile with role='staff' and no phone —
+  // the tenant's first user needs 'admin' so they can manage their own team,
+  // and their real phone (not the synthetic login email) is what the profile
+  // page should actually show.
+  await supabase.from('profiles').update({ role: 'admin', phone: input.phone }).eq('id', authData.user.id)
   await supabase.from('tenants').update({ owner_user_id: authData.user.id }).eq('id', tenant.id)
 
   return NextResponse.json({ tenant }, { status: 201 })

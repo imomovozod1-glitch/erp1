@@ -342,9 +342,9 @@ export function POSClient({
         .limit(1)
         .single()
 
+      const method = getEffectiveCostingMethod(tenant)
       const costByProductId = new Map<string, { unitCost: number; totalCost: number }>()
       for (const item of cart) {
-        const method = getEffectiveCostingMethod(item.product, tenant)
         const consumed = await consumeCostLayers(supabase, item.product.id, item.quantity, method)
         costByProductId.set(item.product.id, consumed)
       }
