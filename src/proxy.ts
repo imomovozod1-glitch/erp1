@@ -100,6 +100,15 @@ function getTenantSubdomain(host: string): string | null {
     return null
   }
 
+  // The app's own deployment domain (e.g. "erp1-livid.vercel.app") is not a
+  // tenant subdomain, even though it has 3+ dot-separated parts just like a
+  // real one ("acme.urlerp.com") would — without this, the platform's own
+  // default/preview domain gets misread as an unknown tenant on every visit.
+  // Real tenant subdomains only ever live on the app's own custom domain.
+  if (hostname === 'vercel.app' || hostname.endsWith('.vercel.app')) {
+    return null
+  }
+
   // For production domains like "tenant1.urlerp.com"
   const parts = hostname.split('.')
   if (parts.length > 2) {
