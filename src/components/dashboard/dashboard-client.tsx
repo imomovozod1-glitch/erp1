@@ -377,12 +377,12 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
             { href: 'finance/transactions/new?type=income', label: t.addIncome, icon: ArrowUpRight, tone: 'emerald' },
             { href: 'finance/transactions/new?type=expense', label: t.addExpense, icon: ArrowDownRight, tone: 'rose' },
             { href: 'customers/new', label: tSales('addCustomer'), icon: Contact, tone: 'slate' },
-            { href: 'customers/categories/new', label: tSales('addCustomerCategory'), icon: FolderPlus, tone: 'blue' },
+            // { href: 'customers/categories/new', label: tSales('addCustomerCategory'), icon: FolderPlus, tone: 'blue' },
             { href: 'inventory/products/new', label: tInventory('addProduct'), icon: Package, tone: 'amber' },
-            { href: 'inventory/categories/new', label: tInventory('addCategory'), icon: Tag, tone: 'amber' },
+            // { href: 'inventory/categories/new', label: tInventory('addCategory'), icon: Tag, tone: 'amber' },
             { href: 'procurement/purchase-orders/new', label: tProcurement('addPurchase'), icon: Truck, tone: 'indigo' },
             { href: 'procurement/suppliers/new', label: tProcurement('addSupplier'), icon: Building2, tone: 'blue' },
-            { href: 'finance/categories/new', label: tFinance('addTxCategory'), icon: FolderPlus, tone: 'slate' },
+            // { href: 'finance/categories/new', label: tFinance('addTxCategory'), icon: FolderPlus, tone: 'slate' },
             { href: 'hr/employees/new', label: tHr('addEmployee'), icon: UserPlus, tone: 'emerald' },
           ].map((action) => {
             const Icon = action.icon

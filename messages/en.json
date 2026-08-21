@@ -691,7 +691,10 @@
       "detailsPlaceholder": "Additional notes, contract number, etc.",
       "sectionBasics": "Company & login",
       "sectionSubscription": "Subscription & pricing",
-      "sectionNotes": "Additional"
+      "sectionNotes": "Additional",
+      "subscriptionEndRequired": "Select the subscription end date",
+      "custom": "Custom",
+      "months": "mo"
     },
     "password": {
       "show": "Show password",

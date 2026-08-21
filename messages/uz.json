@@ -690,7 +690,10 @@
       "detailsPlaceholder": "Qo'shimcha eslatmalar, shartnoma raqami va h.k.",
       "sectionBasics": "Kompaniya va login",
       "sectionSubscription": "Obuna va narx",
-      "sectionNotes": "Qo'shimcha"
+      "sectionNotes": "Qo'shimcha",
+      "subscriptionEndRequired": "Obuna tugash sanasini tanlang",
+      "custom": "Boshqa",
+      "months": "oy"
     },
     "password": {
       "show": "Parolni ko'rsatish",

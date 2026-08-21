@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import { getLocale, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import { Wallet, TrendingUp, Receipt, Building2 } from 'lucide-react'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { StatsCard } from '@/components/shared/stats-card'
 import { AdminPaymentsTable, type AdminPaymentRow } from '@/components/admin/admin-payments-table'
 import { formatCurrency } from '@/lib/utils'
@@ -12,7 +11,7 @@ export const metadata: Metadata = { title: 'Payments' }
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPaymentsPage() {
-  const [t, lang] = await Promise.all([getTranslations('admin.payments'), getLocale()])
+  const t = await getTranslations('admin.payments')
 
   const supabase = getCacheClient() as any
   const { data } = await supabase
@@ -42,9 +41,7 @@ export default async function AdminPaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('title')} subtitle={t('subtitle')}>
-        <PageClock lang={lang} />
-      </PageHeader>
+      <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title={t('statTotal')} value={formatCurrency(totalRevenue)} icon={Wallet} iconClassName="bg-emerald-500" />

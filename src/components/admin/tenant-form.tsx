@@ -1,22 +1,24 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { useForm, Controller, useWatch } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Building2, Globe, Phone, KeyRound, Layers, CalendarDays, Wallet, FileText, ReceiptText, IdCard } from 'lucide-react'
+import { Loader2, Building2, Globe, Phone, KeyRound, Layers, CalendarDays, Wallet, FileText, ReceiptText, IdCard, Users, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { PasswordInput } from '@/components/ui/password-input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatPhoneInput, isReservedSubdomain } from '@/lib/tenant-auth'
+import { cn } from '@/lib/utils'
 
 export interface TenantFormInitialData {
   id: string
@@ -36,6 +38,9 @@ interface TenantFormProps {
   initialData?: TenantFormInitialData
 }
 
+const LICENSE_COUNT_PRESETS = [1, 5, 10, 25, 50]
+const DURATION_PRESETS = [1, 3, 6, 12]
+
 function addMonths(dateStr: string, months: number): string {
   const d = new Date(dateStr)
   d.setMonth(d.getMonth() + (Number(months) || 1))
@@ -50,10 +55,79 @@ function SectionHeading({ icon: Icon, children }: { icon: React.ElementType; chi
   )
 }
 
+/**
+ * Preset-pill selector with a "custom" fallback — the modern equivalent of a
+ * plan/seat-count picker (mirrors the status-filter pill pattern already
+ * used in tenants-table.tsx) instead of a bare number field. Falls open to
+ * a NumericInput automatically when the current value isn't one of the
+ * presets (e.g. editing a tenant that already has a non-standard value).
+ */
+function PresetPicker({
+  value,
+  options,
+  onSelect,
+  customLabel,
+  suffix,
+}: {
+  value: number | undefined
+  options: number[]
+  onSelect: (n: number) => void
+  customLabel: string
+  suffix?: string
+}) {
+  const [customOpen, setCustomOpen] = useState(value != null && !options.includes(value))
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {options.map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => {
+              setCustomOpen(false)
+              onSelect(n)
+            }}
+            className={cn(
+              'px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
+              !customOpen && value === n
+                ? 'bg-indigo-600 border-indigo-600 text-white'
+                : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
+            )}
+          >
+            {n}
+            {suffix ? ` ${suffix}` : ''}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setCustomOpen(true)}
+          className={cn(
+            'flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
+            customOpen
+              ? 'bg-indigo-600 border-indigo-600 text-white'
+              : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
+          )}
+        >
+          <Pencil className="h-3 w-3" /> {customLabel}
+        </button>
+      </div>
+      {customOpen && (
+        <NumericInput
+          value={value}
+          onChange={(v) => onSelect(typeof v === 'number' ? v : 0)}
+          className="w-32"
+        />
+      )}
+    </div>
+  )
+}
+
 export function TenantForm({ mode, initialData }: TenantFormProps) {
   const t = useTranslations('admin.form')
   const tPassword = useTranslations('admin.password')
   const tCosting = useTranslations('inventory')
+  const lang = useLocale()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -78,11 +152,15 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
         license_count: z.number({ message: t('licenseCountRequired') }).int().min(1, t('licenseCountRequired')),
         license_months: z.number({ message: t('licenseMonthsRequired') }).int().min(1, t('licenseMonthsRequired')),
         subscription_started_at: z.string().min(1, t('subscriptionStartRequired')),
+        subscription_ends_at: z.string().min(1, t('subscriptionEndRequired')),
         price_paid:
           mode === 'create'
             ? z.number({ message: t('pricePaidRequired') }).min(0, t('pricePaidNegative'))
             : z.number().optional(),
         details: z.string().optional(),
+      }).refine((data) => new Date(data.subscription_ends_at) > new Date(data.subscription_started_at), {
+        message: t('subscriptionEndBeforeStart'),
+        path: ['subscription_ends_at'],
       }),
     [t, mode]
   )
@@ -92,6 +170,8 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
     register,
     handleSubmit,
     control,
+    getValues,
+    setValue,
     formState: { errors },
   } = useForm<TenantFormData>({
     resolver: zodResolver(tenantFormSchema),
@@ -104,33 +184,38 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
           license_count: initialData.license_count,
           license_months: initialData.license_months,
           subscription_started_at: initialData.subscription_started_at ?? '',
+          subscription_ends_at: initialData.subscription_ends_at ?? '',
         }
       : {
           costing_method: 'fifo',
           license_count: 1,
           license_months: 1,
+          subscription_started_at: new Date().toISOString().slice(0, 10),
+          subscription_ends_at: addMonths(new Date().toISOString().slice(0, 10), 1),
         },
   })
 
-  // Subscription end is always derived from start + license term — never a
-  // second, independently-editable date that could drift out of sync.
-  const startedAt = useWatch({ control, name: 'subscription_started_at' })
-  const licenseMonths = useWatch({ control, name: 'license_months' })
-  const computedEndsAt = startedAt && licenseMonths ? addMonths(startedAt, licenseMonths) : null
+  // Duration presets are a convenience: clicking one sets license_months AND
+  // recomputes subscription_ends_at from the current start date — a one-time
+  // action, not a live watcher, so a manual edit to the end date afterward
+  // is never silently overwritten by an unrelated field change.
+  const applyDurationPreset = (months: number) => {
+    setValue('license_months', months, { shouldValidate: true })
+    const start = getValues('subscription_started_at')
+    if (start) {
+      setValue('subscription_ends_at', addMonths(start, months), { shouldValidate: true })
+    }
+  }
 
   const onSubmit = async (data: TenantFormData) => {
     setIsSubmitting(true)
     try {
-      const payload = {
-        ...data,
-        subscription_ends_at: computedEndsAt,
-      }
       const res = await fetch(
         mode === 'create' ? '/api/admin/tenants' : `/api/admin/tenants/${initialData!.id}`,
         {
           method: mode === 'create' ? 'POST' : 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(data),
         }
       )
       const json = await res.json()
@@ -212,76 +297,115 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
             </div>
           </div>
 
-          <div className="space-y-4 border-t pt-6 dark:border-slate-800">
+          <div className="space-y-5 border-t pt-6 dark:border-slate-800">
             <SectionHeading icon={ReceiptText}>{t('sectionSubscription')}</SectionHeading>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
+              </Label>
+              <Controller
+                control={control}
+                name="costing_method"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full sm:w-64">
+                      <SelectValue>
+                        {(value: 'fifo' | 'lifo' | 'aveco') => tCosting(value)}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fifo">{tCosting('fifo')}</SelectItem>
+                      <SelectItem value="lifo">{tCosting('lifo')}</SelectItem>
+                      <SelectItem value="aveco">{tCosting('aveco')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseCount')}
+              </Label>
+              <Controller
+                control={control}
+                name="license_count"
+                render={({ field: { value, onChange } }) => (
+                  <PresetPicker
+                    value={value}
+                    options={LICENSE_COUNT_PRESETS}
+                    onSelect={onChange}
+                    customLabel={t('custom')}
+                  />
+                )}
+              />
+              {errors.license_count && <p className="text-sm text-red-500">{errors.license_count.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseMonths')}
+              </Label>
+              <Controller
+                control={control}
+                name="license_months"
+                render={({ field: { value } }) => (
+                  <PresetPicker
+                    value={value}
+                    options={DURATION_PRESETS}
+                    onSelect={applyDurationPreset}
+                    customLabel={t('custom')}
+                    suffix={t('months')}
+                  />
+                )}
+              />
+              {errors.license_months && <p className="text-sm text-red-500">{errors.license_months.message}</p>}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
-                </Label>
-                <Controller
-                  control={control}
-                  name="costing_method"
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue>
-                          {(value: 'fifo' | 'lifo' | 'aveco') => tCosting(value)}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="fifo">{tCosting('fifo')}</SelectItem>
-                        <SelectItem value="lifo">{tCosting('lifo')}</SelectItem>
-                        <SelectItem value="aveco">{tCosting('aveco')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="license_count" className="flex items-center gap-1.5">
-                  <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseCount')}
-                </Label>
-                <Controller
-                  control={control}
-                  name="license_count"
-                  render={({ field: { value, onChange } }) => (
-                    <NumericInput id="license_count" value={value ?? undefined} onChange={onChange} />
-                  )}
-                />
-                {errors.license_count && <p className="text-sm text-red-500">{errors.license_count.message}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="license_months" className="flex items-center gap-1.5">
-                  <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseMonths')}
-                </Label>
-                <Controller
-                  control={control}
-                  name="license_months"
-                  render={({ field: { value, onChange } }) => (
-                    <NumericInput id="license_months" value={value ?? undefined} onChange={onChange} />
-                  )}
-                />
-                {errors.license_months && <p className="text-sm text-red-500">{errors.license_months.message}</p>}
-              </div>
-
               <div className="space-y-1.5">
                 <Label htmlFor="subscription_started_at" className="flex items-center gap-1.5">
                   <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionStart')}
                 </Label>
-                <Input id="subscription_started_at" type="date" {...register('subscription_started_at')} />
+                <Controller
+                  control={control}
+                  name="subscription_started_at"
+                  render={({ field }) => (
+                    <DatePicker
+                      id="subscription_started_at"
+                      value={field.value}
+                      onChange={field.onChange}
+                      lang={lang}
+                      placeholder={t('subscriptionStart')}
+                    />
+                  )}
+                />
                 {errors.subscription_started_at && (
                   <p className="text-sm text-red-500">{errors.subscription_started_at.message}</p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
+                <Label htmlFor="subscription_ends_at" className="flex items-center gap-1.5">
                   <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
                 </Label>
-                <Input value={computedEndsAt ?? ''} disabled className="bg-slate-50 dark:bg-slate-800/50" />
+                <Controller
+                  control={control}
+                  name="subscription_ends_at"
+                  render={({ field }) => (
+                    <DatePicker
+                      id="subscription_ends_at"
+                      value={field.value}
+                      onChange={field.onChange}
+                      lang={lang}
+                      placeholder={t('subscriptionEnd')}
+                    />
+                  )}
+                />
+                {errors.subscription_ends_at && (
+                  <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
+                )}
               </div>
 
               {mode === 'create' && (

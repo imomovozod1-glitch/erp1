@@ -682,7 +682,10 @@
       "detailsPlaceholder": "Дополнительные заметки, номер договора и т.д.",
       "sectionBasics": "Компания и вход",
       "sectionSubscription": "Подписка и оплата",
-      "sectionNotes": "Дополнительно"
+      "sectionNotes": "Дополнительно",
+      "subscriptionEndRequired": "Выберите дату окончания подписки",
+      "custom": "Другое",
+      "months": "мес"
     },
     "password": {
       "show": "Показать пароль",

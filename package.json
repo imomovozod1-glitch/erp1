@@ -30,6 +30,7 @@
     "next-intl": "^4.13.2",
     "next-nprogress-bar": "^2.4.7",
     "react": "19.2.4",
+    "react-day-picker": "^10.0.1",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.82.0",
     "react-leaflet": "^5.0.0",

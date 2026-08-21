@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import { getLocale, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import { ShieldAlert, ShieldX, Lock, Activity } from 'lucide-react'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { StatsCard } from '@/components/shared/stats-card'
 import { SecurityLogTable, type LoginAttemptRow } from '@/components/admin/security-log-table'
 import { countCurrentlyLocked } from '@/lib/rate-limit'
@@ -14,7 +13,7 @@ export const dynamic = 'force-dynamic'
 const RECENT_LIMIT = 500
 
 export default async function AdminSecurityPage() {
-  const [t, lang] = await Promise.all([getTranslations('admin.security'), getLocale()])
+  const t = await getTranslations('admin.security')
 
   const supabase = getCacheClient() as any
   const { data } = await supabase
@@ -34,9 +33,7 @@ export default async function AdminSecurityPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('title')} subtitle={t('subtitle')}>
-        <PageClock lang={lang} />
-      </PageHeader>
+      <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title={t('statTotalToday')} value={totalToday} icon={Activity} iconClassName="bg-indigo-500" />

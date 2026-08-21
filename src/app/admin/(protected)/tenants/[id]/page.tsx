@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getLocale, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import { KeyRound, ShieldAlert, Receipt } from 'lucide-react'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { TenantForm } from '@/components/admin/tenant-form'
@@ -30,10 +29,9 @@ export default async function TenantDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [t, tStatus, lang] = await Promise.all([
+  const [t, tStatus] = await Promise.all([
     getTranslations('admin.tenants.detail'),
     getTranslations('admin.tenants'),
-    getLocale(),
   ])
 
   const supabase = getCacheClient() as any
@@ -68,9 +66,7 @@ export default async function TenantDetailPage({
           { label: tStatus('title'), href: '/admin/tenants' },
           { label: tenant.company_name },
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <div className="flex items-center gap-3 -mt-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">

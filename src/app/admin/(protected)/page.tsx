@@ -4,7 +4,6 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { Building2, CheckCircle2, Ban, Wallet, Plus, ArrowRight } from 'lucide-react'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { StatsCard } from '@/components/shared/stats-card'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -79,9 +78,7 @@ export default async function AdminDashboardPage() {
         title={t('title')}
         subtitle={t('subtitle')}
         action={{ label: t('newTenant'), href: '/admin/tenants/new', icon: Plus }}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title={tTenants('statTotal')} value={tenants.length} icon={Building2} iconClassName="bg-indigo-500" />
