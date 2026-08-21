@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
 
 const createTenantSchema = z.object({
-  subdomain: z.string().min(2).regex(/^[a-z0-9-]+$/),
+  subdomain: z
+    .string()
+    .min(2)
+    .regex(/^[a-z0-9-]+$/)
+    .refine((v) => !isReservedSubdomain(v), { message: 'This subdomain is reserved' }),
   company_name: z.string().min(1),
   phone: z.string().min(7),
   password: z.string().min(6),
-  status: z.enum(['active', 'blocked', 'inactive']),
   costing_method: z.enum(['fifo', 'lifo', 'aveco']),
+  license_count: z.number().int().min(1),
+  license_months: z.number().int().min(1),
   subscription_started_at: z.string().optional().nullable(),
   subscription_ends_at: z.string().optional().nullable(),
   price_paid: z.number().nullable().optional(),
@@ -40,17 +45,21 @@ export async function POST(request: NextRequest) {
 
   const supabase = getCacheClient() as any
 
+  // Status is never set manually here — it's always 'active' on creation
+  // (the column default) and from then on purely date-derived from
+  // subscription_ends_at, see src/lib/tenant-status.ts.
   const { data: tenant, error: tenantError } = await supabase
     .from('tenants')
     .insert({
       subdomain: input.subdomain.toLowerCase(),
       company_name: input.company_name,
       phone: input.phone,
-      status: input.status,
       costing_method: input.costing_method,
+      license_count: input.license_count,
+      license_months: input.license_months,
       subscription_started_at: input.subscription_started_at || null,
       subscription_ends_at: input.subscription_ends_at || null,
-      price_paid: input.price_paid ?? null,
+      price_paid: input.price_paid ?? 0,
       details: input.details || null,
     })
     .select()
@@ -81,7 +90,16 @@ export async function POST(request: NextRequest) {
   // and their real phone (not the synthetic login email) is what the profile
   // page should actually show.
   await supabase.from('profiles').update({ role: 'admin', phone: input.phone }).eq('id', authData.user.id)
+  tenant.owner_user_id = authData.user.id
   await supabase.from('tenants').update({ owner_user_id: authData.user.id }).eq('id', tenant.id)
+
+  if (input.price_paid && input.price_paid > 0) {
+    await supabase.from('tenant_payments').insert({
+      tenant_id: tenant.id,
+      amount: input.price_paid,
+      recorded_by: session.userId,
+    })
+  }
 
   return NextResponse.json({ tenant }, { status: 201 })
 }

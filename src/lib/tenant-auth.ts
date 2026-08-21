@@ -7,6 +7,18 @@
  * (super-admin "create tenant", src/app/api/admin/tenants/route.ts) must
  * create the `auth.users` row with this exact same email so login matches.
  */
+/**
+ * Subdomains that can never belong to a tenant — "admin" is rewritten by
+ * src/proxy.ts to the super-admin console (src/app/admin/**), so a tenant
+ * claiming it would either break that routing or spoof it. Enforced at
+ * provisioning and edit time (src/app/api/admin/tenants/**).
+ */
+export const RESERVED_SUBDOMAINS = ['admin', 'www', 'api', 'app']
+
+export function isReservedSubdomain(subdomain: string): boolean {
+  return RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())
+}
+
 export function phoneToSyntheticEmail(phone: string): string {
   const digits = phone.replace(/\D/g, '')
   return `${digits}@tenant.local`

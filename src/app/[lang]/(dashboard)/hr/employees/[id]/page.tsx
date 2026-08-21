@@ -25,11 +25,11 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title={employee?.profiles?.full_name ?? '—'}
+        title={employee?.full_name ?? '—'}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('employees', { fallback: 'Xodimlar' }), href: `/${lang}/hr/employees` },
-          { label: employee?.profiles?.full_name ?? '—' }
+          { label: employee?.full_name ?? '—' }
         ]}
       >
         <PageClock lang={lang} />

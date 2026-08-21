@@ -2,17 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
 
 const updateTenantSchema = z.object({
-  subdomain: z.string().min(2).regex(/^[a-z0-9-]+$/).optional(),
+  subdomain: z
+    .string()
+    .min(2)
+    .regex(/^[a-z0-9-]+$/)
+    .refine((v) => !isReservedSubdomain(v), { message: 'This subdomain is reserved' })
+    .optional(),
   company_name: z.string().min(1).optional(),
   phone: z.string().min(7).optional(),
-  status: z.enum(['active', 'blocked', 'inactive']).optional(),
   costing_method: z.enum(['fifo', 'lifo', 'aveco']).optional(),
+  license_count: z.number().int().min(1).optional(),
+  license_months: z.number().int().min(1).optional(),
   subscription_started_at: z.string().optional().nullable(),
   subscription_ends_at: z.string().optional().nullable(),
-  price_paid: z.number().nullable().optional(),
   details: z.string().optional().nullable(),
 })
 
@@ -46,12 +51,21 @@ export async function PATCH(
   if (input.subdomain !== undefined) update.subdomain = input.subdomain.toLowerCase()
   if (input.company_name !== undefined) update.company_name = input.company_name
   if (input.phone !== undefined) update.phone = input.phone
-  if (input.status !== undefined) update.status = input.status
   if (input.costing_method !== undefined) update.costing_method = input.costing_method
+  if (input.license_count !== undefined) update.license_count = input.license_count
+  if (input.license_months !== undefined) update.license_months = input.license_months
   if (input.subscription_started_at !== undefined) update.subscription_started_at = input.subscription_started_at || null
   if (input.subscription_ends_at !== undefined) update.subscription_ends_at = input.subscription_ends_at || null
-  if (input.price_paid !== undefined) update.price_paid = input.price_paid
   if (input.details !== undefined) update.details = input.details || null
+
+  // Status is never set directly — it's purely date-derived (see
+  // src/lib/tenant-status.ts). Editing the subscription term here can just
+  // as well move it back into the future (a manual date correction), so
+  // recompute it the same way a payment does rather than leaving a stale
+  // 'blocked' behind.
+  if (update.subscription_ends_at) {
+    update.status = new Date(update.subscription_ends_at as string).getTime() >= Date.now() ? 'active' : 'blocked'
+  }
 
   const { data: tenant, error } = await supabase.from('tenants').update(update).eq('id', id).select().single()
   if (error) {

@@ -38,11 +38,17 @@ const STATUS_TONE: Record<TenantRow['status'], StatusTone> = {
 
 const ITEMS_PER_PAGE = 10
 
-export function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
+export function TenantsTable({
+  tenants,
+  initialStatus = 'all',
+}: {
+  tenants: TenantRow[]
+  initialStatus?: 'all' | TenantRow['status']
+}) {
   const t = useTranslations('admin.tenants')
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | TenantRow['status']>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | TenantRow['status']>(initialStatus)
   const [currentPage, setCurrentPage] = useState(1)
 
   const filtered = tenants.filter((tenant) => {
@@ -66,7 +72,11 @@ export function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
     { value: 'all', label: t('filterAll') },
     { value: 'active', label: t('statusActive') },
     { value: 'blocked', label: t('statusBlocked') },
+    { value: 'inactive', label: t('statusInactive') },
   ]
+
+  const startItem = filtered.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0
+  const endItem = Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)
 
   return (
     <div className="rounded-xl border-0 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-slate-900">
@@ -105,9 +115,14 @@ export function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
             ))}
           </div>
         </div>
-        <Button onClick={() => router.push('/admin/tenants/new')} className="gap-2 bg-indigo-600 hover:bg-indigo-500">
-          <Plus className="h-4 w-4" /> {t('newTenant')}
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:inline text-xs text-slate-400 font-medium whitespace-nowrap">
+            {t('showing', { start: startItem, end: endItem, total: filtered.length })}
+          </span>
+          <Button onClick={() => router.push('/admin/tenants/new')} className="gap-2 bg-indigo-600 hover:bg-indigo-500">
+            <Plus className="h-4 w-4" /> {t('newTenant')}
+          </Button>
+        </div>
       </div>
 
       <Table>

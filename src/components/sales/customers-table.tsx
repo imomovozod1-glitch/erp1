@@ -21,7 +21,16 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
-import { LocationMapDialog } from '@/components/shared/location-map-dialog'
+import dynamic from 'next/dynamic'
+
+// react-leaflet/leaflet touch `window` at module-evaluation time, not just
+// render time — a static import here crashes this page's SSR entirely
+// (ReferenceError: window is not defined). Matches the existing ssr:false
+// pattern already used for MapPicker in supplier-form.tsx/sale-form.tsx.
+const LocationMapDialog = dynamic(
+  () => import('@/components/shared/location-map-dialog').then((mod) => mod.LocationMapDialog),
+  { ssr: false }
+)
 import { formatCurrency } from '@/lib/utils'
 
 interface CustomersTableProps {

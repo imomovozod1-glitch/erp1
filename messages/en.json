@@ -96,7 +96,7 @@
     "settings": "Settings",
     "tools": "Tools",
     "pos": "POS (Kassa)",
-    "customers": "CRM"
+    "customers": "Customers"
   },
   "auth": {
     "loading": "Signing in...",
@@ -124,7 +124,8 @@
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "invalidEmail": "Invalid email address",
-    "invalidCredentials": "Invalid email or password"
+    "invalidCredentials": "Invalid email or password",
+    "tooManyAttempts": "Too many attempts. Try again in 15 minutes."
   },
   "tenantStatus": {
     "notFoundTitle": "Organization not found",
@@ -259,6 +260,7 @@
     "editCustomer": "Edit Customer",
     "editInvoice": "Edit Invoice",
     "orders": "Orders",
+    "recentOrders": "Recent orders",
     "customers": "Customers",
     "invoices": "Invoices",
     "addOrder": "Add Order",
@@ -571,7 +573,12 @@
     "ticketMessage": "Message Details",
     "ticketSuccess": "Your ticket has been submitted successfully. We will contact you soon!",
     "liveStatus": "Our operators are online",
-    "liveStatusDesc": "Average response time: 5 minutes"
+    "liveStatusDesc": "Average response time: 5 minutes",
+    "chatbotTitle": "Support chatbot",
+    "chatbotWelcome": "Hi! I'm the ERP assistant bot. How can I help?",
+    "chatbotPlaceholder": "Type your question...",
+    "chatbotError": "Failed to get a response. Please try again.",
+    "chatbotThinking": "Typing..."
   },
   "admin": {
     "login": {
@@ -586,11 +593,15 @@
       "passwordRequired": "Password is required",
       "signingIn": "Signing in...",
       "signIn": "Sign in",
-      "invalidCredentials": "Invalid email or password"
+      "invalidCredentials": "Invalid email or password",
+      "tooManyAttempts": "Too many attempts. Try again in 15 minutes."
     },
     "shell": {
       "tenants": "Tenants",
-      "logout": "Log out"
+      "logout": "Log out",
+      "dashboard": "Dashboard",
+      "navGroup": "Management",
+      "badge": "Super admin"
     },
     "tenants": {
       "title": "Tenants",
@@ -623,8 +634,17 @@
         "back": "Back to tenants",
         "ownerLogin": "Owner login",
         "dangerZone": "Danger zone",
-        "dangerZoneDesc": "Deleting a tenant is permanent and only allowed after 180 days of inactivity"
-      }
+        "dangerZoneDesc": "Deleting a tenant is permanent and only allowed after 180 days of inactivity",
+        "paymentHistory": "Payment history",
+        "totalPaid": "Total paid",
+        "addPayment": "Add payment",
+        "amount": "Amount",
+        "note": "Note (optional)",
+        "noPayments": "No payments yet",
+        "paymentAdded": "Payment added",
+        "paymentError": "Failed to add payment"
+      },
+      "showing": "Showing {start}-{end} of {total}"
     },
     "form": {
       "companyName": "Company name",
@@ -632,6 +652,7 @@
       "subdomain": "Subdomain",
       "subdomainHint": "Lowercase letters, digits, and hyphens only",
       "subdomainInvalid": "Use lowercase letters, digits, and hyphens only",
+      "subdomainReserved": "This subdomain is reserved",
       "phone": "Phone (for login)",
       "phoneInvalid": "Enter a valid phone number",
       "password": "Password",
@@ -643,9 +664,14 @@
       "costingMethod": "Costing method (FIFO/LIFO/AVECO)",
       "subscriptionStart": "Subscription start",
       "subscriptionEnd": "Subscription end",
+      "licenseCount": "License count",
+      "licenseCountRequired": "License count is required",
+      "licenseMonths": "License term (months)",
+      "licenseMonthsRequired": "License term in months is required",
       "subscriptionEndBeforeStart": "End date must be after the start date",
       "subscriptionStartRequired": "Subscription start date is required",
       "pricePaid": "Price paid",
+      "initialPayment": "Initial payment",
       "pricePaidRequired": "Price paid is required",
       "pricePaidNegative": "Amount cannot be negative",
       "details": "Details",
@@ -681,6 +707,16 @@
       "enabledAfter": "Enabled after 180 days of inactivity — {days} day(s) remaining",
       "success": "Tenant deleted",
       "error": "Failed to delete tenant"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Overview of all tenant accounts",
+      "newTenant": "New tenant",
+      "revenueOverTime": "Revenue over time",
+      "noPayments": "No payments recorded yet",
+      "recentTenants": "Recently added tenants",
+      "viewAll": "View all",
+      "blockedWarning": "{count, plural, other {# tenants are blocked — check payment status}}"
     }
   }
 }

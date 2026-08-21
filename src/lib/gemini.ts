@@ -3,12 +3,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 /**
  * Dynamically gets a Gemini GenerativeModel instance with the latest API Key from env
  */
-export function getGeminiModel(modelName = 'gemini-1.5-flash', jsonMode = false) {
+export function getGeminiModel(modelName = 'gemini-1.5-flash', jsonMode = false, systemInstruction?: string) {
   const apiKey = process.env.GEMINI_API_KEY || ''
   const genAI = new GoogleGenerativeAI(apiKey)
   return genAI.getGenerativeModel({
     model: modelName,
     ...(jsonMode ? { generationConfig: { responseMimeType: 'application/json' } } : {}),
+    ...(systemInstruction ? { systemInstruction } : {}),
   })
 }
 

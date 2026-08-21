@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
-import { ArrowLeft, KeyRound, ShieldAlert } from 'lucide-react'
+import { ArrowLeft, KeyRound, ShieldAlert, Receipt } from 'lucide-react'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { TenantForm } from '@/components/admin/tenant-form'
 import { DeleteTenantButton } from '@/components/admin/delete-tenant-button'
 import { ResetPasswordForm } from '@/components/admin/reset-password-form'
+import { PaymentHistory } from '@/components/admin/payment-history'
 import { computeEffectiveStatus } from '@/lib/tenant-status'
 import { formatPhoneInput } from '@/lib/tenant-auth'
 import { getInitials } from '@/lib/utils'
@@ -34,11 +35,14 @@ export default async function TenantDetailPage({
   ])
 
   const supabase = getCacheClient() as any
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const [{ data: tenant }, { data: payments }] = await Promise.all([
+    supabase.from('tenants').select('*').eq('id', id).maybeSingle(),
+    supabase
+      .from('tenant_payments')
+      .select('id, amount, paid_at, note')
+      .eq('tenant_id', id)
+      .order('paid_at', { ascending: false }),
+  ])
 
   if (!tenant) notFound()
 
@@ -86,14 +90,25 @@ export default async function TenantDetailPage({
           subdomain: tenant.subdomain,
           company_name: tenant.company_name,
           phone: tenant.phone,
-          status: tenant.status,
           costing_method: tenant.costing_method,
+          license_count: tenant.license_count,
+          license_months: tenant.license_months,
           subscription_started_at: tenant.subscription_started_at,
           subscription_ends_at: tenant.subscription_ends_at,
-          price_paid: tenant.price_paid,
           details: tenant.details,
         }}
       />
+
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Receipt className="h-4 w-4 text-indigo-600" /> {t('paymentHistory')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PaymentHistory tenantId={tenant.id} payments={payments ?? []} totalPaid={tenant.price_paid ?? 0} />
+        </CardContent>
+      </Card>
 
       <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
         <CardHeader>

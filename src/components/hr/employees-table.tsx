@@ -46,7 +46,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
     }, 0)
   }, [search, statusFilter])
   const filtered = employees.filter((e) => {
-    const matchesSearch = (e.profiles?.full_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    const matchesSearch = (e.full_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
                           e.position.toLowerCase().includes(search.toLowerCase()) ||
                           e.employee_code.toLowerCase().includes(search.toLowerCase())
     const matchesStatus = statusFilter === 'all' ? true : statusFilter === 'hired' ? e.is_active : !e.is_active
@@ -135,7 +135,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs">
-                            {emp.profiles?.full_name?.[0] ?? 'E'}
+                            {emp.full_name?.[0] ?? 'E'}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -144,7 +144,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                               href={`/${lang}/hr/employees/${emp.id}`}
                               className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-colors"
                             >
-                              {emp.profiles?.full_name ?? '—'}
+                              {emp.full_name ?? '—'}
                             </Link>
                           </p>
                           <p className="text-xs text-muted-foreground">{emp.profiles?.email}</p>

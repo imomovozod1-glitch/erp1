@@ -182,6 +182,17 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+      toast.error(t("common.error"));
+      e.target.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t("common.error"));
+      e.target.value = "";
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {

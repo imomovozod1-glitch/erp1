@@ -38,7 +38,7 @@ export function EmployeeImportExport({ employees, lang }: EmployeeImportExportPr
 
   const exportRows = employees.map((e) => ({
     ...e,
-    fullName: e.profiles?.full_name || '',
+    fullName: e.full_name || '',
     email: e.profiles?.email || '',
     hiredAtLabel: e.hired_at ? formatDate(e.hired_at) : '',
     statusLabel: e.is_active ? activeLabel : inactiveLabel,

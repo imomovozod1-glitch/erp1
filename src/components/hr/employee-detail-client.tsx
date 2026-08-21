@@ -111,7 +111,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
     // 1. Profile Info Sheet
     const profileData = [
-      { Parameter: tc('name'), Value: employee.profiles?.full_name ?? '—' },
+      { Parameter: tc('name'), Value: employee.full_name ?? '—' },
       { Parameter: tc('email'), Value: employee.profiles?.email ?? '—' },
       { Parameter: t('employeeCode'), Value: employee.employee_code },
       { Parameter: t('position'), Value: employee.position },
@@ -149,7 +149,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
     const salesWS = XLSX.utils.json_to_sheet(salesData)
     XLSX.utils.book_append_sheet(workbook, salesWS, "Processed Sales")
 
-    XLSX.writeFile(workbook, `${(employee.profiles?.full_name ?? 'employee').replace(/\s+/g, '_')}_details.xlsx`)
+    XLSX.writeFile(workbook, `${(employee.full_name ?? 'employee').replace(/\s+/g, '_')}_details.xlsx`)
   }
 
   return (
@@ -159,11 +159,11 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14">
             <AvatarFallback className="bg-indigo-100 text-indigo-700 text-lg font-bold">
-              {employee.profiles?.full_name?.[0] ?? 'E'}
+              {employee.full_name?.[0] ?? 'E'}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{employee.profiles?.full_name ?? '—'}</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{employee.full_name ?? '—'}</h1>
             <p className="text-xs text-slate-500 font-mono mt-1">{employee.position} &bull; {employee.profiles?.departments?.name ?? '—'}</p>
           </div>
         </div>

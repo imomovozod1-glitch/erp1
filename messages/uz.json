@@ -96,7 +96,7 @@
     "settings": "Sozlamalar",
     "tools": "Vositalar",
     "pos": "POS",
-    "customers": "CRM"
+    "customers": "Mijozlar"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -124,7 +124,8 @@
     "emailRequired": "Elektron pochta kiritilishi shart",
     "passwordRequired": "Parol kiritilishi shart",
     "invalidEmail": "Noto'g'ri elektron pochta manzili",
-    "invalidCredentials": "Elektron pochta yoki parol noto'g'ri"
+    "invalidCredentials": "Elektron pochta yoki parol noto'g'ri",
+    "tooManyAttempts": "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring."
   },
   "tenantStatus": {
     "notFoundTitle": "Tashkilot topilmadi",
@@ -256,6 +257,7 @@
   "sales": {
     "title": "Sotuv",
     "orders": "Sotuvlar",
+    "recentOrders": "Oxirgi sotuvlar",
     "editOrder": "Sotuvni tahrirlash",
     "editCustomer": "Mijozni tahrirlash",
     "editInvoice": "Hisob-fakturani tahrirlash",
@@ -570,7 +572,12 @@
     "ticketMessage": "Murojaat matni",
     "ticketSuccess": "Murojaatingiz muvaffaqiyatli yuborildi. Tez orada siz bilan bog'lanamiz!",
     "liveStatus": "Operatorlarimiz tarmoqda",
-    "liveStatusDesc": "O'rtacha javob berish vaqti: 5 daqiqa"
+    "liveStatusDesc": "O'rtacha javob berish vaqti: 5 daqiqa",
+    "chatbotTitle": "Yordamchi bot",
+    "chatbotWelcome": "Assalomu alaykum! Men ERP tizimi bo'yicha yordamchi botman. Sizga qanday yordam bera olaman?",
+    "chatbotPlaceholder": "Savolingizni yozing...",
+    "chatbotError": "Javob olishda xatolik yuz berdi. Qayta urinib ko'ring.",
+    "chatbotThinking": "Yozmoqda..."
   },
   "admin": {
     "login": {
@@ -585,11 +592,15 @@
       "passwordRequired": "Parol kiritilishi shart",
       "signingIn": "Kirilmoqda...",
       "signIn": "Kirish",
-      "invalidCredentials": "Elektron pochta yoki parol noto'g'ri"
+      "invalidCredentials": "Elektron pochta yoki parol noto'g'ri",
+      "tooManyAttempts": "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring."
     },
     "shell": {
       "tenants": "Tenantlar",
-      "logout": "Chiqish"
+      "logout": "Chiqish",
+      "dashboard": "Boshqaruv paneli",
+      "navGroup": "Boshqaruv",
+      "badge": "Super-admin"
     },
     "tenants": {
       "title": "Tenantlar",
@@ -622,8 +633,17 @@
         "back": "Tenantlarga qaytish",
         "ownerLogin": "Egasining login ma'lumotlari",
         "dangerZone": "Xavfli zona",
-        "dangerZoneDesc": "Tenantni o'chirish qaytarib bo'lmaydi va faqat 180 kunlik faolsizlikdan keyin ruxsat etiladi"
-      }
+        "dangerZoneDesc": "Tenantni o'chirish qaytarib bo'lmaydi va faqat 180 kunlik faolsizlikdan keyin ruxsat etiladi",
+        "paymentHistory": "To'lovlar tarixi",
+        "totalPaid": "Jami to'langan",
+        "addPayment": "To'lov qo'shish",
+        "amount": "Summa",
+        "note": "Izoh (ixtiyoriy)",
+        "noPayments": "Hali to'lovlar yo'q",
+        "paymentAdded": "To'lov qo'shildi",
+        "paymentError": "To'lovni qo'shib bo'lmadi"
+      },
+      "showing": "{total} tadan {start}-{end} ko'rsatilmoqda"
     },
     "form": {
       "companyName": "Kompaniya nomi",
@@ -631,6 +651,7 @@
       "subdomain": "Subdomen",
       "subdomainHint": "Faqat kichik lotin harflari, raqamlar va chiziqcha",
       "subdomainInvalid": "Faqat kichik lotin harflari, raqamlar va chiziqchadan foydalaning",
+      "subdomainReserved": "Bu subdomen band (tizim tomonidan zaxiralangan)",
       "phone": "Telefon (login uchun)",
       "phoneInvalid": "To'g'ri telefon raqamini kiriting",
       "password": "Parol",
@@ -642,9 +663,14 @@
       "costingMethod": "Hisoblash turi (FIFO/LIFO/AVECO)",
       "subscriptionStart": "Obuna boshlanishi",
       "subscriptionEnd": "Obuna tugashi",
+      "licenseCount": "Litsenziyalar soni",
+      "licenseCountRequired": "Litsenziyalar sonini kiriting",
+      "licenseMonths": "Litsenziya muddati (oy)",
+      "licenseMonthsRequired": "Litsenziya oylar sonini kiriting",
       "subscriptionEndBeforeStart": "Tugash sanasi boshlanish sanasidan keyin bo'lishi kerak",
       "subscriptionStartRequired": "Obuna boshlanish sanasi kiritilishi shart",
       "pricePaid": "To'langan summa",
+      "initialPayment": "Boshlang'ich to'lov",
       "pricePaidRequired": "To'langan summa kiritilishi shart",
       "pricePaidNegative": "Summa manfiy bo'la olmaydi",
       "details": "Tafsilotlar",
@@ -680,6 +706,16 @@
       "enabledAfter": "180 kunlik faolsizlikdan keyin faollashadi — {days} kun qoldi",
       "success": "Tenant o'chirildi",
       "error": "Tenantni o'chirib bo'lmadi"
+    },
+    "dashboard": {
+      "title": "Boshqaruv paneli",
+      "subtitle": "Barcha tenant hisoblariga umumiy nazar",
+      "newTenant": "Yangi tenant",
+      "revenueOverTime": "Oylar bo'yicha tushum",
+      "noPayments": "Hali to'lovlar qayd etilmagan",
+      "recentTenants": "So'nggi qo'shilgan tenantlar",
+      "viewAll": "Barchasini ko'rish",
+      "blockedWarning": "{count, plural, other {# ta tenant bloklangan — to'lov holatini tekshiring}}"
     }
   }
 }

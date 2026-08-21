@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeImageWithOpenAI } from '@/lib/openai'
+import { getSessionUser } from '@/lib/auth'
+import { validateImageUpload } from '@/lib/file-validation'
 
 export async function POST(request: NextRequest) {
+  const user = await getSessionUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
@@ -12,6 +17,11 @@ export async function POST(request: NextRequest) {
         { error: 'Rasm fayli yuklanmagan' },
         { status: 400 }
       )
+    }
+
+    const uploadError = validateImageUpload(file)
+    if (uploadError) {
+      return NextResponse.json({ error: uploadError }, { status: 400 })
     }
 
     const defaultPrompt = `Analyze this document/image for an ERP system. 

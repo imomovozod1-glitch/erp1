@@ -36,9 +36,30 @@ export function downloadExcelTemplate(columns: ExcelColumn[], filename: string, 
   XLSX.writeFile(wb, filename)
 }
 
-/** Reads the first sheet of an uploaded .xlsx/.xls file into an array of row objects. */
+const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024 // 5MB — import files are a few hundred rows at most
+
+/**
+ * Reads the first sheet of an uploaded .xlsx/.xls file into an array of row
+ * objects.
+ *
+ * The `xlsx` package has known, unpatched prototype-pollution/ReDoS
+ * advisories (GHSA-4r6h-8v6p-xvw6, GHSA-5pgg-2g8v-p4x9) with no fix on the
+ * npm registry — SheetJS only publishes newer builds via their own CDN now.
+ * Swapping the library is a bigger, riskier change across every import flow
+ * in the app; until that's done, bound what reaches the parser: reject
+ * anything not shaped like a spreadsheet file before it's ever parsed.
+ */
 export function readExcelFile(file: File): Promise<Record<string, any>[]> {
   return new Promise((resolve, reject) => {
+    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+      reject(new Error('Unsupported file type — expected .xlsx, .xls, or .csv'))
+      return
+    }
+    if (file.size > MAX_IMPORT_FILE_BYTES) {
+      reject(new Error('File is too large (max 5MB)'))
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       try {

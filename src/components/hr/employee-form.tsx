@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useForm, Controller, useWatch } from 'react-hook-form'
@@ -31,20 +31,9 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
-  const [profiles, setProfiles] = useState<any[]>([])
-
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('full_name')
-      if (data) setProfiles(data)
-    }
-    fetchProfiles()
-  }, [supabase])
 
   const innerFormSchema = z.object({
+    full_name: z.string().min(1, tCommon('required')),
     employee_code: z.string().min(1, tCommon('required')),
     position: z.string().optional().or(z.literal('')),
     salary: z.coerce.number().min(0, tCommon('invalidAmount')),
@@ -52,7 +41,6 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     is_active: z.boolean().default(true),
     terminated_at: z.string().optional().nullable(),
     notes: z.string().optional(),
-    profile_id: z.string().optional().nullable(),
   })
 
   type FormData = z.infer<typeof innerFormSchema>
@@ -60,6 +48,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
+      full_name: initialData?.full_name || '',
       employee_code: initialData?.employee_code || '',
       position: initialData?.position || '',
       salary: initialData?.salary ?? '' as any,
@@ -67,7 +56,6 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       is_active: initialData?.is_active ?? true,
       terminated_at: initialData?.terminated_at ? initialData.terminated_at.split('T')[0] : '',
       notes: initialData?.notes || '',
-      profile_id: initialData?.profile_id || '',
     }
   })
 
@@ -76,7 +64,6 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     try {
       const payload = {
         ...data,
-        profile_id: data.profile_id || null,
         terminated_at: !data.is_active && data.terminated_at ? data.terminated_at : null,
       }
       if (initialData?.id) {
@@ -114,21 +101,10 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="profile_id">{tCommon('name')}</Label>
-              <select 
-                id="profile_id" 
-                {...register('profile_id')}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-              >
-                <option value="">{tCommon('select')}</option>
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.full_name} ({p.email})
-                  </option>
-                ))}
-              </select>
-              {errors.profile_id && (
-                <p className="text-sm text-red-500">{errors.profile_id.message}</p>
+              <Label htmlFor="full_name">{tCommon('name')}</Label>
+              <Input id="full_name" {...register('full_name')} placeholder={tCommon('name')} />
+              {errors.full_name && (
+                <p className="text-sm text-red-500">{errors.full_name.message}</p>
               )}
             </div>
 

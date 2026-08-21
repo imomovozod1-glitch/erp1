@@ -96,7 +96,7 @@
     "settings": "Настройки",
     "tools": "Инструменты",
     "pos": "POS",
-    "customers": "CRM"
+    "customers": "Клиенты"
   },
   "auth": {
     "loading": "Вход...",
@@ -124,7 +124,8 @@
     "emailRequired": "Электронная почта обязательна",
     "passwordRequired": "Пароль обязателен",
     "invalidEmail": "Неверный адрес электронной почты",
-    "invalidCredentials": "Неверная почта или пароль"
+    "invalidCredentials": "Неверная почта или пароль",
+    "tooManyAttempts": "Слишком много попыток. Повторите через 15 минут."
   },
   "tenantStatus": {
     "notFoundTitle": "Организация не найдена",
@@ -256,6 +257,7 @@
   "sales": {
     "title": "Продажи",
     "orders": "Заказы",
+    "recentOrders": "Последние заказы",
     "editOrder": "Редактирование заказа",
     "editCustomer": "Редактирование клиента",
     "editInvoice": "Редактирование счёта",
@@ -562,7 +564,12 @@
     "ticketMessage": "Текст обращения",
     "ticketSuccess": "Ваше обращение успешно отправлено. Мы свяжемся с вами в ближайшее время!",
     "liveStatus": "Наши операторы онлайн",
-    "liveStatusDesc": "Среднее время ответа: 5 минут"
+    "liveStatusDesc": "Среднее время ответа: 5 минут",
+    "chatbotTitle": "Чат-бот поддержки",
+    "chatbotWelcome": "Здравствуйте! Я чат-бот-помощник по ERP-системе. Чем могу помочь?",
+    "chatbotPlaceholder": "Введите ваш вопрос...",
+    "chatbotError": "Не удалось получить ответ. Попробуйте ещё раз.",
+    "chatbotThinking": "Печатает..."
   },
   "admin": {
     "login": {
@@ -577,11 +584,15 @@
       "passwordRequired": "Введите пароль",
       "signingIn": "Выполняется вход...",
       "signIn": "Войти",
-      "invalidCredentials": "Неверный email или пароль"
+      "invalidCredentials": "Неверный email или пароль",
+      "tooManyAttempts": "Слишком много попыток. Повторите через 15 минут."
     },
     "shell": {
       "tenants": "Арендаторы",
-      "logout": "Выйти"
+      "logout": "Выйти",
+      "dashboard": "Панель управления",
+      "navGroup": "Управление",
+      "badge": "Супер-админ"
     },
     "tenants": {
       "title": "Арендаторы",
@@ -614,8 +625,17 @@
         "back": "Назад к арендаторам",
         "ownerLogin": "Данные для входа владельца",
         "dangerZone": "Опасная зона",
-        "dangerZoneDesc": "Удаление арендатора необратимо и разрешено только после 180 дней неактивности"
-      }
+        "dangerZoneDesc": "Удаление арендатора необратимо и разрешено только после 180 дней неактивности",
+        "paymentHistory": "История платежей",
+        "totalPaid": "Всего оплачено",
+        "addPayment": "Добавить платёж",
+        "amount": "Сумма",
+        "note": "Примечание (необязательно)",
+        "noPayments": "Платежей пока нет",
+        "paymentAdded": "Платёж добавлен",
+        "paymentError": "Не удалось добавить платёж"
+      },
+      "showing": "Показано {start}-{end} из {total}"
     },
     "form": {
       "companyName": "Название компании",
@@ -623,6 +643,7 @@
       "subdomain": "Субдомен",
       "subdomainHint": "Только строчные латинские буквы, цифры и дефис",
       "subdomainInvalid": "Используйте только строчные латинские буквы, цифры и дефис",
+      "subdomainReserved": "Этот субдомен зарезервирован системой",
       "phone": "Телефон (для входа)",
       "phoneInvalid": "Введите корректный номер телефона",
       "password": "Пароль",
@@ -634,9 +655,14 @@
       "costingMethod": "Метод учёта (FIFO/LIFO/AVECO)",
       "subscriptionStart": "Начало подписки",
       "subscriptionEnd": "Окончание подписки",
+      "licenseCount": "Количество лицензий",
+      "licenseCountRequired": "Введите количество лицензий",
+      "licenseMonths": "Срок лицензии (мес.)",
+      "licenseMonthsRequired": "Введите срок лицензии в месяцах",
       "subscriptionEndBeforeStart": "Дата окончания должна быть позже даты начала",
       "subscriptionStartRequired": "Введите дату начала подписки",
       "pricePaid": "Оплаченная сумма",
+      "initialPayment": "Первоначальный платёж",
       "pricePaidRequired": "Введите оплаченную сумму",
       "pricePaidNegative": "Сумма не может быть отрицательной",
       "details": "Детали",
@@ -672,6 +698,16 @@
       "enabledAfter": "Станет доступно после 180 дней неактивности — осталось {days} дн.",
       "success": "Арендатор удалён",
       "error": "Не удалось удалить арендатора"
+    },
+    "dashboard": {
+      "title": "Панель управления",
+      "subtitle": "Обзор всех тенант-аккаунтов",
+      "newTenant": "Новый тенант",
+      "revenueOverTime": "Доход по месяцам",
+      "noPayments": "Платежи еще не зафиксированы",
+      "recentTenants": "Недавно добавленные тенанты",
+      "viewAll": "Смотреть все",
+      "blockedWarning": "{count, plural, other {Заблокировано тенантов: # — проверьте статус оплаты}}"
     }
   }
 }

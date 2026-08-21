@@ -38,28 +38,31 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
     unit: z.string().min(1, tCommon('required')),
     price: z.preprocess(
       (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
-      z.number({ message: tCommon('required') }).min(0, tCommon('required'))
+      z.number().min(0, tCommon('required')).optional()
     ),
     cost_price: z.preprocess(
       (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
-      z.number({ message: tCommon('required') }).min(0, tCommon('required'))
+      z.number().min(0, tCommon('required')).optional()
     ),
     incoming_cost: z.preprocess(
       (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
-      z.number({ message: tCommon('required') }).min(0, tCommon('required'))
+      z.number().min(0, tCommon('required')).optional()
     ),
     stock: z.preprocess(
       (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
-      z.number({ message: tCommon('required') }).min(0, tCommon('required'))
+      z.number().min(0, tCommon('required')).optional()
     ),
     min_stock: z.preprocess(
       (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
-      z.number({ message: tCommon('required') }).min(0, tCommon('required'))
+      z.number().min(0, tCommon('required')).optional()
     ),
     category_id: z.string().optional().nullable(),
     description: z.string().optional(),
     is_active: z.boolean().default(true),
-  })
+  }).refine(
+    (data) => data.stock === undefined || data.cost_price !== undefined,
+    { message: tCommon('required'), path: ['cost_price'] }
+  )
 
   type FormData = z.infer<typeof innerFormSchema>
 
@@ -104,7 +107,14 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       stock: initialData?.stock ?? '' as any,
       min_stock: initialData?.min_stock ?? '' as any,
       description: initialData?.description || '',
-      is_active: initialData?.is_active ?? true,
+      // Deliberately a STRING matching the <option value> below, not a raw
+      // boolean: register('is_active', { setValueAs: v => v === 'true' })
+      // only ever transforms whatever RHF is currently holding for this
+      // field — if the user never touches the select, that's still this
+      // defaultValues entry untouched. A boolean `true` here means the
+      // transform evaluates `true === 'true'` (always false), silently
+      // submitting is_active: false for a product nobody ever set inactive.
+      is_active: String(initialData?.is_active ?? true) as any,
     },
   })
 
@@ -122,7 +132,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         const num = parseInt(row.sku, 10)
         if (!isNaN(num) && num > maxSku) maxSku = num
       }
-      setValue('sku', (maxSku + 1).toString())
+      setValue('sku', (maxSku + 1).toString(), { shouldValidate: true })
     }
     fetchNextSku()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,9 +189,18 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         throw new Error(t('nameExists'))
       }
 
-      const payload = {
+      const payload: Record<string, any> = {
         ...data,
         category_id: data.category_id || null, // convert empty string to null
+      }
+      // supabase-js builds its column list from Object.keys(), which still
+      // sees a key whose value is `undefined` (unlike JSON.stringify, which
+      // would just drop it) — and serializes that as an explicit `null`,
+      // which fails the NOT NULL constraint on these columns' own DB
+      // defaults (0). Deleting the key outright is what actually leaves the
+      // column out of the INSERT/UPDATE so the default applies.
+      for (const key of Object.keys(payload)) {
+        if (payload[key] === undefined) delete payload[key]
       }
 
       let userId: string | null = null

@@ -126,6 +126,21 @@ export async function proxy(request: NextRequest) {
   const host = request.headers.get('host') || ''
   const tenantSubdomain = getTenantSubdomain(host)
 
+  // admin.<domain> is the super-admin console, not a tenant — rewrite to the
+  // same /admin path tree that already works at <domain>/admin/** (see the
+  // path-based bypass further below), so the URL bar still shows
+  // admin.<domain>/login while Next.js actually serves src/app/admin/**.
+  // "admin" can never collide with a real tenant subdomain: tenants are
+  // only ever created via the provisioning route, which never accepts it
+  // (reserved, see src/app/api/admin/tenants/route.ts).
+  if (tenantSubdomain === 'admin') {
+    const url = request.nextUrl.clone()
+    if (!pathname.startsWith('/admin')) {
+      url.pathname = `/admin${pathname === '/' ? '' : pathname}`
+    }
+    return NextResponse.rewrite(url)
+  }
+
   // Clone headers and append tenant context if present
   const requestHeaders = new Headers(request.headers)
   if (tenantSubdomain) {

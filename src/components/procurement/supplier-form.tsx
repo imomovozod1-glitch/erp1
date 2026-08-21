@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateSuppliers } from '@/lib/data/revalidate'
+import { formatPhoneInput } from '@/lib/tenant-auth'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -61,7 +62,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
 
   type FormData = z.infer<typeof formSchema>
 
-  const { register, handleSubmit, setValue, getValues, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, setValue, getValues, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || '',
@@ -73,7 +74,13 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
       contact_person: initialData?.contact_person || '',
       tin: initialData?.tin || '',
       notes: initialData?.notes || '',
-      is_active: initialData?.is_active ?? true,
+      // A STRING matching the <option value> below, not a raw boolean — see
+      // product-form.tsx for why: setValueAs: v => v === 'true' only
+      // transforms whatever RHF is currently holding, and an untouched
+      // select still holds this defaultValues entry. A boolean `true` here
+      // makes that comparison always false, silently submitting
+      // is_active: false for a supplier nobody ever set inactive.
+      is_active: String(initialData?.is_active ?? true) as any,
     },
   })
 
@@ -177,11 +184,18 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             <Phone className="h-3.5 w-3.5 text-slate-400" />
             {t('supplierPhone')} *
           </Label>
-          <Input
-            id="phone"
-            {...register('phone')}
-            placeholder="+998 90 123 45 67"
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field }) => (
+              <Input
+                id="phone"
+                value={field.value ?? ''}
+                onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
+                placeholder="+998 90 123 45 67"
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+              />
+            )}
           />
           {errors.phone && <p className="text-xs text-red-500 font-medium">{errors.phone.message}</p>}
         </div>

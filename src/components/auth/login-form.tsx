@@ -8,8 +8,7 @@ import { toast } from 'sonner'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2, Loader2, Phone } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { phoneToSyntheticEmail, formatPhoneInput } from '@/lib/tenant-auth'
+import { formatPhoneInput } from '@/lib/tenant-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,13 +33,13 @@ export function LoginForm({ lang }: { lang: string }) {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email: phoneToSyntheticEmail(data.phone),
-        password: data.password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: data.phone, password: data.password }),
       })
-      if (error) {
-        toast.error(t('invalidCredentials'))
+      if (!res.ok) {
+        toast.error(res.status === 429 ? t('tooManyAttempts') : t('invalidCredentials'))
         setIsLoading(false)
         return
       }

@@ -5,10 +5,11 @@ import { PageHeader } from '@/components/shared/page-header'
 import { getTranslations } from 'next-intl/server'
 
 interface AnalyticsPageProps {
-  params: { lang: string }
+  params: Promise<{ lang: string }>
 }
 
-export default async function AnalyticsPage({ params: { lang } }: AnalyticsPageProps) {
+export default async function AnalyticsPage({ params }: AnalyticsPageProps) {
+  const { lang } = await params
   const t = await getTranslations('analytics')
   const tenantId = await getCurrentTenantId()
 

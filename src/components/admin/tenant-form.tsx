@@ -3,11 +3,11 @@
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Building2, Globe, Phone, KeyRound, CircleDot, Layers, CalendarDays, Wallet, FileText, ReceiptText } from 'lucide-react'
+import { Loader2, Building2, Globe, Phone, KeyRound, Layers, CalendarDays, Wallet, FileText, ReceiptText, IdCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,18 +16,18 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
-import { formatPhoneInput } from '@/lib/tenant-auth'
+import { formatPhoneInput, isReservedSubdomain } from '@/lib/tenant-auth'
 
 export interface TenantFormInitialData {
   id: string
   subdomain: string
   company_name: string
   phone: string
-  status: 'active' | 'blocked' | 'inactive'
   costing_method: 'fifo' | 'lifo' | 'aveco'
+  license_count: number
+  license_months: number
   subscription_started_at: string | null
   subscription_ends_at: string | null
-  price_paid: number | null
   details: string | null
 }
 
@@ -36,9 +36,9 @@ interface TenantFormProps {
   initialData?: TenantFormInitialData
 }
 
-function addOneMonth(dateStr: string): string {
+function addMonths(dateStr: string, months: number): string {
   const d = new Date(dateStr)
-  d.setMonth(d.getMonth() + 1)
+  d.setMonth(d.getMonth() + (Number(months) || 1))
   return d.toISOString().slice(0, 10)
 }
 
@@ -59,36 +59,31 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
 
   const tenantFormSchema = useMemo(
     () =>
-      z
-        .object({
-          subdomain: z
-            .string()
-            .min(2, t('subdomainInvalid'))
-            .regex(/^[a-z0-9-]+$/, t('subdomainInvalid')),
-          company_name: z.string().min(1, t('companyNameRequired')),
-          phone: z
-            .string()
-            .min(9, t('phoneInvalid'))
-            .regex(/^\+?\d[\d\s-]{7,}\d$/, t('phoneInvalid')),
-          password:
-            mode === 'create'
-              ? z.string().min(6, t('passwordRequired'))
-              : z.string().optional(),
-          status: z.enum(['active', 'blocked']),
-          costing_method: z.enum(['fifo', 'lifo', 'aveco']),
-          subscription_started_at: z.string().min(1, t('subscriptionStartRequired')),
-          subscription_ends_at: z.string().optional(),
-          price_paid: z
-            .number({ message: t('pricePaidRequired') })
-            .min(0, t('pricePaidNegative')),
-          details: z.string().optional(),
-        })
-        .refine(
-          (data) =>
-            !data.subscription_ends_at ||
-            new Date(data.subscription_ends_at) > new Date(data.subscription_started_at),
-          { message: t('subscriptionEndBeforeStart'), path: ['subscription_ends_at'] }
-        ),
+      z.object({
+        subdomain: z
+          .string()
+          .min(2, t('subdomainInvalid'))
+          .regex(/^[a-z0-9-]+$/, t('subdomainInvalid'))
+          .refine((v) => !isReservedSubdomain(v), t('subdomainReserved')),
+        company_name: z.string().min(1, t('companyNameRequired')),
+        phone: z
+          .string()
+          .min(9, t('phoneInvalid'))
+          .regex(/^\+?\d[\d\s-]{7,}\d$/, t('phoneInvalid')),
+        password:
+          mode === 'create'
+            ? z.string().min(6, t('passwordRequired'))
+            : z.string().optional(),
+        costing_method: z.enum(['fifo', 'lifo', 'aveco']),
+        license_count: z.number({ message: t('licenseCountRequired') }).int().min(1, t('licenseCountRequired')),
+        license_months: z.number({ message: t('licenseMonthsRequired') }).int().min(1, t('licenseMonthsRequired')),
+        subscription_started_at: z.string().min(1, t('subscriptionStartRequired')),
+        price_paid:
+          mode === 'create'
+            ? z.number({ message: t('pricePaidRequired') }).min(0, t('pricePaidNegative'))
+            : z.number().optional(),
+        details: z.string().optional(),
+      }),
     [t, mode]
   )
   type TenantFormData = z.infer<typeof tenantFormSchema>
@@ -97,8 +92,6 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
     register,
     handleSubmit,
     control,
-    setValue,
-    getValues,
     formState: { errors },
   } = useForm<TenantFormData>({
     resolver: zodResolver(tenantFormSchema),
@@ -107,30 +100,37 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
           subdomain: initialData.subdomain,
           company_name: initialData.company_name,
           phone: initialData.phone,
-          // 'inactive' is being retired from the picker (see zod schema
-          // above) — a legacy row still carrying it loads as 'blocked'.
-          status: initialData.status === 'inactive' ? 'blocked' : initialData.status,
           costing_method: initialData.costing_method,
+          license_count: initialData.license_count,
+          license_months: initialData.license_months,
           subscription_started_at: initialData.subscription_started_at ?? '',
-          subscription_ends_at: initialData.subscription_ends_at ?? '',
-          price_paid: initialData.price_paid ?? undefined,
-          details: initialData.details ?? '',
         }
       : {
-          status: 'active',
           costing_method: 'fifo',
+          license_count: 1,
+          license_months: 1,
         },
   })
+
+  // Subscription end is always derived from start + license term — never a
+  // second, independently-editable date that could drift out of sync.
+  const startedAt = useWatch({ control, name: 'subscription_started_at' })
+  const licenseMonths = useWatch({ control, name: 'license_months' })
+  const computedEndsAt = startedAt && licenseMonths ? addMonths(startedAt, licenseMonths) : null
 
   const onSubmit = async (data: TenantFormData) => {
     setIsSubmitting(true)
     try {
+      const payload = {
+        ...data,
+        subscription_ends_at: computedEndsAt,
+      }
       const res = await fetch(
         mode === 'create' ? '/api/admin/tenants' : `/api/admin/tenants/${initialData!.id}`,
         {
           method: mode === 'create' ? 'POST' : 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
+          body: JSON.stringify(payload),
         }
       )
       const json = await res.json()
@@ -217,29 +217,6 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="flex items-center gap-1.5">
-                  <CircleDot className="h-3.5 w-3.5 text-muted-foreground" /> {t('status')}
-                </Label>
-                <Controller
-                  control={control}
-                  name="status"
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue>
-                          {(value: string) => (value === 'blocked' ? t('statusBlocked') : t('statusActive'))}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">{t('statusActive')}</SelectItem>
-                        <SelectItem value="blocked">{t('statusBlocked')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
                   <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
                 </Label>
                 <Controller
@@ -263,59 +240,65 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="subscription_started_at" className="flex items-center gap-1.5">
-                  <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionStart')}
+                <Label htmlFor="license_count" className="flex items-center gap-1.5">
+                  <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseCount')}
                 </Label>
                 <Controller
                   control={control}
-                  name="subscription_started_at"
-                  render={({ field }) => (
-                    <Input
-                      id="subscription_started_at"
-                      type="date"
-                      value={field.value ?? ''}
-                      onChange={(e) => {
-                        const newStart = e.target.value
-                        field.onChange(newStart)
-                        const currentEnd = getValues('subscription_ends_at')
-                        // Auto-set a 1-month term when a start date is (re)picked
-                        // on a new tenant, or when an existing tenant has no end
-                        // date yet — never silently overwrites a manually-set end.
-                        if (newStart && (mode === 'create' || !currentEnd)) {
-                          setValue('subscription_ends_at', addOneMonth(newStart), { shouldValidate: true })
-                        }
-                      }}
-                    />
+                  name="license_count"
+                  render={({ field: { value, onChange } }) => (
+                    <NumericInput id="license_count" value={value ?? undefined} onChange={onChange} />
                   )}
                 />
+                {errors.license_count && <p className="text-sm text-red-500">{errors.license_count.message}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="license_months" className="flex items-center gap-1.5">
+                  <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseMonths')}
+                </Label>
+                <Controller
+                  control={control}
+                  name="license_months"
+                  render={({ field: { value, onChange } }) => (
+                    <NumericInput id="license_months" value={value ?? undefined} onChange={onChange} />
+                  )}
+                />
+                {errors.license_months && <p className="text-sm text-red-500">{errors.license_months.message}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="subscription_started_at" className="flex items-center gap-1.5">
+                  <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionStart')}
+                </Label>
+                <Input id="subscription_started_at" type="date" {...register('subscription_started_at')} />
                 {errors.subscription_started_at && (
                   <p className="text-sm text-red-500">{errors.subscription_started_at.message}</p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="subscription_ends_at" className="flex items-center gap-1.5">
+                <Label className="flex items-center gap-1.5">
                   <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
                 </Label>
-                <Input id="subscription_ends_at" type="date" {...register('subscription_ends_at')} />
-                {errors.subscription_ends_at && (
-                  <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
-                )}
+                <Input value={computedEndsAt ?? ''} disabled className="bg-slate-50 dark:bg-slate-800/50" />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="price_paid" className="flex items-center gap-1.5">
-                  <Wallet className="h-3.5 w-3.5 text-muted-foreground" /> {t('pricePaid')}
-                </Label>
-                <Controller
-                  control={control}
-                  name="price_paid"
-                  render={({ field: { value, onChange } }) => (
-                    <NumericInput id="price_paid" placeholder="0" value={value ?? undefined} onChange={onChange} />
-                  )}
-                />
-                {errors.price_paid && <p className="text-sm text-red-500">{errors.price_paid.message}</p>}
-              </div>
+              {mode === 'create' && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="price_paid" className="flex items-center gap-1.5">
+                    <Wallet className="h-3.5 w-3.5 text-muted-foreground" /> {t('initialPayment')}
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="price_paid"
+                    render={({ field: { value, onChange } }) => (
+                      <NumericInput id="price_paid" placeholder="0" value={value ?? undefined} onChange={onChange} />
+                    )}
+                  />
+                  {errors.price_paid && <p className="text-sm text-red-500">{errors.price_paid.message}</p>}
+                </div>
+              )}
             </div>
           </div>
 

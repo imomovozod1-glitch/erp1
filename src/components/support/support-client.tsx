@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { SupportChatbot } from '@/components/support/support-chatbot'
 
 interface SupportClientProps {
   lang: string
@@ -248,6 +249,8 @@ export function SupportClient({ lang }: SupportClientProps) {
           </div>
         </div>
       </div>
+
+      <SupportChatbot lang={lang} />
     </div>
   )
 }

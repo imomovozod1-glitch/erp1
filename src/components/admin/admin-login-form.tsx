@@ -8,7 +8,6 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { ShieldCheck, Loader2, Mail } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -39,13 +38,13 @@ export function AdminLoginForm() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email, password: data.password }),
       })
-      if (error) {
-        toast.error(t('invalidCredentials'))
+      if (!res.ok) {
+        toast.error(res.status === 429 ? t('tooManyAttempts') : t('invalidCredentials'))
         setIsLoading(false)
         return
       }

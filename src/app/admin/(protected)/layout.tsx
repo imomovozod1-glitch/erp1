@@ -10,5 +10,9 @@ export default async function AdminProtectedLayout({
   const session = await getSuperAdminSession()
   if (!session) redirect('/admin/login')
 
-  return <AdminShell adminName={session.fullName}>{children}</AdminShell>
+  return (
+    <AdminShell adminName={session.fullName} adminEmail={session.email}>
+      {children}
+    </AdminShell>
+  )
 }
