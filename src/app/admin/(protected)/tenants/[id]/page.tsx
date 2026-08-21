@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
-import Link from 'next/link'
-import { ArrowLeft, KeyRound, ShieldAlert, Receipt } from 'lucide-react'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { KeyRound, ShieldAlert, Receipt } from 'lucide-react'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { PageHeader } from '@/components/shared/page-header'
+import { PageClock } from '@/components/shared/page-clock'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { TenantForm } from '@/components/admin/tenant-form'
@@ -29,9 +30,10 @@ export default async function TenantDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [t, tStatus] = await Promise.all([
+  const [t, tStatus, lang] = await Promise.all([
     getTranslations('admin.tenants.detail'),
     getTranslations('admin.tenants'),
+    getLocale(),
   ])
 
   const supabase = getCacheClient() as any
@@ -59,28 +61,22 @@ export default async function TenantDetailPage({
 
   return (
     <div className="space-y-8">
-      <Link
-        href="/admin/tenants"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors"
+      <PageHeader
+        title={tenant.company_name}
+        subtitle={`${tenant.subdomain} · ${formatPhoneInput(tenant.phone)}`}
+        breadcrumbs={[
+          { label: tStatus('title'), href: '/admin/tenants' },
+          { label: tenant.company_name },
+        ]}
       >
-        <ArrowLeft className="h-4 w-4" /> {t('back')}
-      </Link>
+        <PageClock lang={lang} />
+      </PageHeader>
 
-      <div className="flex items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-lg font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+      <div className="flex items-center gap-3 -mt-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
           {getInitials(tenant.company_name)}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {tenant.company_name}
-            </h1>
-            <StatusBadge label={statusLabel} tone={STATUS_TONE[tenant.status] ?? 'slate'} />
-          </div>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {tenant.subdomain} · {formatPhoneInput(tenant.phone)}
-          </p>
-        </div>
+        <StatusBadge label={statusLabel} tone={STATUS_TONE[tenant.status] ?? 'slate'} />
       </div>
 
       <TenantForm

@@ -1,8 +1,8 @@
 import { getCacheClient } from '@/lib/supabase/cache-client'
 
-const WINDOW_MINUTES = 15
-const MAX_ATTEMPTS_PER_IDENTIFIER = 5
-const MAX_ATTEMPTS_PER_IP = 20
+export const WINDOW_MINUTES = 15
+export const MAX_ATTEMPTS_PER_IDENTIFIER = 5
+export const MAX_ATTEMPTS_PER_IP = 20
 
 export interface RateLimitResult {
   allowed: boolean
@@ -47,6 +47,25 @@ export async function checkLoginRateLimit(identifier: string, ip: string): Promi
 export async function recordLoginAttempt(identifier: string, ip: string, success: boolean): Promise<void> {
   const supabase = getCacheClient() as any
   await supabase.from('login_attempts').insert({ identifier, ip, success })
+}
+
+/**
+ * Counts identifiers currently over the failed-attempt threshold within the
+ * rate-limit window — used by the admin security log's "currently locked"
+ * stat. A plain helper (not a component/hook) so the `Date.now()` call
+ * doesn't trip the React Compiler purity lint rule the way it would inside
+ * a Server Component's render body.
+ */
+export function countCurrentlyLocked(
+  attempts: { identifier: string; success: boolean; created_at: string }[]
+): number {
+  const windowStart = Date.now() - WINDOW_MINUTES * 60 * 1000
+  const failedCountByIdentifier = new Map<string, number>()
+  for (const a of attempts) {
+    if (a.success || new Date(a.created_at).getTime() < windowStart) continue
+    failedCountByIdentifier.set(a.identifier, (failedCountByIdentifier.get(a.identifier) ?? 0) + 1)
+  }
+  return [...failedCountByIdentifier.values()].filter((n) => n >= MAX_ATTEMPTS_PER_IDENTIFIER).length
 }
 
 export function getClientIp(request: Request): string {

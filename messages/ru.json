@@ -592,7 +592,10 @@
       "logout": "Выйти",
       "dashboard": "Панель управления",
       "navGroup": "Управление",
-      "badge": "Супер-админ"
+      "badge": "Супер-админ",
+      "payments": "Платежи",
+      "security": "Безопасность",
+      "settings": "Настройки"
     },
     "tenants": {
       "title": "Арендаторы",
@@ -708,6 +711,83 @@
       "recentTenants": "Недавно добавленные тенанты",
       "viewAll": "Смотреть все",
       "blockedWarning": "{count, plural, other {Заблокировано тенантов: # — проверьте статус оплаты}}"
+    },
+    "payments": {
+      "title": "Платежи",
+      "subtitle": "История всех платежей от тенантов",
+      "statTotal": "Общий доход",
+      "statThisMonth": "За этот месяц",
+      "statCount": "Количество платежей",
+      "statTenants": "Платящих тенантов",
+      "searchPlaceholder": "Поиск по компании, субдомену или заметке...",
+      "showing": "Показано {start}-{end} из {total}",
+      "colTenant": "Тенант",
+      "colAmount": "Сумма",
+      "colNote": "Заметка",
+      "colDate": "Дата",
+      "empty": "Платежи не найдены"
+    },
+    "security": {
+      "title": "Журнал безопасности",
+      "subtitle": "Все попытки входа и заблокированные аккаунты",
+      "statTotalToday": "Попыток сегодня",
+      "statFailedToday": "Неудачных сегодня",
+      "statLocked": "Заблокировано сейчас",
+      "statTracked": "Отслеживаемых записей",
+      "searchPlaceholder": "Поиск по телефону/email или IP...",
+      "showing": "Показано {start}-{end} из {total}",
+      "colIdentifier": "Аккаунт",
+      "colIp": "IP-адрес",
+      "colOutcome": "Результат",
+      "colTime": "Время",
+      "filterAll": "Все",
+      "filterFailed": "Неудачные",
+      "filterSuccess": "Успешные",
+      "success": "Успешно",
+      "failed": "Неудача"
+    },
+    "settings": {
+      "title": "Настройки",
+      "tabs": {
+        "profile": "Профиль",
+        "admins": "Супер-админы"
+      },
+      "profile": {
+        "title": "Данные профиля",
+        "subtitle": "Ваше имя и email для входа",
+        "fullName": "Полное имя",
+        "email": "Электронная почта",
+        "save": "Сохранить",
+        "success": "Профиль обновлен",
+        "error": "Не удалось обновить профиль"
+      },
+      "security": {
+        "title": "Обновить пароль",
+        "subtitle": "Установите новый пароль для аккаунта",
+        "newPassword": "Новый пароль",
+        "confirmPassword": "Подтвердите пароль",
+        "save": "Обновить",
+        "success": "Пароль обновлен",
+        "error": "Не удалось обновить пароль",
+        "tooShort": "Пароль должен содержать минимум 6 символов",
+        "mismatch": "Пароли не совпадают"
+      },
+      "admins": {
+        "count": "{count, plural, other {# супер-админов}}",
+        "addAdmin": "Добавить админа",
+        "fullName": "Полное имя",
+        "email": "Электронная почта",
+        "password": "Пароль",
+        "create": "Создать",
+        "colName": "Имя",
+        "colEmail": "Электронная почта",
+        "colSince": "Добавлен",
+        "you": "Вы",
+        "confirmDelete": "Убрать \"{name}\" из супер-админов?",
+        "created": "Админ добавлен",
+        "deleted": "Админ удален",
+        "error": "Не удалось выполнить действие"
+      }
     }
   }
 }

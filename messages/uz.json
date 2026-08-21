@@ -600,7 +600,10 @@
       "logout": "Chiqish",
       "dashboard": "Boshqaruv paneli",
       "navGroup": "Boshqaruv",
-      "badge": "Super-admin"
+      "badge": "Super-admin",
+      "payments": "To'lovlar",
+      "security": "Xavfsizlik",
+      "settings": "Sozlamalar"
     },
     "tenants": {
       "title": "Tenantlar",
@@ -716,6 +719,83 @@
       "recentTenants": "So'nggi qo'shilgan tenantlar",
       "viewAll": "Barchasini ko'rish",
       "blockedWarning": "{count, plural, other {# ta tenant bloklangan — to'lov holatini tekshiring}}"
+    },
+    "payments": {
+      "title": "To'lovlar",
+      "subtitle": "Barcha tenantlardan qabul qilingan to'lovlar tarixi",
+      "statTotal": "Jami tushum",
+      "statThisMonth": "Shu oy",
+      "statCount": "To'lovlar soni",
+      "statTenants": "To'lov qilgan tenantlar",
+      "searchPlaceholder": "Kompaniya, subdomen yoki izoh bo'yicha qidirish...",
+      "showing": "{total} tadan {start}-{end} ko'rsatilmoqda",
+      "colTenant": "Tenant",
+      "colAmount": "Summa",
+      "colNote": "Izoh",
+      "colDate": "Sana",
+      "empty": "To'lovlar topilmadi"
+    },
+    "security": {
+      "title": "Xavfsizlik jurnali",
+      "subtitle": "Barcha login urinishlari va bloklangan hisoblar",
+      "statTotalToday": "Bugungi urinishlar",
+      "statFailedToday": "Bugungi xato urinishlar",
+      "statLocked": "Hozir bloklangan",
+      "statTracked": "Kuzatilgan yozuvlar",
+      "searchPlaceholder": "Telefon/email yoki IP bo'yicha qidirish...",
+      "showing": "{total} tadan {start}-{end} ko'rsatilmoqda",
+      "colIdentifier": "Hisob",
+      "colIp": "IP manzil",
+      "colOutcome": "Natija",
+      "colTime": "Vaqt",
+      "filterAll": "Barchasi",
+      "filterFailed": "Xato",
+      "filterSuccess": "Muvaffaqiyatli",
+      "success": "Muvaffaqiyatli",
+      "failed": "Xato"
+    },
+    "settings": {
+      "title": "Sozlamalar",
+      "tabs": {
+        "profile": "Profil",
+        "admins": "Super-adminlar"
+      },
+      "profile": {
+        "title": "Profil ma'lumotlari",
+        "subtitle": "Ismingiz va login elektron pochtangiz",
+        "fullName": "To'liq ism",
+        "email": "Elektron pochta",
+        "save": "Saqlash",
+        "success": "Profil yangilandi",
+        "error": "Profilni yangilab bo'lmadi"
+      },
+      "security": {
+        "title": "Parolni yangilash",
+        "subtitle": "Hisobingiz uchun yangi parol o'rnating",
+        "newPassword": "Yangi parol",
+        "confirmPassword": "Parolni tasdiqlang",
+        "save": "Yangilash",
+        "success": "Parol yangilandi",
+        "error": "Parolni yangilab bo'lmadi",
+        "tooShort": "Parol kamida 6 ta belgidan iborat bo'lishi kerak",
+        "mismatch": "Parollar mos kelmadi"
+      },
+      "admins": {
+        "count": "{count, plural, other {# ta super-admin}}",
+        "addAdmin": "Admin qo'shish",
+        "fullName": "To'liq ism",
+        "email": "Elektron pochta",
+        "password": "Parol",
+        "create": "Yaratish",
+        "colName": "Ism",
+        "colEmail": "Elektron pochta",
+        "colSince": "Qo'shilgan sana",
+        "you": "Siz",
+        "confirmDelete": "\"{name}\" ni super-adminlardan olib tashlamoqchimisiz?",
+        "created": "Admin qo'shildi",
+        "deleted": "Admin o'chirildi",
+        "error": "Amalni bajarib bo'lmadi"
+      }
     }
   }
 }

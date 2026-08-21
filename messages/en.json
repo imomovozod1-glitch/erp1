@@ -601,7 +601,10 @@
       "logout": "Log out",
       "dashboard": "Dashboard",
       "navGroup": "Management",
-      "badge": "Super admin"
+      "badge": "Super admin",
+      "payments": "Payments",
+      "security": "Security",
+      "settings": "Settings"
     },
     "tenants": {
       "title": "Tenants",
@@ -717,6 +720,83 @@
       "recentTenants": "Recently added tenants",
       "viewAll": "View all",
       "blockedWarning": "{count, plural, other {# tenants are blocked — check payment status}}"
+    },
+    "payments": {
+      "title": "Payments",
+      "subtitle": "History of every payment received from tenants",
+      "statTotal": "Total revenue",
+      "statThisMonth": "This month",
+      "statCount": "Number of payments",
+      "statTenants": "Paying tenants",
+      "searchPlaceholder": "Search by company, subdomain, or note...",
+      "showing": "Showing {start}-{end} of {total}",
+      "colTenant": "Tenant",
+      "colAmount": "Amount",
+      "colNote": "Note",
+      "colDate": "Date",
+      "empty": "No payments found"
+    },
+    "security": {
+      "title": "Security log",
+      "subtitle": "Every login attempt and currently locked accounts",
+      "statTotalToday": "Attempts today",
+      "statFailedToday": "Failed today",
+      "statLocked": "Currently locked",
+      "statTracked": "Tracked records",
+      "searchPlaceholder": "Search by phone/email or IP...",
+      "showing": "Showing {start}-{end} of {total}",
+      "colIdentifier": "Account",
+      "colIp": "IP address",
+      "colOutcome": "Outcome",
+      "colTime": "Time",
+      "filterAll": "All",
+      "filterFailed": "Failed",
+      "filterSuccess": "Successful",
+      "success": "Success",
+      "failed": "Failed"
+    },
+    "settings": {
+      "title": "Settings",
+      "tabs": {
+        "profile": "Profile",
+        "admins": "Super admins"
+      },
+      "profile": {
+        "title": "Profile details",
+        "subtitle": "Your name and login email",
+        "fullName": "Full name",
+        "email": "Email",
+        "save": "Save",
+        "success": "Profile updated",
+        "error": "Could not update profile"
+      },
+      "security": {
+        "title": "Update password",
+        "subtitle": "Set a new password for your account",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm password",
+        "save": "Update",
+        "success": "Password updated",
+        "error": "Could not update password",
+        "tooShort": "Password must be at least 6 characters",
+        "mismatch": "Passwords don't match"
+      },
+      "admins": {
+        "count": "{count, plural, other {# super admins}}",
+        "addAdmin": "Add admin",
+        "fullName": "Full name",
+        "email": "Email",
+        "password": "Password",
+        "create": "Create",
+        "colName": "Name",
+        "colEmail": "Email",
+        "colSince": "Added",
+        "you": "You",
+        "confirmDelete": "Remove \"{name}\" from super admins?",
+        "created": "Admin added",
+        "deleted": "Admin removed",
+        "error": "Could not complete action"
+      }
     }
   }
 }

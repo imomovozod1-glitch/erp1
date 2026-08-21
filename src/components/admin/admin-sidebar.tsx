@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { ShieldCheck, LayoutDashboard, Building2 } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, Building2, Wallet, ShieldAlert, Settings } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +24,9 @@ import { getInitials } from '@/lib/utils'
 const NAV_ITEMS = [
   { key: 'dashboard', icon: LayoutDashboard, href: '/admin' },
   { key: 'tenants', icon: Building2, href: '/admin/tenants' },
+  { key: 'payments', icon: Wallet, href: '/admin/payments' },
+  { key: 'security', icon: ShieldAlert, href: '/admin/security' },
+  { key: 'settings', icon: Settings, href: '/admin/settings/profile' },
 ]
 
 interface AdminSidebarProps {
@@ -60,8 +63,9 @@ export function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
             <SidebarMenu>
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon
+                const matchPrefix = item.key === 'settings' ? '/admin/settings' : item.href
                 const isActive =
-                  item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href)
+                  item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(matchPrefix)
                 return (
                   <SidebarMenuItem key={item.key}>
                     <SidebarMenuButton
