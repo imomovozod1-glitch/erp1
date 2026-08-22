@@ -77,6 +77,9 @@ export function DatePicker({ id, value, onChange, placeholder, lang, disabled, c
           }}
           locale={toDayPickerLocale(lang)}
           autoFocus
+          captionLayout="dropdown"
+          startMonth={new Date(1920, 0)}
+          endMonth={new Date(new Date().getFullYear() + 10, 11)}
         />
       </PopoverContent>
     </Popover>

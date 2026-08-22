@@ -338,7 +338,13 @@
     "category": "Категория",
     "customerCategories": "Категории клиентов",
     "addCustomerCategory": "Добавить категорию",
-    "editCustomerCategory": "Редактировать категорию"
+    "editCustomerCategory": "Редактировать категорию",
+    "customersMap": "Карта клиентов",
+    "customersMapSubtitle": "Все клиенты на одной карте",
+    "customersMapCount": "Показано {shown} из {total} клиентов на карте",
+    "customersMapMissing": "{count, plural, other {у # нет адреса}}",
+    "customersMapEmpty": "Ни у одного клиента не указан адрес или местоположение для карты",
+    "debt": "Долг"
   },
   "finance": {
     "title": "Финансы",

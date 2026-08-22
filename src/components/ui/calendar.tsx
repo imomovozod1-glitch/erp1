@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { DayPicker, getDefaultClassNames, type DayButton } from 'react-day-picker'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -125,6 +126,30 @@ function Calendar({
             <div className="flex size-(--cell-size) items-center justify-center text-center">{children}</div>
           </td>
         ),
+        Dropdown: ({ value, onChange, className, ...props }: any) => {
+          const options = props.options
+          const selected = options?.find((child: any) => child.value === value)
+          const handleChange = (value: string) => {
+            const changeEvent = {
+              target: { value },
+            } as React.ChangeEvent<HTMLSelectElement>
+            onChange?.(changeEvent)
+          }
+          return (
+            <Select value={value?.toString()} onValueChange={handleChange}>
+              <SelectTrigger className={cn("h-7 w-fit py-0 px-2 gap-1 border-none bg-transparent hover:bg-accent hover:text-accent-foreground focus:ring-0 font-medium", className)}>
+                <SelectValue>{selected?.label}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {options?.map((option: any, id: number) => (
+                  <SelectItem key={`${option.value}-${id}`} value={option.value?.toString() ?? ''} disabled={option.disabled}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )
+        },
         ...components,
       }}
       {...props}

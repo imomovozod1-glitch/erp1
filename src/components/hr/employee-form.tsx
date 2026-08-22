@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { invalidateEmployees } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { DatePicker } from '@/components/ui/date-picker'
 import type { Resolver } from 'react-hook-form'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -140,7 +141,19 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="hired_at">{t('hiredAt')}</Label>
-              <Input id="hired_at" type="date" {...register('hired_at')} />
+              <Controller
+                control={control}
+                name="hired_at"
+                render={({ field }) => (
+                  <DatePicker
+                    id="hired_at"
+                    value={field.value}
+                    onChange={field.onChange}
+                    lang={lang}
+                    placeholder={t('hiredAt')}
+                  />
+                )}
+              />
               {errors.hired_at && (
                 <p className="text-sm text-red-500">{errors.hired_at.message}</p>
               )}
@@ -176,7 +189,19 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
           {!isActiveValue && (
             <div className="space-y-2 max-w-sm animate-in fade-in slide-in-from-top-1 duration-200">
               <Label htmlFor="terminated_at">{t('terminatedAt')}</Label>
-              <Input id="terminated_at" type="date" {...register('terminated_at')} />
+              <Controller
+                control={control}
+                name="terminated_at"
+                render={({ field }) => (
+                  <DatePicker
+                    id="terminated_at"
+                    value={field.value ?? undefined}
+                    onChange={field.onChange}
+                    lang={lang}
+                    placeholder={t('terminatedAt')}
+                  />
+                )}
+              />
               {errors.terminated_at && (
                 <p className="text-sm text-red-500">{errors.terminated_at.message}</p>
               )}

@@ -175,8 +175,12 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
       return (!start || d >= start) && (!end || d <= end)
     })
 
-    // Aggregate products
-    const productMap: Record<string, { name: string; costPrice: number; sellingPrice: number; quantity: number; totalSum: number }> = {}
+    // Aggregate products. Each sale of the same product can carry a different
+    // realized unit_cost (the entire point of FIFO/LIFO/AVECO — later sales draw
+    // from different cost layers), so cost must accumulate per line
+    // (`quantity * costPrice` summed across every sale), never a single costPrice
+    // from whichever line happened to be seen first multiplied by total quantity.
+    const productMap: Record<string, { name: string; totalCost: number; sellingPrice: number; quantity: number; totalSum: number }> = {}
     filteredItems.forEach((item: any) => {
       const productName = item.products?.name ?? 'Unknown'
       // Realized cost at time of sale (FIFO/LIFO/AVECO) when available; falls back to
@@ -187,7 +191,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
       if (!productMap[productName]) {
         productMap[productName] = {
           name: productName,
-          costPrice,
+          totalCost: 0,
           sellingPrice,
           quantity: 0,
           totalSum: 0,
@@ -195,15 +199,19 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
       }
       productMap[productName].quantity += item.quantity
       productMap[productName].totalSum += item.total_price
+      productMap[productName].totalCost += costPrice * item.quantity
     })
 
     const aggregatedProducts = Object.values(productMap).map(p => ({
       ...p,
-      profit: p.totalSum - (p.costPrice * p.quantity),
+      // Weighted-average cost across every sale, for display only — profit
+      // itself is computed from the accumulated totalCost, not this average.
+      costPrice: p.quantity > 0 ? p.totalCost / p.quantity : 0,
+      profit: p.totalSum - p.totalCost,
     })).sort((a, b) => b.totalSum - a.totalSum)
 
     const totalRevenue = aggregatedProducts.reduce((sum, p) => sum + p.totalSum, 0)
-    const totalCost = aggregatedProducts.reduce((sum, p) => sum + (p.costPrice * p.quantity), 0)
+    const totalCost = aggregatedProducts.reduce((sum, p) => sum + p.totalCost, 0)
     const totalProfit = totalRevenue - totalCost
     const totalSold = aggregatedProducts.reduce((sum, p) => sum + p.quantity, 0)
     const totalOrdersCount = filteredOrders.length

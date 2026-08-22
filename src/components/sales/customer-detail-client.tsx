@@ -18,6 +18,10 @@ const LocationMapDialog = dynamic(
   () => import('@/components/shared/location-map-dialog').then((mod) => mod.LocationMapDialog),
   { ssr: false }
 )
+const LocationPreviewMap = dynamic(
+  () => import('@/components/shared/location-preview-map').then((mod) => mod.LocationPreviewMap),
+  { ssr: false }
+)
 import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -242,18 +246,26 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                 </div>
               </div>
             )}
-            {customer.address && (
+            {(customer.address || (typeof customer.latitude === 'number' && typeof customer.longitude === 'number')) && (
               <div className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div className="flex-1">
-                  <span className="text-xs text-slate-400 block">{tc('address')}</span>
-                  <span className="font-medium text-slate-800">{customer.address}</span>
+                <div className="flex-1 space-y-2">
+                  <div>
+                    <span className="text-xs text-slate-400 block">{tc('address')}</span>
+                    <span className="font-medium text-slate-800">{customer.address || '—'}</span>
+                  </div>
+                  <LocationPreviewMap
+                    address={customer.address}
+                    latitude={customer.latitude}
+                    longitude={customer.longitude}
+                    onClick={() => setIsMapOpen(true)}
+                  />
                   <button
                     type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="block mt-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline cursor-pointer"
+                    className="block text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline cursor-pointer"
                   >
-                    {lang === 'uz' ? "Xaritada ko'rish" : lang === 'ru' ? 'Показать на карте' : 'View on map'}
+                    {lang === 'uz' ? "Kattaroq xaritada ko'rish" : lang === 'ru' ? 'Показать на большой карте' : 'View larger map'}
                   </button>
                 </div>
               </div>

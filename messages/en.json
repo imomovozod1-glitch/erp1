@@ -338,7 +338,13 @@
     "category": "Category",
     "customerCategories": "Customer categories",
     "addCustomerCategory": "Add category",
-    "editCustomerCategory": "Edit category"
+    "editCustomerCategory": "Edit category",
+    "customersMap": "Customers map",
+    "customersMapSubtitle": "See all customers on one map",
+    "customersMapCount": "Showing {shown} of {total} customers on the map",
+    "customersMapMissing": "{count, plural, other {# missing an address}}",
+    "customersMapEmpty": "No customers have an address or location set for the map",
+    "debt": "Debt"
   },
   "finance": {
     "title": "Finance",

@@ -338,7 +338,13 @@
     "category": "Toifa",
     "customerCategories": "Mijozlar toifalari",
     "addCustomerCategory": "Toifa qo'shish",
-    "editCustomerCategory": "Toifani tahrirlash"
+    "editCustomerCategory": "Toifani tahrirlash",
+    "customersMap": "Mijozlar xaritasi",
+    "customersMapSubtitle": "Barcha mijozlarni bitta xaritada ko'ring",
+    "customersMapCount": "{total} mijozdan {shown} tasi xaritada ko'rsatilmoqda",
+    "customersMapMissing": "{count, plural, other {# tasida manzil yo'q}}",
+    "customersMapEmpty": "Hech qaysi mijozda xarita uchun manzil yoki lokatsiya kiritilmagan",
+    "debt": "Qarz"
   },
   "finance": {
     "title": "Moliya",
