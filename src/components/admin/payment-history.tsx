@@ -10,12 +10,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 export interface PaymentRow {
   id: string
   amount: number
   paid_at: string
+  created_at: string
   note: string | null
 }
 
@@ -109,7 +110,7 @@ export function PaymentHistory({
               <TableRow key={p.id}>
                 <TableCell className="font-medium tabular-nums">{formatCurrency(p.amount)}</TableCell>
                 <TableCell className="text-slate-500">{p.note || '—'}</TableCell>
-                <TableCell className="text-right text-slate-500">{formatDate(p.paid_at)}</TableCell>
+                <TableCell className="text-right text-slate-500">{formatDateTime(p.created_at)}</TableCell>
               </TableRow>
             ))
           )}

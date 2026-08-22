@@ -16,7 +16,16 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
 
     return (
       <div className="relative">
-        <Input ref={ref} type={visible ? 'text' : 'password'} className={cn('pr-10', className)} {...props} />
+        <Input
+          ref={ref}
+          type={visible ? 'text' : 'password'}
+          // Edge/IE on Windows render their own built-in reveal ("eye") and
+          // clear buttons inside password inputs, which stack visually with
+          // the custom button below — hide both native pseudo-elements so
+          // only one eye icon ever shows.
+          className={cn('pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden', className)}
+          {...props}
+        />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}

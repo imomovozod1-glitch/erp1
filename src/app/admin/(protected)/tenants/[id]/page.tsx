@@ -39,7 +39,7 @@ export default async function TenantDetailPage({
     supabase.from('tenants').select('*').eq('id', id).maybeSingle(),
     supabase
       .from('tenant_payments')
-      .select('id, amount, paid_at, note')
+      .select('id, amount, paid_at, created_at, note')
       .eq('tenant_id', id)
       .order('paid_at', { ascending: false }),
   ])

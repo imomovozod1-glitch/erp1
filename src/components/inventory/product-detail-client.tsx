@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { formatCurrency, formatNumber, formatDate, formatDateTime } from '@/lib/utils'
+import { formatCurrency, formatNumber, formatDateTime } from '@/lib/utils'
+import { translateMovementReason } from '@/lib/movement-reason'
 import { useTranslations } from 'next-intl'
 import {
   TrendingUp, Download, Package, RefreshCw, ShoppingCart, Truck, Layers
@@ -23,32 +24,6 @@ interface ProductDetailClientProps {
   costLayers?: any[]
   effectiveCostingMethod?: string
   nextSaleCost?: number | null
-}
-
-// Stock movement `reason` is free-form English text written at insert time
-// (see product-form.tsx, sale-form.tsx, pos-client.tsx, purchase-order-form.tsx),
-// not a fixed enum — so translation here has to pattern-match the known
-// templates and localize them, preserving any interpolated order number/supplier.
-function translateReason(reason: string | null | undefined, lang: string): string {
-  if (!reason) return '—'
-  if (reason === 'Manual adjustment in product form') {
-    return lang === 'uz' ? "Mahsulot shaklida qo'lda tuzatish" : lang === 'ru' ? 'Ручная корректировка в форме товара' : reason
-  }
-  if (reason === 'Initial stock on product creation') {
-    return lang === 'uz' ? "Mahsulot yaratilganda boshlang'ich zaxira" : lang === 'ru' ? 'Начальный запас при создании товара' : reason
-  }
-  if (reason === 'POS Sale') {
-    return lang === 'uz' ? 'POS sotuvi' : lang === 'ru' ? 'Продажа через POS' : reason
-  }
-  if (reason.startsWith('Sale ')) {
-    const orderNumber = reason.slice('Sale '.length)
-    return lang === 'uz' ? `Sotuv ${orderNumber}` : lang === 'ru' ? `Продажа ${orderNumber}` : reason
-  }
-  if (reason.startsWith('Purchase from ')) {
-    const supplier = reason.slice('Purchase from '.length)
-    return lang === 'uz' ? `Xarid: ${supplier}` : lang === 'ru' ? `Закупка: ${supplier}` : reason
-  }
-  return reason
 }
 
 const SOURCE_TYPE_LABELS: Record<string, { uz: string; ru: string; en: string }> = {
@@ -98,7 +73,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
       Quantity: m.quantity,
       Before: m.quantity_before,
       After: m.quantity_after,
-      Reason: translateReason(m.reason, lang),
+      Reason: translateMovementReason(m.reason, lang),
       Date: formatDateTime(m.created_at)
     }))
     const movementsWS = XLSX.utils.json_to_sheet(movementsData)
@@ -110,7 +85,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
       Customer: s.sales_orders?.customers?.name ?? '—',
       Quantity: s.quantity,
       TotalPrice: s.total_price,
-      Date: s.sales_orders?.order_date ? formatDate(s.sales_orders.order_date) : '—'
+      Date: s.sales_orders?.created_at ? formatDateTime(s.sales_orders.created_at) : '—'
     }))
     const salesWS = XLSX.utils.json_to_sheet(salesData)
     XLSX.utils.book_append_sheet(workbook, salesWS, "Sales")
@@ -121,7 +96,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
       Supplier: p.purchase_orders?.suppliers?.name ?? '—',
       Quantity: p.quantity,
       TotalCost: p.total_cost,
-      Date: p.purchase_orders?.order_date ? formatDate(p.purchase_orders.order_date) : '—'
+      Date: p.purchase_orders?.created_at ? formatDateTime(p.purchase_orders.created_at) : '—'
     }))
     const purchasesWS = XLSX.utils.json_to_sheet(purchasesData)
     XLSX.utils.book_append_sheet(workbook, purchasesWS, "Purchases")
@@ -304,7 +279,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                           <span className="text-slate-400">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-slate-600 text-sm">{translateReason(m.reason, lang)}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{translateMovementReason(m.reason, lang)}</TableCell>
                       <TableCell className="text-slate-500 text-xs">{formatDateTime(m.created_at)}</TableCell>
                     </TableRow>
                   ))
@@ -341,7 +316,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                       <TableCell className="text-right font-medium">{formatNumber(s.quantity)}</TableCell>
                       <TableCell className="text-right font-bold text-slate-900">{formatCurrency(s.total_price)}</TableCell>
                       <TableCell className="text-slate-500 text-xs">
-                        {s.sales_orders?.order_date ? formatDate(s.sales_orders.order_date) : '—'}
+                        {s.sales_orders?.created_at ? formatDateTime(s.sales_orders.created_at) : '—'}
                       </TableCell>
                     </TableRow>
                   ))
@@ -378,7 +353,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                       <TableCell className="text-right font-medium">{formatNumber(p.quantity)}</TableCell>
                       <TableCell className="text-right font-bold text-slate-900">{formatCurrency(p.total_cost)}</TableCell>
                       <TableCell className="text-slate-500 text-xs">
-                        {p.purchase_orders?.order_date ? formatDate(p.purchase_orders.order_date) : '—'}
+                        {p.purchase_orders?.created_at ? formatDateTime(p.purchase_orders.created_at) : '—'}
                       </TableCell>
                     </TableRow>
                   ))

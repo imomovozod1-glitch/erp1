@@ -33,7 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { NumericInput } from '@/components/ui/numeric-input'
 import { PageHeader } from '@/components/shared/page-header'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateTransactions, invalidateSuppliers, invalidateEmployees, invalidateCustomers, invalidateInvoices } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
@@ -1184,7 +1184,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                         <td className="p-4 text-xs text-slate-400">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5" />
-                            <span>{formatDate(cb.created_at)}</span>
+                            <span>{formatDateTime(cb.created_at)}</span>
                           </div>
                         </td>
                         <td className="p-4 pr-6 flex justify-end items-center gap-2">
@@ -1305,7 +1305,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                         <td className="p-4 pl-6 text-xs text-slate-500">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                            <span>{formatDate(tx.transaction_date)}</span>
+                            <span>{formatDateTime(tx.created_at)}</span>
                           </div>
                         </td>
                         <td className="p-4 font-semibold text-slate-800">{cbName}</td>

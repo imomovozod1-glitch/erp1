@@ -18,7 +18,7 @@ import {
   ArrowLeft, 
   Loader2 
 } from 'lucide-react'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-700 border-slate-200',
@@ -133,7 +133,7 @@ export default function PurchaseOrderDetailPage() {
                 <Calendar className="h-3.5 w-3.5" />
                 {tCommon('date')}
               </span>
-              <p className="font-semibold text-slate-805">{formatDate(order.order_date)}</p>
+              <p className="font-semibold text-slate-805">{formatDateTime(order.created_at)}</p>
             </div>
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">

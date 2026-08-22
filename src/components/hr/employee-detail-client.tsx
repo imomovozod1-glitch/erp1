@@ -10,7 +10,7 @@ import { CustomDateRangePicker } from '@/components/shared/custom-date-range-pic
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
   Download, DollarSign, ShoppingCart, X
@@ -133,7 +133,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       Category: tx.category,
       Amount: tx.amount,
       Description: tx.description || '—',
-      Date: formatDate(tx.transaction_date)
+      Date: formatDateTime(tx.created_at)
     }))
     const payoutsWS = XLSX.utils.json_to_sheet(payoutsData)
     XLSX.utils.book_append_sheet(workbook, payoutsWS, "Payout History")
@@ -144,7 +144,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       Customer: o.customers?.name ?? '—',
       TotalAmount: o.total_amount,
       Status: o.status,
-      Date: formatDate(o.order_date)
+      Date: formatDateTime(o.created_at)
     }))
     const salesWS = XLSX.utils.json_to_sheet(salesData)
     XLSX.utils.book_append_sheet(workbook, salesWS, "Processed Sales")
@@ -357,7 +357,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                               -{formatCurrency(tx.amount)}
                             </TableCell>
                             <TableCell className="text-slate-600 text-sm">{tx.description || '—'}</TableCell>
-                            <TableCell className="text-slate-500 text-xs">{formatDate(tx.transaction_date)}</TableCell>
+                            <TableCell className="text-slate-500 text-xs">{formatDateTime(tx.created_at)}</TableCell>
                           </TableRow>
                         ))
                       )}
@@ -395,7 +395,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                           <TableCell>
                             <StatusBadge tone={ORDER_STATUS_TONES[o.status] ?? 'slate'} label={tSales(`status.${o.status}`)} />
                           </TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDate(o.order_date)}</TableCell>
+                          <TableCell className="text-slate-500 text-xs">{formatDateTime(o.created_at)}</TableCell>
                         </TableRow>
                       ))
                     )}

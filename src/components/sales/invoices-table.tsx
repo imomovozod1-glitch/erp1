@@ -16,7 +16,7 @@ import {
   TableHeader, TableRow,
 } from '@/components/ui/table'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 const STATUS_TONES: Record<string, StatusTone> = {
   draft: 'slate',
@@ -144,7 +144,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                       {formatCurrency(invoice.paid_amount)}
                     </TableCell>
                     <TableCell className="text-right text-muted-foreground">
-                      {formatDate(invoice.issued_at)}
+                      {formatDateTime(invoice.created_at)}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>

@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 
 interface TransactionsTableProps {
@@ -90,7 +90,7 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                   <TableCell className="text-center font-medium text-slate-500 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(tx.transaction_date)}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatDateTime(tx.created_at)}</TableCell>
                   <TableCell>
                     <StatusBadge
                       tone={tx.type === 'income' ? 'emerald' : 'rose'}

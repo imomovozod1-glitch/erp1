@@ -7,12 +7,13 @@ import { Search, Wallet } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
+import { formatCurrency, formatDateTime, getInitials } from '@/lib/utils'
 
 export interface AdminPaymentRow {
   id: string
   amount: number
   paid_at: string
+  created_at: string
   note: string | null
   tenant_id: string
   tenant_company_name: string
@@ -104,7 +105,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
                   {formatCurrency(p.amount)}
                 </TableCell>
                 <TableCell className="text-slate-500">{p.note || '—'}</TableCell>
-                <TableCell className="text-right text-slate-500">{formatDate(p.paid_at)}</TableCell>
+                <TableCell className="text-right text-slate-500">{formatDateTime(p.created_at)}</TableCell>
               </TableRow>
             ))
           )}

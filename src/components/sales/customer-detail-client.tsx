@@ -22,7 +22,7 @@ const LocationPreviewMap = dynamic(
   () => import('@/components/shared/location-preview-map').then((mod) => mod.LocationPreviewMap),
   { ssr: false }
 )
-import { formatCurrency, formatDate, getInitials } from '@/lib/utils'
+import { formatCurrency, formatDate, formatDateTime, getInitials } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -104,7 +104,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       TotalAmount: o.total_amount,
       Status: o.status,
       Notes: o.notes || '—',
-      Date: formatDate(o.order_date)
+      Date: formatDateTime(o.created_at)
     }))
     const ordersWS = XLSX.utils.json_to_sheet(ordersData)
     XLSX.utils.book_append_sheet(workbook, ordersWS, "Sales Orders")
@@ -116,7 +116,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       PaidAmount: inv.paid_amount,
       Status: inv.status,
       DueDate: formatDate(inv.due_at),
-      IssuedDate: formatDate(inv.issued_at)
+      IssuedDate: formatDateTime(inv.created_at)
     }))
     const invoicesWS = XLSX.utils.json_to_sheet(invoicesData)
     XLSX.utils.book_append_sheet(workbook, invoicesWS, "Invoices")
@@ -126,7 +126,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       Type: tx.type,
       Category: tx.category,
       Amount: tx.amount,
-      Date: formatDate(tx.transaction_date),
+      Date: formatDateTime(tx.created_at),
       Note: tx.description || '—'
     }))
     const transactionsWS = XLSX.utils.json_to_sheet(transactionsData)
@@ -344,7 +344,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                           <TableCell>
                             <StatusBadge tone={ORDER_STATUS_TONES[o.status] ?? 'slate'} label={tSales(`status.${o.status}`)} />
                           </TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDate(o.order_date)}</TableCell>
+                          <TableCell className="text-slate-500 text-xs">{formatDateTime(o.created_at)}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -428,7 +428,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                             <TableCell className={`text-right font-bold ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
                               {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
                             </TableCell>
-                            <TableCell className="text-slate-500 text-xs">{formatDate(tx.transaction_date)}</TableCell>
+                            <TableCell className="text-slate-500 text-xs">{formatDateTime(tx.created_at)}</TableCell>
                             <TableCell className="text-slate-500 text-xs max-w-50 truncate">{tx.description || '—'}</TableCell>
                           </TableRow>
                         )

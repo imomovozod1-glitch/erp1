@@ -25,7 +25,7 @@ import {
   Loader2,
   CheckCircle2,
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-slate-100 text-slate-700 border-slate-200",
@@ -262,7 +262,7 @@ export default function InvoiceDetailPage() {
                 {lang === "uz" ? "Yaratilgan sana" : "Дата выставления"}
               </span>
               <p className="font-semibold text-slate-850">
-                {formatDate(invoice.issued_at)}
+                {formatDateTime(invoice.created_at)}
               </p>
             </div>
             <div className="space-y-1">

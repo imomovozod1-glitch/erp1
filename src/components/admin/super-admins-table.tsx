@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { formatDate, getInitials } from '@/lib/utils'
+import { formatDateTime, getInitials } from '@/lib/utils'
 
 export interface SuperAdminRow {
   id: string
@@ -150,7 +150,7 @@ export function SuperAdminsTable({
                   </div>
                 </TableCell>
                 <TableCell className="text-slate-500">{admin.email}</TableCell>
-                <TableCell className="text-slate-500">{formatDate(admin.created_at)}</TableCell>
+                <TableCell className="text-slate-500">{formatDateTime(admin.created_at)}</TableCell>
                 <TableCell>
                   {admin.id !== currentAdminId && (
                     <Button

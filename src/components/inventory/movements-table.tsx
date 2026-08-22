@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { Search, ArrowDownRight, ArrowUpRight, Settings2, Activity } from 'lucide-react'
 import { formatNumber, formatDateTime } from '@/lib/utils'
+import { translateMovementReason } from '@/lib/movement-reason'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -129,7 +130,7 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground max-w-[200px] truncate block">
-                      {movement.reason || '—'}
+                      {translateMovementReason(movement.reason, lang)}
                     </span>
                   </TableCell>
                 </TableRow>

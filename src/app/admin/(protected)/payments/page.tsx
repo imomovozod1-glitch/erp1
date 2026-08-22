@@ -16,13 +16,14 @@ export default async function AdminPaymentsPage() {
   const supabase = getCacheClient() as any
   const { data } = await supabase
     .from('tenant_payments')
-    .select('id, amount, paid_at, note, tenant_id, tenants(company_name, subdomain)')
+    .select('id, amount, paid_at, created_at, note, tenant_id, tenants(company_name, subdomain)')
     .order('paid_at', { ascending: false })
 
   const payments: AdminPaymentRow[] = (data ?? []).map((row: any) => ({
     id: row.id,
     amount: Number(row.amount) || 0,
     paid_at: row.paid_at,
+    created_at: row.created_at,
     note: row.note,
     tenant_id: row.tenant_id,
     tenant_company_name: row.tenants?.company_name ?? '—',

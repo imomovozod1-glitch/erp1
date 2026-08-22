@@ -19,7 +19,7 @@ import {
   Pencil,
   Loader2 
 } from 'lucide-react'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 // sales_orders.notes is free-form text; the only system-generated template written
 // to it (pos-client.tsx) is "POS Sale - Paid via CASH/CARD/TRANSFER/DEBT" — translate
@@ -165,7 +165,7 @@ export default function OrderDetailPage() {
                 <Calendar className="h-3.5 w-3.5" />
                 {t('orderDate')}
               </span>
-              <p className="font-semibold text-slate-800">{formatDate(order.order_date)}</p>
+              <p className="font-semibold text-slate-800">{formatDateTime(order.created_at)}</p>
             </div>
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">

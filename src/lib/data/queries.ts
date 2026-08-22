@@ -684,8 +684,8 @@ export const getCachedProductDetails = unstable_cache(
     ] = await Promise.all([
       supabase.from('products').select('*, categories(name)').eq('id', id).eq('tenant_id', tenantId).single(),
       supabase.from('stock_movements').select('*').eq('product_id', id).eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-      supabase.from('sales_order_items').select('quantity, total_price, sales_orders(order_number, order_date, status, customers(name))').eq('product_id', id).eq('tenant_id', tenantId),
-      supabase.from('purchase_order_items').select('quantity, total_cost, purchase_orders(po_number, order_date, status, suppliers(name))').eq('product_id', id).eq('tenant_id', tenantId),
+      supabase.from('sales_order_items').select('quantity, total_price, sales_orders(order_number, order_date, created_at, status, customers(name))').eq('product_id', id).eq('tenant_id', tenantId),
+      supabase.from('purchase_order_items').select('quantity, total_cost, purchase_orders(po_number, order_date, created_at, status, suppliers(name))').eq('product_id', id).eq('tenant_id', tenantId),
       supabase
         .from('inventory_cost_layers')
         .select('id, quantity, remaining_qty, unit_cost, source_type, received_at')

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -110,7 +110,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                       </code>
                     </TableCell>
                     <TableCell className="font-medium text-slate-800">{order.suppliers?.name ?? '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(order.order_date)}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDateTime(order.created_at)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(order.total_amount)}</TableCell>
                     <TableCell>
                       <StatusBadge tone={STATUS_TONES[order.status] ?? 'slate'} label={t(`status.${order.status}`)} />

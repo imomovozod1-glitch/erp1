@@ -22,7 +22,7 @@ const LocationPreviewMap = dynamic(
   () => import('@/components/shared/location-preview-map').then((mod) => mod.LocationPreviewMap),
   { ssr: false }
 )
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
   Download, Truck, Phone, Mail, Globe, MapPin, DollarSign, Landmark
@@ -94,7 +94,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
       TotalCost: po.total_amount,
       Status: po.status,
       Notes: po.notes || '—',
-      Date: formatDate(po.order_date)
+      Date: formatDateTime(po.created_at)
     }))
     const poWS = XLSX.utils.json_to_sheet(poData)
     XLSX.utils.book_append_sheet(workbook, poWS, "Purchase Orders")
@@ -104,7 +104,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
       Category: tx.category,
       Amount: tx.amount,
       Description: tx.description || '—',
-      Date: formatDate(tx.transaction_date)
+      Date: formatDateTime(tx.created_at)
     }))
     const paymentsWS = XLSX.utils.json_to_sheet(paymentsData)
     XLSX.utils.book_append_sheet(workbook, paymentsWS, "Payment History")
@@ -300,7 +300,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                           <TableCell>
                             <StatusBadge tone={PO_STATUS_TONES[po.status] ?? 'slate'} label={t(`status.${po.status}`)} />
                           </TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDate(po.order_date)}</TableCell>
+                          <TableCell className="text-slate-500 text-xs">{formatDateTime(po.created_at)}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -337,7 +337,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                             -{formatCurrency(tx.amount)}
                           </TableCell>
                           <TableCell className="text-slate-600 text-sm">{tx.description || '—'}</TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDate(tx.transaction_date)}</TableCell>
+                          <TableCell className="text-slate-500 text-xs">{formatDateTime(tx.created_at)}</TableCell>
                         </TableRow>
                       ))
                     )}
