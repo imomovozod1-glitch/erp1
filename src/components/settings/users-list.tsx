@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProfile } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
-import { Search, UserCheck, Shield, Users, KeyRound, Loader2 } from 'lucide-react'
+import { Search, UserCheck, Shield, ShieldCheck, Users, KeyRound, Loader2 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,8 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getInitials } from '@/lib/utils'
 import { isStrongPassword } from '@/lib/password-validation'
+import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
+import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
 import type { Profile } from '@/types/database.types'
 
 interface UsersListProps {
@@ -48,6 +50,10 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
   const [resetTarget, setResetTarget] = useState<{ id: string; name: string | null } | null>(null)
   const [resetPassword, setResetPassword] = useState('')
   const [isResetting, setIsResetting] = useState(false)
+
+  const [permsTarget, setPermsTarget] = useState<{ id: string; name: string | null } | null>(null)
+  const [permsValue, setPermsValue] = useState<Permissions>(EMPTY_PERMISSIONS)
+  const [isSavingPerms, setIsSavingPerms] = useState(false)
 
   useEffect(() => {
     setTimeout(() => {
@@ -126,6 +132,35 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
       toast.error(t('resetUserPasswordError'))
     } finally {
       setIsResetting(false)
+    }
+  }
+
+  const openPermissions = (userId: string, name: string | null, current: unknown) => {
+    setPermsTarget({ id: userId, name })
+    setPermsValue(current && typeof current === 'object' ? (current as Permissions) : EMPTY_PERMISSIONS)
+  }
+
+  const handleSavePermissions = async () => {
+    if (!permsTarget) return
+    setIsSavingPerms(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ permissions: permsValue })
+        .eq('id', permsTarget.id)
+      if (error) throw error
+
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === permsTarget.id ? { ...p, permissions: permsValue } as any : p))
+      )
+      await invalidateProfile(permsTarget.id)
+      toast.success(t('permissionsSaved'))
+      setPermsTarget(null)
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || t('permissionsSaveError'))
+    } finally {
+      setIsSavingPerms(false)
     }
   }
 
@@ -276,7 +311,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                               }}
                             >
                               <SelectTrigger className="w-36 border-slate-200 dark:border-slate-700 text-sm font-medium">
-                                <SelectValue />
+                                <SelectValue>{(val: string) => roleLabels[val] || val}</SelectValue>
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="admin">{t('role.admin')}</SelectItem>
@@ -308,6 +343,16 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                               <span className="text-xs text-slate-400 dark:text-slate-500 font-normal italic">{lang === 'uz' ? "O'zini boshqarish o'chirilgan" : lang === 'ru' ? 'Самоуправление отключено' : 'Self-management disabled'}</span>
                             ) : (
                               <div className="flex justify-end items-center gap-2">
+                                {p.role !== 'admin' && (
+                                  <button
+                                    type="button"
+                                    title={t('permissions')}
+                                    onClick={() => openPermissions(p.id, p.full_name, (p as any).permissions)}
+                                    className="h-7 w-7 inline-flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                                  >
+                                    <ShieldCheck className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   title={t('resetUserPassword')}
@@ -418,6 +463,29 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
             >
               {isResetting && <Loader2 className="h-4 w-4 animate-spin" />}
               {t('resetUserPassword')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!permsTarget} onOpenChange={(open) => { if (!open) setPermsTarget(null) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t('permissionsDialogTitle', { name: permsTarget?.name || '' })}</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-slate-400 dark:text-slate-500 -mt-2">{t('permissionsAdminHint')}</p>
+          <PermissionsMatrix value={permsValue} onChange={setPermsValue} disabled={isSavingPerms} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPermsTarget(null)}>
+              {t('cancel')}
+            </Button>
+            <Button
+              onClick={handleSavePermissions}
+              disabled={isSavingPerms}
+              className="bg-violet-600 hover:bg-violet-700 gap-2"
+            >
+              {isSavingPerms && <Loader2 className="h-4 w-4 animate-spin" />}
+              {tCommon('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

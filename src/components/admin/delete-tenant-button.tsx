@@ -95,12 +95,12 @@ export function DeleteTenantButton({
         variant="outline"
         disabled={!eligible || isDeleting}
         onClick={handleDelete}
-        className="gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:border-rose-900/50 dark:text-rose-400"
+        className="gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/30"
       >
         {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
         {t('button')}
       </Button>
-      {!eligible && <p className="text-xs text-slate-400">{t('enabledAfter', { days: daysRemaining })}</p>}
+      {!eligible && <p className="text-xs text-slate-400 dark:text-slate-500">{t('enabledAfter', { days: daysRemaining })}</p>}
     </div>
   )
 }

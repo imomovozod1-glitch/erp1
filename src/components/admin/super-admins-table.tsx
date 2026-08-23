@@ -160,8 +160,8 @@ export function SuperAdminsTable({
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-slate-500">{admin.email}</TableCell>
-                <TableCell className="text-slate-500">{formatDateTime(admin.created_at)}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400">{admin.email}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400">{formatDateTime(admin.created_at)}</TableCell>
                 <TableCell>
                   {admin.id !== currentAdminId && (
                     <Button

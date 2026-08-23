@@ -59,7 +59,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
             className="pl-9"
           />
         </div>
-        <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium whitespace-nowrap">
           {t('showing', { start: startItem, end: endItem, total: filtered.length })}
         </span>
       </div>
@@ -77,7 +77,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
           {paginated.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="h-32 text-center">
-                <div className="flex flex-col items-center gap-2 text-slate-400">
+                <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                   <Wallet className="h-8 w-8 opacity-40" />
                   <p className="text-sm">{t('empty')}</p>
                 </div>
@@ -97,15 +97,15 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
                     </div>
                     <div>
                       <p>{p.tenant_company_name}</p>
-                      <p className="text-xs text-slate-400 font-normal">{p.tenant_subdomain}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-normal">{p.tenant_subdomain}</p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(p.amount)}
                 </TableCell>
-                <TableCell className="text-slate-500">{p.note || '—'}</TableCell>
-                <TableCell className="text-right text-slate-500">{formatDateTime(p.created_at)}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400">{p.note || '—'}</TableCell>
+                <TableCell className="text-right text-slate-500 dark:text-slate-400">{formatDateTime(p.created_at)}</TableCell>
               </TableRow>
             ))
           )}
@@ -122,7 +122,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
           >
             {tCommon('previous')}
           </Button>
-          <span className="text-sm text-slate-500 px-2">
+          <span className="text-sm text-slate-500 dark:text-slate-400 px-2">
             {currentPage} / {totalPages}
           </span>
           <Button

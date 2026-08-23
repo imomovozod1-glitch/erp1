@@ -83,7 +83,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
             ))}
           </div>
         </div>
-        <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium whitespace-nowrap">
           {t('showing', { start: startItem, end: endItem, total: filtered.length })}
         </span>
       </div>
@@ -101,7 +101,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
           {paginated.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="h-32 text-center">
-                <div className="flex flex-col items-center gap-2 text-slate-400">
+                <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                   <ShieldAlert className="h-8 w-8 opacity-40" />
                   <p className="text-sm">{tCommon('noData')}</p>
                 </div>
@@ -111,14 +111,14 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
             paginated.map((a) => (
               <TableRow key={a.id}>
                 <TableCell className="font-medium text-slate-700 dark:text-slate-300">{a.identifier}</TableCell>
-                <TableCell className="text-slate-500 tabular-nums">{a.ip}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400 tabular-nums">{a.ip}</TableCell>
                 <TableCell>
                   <StatusBadge
                     label={a.success ? t('success') : t('failed')}
                     tone={a.success ? 'emerald' : 'rose'}
                   />
                 </TableCell>
-                <TableCell className="text-right text-slate-500">{formatDateTime(a.created_at)}</TableCell>
+                <TableCell className="text-right text-slate-500 dark:text-slate-400">{formatDateTime(a.created_at)}</TableCell>
               </TableRow>
             ))
           )}
@@ -130,7 +130,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
           <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
             {tCommon('previous')}
           </Button>
-          <span className="text-sm text-slate-500 px-2">
+          <span className="text-sm text-slate-500 dark:text-slate-400 px-2">
             {currentPage} / {totalPages}
           </span>
           <Button

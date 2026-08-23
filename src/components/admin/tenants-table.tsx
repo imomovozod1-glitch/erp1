@@ -116,7 +116,7 @@ export function TenantsTable({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden sm:inline text-xs text-slate-400 font-medium whitespace-nowrap">
+          <span className="hidden sm:inline text-xs text-slate-400 dark:text-slate-500 font-medium whitespace-nowrap">
             {t('showing', { start: startItem, end: endItem, total: filtered.length })}
           </span>
           <Button onClick={() => router.push('/admin/tenants/new')} className="gap-2 bg-violet-600 hover:bg-violet-500">
@@ -140,7 +140,7 @@ export function TenantsTable({
         <TableBody>
           {paginated.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="h-32 text-center text-slate-400">
+              <TableCell colSpan={7} className="h-32 text-center text-slate-400 dark:text-slate-500">
                 {t('empty')}
               </TableCell>
             </TableRow>
@@ -152,16 +152,16 @@ export function TenantsTable({
                 onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
               >
                 <TableCell className="font-medium">{tenant.company_name}</TableCell>
-                <TableCell className="text-slate-500">{tenant.subdomain}</TableCell>
-                <TableCell className="text-slate-500 tabular-nums">{formatPhoneInput(tenant.phone)}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400">{tenant.subdomain}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400 tabular-nums">{formatPhoneInput(tenant.phone)}</TableCell>
                 <TableCell>
                   <StatusBadge label={t(`status${capitalize(tenant.status)}`)} tone={STATUS_TONE[tenant.status]} />
                 </TableCell>
-                <TableCell className="uppercase text-slate-500">{tenant.costing_method}</TableCell>
-                <TableCell className="text-slate-500">
+                <TableCell className="uppercase text-slate-500 dark:text-slate-400">{tenant.costing_method}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400">
                   {tenant.subscription_ends_at ? formatDate(tenant.subscription_ends_at) : '—'}
                 </TableCell>
-                <TableCell className="text-slate-500 tabular-nums">
+                <TableCell className="text-slate-500 dark:text-slate-400 tabular-nums">
                   {tenant.price_paid != null ? formatCurrency(tenant.price_paid) : '—'}
                 </TableCell>
               </TableRow>
@@ -180,7 +180,7 @@ export function TenantsTable({
           >
             {t('prev')}
           </Button>
-          <span className="text-sm text-slate-500 px-2">
+          <span className="text-sm text-slate-500 dark:text-slate-400 px-2">
             {currentPage} / {totalPages}
           </span>
           <Button

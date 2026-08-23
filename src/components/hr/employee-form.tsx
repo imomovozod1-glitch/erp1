@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useForm, Controller, useWatch } from 'react-hook-form'
@@ -11,14 +11,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateEmployees } from '@/lib/data/revalidate'
+import { invalidateEmployees, invalidateProfile } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, KeyRound } from 'lucide-react'
 import { DatePicker } from '@/components/ui/date-picker'
 import type { Resolver } from 'react-hook-form'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
+import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
+import { isStrongPassword } from '@/lib/password-validation'
+import { cn } from '@/lib/utils'
 
 
 interface EmployeeFormProps {
@@ -26,12 +33,63 @@ interface EmployeeFormProps {
   lang: string
 }
 
+interface AccountOption {
+  id: string
+  full_name: string | null
+  email: string | null
+  permissions: unknown
+}
+
 export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   const t = useTranslations('hr')
   const tCommon = useTranslations('common')
+  const tSettings = useTranslations('settings')
+  const tAuth = useTranslations('auth')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
+
+  const [accessMode, setAccessMode] = useState<'none' | 'link' | 'create'>(initialData?.profile_id ? 'link' : 'none')
+  const [accountOptions, setAccountOptions] = useState<AccountOption[]>([])
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(initialData?.profile_id ?? null)
+  const [permsValue, setPermsValue] = useState<Permissions>(EMPTY_PERMISSIONS)
+  const [newPhone, setNewPhone] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+
+  // Available login accounts to link this employee to — profiles not
+  // already claimed by a different employee (employees.profile_id is
+  // UNIQUE), plus whichever one this employee already has, so editing an
+  // existing link doesn't make it disappear from its own dropdown.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const [{ data: profiles }, { data: linkedEmployees }] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, email, role, permissions'),
+        supabase.from('employees').select('profile_id').not('profile_id', 'is', null),
+      ])
+      if (cancelled) return
+      const claimedIds = new Set(
+        (linkedEmployees ?? [])
+          .map((e: any) => e.profile_id)
+          .filter((id: string) => id !== initialData?.profile_id)
+      )
+      const available = (profiles ?? []).filter((p: any) => p.role !== 'admin' && !claimedIds.has(p.id))
+      setAccountOptions(available)
+      const current = (profiles ?? []).find((p: any) => p.id === initialData?.profile_id)
+      if (current) {
+        setPermsValue(current.permissions && typeof current.permissions === 'object' ? current.permissions : EMPTY_PERMISSIONS)
+      }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleSelectAccount = (profileId: string | null) => {
+    const next = !profileId || profileId === 'none' ? null : profileId
+    setSelectedProfileId(next)
+    const chosen = accountOptions.find((p) => p.id === next)
+    setPermsValue(chosen?.permissions && typeof chosen.permissions === 'object' ? (chosen.permissions as Permissions) : EMPTY_PERMISSIONS)
+  }
 
   const innerFormSchema = z.object({
     full_name: z.string().min(1, tCommon('required')),
@@ -61,11 +119,41 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   })
 
   const onSubmit = async (data: FormData) => {
+    if (accessMode === 'create' && !isStrongPassword(newPassword)) {
+      toast.error(tAuth('passwordRequirements'))
+      return
+    }
     setIsSubmitting(true)
     try {
+      let profileId: string | null = accessMode === 'link' ? selectedProfileId : null
+
+      // Creating a brand-new login has to go through a server route — it
+      // needs the service-role key (auth.admin.createUser), which the
+      // browser client never has access to. See src/app/api/tenant/users/route.ts.
+      if (accessMode === 'create') {
+        const res = await fetch('/api/tenant/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: data.full_name,
+            phone: newPhone,
+            password: newPassword,
+            permissions: permsValue,
+          }),
+        })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          toast.error(json.error || t('createAccountError'))
+          setIsSubmitting(false)
+          return
+        }
+        profileId = json.profile.id
+      }
+
       const payload = {
         ...data,
         terminated_at: !data.is_active && data.terminated_at ? data.terminated_at : null,
+        profile_id: profileId,
       }
       if (initialData?.id) {
         const { error } = await supabase
@@ -81,7 +169,20 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
         if (error) throw error
         toast.success(tCommon('created'))
       }
-      
+
+      // The linked login account's module permissions are edited here but
+      // live on `profiles`, not `employees` — a separate write. (A
+      // freshly-created account already got its permissions set by the
+      // API route above, so this only applies to an existing linked one.)
+      if (accessMode === 'link' && profileId) {
+        const { error: permError } = await supabase
+          .from('profiles')
+          .update({ permissions: permsValue })
+          .eq('id', profileId)
+        if (permError) throw permError
+        await invalidateProfile(profileId)
+      }
+
       await invalidateEmployees()
       router.push(`/${lang}/hr/employees`)
     } catch (error: any) {
@@ -165,6 +266,90 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
             <Textarea id="notes" {...register('notes')} />
             {errors.notes && (
               <p className="text-sm text-red-500">{errors.notes.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-2 border-t dark:border-slate-800">
+            <Label className="flex items-center gap-1.5 pt-4">
+              <KeyRound className="h-3.5 w-3.5 text-muted-foreground" /> {t('systemAccess')}
+            </Label>
+
+            <div className="flex flex-wrap gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 p-1 w-fit">
+              {(['none', 'link', 'create'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setAccessMode(mode)}
+                  className={cn(
+                    'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors',
+                    accessMode === mode
+                      ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  )}
+                >
+                  {mode === 'none' ? t('systemAccessNone') : mode === 'link' ? t('systemAccessLink') : t('systemAccessCreate')}
+                </button>
+              ))}
+            </div>
+
+            {accessMode === 'none' && (
+              <p className="text-xs text-muted-foreground">{t('systemAccessHint')}</p>
+            )}
+
+            {accessMode === 'link' && (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <Select value={selectedProfileId ?? ''} onValueChange={handleSelectAccount}>
+                  <SelectTrigger id="system-access" className="w-full sm:w-80">
+                    <SelectValue>
+                      {(val: string) => {
+                        const chosen = accountOptions.find((p) => p.id === val)
+                        return chosen ? (chosen.full_name || chosen.email || val) : t('selectAccount')
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accountOptions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.full_name || p.email} {p.email ? `(${p.email})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedProfileId && (
+                  <div className="space-y-2">
+                    <Label>{tSettings('permissions')}</Label>
+                    <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {accessMode === 'create' && (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="text-xs text-muted-foreground">{t('newAccountFields')}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-account-phone">{tAuth('phone')}</Label>
+                    <PhoneInput id="new-account-phone" value={newPhone} onChange={setNewPhone} placeholder="90 123 45 67" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-account-password">{tAuth('password')}</Label>
+                    <PasswordInput
+                      id="new-account-password"
+                      placeholder="••••••••"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      showLabel={tAuth('showPassword')}
+                      hideLabel={tAuth('hidePassword')}
+                    />
+                    <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>{tSettings('permissions')}</Label>
+                  <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
+                </div>
+              </div>
             )}
           </div>
 

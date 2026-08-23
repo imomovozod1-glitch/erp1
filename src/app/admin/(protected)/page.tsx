@@ -116,7 +116,7 @@ export default async function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-1">
             {recentTenants.length === 0 ? (
-              <p className="text-sm text-slate-400 py-6 text-center">{tTenants('empty')}</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center">{tTenants('empty')}</p>
             ) : (
               recentTenants.map((tenant: any) => (
                 <Link
@@ -155,7 +155,7 @@ export default async function AdminDashboardPage() {
             </div>
             <Link
               href="/admin/tenants?status=blocked"
-              className="inline-flex items-center h-7 px-2.5 text-[0.8rem] font-medium rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors"
+              className="inline-flex items-center h-7 px-2.5 text-[0.8rem] font-medium rounded-lg border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/40 transition-colors"
             >
               {t('viewAll')}
             </Link>

@@ -80,7 +80,7 @@ export function InventoryCostingForm() {
         <div className="space-y-1.5 max-w-xs">
           <Select value={method} onValueChange={handleChange} disabled={isLoading || isSaving || !tenantId}>
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue>{(val: CostingMethod) => tInv(val)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="fifo">{tInv('fifo')}</SelectItem>

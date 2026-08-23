@@ -84,7 +84,9 @@
     "importReadError": "Faylni o'qishda xatolik yuz berdi",
     "importFileEmpty": "Fayl bo'sh",
     "invalidEmail": "Noto'g'ri elektron pochta manzili",
-    "invalidAmount": "Noto'g'ri summa"
+    "invalidAmount": "Noto'g'ri summa",
+    "created": "Muvaffaqiyatli yaratildi",
+    "saved": "Muvaffaqiyatli saqlandi"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -418,7 +420,15 @@
     "department": "Bo'lim",
     "manager": "Menejer",
     "isActive": "Faol (Ishlamoqda)",
-    "notes": "Izohlar"
+    "notes": "Izohlar",
+    "systemAccess": "Tizimga kirish huquqi",
+    "systemAccessNone": "Yo'q (faqat kadrlar yozuvi)",
+    "systemAccessHint": "Agar xodim tizimga kirishi kerak bo'lsa, mavjud foydalanuvchi hisobini tanlang",
+    "selectAccount": "Hisobni tanlang",
+    "systemAccessLink": "Mavjud hisobni bog'lash",
+    "systemAccessCreate": "Yangi hisob yaratish",
+    "createAccountError": "Hisob yaratib bo'lmadi",
+    "newAccountFields": "Yangi hisob ma'lumotlari"
   },
   "procurement": {
     "title": "Ta'minot",
@@ -543,7 +553,13 @@
     "resetUserPasswordSuccess": "Parol muvaffaqiyatli yangilandi",
     "resetUserPasswordError": "Parolni yangilab bo'lmadi",
     "resetUserPasswordSelfHint": "O'z parolingizni Xavfsizlik bo'limida o'zgartirishingiz mumkin",
-    "cancel": "Bekor qilish"
+    "cancel": "Bekor qilish",
+    "permissions": "Ruxsatlar",
+    "permissionsDialogTitle": "{name} uchun ruxsatlar",
+    "permissionsSaved": "Ruxsatlar saqlandi",
+    "permissionsSaveError": "Ruxsatlarni saqlab bo'lmadi",
+    "permissionsAdminHint": "Administrator rolidagi foydalanuvchilar har doim barcha bo'limlarga to'liq kirish huquqiga ega",
+    "moduleColumn": "Bo'lim"
   },
   "tools": {
     "title": "Vositalar",

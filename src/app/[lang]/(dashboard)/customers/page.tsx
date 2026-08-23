@@ -46,7 +46,7 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
         <StatsCard
           title={lang === 'uz' ? 'Balans qoldig\'i' : lang === 'ru' ? 'Остаток баланса' : 'Balance'}
           value={`${totalBalance > 0 ? '+' : totalBalance < 0 ? '-' : ''}${formatCurrency(Math.abs(totalBalance))}`}
-          valueClassName={totalBalance > 0 ? 'text-emerald-600' : totalBalance < 0 ? 'text-rose-600' : undefined}
+          valueClassName={totalBalance > 0 ? 'text-emerald-600 dark:text-emerald-400' : totalBalance < 0 ? 'text-rose-600 dark:text-rose-400' : undefined}
           subtitle={
             lang === 'uz'
               ? `Qarz: ${formatCurrency(totalDebt)} · Haqdorlik: ${formatCurrency(totalCredit)}`

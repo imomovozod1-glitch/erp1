@@ -84,7 +84,9 @@
     "importReadError": "Ошибка чтения файла",
     "importFileEmpty": "Файл пуст",
     "invalidEmail": "Неверный адрес электронной почты",
-    "invalidAmount": "Неверная сумма"
+    "invalidAmount": "Неверная сумма",
+    "created": "Успешно создано",
+    "saved": "Успешно сохранено"
   },
   "nav": {
     "dashboard": "Панель управления",
@@ -418,7 +420,15 @@
     "department": "Отдел",
     "manager": "Менеджер",
     "isActive": "Активен (Работает)",
-    "notes": "Примечания"
+    "notes": "Примечания",
+    "systemAccess": "Доступ к системе",
+    "systemAccessNone": "Нет (только кадровая запись)",
+    "systemAccessHint": "Если сотруднику нужен доступ к системе, выберите существующую учётную запись",
+    "selectAccount": "Выберите учётную запись",
+    "systemAccessLink": "Привязать существующую",
+    "systemAccessCreate": "Создать новую учётную запись",
+    "createAccountError": "Не удалось создать учётную запись",
+    "newAccountFields": "Данные новой учётной записи"
   },
   "procurement": {
     "title": "Закупки",
@@ -535,7 +545,13 @@
     "resetUserPasswordSuccess": "Пароль успешно обновлён",
     "resetUserPasswordError": "Не удалось обновить пароль",
     "resetUserPasswordSelfHint": "Свой пароль можно изменить в разделе Безопасность",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "permissions": "Права доступа",
+    "permissionsDialogTitle": "Права доступа для {name}",
+    "permissionsSaved": "Права доступа сохранены",
+    "permissionsSaveError": "Не удалось сохранить права доступа",
+    "permissionsAdminHint": "Пользователи с ролью Администратор всегда имеют полный доступ ко всем разделам",
+    "moduleColumn": "Раздел"
   },
   "tools": {
     "title": "Инструменты",

@@ -1,6 +1,7 @@
 'use client'
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useTheme } from '@/components/providers/theme-provider'
 import { formatCurrency } from '@/lib/utils'
 
 interface RevenuePoint {
@@ -9,11 +10,13 @@ interface RevenuePoint {
 }
 
 export function AdminRevenueChart({ data, emptyLabel }: { data: RevenuePoint[]; emptyLabel: string }) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const hasData = data.some((point) => point.revenue > 0)
 
   if (!hasData) {
     return (
-      <div className="h-[260px] flex items-center justify-center text-slate-400 text-sm">{emptyLabel}</div>
+      <div className="h-[260px] flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">{emptyLabel}</div>
     )
   }
 
@@ -26,18 +29,18 @@ export function AdminRevenueChart({ data, emptyLabel }: { data: RevenuePoint[]; 
             <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#f1f5f9'} vertical={false} />
         <XAxis
           dataKey="monthLabel"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 12, fill: '#64748b' }}
+          tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }}
           dy={10}
         />
         <YAxis
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 12, fill: '#64748b' }}
+          tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }}
           tickFormatter={(v) => {
             if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
             if (v >= 1000) return `${(v / 1000).toFixed(1)}k`
@@ -46,7 +49,12 @@ export function AdminRevenueChart({ data, emptyLabel }: { data: RevenuePoint[]; 
         />
         <Tooltip
           formatter={(value: any) => formatCurrency(value as number)}
-          contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+          contentStyle={
+            isDark
+              ? { borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: '#e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)' }
+              : { borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }
+          }
+          labelStyle={isDark ? { color: '#e2e8f0' } : undefined}
         />
         <Area
           type="monotone"

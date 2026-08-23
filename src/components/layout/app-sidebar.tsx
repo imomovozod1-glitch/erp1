@@ -41,6 +41,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import type { Profile } from '@/types/database.types'
 import { cn, getInitials } from '@/lib/utils'
+import { hasViewAccess, PERMISSION_MODULES, type PermissionModule } from '@/lib/permissions'
 
 interface NavItem {
   key: string
@@ -173,6 +174,15 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
 
   const initials = getInitials(profile?.full_name) || 'U'
 
+  // Sidebar-level enforcement for the module permissions granted in
+  // Settings → Users / HR → Add Employee (see src/lib/permissions.ts).
+  // Admins always see everything; 'dashboard' and 'guide' aren't
+  // permission-gated modules and always show.
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    if (!PERMISSION_MODULES.includes(item.key as PermissionModule)) return true
+    return hasViewAccess(profile?.role, (profile as any)?.permissions, item.key as PermissionModule)
+  })
+
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader>
@@ -196,7 +206,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
           <SidebarGroupLabel>Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => {
+              {visibleNavItems.map((item) => {
                 const Icon = item.icon
                 const fullHref = `/${lang}/${item.href}`
                 const isActive = pathname === fullHref || pathname.startsWith(`${fullHref}/`)

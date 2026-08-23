@@ -84,7 +84,9 @@
     "importReadError": "Error reading the file",
     "importFileEmpty": "File is empty",
     "invalidEmail": "Invalid email address",
-    "invalidAmount": "Invalid amount"
+    "invalidAmount": "Invalid amount",
+    "created": "Created successfully",
+    "saved": "Saved successfully"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -418,7 +420,15 @@
     "department": "Department",
     "manager": "Manager",
     "isActive": "Active (Employed)",
-    "notes": "Notes"
+    "notes": "Notes",
+    "systemAccess": "System access",
+    "systemAccessNone": "None (HR record only)",
+    "systemAccessHint": "If this employee needs to log in, select an existing user account",
+    "selectAccount": "Select an account",
+    "systemAccessLink": "Link existing account",
+    "systemAccessCreate": "Create new account",
+    "createAccountError": "Failed to create account",
+    "newAccountFields": "New account details"
   },
   "procurement": {
     "title": "Procurement",
@@ -544,7 +554,13 @@
     "resetUserPasswordSuccess": "Password updated successfully",
     "resetUserPasswordError": "Failed to update password",
     "resetUserPasswordSelfHint": "You can change your own password in the Security tab",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "permissions": "Permissions",
+    "permissionsDialogTitle": "Permissions for {name}",
+    "permissionsSaved": "Permissions saved",
+    "permissionsSaveError": "Failed to save permissions",
+    "permissionsAdminHint": "Users with the Admin role always have full access to every module",
+    "moduleColumn": "Module"
   },
   "tools": {
     "title": "Tools",

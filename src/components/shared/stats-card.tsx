@@ -29,17 +29,17 @@ export function StatsCard({
     <Card className={cn('relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow duration-200', className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className={cn('p-2 rounded-lg', iconClassName ?? 'bg-violet-50')}>
-          <Icon className={cn('h-4 w-4', iconClassName ? 'text-white' : 'text-violet-600')} />
+        <div className={cn('p-2 rounded-lg', iconClassName ?? 'bg-violet-50 dark:bg-violet-950/40')}>
+          <Icon className={cn('h-4 w-4', iconClassName ? 'text-white' : 'text-violet-600 dark:text-violet-400')} />
         </div>
       </CardHeader>
       <CardContent>
-        <div className={cn('text-2xl font-bold text-slate-900', valueClassName)}>{value}</div>
+        <div className={cn('text-2xl font-bold text-slate-900 dark:text-slate-100', valueClassName)}>{value}</div>
         {subtitle && (
           <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
         )}
         {trend && (
-          <p className={cn('text-xs font-medium mt-1', isPositiveTrend ? 'text-emerald-600' : 'text-red-500')}>
+          <p className={cn('text-xs font-medium mt-1', isPositiveTrend ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
             {isPositiveTrend ? '↑' : '↓'} {Math.abs(trend.value)}% {trend.label}
           </p>
         )}
