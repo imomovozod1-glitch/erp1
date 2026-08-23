@@ -73,11 +73,9 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
   const [tenantCostingMethod, setTenantCostingMethod] = useState<CostingMethod>('fifo')
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setUnits(getMeasurementUnits(lang))
-    }, 0)
-    return () => clearTimeout(timer)
-  }, [lang])
+    getMeasurementUnits(supabase).then(setUnits)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     // RLS scopes this to the caller's own tenant row — no explicit filter needed.

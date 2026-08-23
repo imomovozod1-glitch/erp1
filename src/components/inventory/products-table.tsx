@@ -67,8 +67,9 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
   }, [search, statusFilter]);
 
  
-  const downloadExcelTemplate = () => {
-    const systemUnits = getMeasurementUnits(lang);
+  const downloadExcelTemplate = async () => {
+    const supabase = createClient();
+    const systemUnits = await getMeasurementUnits(supabase);
     const templateData = [
       {
         "Nomi": "Mahsulot A",
@@ -219,7 +220,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
         };
 
         // Map Excel columns to products table columns (supporting multi-language headers)
-        const systemUnits = getMeasurementUnits(lang);
+        const systemUnits = await getMeasurementUnits(supabase);
         const invalidUnitRows: { name: string; unit: string }[] = [];
 
         const newProducts = data
