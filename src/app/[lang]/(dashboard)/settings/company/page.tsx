@@ -37,7 +37,7 @@ export default async function CompanySettingsPage({
         ]}
       />
       <CompanyForm />
-      <InventoryCostingForm />
+      {/* <InventoryCostingForm /> */}
     </div>
   )
 }

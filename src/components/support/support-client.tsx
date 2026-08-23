@@ -76,7 +76,7 @@ export function SupportClient({ lang }: SupportClientProps) {
           href="https://t.me/erpsupport_bot" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="group relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/65 dark:border-slate-800 hover:border-violet-400 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+          className="group relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/65 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
         >
           <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/10 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-300" />
           <div>
@@ -145,10 +145,10 @@ export function SupportClient({ lang }: SupportClientProps) {
 
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Support Ticket Form */}
-        <Card className="lg:col-span-3 border-slate-200/65 shadow-md dark:border-slate-850 rounded-2xl">
+        <Card className="lg:col-span-3 border-slate-200/65 dark:border-slate-800 shadow-md rounded-2xl">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-violet-600" />
+              <MessageSquare className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               {t('submitTicket')}
             </CardTitle>
             <CardDescription>
@@ -158,7 +158,7 @@ export function SupportClient({ lang }: SupportClientProps) {
           <CardContent>
             {isSubmitted ? (
               <div className="flex flex-col items-center justify-center py-8 text-center animate-in fade-in-50 zoom-in-95 duration-300">
-                <div className="p-4 bg-violet-50 dark:bg-violet-950/20 text-violet-600 rounded-full mb-4 animate-bounce">
+                <div className="p-4 bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 rounded-full mb-4 animate-bounce">
                   <CheckCircle2 className="h-10 w-10" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{lang === 'uz' ? "Murojaat qabul qilindi!" : lang === 'ru' ? 'Обращение принято!' : 'Ticket Received!'}</h3>
@@ -180,7 +180,7 @@ export function SupportClient({ lang }: SupportClientProps) {
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={lang === 'uz' ? "Misol: To'lov tizimidagi muammo" : lang === 'ru' ? 'Например: Проблема с оплатой' : 'Example: Issue with payment'}
-                    className="rounded-xl border-slate-200 focus-visible:ring-violet-500"
+                    className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -191,7 +191,7 @@ export function SupportClient({ lang }: SupportClientProps) {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder={lang === 'uz' ? "Batafsil ma'lumot qoldiring..." : lang === 'ru' ? 'Подробно опишите вашу проблему...' : 'Describe your issue in detail...'}
-                    className="rounded-xl border-slate-200 min-h-[120px] focus-visible:ring-violet-500"
+                    className="rounded-xl border-slate-200 dark:border-slate-700 min-h-30 focus-visible:ring-violet-500"
                   />
                 </div>
                 <Button 
@@ -229,16 +229,15 @@ export function SupportClient({ lang }: SupportClientProps) {
                 {t('liveStatusDesc')}
               </p>
               <div className="pt-2 flex items-center gap-2 text-xs font-semibold bg-white/15 px-3 py-2 rounded-xl w-fit">
-                <Sparkles className="h-4 w-4 text-amber-300" />
                 <span>Premium Support Active</span>
               </div>
             </div>
           </div>
 
           {/* Security & Confidentiality */}
-          <div className="bg-slate-50 dark:bg-slate-905 border border-slate-200/50 p-6 rounded-2xl space-y-3">
+          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-6 rounded-2xl space-y-3">
             <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-semibold text-sm">
-              <ShieldCheck className="h-5 w-5 text-violet-600" />
+              <ShieldCheck className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               <span>{lang === 'uz' ? "Xavfsizlik kafolati" : lang === 'ru' ? 'Гарантия безопасности' : 'Security Guarantee'}</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">

@@ -85,7 +85,7 @@ export function LoginForm({ lang }: { lang: string }) {
                   value={field.value ?? ''}
                   onChange={field.onChange}
                   hasError={!!errors.phone}
-                  triggerClassName="bg-white/5 border-white/10 text-white h-11"
+                  triggerClassName="bg-white/5 border-white/10 text-white !h-11"
                   inputClassName="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11"
                   contentClassName="bg-slate-900 border border-white/10 text-white [&_[data-slot=select-item]]:text-white [&_[data-slot=select-item]]:focus:bg-white/10"
                 />

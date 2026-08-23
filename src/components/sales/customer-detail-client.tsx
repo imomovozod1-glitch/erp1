@@ -183,7 +183,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</span>
-            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'}`}>
+            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${balance > 0 ? 'text-emerald-600 dark:text-white' : balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'}`}>
               {balance > 0 ? '+' : balance < 0 ? '-' : ''}{formatCurrency(Math.abs(balance))}
             </h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">

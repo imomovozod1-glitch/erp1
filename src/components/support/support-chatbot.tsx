@@ -110,7 +110,7 @@ export function SupportChatbot({ lang }: { lang: string }) {
                 }
               }}
               placeholder={t('chatbotPlaceholder')}
-              className="h-9 flex-1 rounded-xl border-slate-200 text-sm"
+              className="h-9 flex-1 rounded-xl border-slate-200 dark:border-slate-700 text-sm"
             />
             <Button
               size="icon"
