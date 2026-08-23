@@ -31,3 +31,17 @@ export function resolveMeasurementUnit(rawUnit: string, systemUnits: string[]): 
   const normalized = rawUnit.trim().toLowerCase()
   return systemUnits.find((u) => u.trim().toLowerCase() === normalized) ?? null
 }
+
+/**
+ * Whether a quantity in this unit can be fractional. "Dona" (piece) is a
+ * discrete-count unit — you can't sell/stock 1.5 of an indivisible item —
+ * so it's the one exception forced to whole numbers everywhere a quantity
+ * is tied to a product's unit (stock entry, sale/purchase line items, POS
+ * cart). Every other unit (Kilogram, Litr, Metr, or any tenant-added one)
+ * is a measured quantity and can be fractional. Case-insensitive so a
+ * renamed "dona"/"DONA" is still treated the same.
+ */
+export function unitAllowsDecimals(unit: string | null | undefined): boolean {
+  if (!unit) return true
+  return unit.trim().toLowerCase() !== 'dona'
+}

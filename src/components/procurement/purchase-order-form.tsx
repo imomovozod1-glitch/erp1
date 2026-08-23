@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Plus, Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { unitAllowsDecimals } from '@/lib/units'
 
 interface PurchaseOrderFormProps {
   suppliers: { id: string; name: string }[]
@@ -354,6 +355,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               <NumericInput
                 value={tempQty}
                 onChange={(val) => setTempQty(val)}
+                allowDecimals={unitAllowsDecimals(products.find(p => p.id === selectedProductId)?.unit)}
                 className="h-9"
               />
             </div>

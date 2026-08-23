@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { unitAllowsDecimals } from '@/lib/units'
 
 interface SaleFormProps {
   products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
@@ -371,6 +372,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
               <NumericInput
                 value={tempQty}
                 onChange={(val) => setTempQty(val)}
+                allowDecimals={unitAllowsDecimals(products.find(p => p.id === selectedProductId)?.unit)}
                 className="h-9"
               />
             </div>

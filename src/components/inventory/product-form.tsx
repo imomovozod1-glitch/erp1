@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller } from 'react-hook-form'
 import { formatCurrency } from '@/lib/utils'
-import { getMeasurementUnits } from '@/lib/units'
+import { getMeasurementUnits, unitAllowsDecimals } from '@/lib/units'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -563,7 +563,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
             control={control}
             name="stock"
             render={({ field: { onChange, value } }) => (
-              <NumericInput id="stock" value={value} onChange={onChange} />
+              <NumericInput id="stock" value={value} onChange={onChange} allowDecimals={unitAllowsDecimals(watch('unit'))} />
             )}
           />
           {errors.stock && <p className="text-sm text-red-500">{errors.stock.message}</p>}
@@ -575,7 +575,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
             control={control}
             name="min_stock"
             render={({ field: { onChange, value } }) => (
-              <NumericInput id="min_stock" value={value} onChange={onChange} />
+              <NumericInput id="min_stock" value={value} onChange={onChange} allowDecimals={unitAllowsDecimals(watch('unit'))} />
             )}
           />
           {errors.min_stock && <p className="text-sm text-red-500">{errors.min_stock.message}</p>}

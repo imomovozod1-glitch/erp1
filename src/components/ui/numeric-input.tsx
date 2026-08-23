@@ -21,9 +21,11 @@ interface NumericInputProps extends Omit<React.ComponentProps<typeof Input>, "va
   value?: number | string;
   defaultValue?: number | string;
   onChange?: (val: number | "") => void;
+  /** Set false to reject a decimal point entirely (e.g. a "Dona"/piece quantity) — defaults to true everywhere else (money, weights, etc). */
+  allowDecimals?: boolean;
 }
 
-export function NumericInput({ value, defaultValue, onChange, ...props }: NumericInputProps) {
+export function NumericInput({ value, defaultValue, onChange, allowDecimals = true, ...props }: NumericInputProps) {
   const [displayValue, setDisplayValue] = React.useState(() => {
     const targetValue = value !== undefined ? value : (defaultValue !== undefined ? defaultValue : "");
     return formatNumberWithSpaces(targetValue);
@@ -37,12 +39,13 @@ export function NumericInput({ value, defaultValue, onChange, ...props }: Numeri
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let inputVal = e.target.value;
-    
+
     // Replace commas with dots
     inputVal = inputVal.replace(/,/g, ".");
-    
-    // Remove characters that are not digits, spaces, or dots
-    inputVal = inputVal.replace(/[^\d\s.]/g, "");
+
+    // Remove characters that are not digits, spaces, or dots (or dots
+    // entirely, when this quantity has to stay a whole number)
+    inputVal = inputVal.replace(allowDecimals ? /[^\d\s.]/g : /[^\d\s]/g, "");
     
     // Ensure only one dot
     const parts = inputVal.split(".");

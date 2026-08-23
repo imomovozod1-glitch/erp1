@@ -45,6 +45,7 @@ import {
 } from '@/lib/data/revalidate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { NumericInput } from '@/components/ui/numeric-input'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -59,6 +60,7 @@ import { useSidebar } from '@/components/ui/sidebar'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
+import { unitAllowsDecimals } from '@/lib/units'
 
 // Module-level pure helper functions to satisfy strict React compiler rules
 function generatePOSOrderNumber(): string {
@@ -756,28 +758,22 @@ export function POSClient({
                           >
                             <Minus className="h-3 w-3" />
                           </button>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
+                          <NumericInput
                             value={item.quantity === 0 ? '' : item.quantity}
-                            onChange={(e) => {
-                              const rawVal = e.target.value
-                              if (rawVal === '') {
+                            onChange={(val) => {
+                              if (val === '') {
                                 setCart(cart.map((i) => (i.product.id === item.product.id ? { ...i, quantity: 0 } : i)))
                                 return
                               }
-                              const val = parseInt(rawVal, 10)
-                              if (!isNaN(val)) {
-                                updateQuantity(item.product.id, val)
-                              }
+                              updateQuantity(item.product.id, val)
                             }}
+                            allowDecimals={unitAllowsDecimals(item.product.unit)}
                             onBlur={() => {
                               if (item.quantity <= 0) {
                                 removeFromCart(item.product.id)
                               }
                             }}
-                            className="w-8 text-center text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-slate-50 dark:focus:bg-slate-800 h-full border-0 p-0"
+                            className="w-10 text-center text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-slate-50 dark:focus:bg-slate-800 h-full border-0 rounded-none p-0 shadow-none"
                           />
                           <button
                             type="button"
