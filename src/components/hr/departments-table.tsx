@@ -42,7 +42,7 @@ export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
+              <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead>{t('name')}</TableHead>
               <TableHead>{t('description')}</TableHead>
               <TableHead className="w-12.5"></TableHead>
@@ -59,10 +59,10 @@ export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
               paginated.map((dept, index) => (
                 <TableRow 
                   key={dept.id}
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                   onClick={() => router.push(`/${lang}/hr/departments/${dept.id}/edit`)}
                 >
-                  <TableCell className="text-center font-medium text-slate-500 text-xs">
+                  <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
                   <TableCell className="font-medium">{dept.name}</TableCell>

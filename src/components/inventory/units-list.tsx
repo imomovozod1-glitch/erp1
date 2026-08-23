@@ -104,16 +104,16 @@ export function UnitsList({ lang }: UnitsListProps) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-slate-200/60 shadow-sm p-6">
+          <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm p-6">
             <Skeleton className="h-6 w-1/3 mb-2" />
             <Skeleton className="h-8 w-1/2" />
           </Card>
-          <Card className="border-slate-200/60 shadow-sm p-6">
+          <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm p-6">
             <Skeleton className="h-6 w-1/3 mb-2" />
             <Skeleton className="h-10 w-full" />
           </Card>
         </div>
-        <Card className="border-slate-200/60 shadow-sm p-6">
+        <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm p-6">
           <Skeleton className="h-10 w-full mb-4" />
           <Skeleton className="h-20 w-full" />
         </Card>
@@ -126,27 +126,27 @@ export function UnitsList({ lang }: UnitsListProps) {
       {/* Stats and Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Statistics Card */}
-        <Card className="border-slate-200/60 shadow-sm flex items-center p-6 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
-          <div className="p-3 bg-violet-50 rounded-xl text-violet-600">
+        <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm flex items-center p-6 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
             <Scale className="h-6 w-6" />
           </div>
           <div className="text-center">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {lang === 'uz' ? 'Jami o\'lchov birliklari' : lang === 'ru' ? 'Всего единиц' : 'Total Units'}
             </p>
-            <p className="text-2xl font-bold text-slate-800">
+            <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
               {customUnits.length}
             </p>
-            <p className="text-xs text-slate-500 font-normal">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
               {lang === 'uz' ? 'Foydalanuvchi birliklari' : lang === 'ru' ? 'Пользовательские единицы' : 'User-defined units'}
             </p>
           </div>
         </Card>
 
         {/* Add Unit Form */}
-        <Card className="border-slate-200/60 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
+        <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
           <CardHeader className="py-4">
-            <CardTitle className="text-sm font-bold text-slate-800">
+            <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">
               {lang === 'uz' ? 'Yangi o\'lchov birligi qo\'shish' : lang === 'ru' ? 'Добавить единицу измерения' : 'Add New Unit'}
             </CardTitle>
           </CardHeader>
@@ -156,9 +156,13 @@ export function UnitsList({ lang }: UnitsListProps) {
                 placeholder={lang === 'uz' ? 'Masalan: Juft, Quti' : lang === 'ru' ? 'Например: Коробка, Пара' : 'e.g. Pair, Box'}
                 value={newUnit}
                 onChange={(e) => setNewUnit(e.target.value)}
-                className="border-slate-200 focus-visible:ring-violet-500 flex-1"
+                className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 flex-1"
               />
-              <Button type="submit" className="bg-violet-600 hover:bg-violet-700 text-white shrink-0 cursor-pointer">
+              <Button
+                type="submit"
+                disabled={!newUnit.trim()}
+                className="bg-violet-600 hover:bg-violet-700 text-white shrink-0 cursor-pointer disabled:cursor-not-allowed"
+              >
                 <Plus className="h-4 w-4 mr-1" />
                 {tCommon('add') || 'Add'}
               </Button>
@@ -168,9 +172,9 @@ export function UnitsList({ lang }: UnitsListProps) {
       </div>
 
       {/* List Table */}
-      <Card className="border-slate-200/60 shadow-sm animate-in fade-in duration-300">
+      <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm animate-in fade-in duration-300">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-slate-800">
+          <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200">
             {t('unit')}
           </CardTitle>
           <CardDescription>
@@ -178,13 +182,13 @@ export function UnitsList({ lang }: UnitsListProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg border border-slate-100 overflow-hidden">
+          <div className="rounded-lg border border-slate-100 dark:border-slate-700 overflow-hidden">
             <Table>
-              <TableHeader className="bg-slate-50/50">
+              <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableRow>
-                  <TableHead className="w-10 text-center font-semibold text-slate-600">#</TableHead>
-                  <TableHead className="font-semibold text-slate-600">{lang === 'uz' ? 'O\'lchov birligi nomi' : lang === 'ru' ? 'Название единицы' : 'Unit Name'}</TableHead>
-                  <TableHead className="w-[100px] font-semibold text-slate-600 text-right">{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</TableHead>
+                  <TableHead className="w-10 text-center font-semibold text-slate-600 dark:text-slate-300">#</TableHead>
+                  <TableHead className="font-semibold text-slate-600 dark:text-slate-300">{lang === 'uz' ? 'O\'lchov birligi nomi' : lang === 'ru' ? 'Название единицы' : 'Unit Name'}</TableHead>
+                  <TableHead className="w-[100px] font-semibold text-slate-600 dark:text-slate-300 text-right">{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -201,16 +205,16 @@ export function UnitsList({ lang }: UnitsListProps) {
                   paginated.map((u, index) => {
                     const isEditing = editingUnit === u
                     return (
-                      <TableRow key={u} className="hover:bg-slate-50/30 transition-colors">
-                        <TableCell className="text-center font-medium text-slate-500 text-xs">
+                      <TableRow key={u} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/30 transition-colors">
+                        <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                           {(currentPage - 1) * itemsPerPage + index + 1}
                         </TableCell>
-                        <TableCell className="font-semibold text-slate-800 text-sm">
+                        <TableCell className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
                           {isEditing ? (
                             <Input
                               value={editingValue}
                               onChange={(e) => setEditingValue(e.target.value)}
-                              className="h-8 py-1 px-2 text-sm border-slate-200 focus-visible:ring-violet-500 max-w-[200px]"
+                              className="h-8 py-1 px-2 text-sm border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 max-w-[200px]"
                               autoFocus
                             />
                           ) : (
@@ -224,7 +228,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleSaveEdit(u)}
-                                className="h-8 w-8 text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50 cursor-pointer"
+                                className="h-8 w-8 text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer"
                                 title={tCommon('save') || 'Save'}
                               >
                                 <Check className="h-4 w-4" />
@@ -236,7 +240,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                                   setEditingUnit(null)
                                   setEditingValue('')
                                 }}
-                                className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                                 title={tCommon('cancel') || 'Cancel'}
                               >
                                 <X className="h-4 w-4" />
@@ -251,7 +255,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                                   setEditingUnit(u)
                                   setEditingValue(u)
                                 }}
-                                className="h-8 w-8 text-violet-600 hover:text-violet-900 hover:bg-violet-50 cursor-pointer"
+                                className="h-8 w-8 text-violet-600 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/30 cursor-pointer"
                                 title={tCommon('edit') || 'Edit'}
                               >
                                 <Pencil className="h-4 w-4" />
@@ -260,7 +264,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleDeleteUnit(u)}
-                                className="h-8 w-8 text-rose-600 hover:text-rose-900 hover:bg-rose-50 cursor-pointer"
+                                className="h-8 w-8 text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
                                 title={tCommon('delete') || 'Delete'}
                               >
                                 <Trash2 className="h-4 w-4" />

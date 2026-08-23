@@ -74,8 +74,8 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
-                <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
+              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
                 <TableHead className="w-45">{t('invoiceNumber')}</TableHead>
                 <TableHead>{t('customer')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
@@ -96,19 +96,19 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                 paginated.map((invoice, index) => (
                   <TableRow 
                     key={invoice.id} 
-                    className="group hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                     onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}`)}
                   >
-                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                    <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
                           <FileText className="h-4 w-4" />
                         </div>
                         <div>
-                          <div className="font-medium text-slate-900">
+                          <div className="font-medium text-slate-900 dark:text-slate-100">
                             {invoice.invoice_number}
                           </div>
                           {invoice.sales_orders?.order_number && (
@@ -120,7 +120,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium text-slate-900">{invoice.customers?.name || '-'}</div>
+                      <div className="font-medium text-slate-900 dark:text-slate-100">{invoice.customers?.name || '-'}</div>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex flex-col items-start gap-1.5">
@@ -130,7 +130,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                             variant="outline"
                             size="sm"
                             onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
-                            className="h-7 border-violet-200 text-violet-700 bg-violet-50/50 hover:bg-violet-100/70 hover:text-violet-800 font-medium text-[10px] rounded-md transition-all px-2 mt-1"
+                            className="h-7 border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-100/70 dark:hover:bg-violet-950/50 hover:text-violet-800 dark:hover:text-violet-300 font-medium text-[10px] rounded-md transition-all px-2 mt-1"
                           >
                             To&apos;lov qilish
                           </Button>

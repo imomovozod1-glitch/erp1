@@ -7,12 +7,12 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2, Loader2, Phone } from 'lucide-react'
-import { formatPhoneInput } from '@/lib/tenant-auth'
+import { Building2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
 const loginSchema = z.object({
@@ -75,33 +75,46 @@ export function LoginForm({ lang }: { lang: string }) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="phone" className="text-slate-300 text-sm">{t('phone')}</Label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Controller
-                control={control}
-                name="phone"
-                render={({ field }) => (
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+998 90 123 45 67"
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
-                    className={cn(
-                      'pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11',
-                      errors.phone && 'border-red-500/50'
-                    )}
-                  />
-                )}
-              />
-            </div>
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field }) => (
+                <PhoneInput
+                  id="phone"
+                  placeholder="90 123 45 67"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  hasError={!!errors.phone}
+                  triggerClassName="bg-white/5 border-white/10 text-white h-11"
+                  inputClassName="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11"
+                  contentClassName="bg-slate-900 border border-white/10 text-white [&_[data-slot=select-item]]:text-white [&_[data-slot=select-item]]:focus:bg-white/10"
+                />
+              )}
+            />
             {errors.phone && (
               <p className="text-red-400 text-xs">{t('invalidPhone')}</p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-slate-300 text-sm">{t('password')}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-slate-300 text-sm">{t('password')}</Label>
+              <Popover>
+                <PopoverTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                    />
+                  }
+                >
+                  {t('forgotPassword')}
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 text-sm leading-relaxed bg-slate-900 border-white/10 text-slate-200">
+                  {t('forgotPasswordHint')}
+                </PopoverContent>
+              </Popover>
+            </div>
             <PasswordInput
               id="password"
               placeholder="••••••••"

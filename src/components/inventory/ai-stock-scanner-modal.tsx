@@ -346,14 +346,14 @@ export function AIStockScannerModal({
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-6 overflow-hidden">
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-violet-50 text-violet-600 rounded-lg">
+            <div className="p-2 bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 rounded-lg">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold text-slate-900">
+              <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 {lang === 'uz' ? 'AI Ombor Rasmidan Yuklash (Image-to-Table)' : lang === 'ru' ? 'Загрузка со склада по фото (Image-to-Table)' : 'AI Warehouse Image Upload (Image-to-Table)'}
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500 mt-0.5">
+              <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {lang === 'uz' ? "Kelgan tovarlar ro'yxati yoki nakladnoy rasmini yuklang, AI avtomatik jadvalga o'tkazib beradi." : lang === 'ru' ? 'Загрузите фото накладной или списка товаров — ИИ автоматически перенесет данные в таблицу.' : 'Upload a photo of an incoming goods list or invoice — AI will automatically convert it into a table.'}
               </DialogDescription>
             </div>
@@ -366,14 +366,14 @@ export function AIStockScannerModal({
             <div className="grid gap-6 md:grid-cols-2">
               {/* Dropzone */}
               <div className="flex flex-col h-full min-h-75">
-                <label className="text-xs font-semibold text-slate-700 mb-2">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
                   {lang === 'uz' ? 'Hujjat / Tovarlar rasmi:' : lang === 'ru' ? 'Фото документа / товаров:' : 'Document / Products image:'}
                 </label>
                 <div
                   className={`flex-1 relative border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-6 transition-all ${
                     preview
-                      ? 'border-violet-300 bg-violet-50/20'
-                      : 'border-slate-200 bg-slate-50 hover:border-violet-400 hover:bg-slate-100/50'
+                      ? 'border-violet-300 dark:border-violet-800 bg-violet-50/20 dark:bg-violet-950/20'
+                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-violet-400 dark:hover:border-violet-700 hover:bg-slate-100/50 dark:hover:bg-slate-800/70'
                   }`}
                 >
                   {preview ? (
@@ -387,13 +387,13 @@ export function AIStockScannerModal({
                     </div>
                   ) : (
                     <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
-                      <div className="h-14 w-14 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center mb-3 text-violet-600">
+                      <div className="h-14 w-14 bg-white dark:bg-slate-900 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center mb-3 text-violet-600 dark:text-violet-400">
                         <UploadCloud className="h-7 w-7" />
                       </div>
-                      <p className="text-sm font-semibold text-slate-700 text-center">
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 text-center">
                         {lang === 'uz' ? 'Rasmni bu yerga yuklang yoki tanlang' : lang === 'ru' ? 'Загрузите изображение сюда или выберите' : 'Upload an image here or select one'}
                       </p>
-                      <p className="text-xs text-slate-400 mt-1 text-center">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 text-center">
                         {lang === 'uz' ? "PNG, JPG, WEBP formatlari qo'llab-quvvatlanadi" : lang === 'ru' ? 'Поддерживаются форматы PNG, JPG, WEBP' : 'PNG, JPG, WEBP formats are supported'}
                       </p>
                       <input
@@ -413,7 +413,7 @@ export function AIStockScannerModal({
                       variant="outline"
                       size="sm"
                       onClick={handleReset}
-                      className="text-slate-600 text-xs"
+                      className="text-slate-600 dark:text-slate-300 text-xs"
                     >
                       {lang === 'uz' ? 'Boshqa rasm tanlash' : lang === 'ru' ? 'Выбрать другое изображение' : 'Choose another image'}
                     </Button>
@@ -422,27 +422,27 @@ export function AIStockScannerModal({
               </div>
 
               {/* Guide Card */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-5 flex flex-col justify-between">
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 rounded-xl p-5 flex flex-col justify-between">
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-3">
-                    <FileSpreadsheet className="h-4 w-4 text-violet-600" />
+                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-3">
+                    <FileSpreadsheet className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                     {lang === 'uz' ? 'Qanday ishlaydi?' : lang === 'ru' ? 'Как это работает?' : 'How does it work?'}
                   </h4>
-                  <ul className="space-y-2.5 text-xs text-slate-600">
+                  <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
                     <li className="flex items-start gap-2">
-                      <span className="bg-violet-100 text-violet-700 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      <span className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
                         1
                       </span>
                       {lang === 'uz' ? "Omborga kelgan yuk, nakladnoy yoki ro'yxat rasmini yuklaysiz." : lang === 'ru' ? 'Загрузите фото накладной, поступившего груза или списка товаров.' : 'Upload a photo of incoming goods, an invoice, or a product list.'}
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="bg-violet-100 text-violet-700 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      <span className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
                         2
                       </span>
                       {lang === 'uz' ? "Sun'iy intellekt (Gemini Vision AI) rasmdagi barcha tovarlarni tahlil qilib, Jadval shaklida o'qib beradi." : lang === 'ru' ? 'Искусственный интеллект (Gemini Vision AI) анализирует все товары на изображении и переносит их в таблицу.' : 'AI (Gemini Vision AI) analyzes all the products in the image and reads them into a table.'}
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="bg-violet-100 text-violet-700 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      <span className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
                         3
                       </span>
                       {lang === 'uz' ? "Hosil bo'lgan jadvaldagi narxlar va miqdorlarni ko'rib chiqasiz hamda bir tugma bilan Omborga saqlaysiz." : lang === 'ru' ? 'Проверяете цены и количество в получившейся таблице и сохраняете на склад одной кнопкой.' : 'Review the prices and quantities in the resulting table and save to the warehouse with one click.'}
@@ -450,8 +450,8 @@ export function AIStockScannerModal({
                   </ul>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200/60 rounded-lg p-3 mt-4 text-[11px] text-amber-800 flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/50 rounded-lg p-3 mt-4 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <span>
                     {lang === 'uz' ? "Rasm sifatli va yorug' joyda olingan bo'lsa, AI ma'lumotlarni aniqroq o'qiydi." : lang === 'ru' ? 'Если снимок сделан качественно и при хорошем освещении, ИИ распознает данные точнее.' : 'If the photo is high quality and well-lit, AI will read the data more accurately.'}
                   </span>
@@ -463,10 +463,10 @@ export function AIStockScannerModal({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs px-2.5 py-0.5">
+                  <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50 text-xs px-2.5 py-0.5">
                     {lang === 'uz' ? `${items.length} ta mahsulot aniqlandi` : lang === 'ru' ? `Обнаружено товаров: ${items.length}` : `${items.length} products detected`}
                   </Badge>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     {lang === 'uz' ? "Jadvaldagi katakchalarni bevosita tahrirlashingiz mumkin." : lang === 'ru' ? 'Ячейки таблицы можно редактировать напрямую.' : 'You can edit the table cells directly.'}
                   </span>
                 </div>
@@ -474,15 +474,15 @@ export function AIStockScannerModal({
                   <Button variant="outline" size="sm" onClick={handleAddRow} className="h-8 gap-1 text-xs">
                     <Plus className="h-3.5 w-3.5" /> {lang === 'uz' ? "Qator qo'shish" : lang === 'ru' ? 'Добавить строку' : 'Add row'}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setScanStep('upload')} className="h-8 text-xs text-slate-500">
+                  <Button variant="ghost" size="sm" onClick={() => setScanStep('upload')} className="h-8 text-xs text-slate-500 dark:text-slate-400">
                     {lang === 'uz' ? 'Qayta scan qilish' : lang === 'ru' ? 'Сканировать заново' : 'Scan again'}
                   </Button>
                 </div>
               </div>
 
-              <div className="border border-slate-200 rounded-xl overflow-hidden max-h-100 overflow-y-auto shadow-xs bg-white">
+              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden max-h-100 overflow-y-auto shadow-xs bg-white dark:bg-slate-900">
                 <Table>
-                  <TableHeader className="bg-slate-50 sticky top-0 z-10">
+                  <TableHeader className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10">
                     <TableRow>
                       <TableHead className="w-[30%] text-xs font-semibold">{lang === 'uz' ? 'Mahsulot nomi' : lang === 'ru' ? 'Название товара' : 'Product name'}</TableHead>
                       <TableHead className="w-[15%] text-xs font-semibold">{lang === 'uz' ? 'Artikul (SKU)' : lang === 'ru' ? 'Артикул (SKU)' : 'SKU'}</TableHead>
@@ -495,13 +495,13 @@ export function AIStockScannerModal({
                   </TableHeader>
                   <TableBody>
                     {items.map((item) => (
-                      <TableRow key={item.id} className="hover:bg-slate-50/70">
+                      <TableRow key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/70">
                         <TableCell className="p-2">
                           <Input
                             value={item.name}
                             onChange={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
                             placeholder={lang === 'uz' ? 'Mahsulot nomi' : lang === 'ru' ? 'Название товара' : 'Product name'}
-                            className="h-8 text-xs border-slate-200"
+                            className="h-8 text-xs border-slate-200 dark:border-slate-700"
                           />
                         </TableCell>
                         <TableCell className="p-2">
@@ -509,7 +509,7 @@ export function AIStockScannerModal({
                             value={item.sku}
                             onChange={(e) => handleUpdateItem(item.id, 'sku', e.target.value)}
                             placeholder="SKU-001"
-                            className="h-8 text-xs font-mono border-slate-200"
+                            className="h-8 text-xs font-mono border-slate-200 dark:border-slate-700"
                           />
                         </TableCell>
                         <TableCell className="p-2">
@@ -517,7 +517,7 @@ export function AIStockScannerModal({
                             value={item.unit}
                             onChange={(e) => handleUpdateItem(item.id, 'unit', e.target.value)}
                             placeholder={lang === 'uz' ? 'dona' : lang === 'ru' ? 'шт' : 'pcs'}
-                            className="h-8 text-xs border-slate-200"
+                            className="h-8 text-xs border-slate-200 dark:border-slate-700"
                           />
                         </TableCell>
                         <TableCell className="p-2 text-right">
@@ -525,7 +525,7 @@ export function AIStockScannerModal({
                             type="number"
                             value={item.stock}
                             onChange={(e) => handleUpdateItem(item.id, 'stock', Number(e.target.value))}
-                            className="h-8 text-xs text-right border-slate-200 font-semibold"
+                            className="h-8 text-xs text-right border-slate-200 dark:border-slate-700 font-semibold"
                           />
                         </TableCell>
                         <TableCell className="p-2 text-right">
@@ -533,7 +533,7 @@ export function AIStockScannerModal({
                             type="number"
                             value={item.price}
                             onChange={(e) => handleUpdateItem(item.id, 'price', Number(e.target.value))}
-                            className="h-8 text-xs text-right border-slate-200"
+                            className="h-8 text-xs text-right border-slate-200 dark:border-slate-700"
                           />
                         </TableCell>
                         <TableCell className="p-2 text-right">
@@ -541,7 +541,7 @@ export function AIStockScannerModal({
                             type="number"
                             value={item.cost_price}
                             onChange={(e) => handleUpdateItem(item.id, 'cost_price', Number(e.target.value))}
-                            className="h-8 text-xs text-right border-slate-200"
+                            className="h-8 text-xs text-right border-slate-200 dark:border-slate-700"
                           />
                         </TableCell>
                         <TableCell className="p-2 text-center">
@@ -549,7 +549,7 @@ export function AIStockScannerModal({
                             variant="ghost"
                             size="icon"
                             onClick={() => handleRemoveRow(item.id)}
-                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            className="h-7 w-7 text-red-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

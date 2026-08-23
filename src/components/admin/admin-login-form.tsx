@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { ShieldCheck, Loader2, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -97,7 +98,12 @@ export function AdminLoginForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-slate-300 text-sm">{t('password')}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-slate-300 text-sm">{t('password')}</Label>
+              <Link href="/admin/forgot-password" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">
+                {t('forgotPassword')}
+              </Link>
+            </div>
             <PasswordInput
               id="password"
               placeholder="••••••••"

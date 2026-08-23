@@ -72,33 +72,33 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   }
 
   return (
-    <Card className="max-w-2xl border-slate-200/60 shadow-sm">
+    <Card className="max-w-2xl border-slate-200/60 dark:border-slate-800 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-slate-800">{t('profile')}</CardTitle>
-        <CardDescription>{tCommon('edit')}</CardDescription>
+        <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200">{t('profile')}</CardTitle>
+        <CardDescription>{t('profileDesc')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <Label className="text-slate-600 font-medium">{t('role.admin') || 'Role'}</Label>
-            <div className="h-9 flex items-center px-3 rounded-md bg-violet-50/50 border border-violet-100 text-violet-700 text-sm font-semibold capitalize w-fit">
+            <Label className="text-slate-600 dark:text-slate-400 font-medium">{t('role.admin') || 'Role'}</Label>
+            <div className="h-9 flex items-center px-3 rounded-md bg-violet-50/50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 text-sm font-semibold capitalize w-fit">
               {roleLabels[profile?.role || ''] || profile?.role || 'Staff'}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="full_name" className="text-slate-600 font-medium">{tCommon('name')} *</Label>
-            <Input id="full_name" {...register('full_name')} placeholder={tCommon('name')} className="border-slate-200" />
+            <Label htmlFor="full_name" className="text-slate-600 dark:text-slate-400 font-medium">{tCommon('name')} *</Label>
+            <Input id="full_name" {...register('full_name')} placeholder={tCommon('name')} className="border-slate-200 dark:border-slate-700" />
             {errors.full_name && <p className="text-sm text-red-500">{errors.full_name.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-slate-600 font-medium">{t('phone')}</Label>
-            <Input id="phone" {...register('phone')} placeholder="+998901234567" className="border-slate-200" />
+            <Label htmlFor="phone" className="text-slate-600 dark:text-slate-400 font-medium">{t('phone')}</Label>
+            <Input id="phone" {...register('phone')} placeholder="+998901234567" className="border-slate-200 dark:border-slate-700" />
             {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-slate-100">
+          <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-700 text-white transition-colors px-6 shadow-sm">
               {isSubmitting ? tCommon('loading') : tCommon('save')}
             </Button>

@@ -83,8 +83,8 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
 
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
-              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead className="font-semibold">{tCommon('name')}</TableHead>
               <TableHead>{t('slug')}</TableHead>
               <TableHead>{tCommon('description')}</TableHead>
@@ -105,17 +105,17 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
                 paginated.map((category, index) => (
                   <TableRow 
                     key={category.id} 
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                     onClick={() => router.push(`/${lang}/inventory/categories/${category.id}/edit`)}
                   >
-                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                    <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
                     <TableCell>
-                      <p className="font-medium text-slate-800">{category.name}</p>
+                      <p className="font-medium text-slate-800 dark:text-slate-200">{category.name}</p>
                     </TableCell>
                     <TableCell>
-                      <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                      <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
                         {category.slug}
                       </code>
                     </TableCell>
@@ -137,7 +137,7 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(category.id)}
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
                             disabled={isDeleting === category.id}
                           >
                             <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}

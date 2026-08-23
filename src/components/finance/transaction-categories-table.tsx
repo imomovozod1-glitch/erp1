@@ -91,8 +91,8 @@ export function TransactionCategoriesTable({ categories, lang }: TransactionCate
 
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
-              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead className="font-semibold">{tCommon('name')}</TableHead>
               <TableHead>{t('type')}</TableHead>
               <TableHead>{t('personType')}</TableHead>
@@ -113,14 +113,14 @@ export function TransactionCategoriesTable({ categories, lang }: TransactionCate
               paginated.map((category, index) => (
                 <TableRow
                   key={category.id}
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                   onClick={() => router.push(`/${lang}/finance/categories/${category.id}/edit`)}
                 >
-                  <TableCell className="text-center font-medium text-slate-500 text-xs">
+                  <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
                   <TableCell>
-                    <p className="font-medium text-slate-800">{category.name}</p>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">{category.name}</p>
                   </TableCell>
                   <TableCell>
                     <StatusBadge

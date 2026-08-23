@@ -12,16 +12,18 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { newPasswordSchema } from '@/lib/password-validation'
 
 export function AdminSecurityForm() {
   const t = useTranslations('admin.settings.security')
   const tPassword = useTranslations('admin.password')
+  const tAuth = useTranslations('auth')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const schema = z
     .object({
-      password: z.string().min(6, t('tooShort')),
-      confirmPassword: z.string().min(6, t('tooShort')),
+      password: newPasswordSchema(t('tooShort')),
+      confirmPassword: newPasswordSchema(t('tooShort')),
     })
     .refine((data) => data.password === data.confirmPassword, {
       message: t('mismatch'),
@@ -71,7 +73,11 @@ export function AdminSecurityForm() {
                 hideLabel={tPassword('hide')}
                 {...register('password')}
               />
-              {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+              {errors.password ? (
+                <p className="text-sm text-red-500">{errors.password.message}</p>
+              ) : (
+                <p className="text-xs text-slate-400 dark:text-slate-500">{tAuth('passwordRequirements')}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>

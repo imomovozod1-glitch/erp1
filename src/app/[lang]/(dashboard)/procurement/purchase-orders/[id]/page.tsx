@@ -21,10 +21,10 @@ import {
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 text-slate-700 border-slate-200',
-  ordered: 'bg-blue-50 text-blue-700 border-blue-200/50',
-  received: 'bg-emerald-50 text-emerald-700 border-emerald-200/50',
-  cancelled: 'bg-rose-50 text-rose-700 border-rose-200/50',
+  draft: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+  ordered: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/50',
+  received: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/50',
+  cancelled: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200/50 dark:border-rose-900/50',
 }
 
 export default function PurchaseOrderDetailPage() {
@@ -111,89 +111,89 @@ export default function PurchaseOrderDetailPage() {
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left column - Info card */}
-        <Card className="md:col-span-1 border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden">
-          <CardHeader className="p-5 border-b border-slate-100 flex flex-row items-center gap-3 bg-slate-50/50">
-            <div className="p-2 bg-violet-50 text-violet-600 rounded-xl">
+        <Card className="md:col-span-1 border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
+          <CardHeader className="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+            <div className="p-2 bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 rounded-xl">
               <Receipt className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-sm font-bold text-slate-800">{lang === 'uz' ? 'Xarid buyurtmasi ma\'lumotlari' : 'Информация о заказе закупки'}</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Xarid buyurtmasi ma\'lumotlari' : 'Информация о заказе закупки'}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-5 space-y-4">
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <Truck className="h-3.5 w-3.5" />
                 {t('supplier')}
               </span>
-              <p className="font-semibold text-slate-805">{order.suppliers?.name ?? '—'}</p>
+              <p className="font-semibold text-slate-805 dark:text-slate-200">{order.suppliers?.name ?? '—'}</p>
             </div>
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
                 {tCommon('date')}
               </span>
-              <p className="font-semibold text-slate-805">{formatDateTime(order.created_at)}</p>
+              <p className="font-semibold text-slate-805 dark:text-slate-200">{formatDateTime(order.created_at)}</p>
             </div>
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5" />
                 {tCommon('status')}
               </span>
               <div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 text-slate-650'}`}>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 dark:bg-slate-800 text-slate-650 dark:text-slate-300'}`}>
                   {t(`status.${order.status}`)}
                 </span>
               </div>
             </div>
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 {lang === 'uz' ? 'Jami summa' : 'Итоговая сумма'}
               </span>
-              <p className="text-lg font-black text-violet-600">{formatCurrency(order.total_amount)}</p>
+              <p className="text-lg font-black text-violet-600 dark:text-violet-400">{formatCurrency(order.total_amount)}</p>
             </div>
             {order.notes && (
-              <div className="space-y-1 pt-3 border-t border-slate-100">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="space-y-1 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                   <FileText className="h-3.5 w-3.5" />
                   {tCommon('notes')}
                 </span>
-                <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">{order.notes}</p>
+                <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{order.notes}</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Right column - Items list */}
-        <Card className="md:col-span-2 border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden">
-          <CardHeader className="p-5 border-b border-slate-100 bg-slate-50/50">
-            <CardTitle className="text-sm font-bold text-slate-800">{t('product')}</CardTitle>
+        <Card className="md:col-span-2 border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
+          <CardHeader className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+            <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">{t('product')}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto w-full">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50/30">
-                    <TableHead className="font-bold text-slate-400 h-10">{t('product')}</TableHead>
-                    <TableHead className="font-bold text-slate-400 h-10 text-right">{t('quantity')}</TableHead>
-                    <TableHead className="font-bold text-slate-400 h-10 text-right">{t('unitCost')}</TableHead>
-                    <TableHead className="font-bold text-slate-400 h-10 text-right">{t('totalCost')}</TableHead>
+                  <TableRow className="bg-slate-50/30 dark:bg-slate-800/30">
+                    <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10">{t('product')}</TableHead>
+                    <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10 text-right">{t('quantity')}</TableHead>
+                    <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10 text-right">{t('unitCost')}</TableHead>
+                    <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10 text-right">{t('totalCost')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-slate-50/40">
-                      <TableCell className="font-medium text-slate-800">{item.products?.name ?? '—'}</TableCell>
-                      <TableCell className="text-right text-slate-700">{item.quantity}</TableCell>
-                      <TableCell className="text-right text-slate-700">{formatCurrency(item.unit_cost)}</TableCell>
-                      <TableCell className="text-right font-bold text-slate-900">{formatCurrency(item.total_cost)}</TableCell>
+                    <TableRow key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/40">
+                      <TableCell className="font-medium text-slate-800 dark:text-slate-200">{item.products?.name ?? '—'}</TableCell>
+                      <TableCell className="text-right text-slate-700 dark:text-slate-300">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-slate-700 dark:text-slate-300">{formatCurrency(item.unit_cost)}</TableCell>
+                      <TableCell className="text-right font-bold text-slate-900 dark:text-slate-100">{formatCurrency(item.total_cost)}</TableCell>
                     </TableRow>
                   ))}
-                  <TableRow className="bg-slate-50 font-semibold border-t">
-                    <TableCell colSpan={3} className="text-right text-slate-700">
+                  <TableRow className="bg-slate-50 dark:bg-slate-800 font-semibold border-t">
+                    <TableCell colSpan={3} className="text-right text-slate-700 dark:text-slate-300">
                       {tCommon('total')}:
                     </TableCell>
-                    <TableCell className="text-right text-violet-700 text-base">
+                    <TableCell className="text-right text-violet-700 dark:text-violet-400 text-base">
                       {formatCurrency(order.total_amount)}
                     </TableCell>
                   </TableRow>

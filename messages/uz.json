@@ -82,7 +82,9 @@
     "importSuccess": "{count} ta qator muvaffaqiyatli import qilindi",
     "importNoValidRows": "Yaroqli qatorlar topilmadi. Ustun nomlarini shablon bilan solishtiring",
     "importReadError": "Faylni o'qishda xatolik yuz berdi",
-    "importFileEmpty": "Fayl bo'sh"
+    "importFileEmpty": "Fayl bo'sh",
+    "invalidEmail": "Noto'g'ri elektron pochta manzili",
+    "invalidAmount": "Noto'g'ri summa"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -112,6 +114,7 @@
     "showPassword": "Parolni ko'rsatish",
     "hidePassword": "Parolni yashirish",
     "confirmPassword": "Parolni tasdiqlang",
+    "passwordMismatch": "Parollar mos kelmadi",
     "fullName": "To'liq ism",
     "forgotPassword": "Parolni unutdingizmi?",
     "resetPassword": "Parolni tiklash",
@@ -126,7 +129,9 @@
     "passwordRequired": "Parol kiritilishi shart",
     "invalidEmail": "Noto'g'ri elektron pochta manzili",
     "invalidCredentials": "Elektron pochta yoki parol noto'g'ri",
-    "tooManyAttempts": "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring."
+    "tooManyAttempts": "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring.",
+    "passwordRequirements": "Kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak",
+    "forgotPasswordHint": "Parolni tiklash uchun kompaniyangiz administratoriga yoki qo'llab-quvvatlash xizmatiga murojaat qiling"
   },
   "tenantStatus": {
     "notFoundTitle": "Tashkilot topilmadi",
@@ -412,7 +417,8 @@
     "terminatedAt": "Ishdan bo'shatilgan sana",
     "department": "Bo'lim",
     "manager": "Menejer",
-    "isActive": "Faol (Ishlamoqda)"
+    "isActive": "Faol (Ishlamoqda)",
+    "notes": "Izohlar"
   },
   "procurement": {
     "title": "Ta'minot",
@@ -504,6 +510,7 @@
   "settings": {
     "title": "Sozlamalar",
     "company": "Kompaniya",
+    "companyInfoDesc": "Ushbu ma'lumotlar administrator tomonidan tizimga kiritilgan. O'zgartirish uchun administrator bilan bog'laning.",
     "users": "Foydalanuvchilar",
     "roles": "Rollar",
     "companyName": "Kompaniya nomi",
@@ -524,7 +531,19 @@
     "inventoryCostingDesc": "Barcha mahsulotlar uchun standart tannarx hisoblash usulini tanlang (FIFO, LIFO yoki AVECO). Har bir mahsulot uchun alohida usul belgilash mumkin.",
     "companySettingsTableMissing": "Supabase ma'lumotlar bazasida 'company_settings' jadvali topilmadi. Uni yaratish uchun supabase/migration_inventory_costing.sql faylini Supabase SQL Editor orqali ishga tushiring.",
     "costingMethodSaved": "Tannarx hisoblash usuli saqlandi",
-    "costingMethodSaveFailed": "Tannarx hisoblash usulini saqlab bo'lmadi"
+    "costingMethodSaveFailed": "Tannarx hisoblash usulini saqlab bo'lmadi",
+    "securityDesc": "Hisobingiz uchun yangi parol o'rnating",
+    "profileDesc": "Shaxsiy ma'lumotlaringizni yangilang",
+    "companyCardDesc": "Kompaniya ma'lumotlari, litsenziya va obuna",
+    "usersCardDesc": "Foydalanuvchilar, rollar va ruxsatlar",
+    "profileCardDesc": "Shaxsiy ma'lumotlaringiz",
+    "securityCardDesc": "Parol va hisob xavfsizligi",
+    "resetUserPassword": "Parolni tiklash",
+    "resetUserPasswordDialogTitle": "{name} uchun yangi parol",
+    "resetUserPasswordSuccess": "Parol muvaffaqiyatli yangilandi",
+    "resetUserPasswordError": "Parolni yangilab bo'lmadi",
+    "resetUserPasswordSelfHint": "O'z parolingizni Xavfsizlik bo'limida o'zgartirishingiz mumkin",
+    "cancel": "Bekor qilish"
   },
   "tools": {
     "title": "Vositalar",
@@ -600,7 +619,8 @@
       "signingIn": "Kirilmoqda...",
       "signIn": "Kirish",
       "invalidCredentials": "Elektron pochta yoki parol noto'g'ri",
-      "tooManyAttempts": "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring."
+      "tooManyAttempts": "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring.",
+      "forgotPassword": "Parolni unutdingizmi?"
     },
     "shell": {
       "tenants": "Tenantlar",
@@ -711,7 +731,7 @@
       "submit": "Yangilash",
       "success": "Parol yangilandi",
       "error": "Parolni yangilab bo'lmadi",
-      "tooShort": "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
+      "tooShort": "Parol kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak"
     },
     "delete": {
       "button": "Tenantni o'chirish",
@@ -787,7 +807,7 @@
         "save": "Yangilash",
         "success": "Parol yangilandi",
         "error": "Parolni yangilab bo'lmadi",
-        "tooShort": "Parol kamida 6 ta belgidan iborat bo'lishi kerak",
+        "tooShort": "Parol kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak",
         "mismatch": "Parollar mos kelmadi"
       },
       "admins": {
@@ -804,8 +824,23 @@
         "confirmDelete": "\"{name}\" ni super-adminlardan olib tashlamoqchimisiz?",
         "created": "Admin qo'shildi",
         "deleted": "Admin o'chirildi",
-        "error": "Amalni bajarib bo'lmadi"
+        "error": "Amalni bajarib bo'lmadi",
+        "passwordTooWeak": "Parol kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak"
       }
+    },
+    "accountRecovery": {
+      "forgotTitle": "Parolni tiklash",
+      "forgotSubtitle": "Elektron pochtangizni kiriting — tiklash havolasini yuboramiz",
+      "sendLink": "Havola yuborish",
+      "sending": "Yuborilmoqda...",
+      "checkEmail": "Agar bu manzil ro'yxatdan o'tgan bo'lsa, tiklash havolasi yuborildi. Pochta qutingizni tekshiring.",
+      "backToLogin": "Kirish sahifasiga qaytish",
+      "newPasswordTitle": "Yangi parol o'rnating",
+      "newPasswordSubtitle": "Hisobingiz uchun yangi parol kiriting",
+      "updatePassword": "Parolni yangilash",
+      "updateSuccess": "Parol yangilandi. Endi tizimga kirishingiz mumkin.",
+      "invalidOrExpiredLink": "Havola yaroqsiz yoki muddati o'tgan. Qaytadan so'rang.",
+      "goToLogin": "Kirish sahifasiga o'tish"
     }
   },
   "pageInfo": {
@@ -818,7 +853,7 @@
     "units": "O'lchov birliklari — mahsulotlar uchun ishlatiladigan birliklar (dona, kg, litr va h.k.) ro'yxatini shu yerdan boshqaring.",
     "salesOrders": "Sotuv buyurtmalari — mijozlarga qilingan barcha sotuvlar ro'yxati. Yangi buyurtma yarating, holatini kuzating va tafsilotlarini ko'ring.",
     "invoices": "Hisob-fakturalar — mijozlarga chiqarilgan to'lov hujjatlari. To'lov holatini kuzating va muddati o'tgan fakturalarni nazorat qiling.",
-    "customers": "Mijozlar — barcha mijozlaringiz ro'yxati, aloqa ma'lumotlari va qarzdorligi shu yerda. Yangi mijoz qo'shing yoki mavjudlarini tahrirlang.",
+    "customers": "Mijozlar — barcha mijozlaringiz ro'yxati, aloqa ma'lumotlari va qarzdorligi shu yerda. Yangi mijoz qo'shing, tahrirlang yoki \"Xarita\" tabiga o'tib joylashuvlarini xaritada ko'ring.",
     "customersMap": "Mijozlar xaritasi — barcha mijozlaringizning joylashuvini bitta xaritada ko'ring.",
     "customerCategories": "Mijoz toifalari — mijozlarni turkumlarga ajratib, ular bilan ishlashni osonlashtiring.",
     "purchaseOrders": "Xarid buyurtmalari — yetkazib beruvchilardan qilingan xaridlar ro'yxati. Yangi xarid yarating va qabul qilingan miqdorni kuzating.",

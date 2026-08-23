@@ -310,7 +310,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">{t('productName')} *</Label>
@@ -530,29 +530,29 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         </div>
 
         {costPriceNum > 0 && priceNum > 0 && (
-          <div className="col-span-1 md:col-span-2 bg-gradient-to-r from-slate-50 to-slate-100 p-4 rounded-xl border border-slate-200/60 shadow-inner flex flex-wrap justify-between items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="col-span-1 md:col-span-2 bg-gradient-to-r from-slate-50 dark:from-slate-800 to-slate-100 dark:to-slate-800/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700 shadow-inner flex flex-wrap justify-between items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex gap-8 flex-wrap">
               <div className="space-y-1">
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block">{t('expectedProfit')}</span>
-                <span className={`text-lg font-bold tracking-tight ${expectedProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">{t('expectedProfit')}</span>
+                <span className={`text-lg font-bold tracking-tight ${expectedProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                   {formatCurrency(expectedProfit)}
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block">{t('margin')}</span>
-                <span className="text-lg font-bold text-sky-600 tracking-tight">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">{t('margin')}</span>
+                <span className="text-lg font-bold text-sky-600 dark:text-sky-400 tracking-tight">
                   {marginPercent.toFixed(1)}%
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider block">{t('markup')}</span>
-                <span className="text-lg font-bold text-violet-600 tracking-tight">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">{t('markup')}</span>
+                <span className="text-lg font-bold text-violet-600 dark:text-violet-400 tracking-tight">
                   {(((priceNum - costPriceNum) / costPriceNum) * 100).toFixed(1)}%
                 </span>
               </div>
             </div>
             {tenantCostingMethod !== 'aveco' && (
-              <p className="text-[11px] text-slate-400 leading-snug basis-full">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-snug basis-full">
                 {t('averageCostEstimate')}
               </p>
             )}

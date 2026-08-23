@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { Plus, Scale } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatsCard } from '@/components/shared/stats-card'
-import { CustomersTable } from '@/components/sales/customers-table'
+import { CustomersViewTabs } from '@/components/sales/customers-view-tabs'
 import { CustomerImportExport } from '@/components/sales/customer-import-export'
 import { getCachedCustomers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
@@ -59,7 +59,7 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
         />
       </div>
 
-      <CustomersTable customers={customers} lang={lang} />
+      <CustomersViewTabs customers={customers} lang={lang} />
     </div>
   )
 }

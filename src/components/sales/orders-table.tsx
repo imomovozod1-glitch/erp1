@@ -77,7 +77,7 @@ export function OrdersTable({ orders, lang }: OrdersTableProps) {
         </div>
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
               <TableHead>{t('orderNumber')}</TableHead>
               <TableHead>{t('customer')}</TableHead>
@@ -101,14 +101,14 @@ export function OrdersTable({ orders, lang }: OrdersTableProps) {
                paginated.map((order, index) => (
                   <TableRow 
                      key={order.id} 
-                     className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                     className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                      onClick={() => router.push(`/${lang}/sales/orders/${order.id}`)}
                    >
-                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                    <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
                    <TableCell>
-                     <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono font-semibold">
+                     <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono font-semibold">
                        {order.order_number}
                      </code>
                    </TableCell>

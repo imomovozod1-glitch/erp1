@@ -22,7 +22,7 @@ import { Truck, Mail, Phone, MapPin, CreditCard, FileText, User, Loader2 } from 
 const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod => mod.MapPicker), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-80 bg-slate-50 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
+    <div className="w-full h-80 bg-slate-50 dark:bg-slate-800 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
     </div>
   )
@@ -151,21 +151,21 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
 
   return (
     <>
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-3xl bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
-      <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-        <div className="h-10 w-10 rounded-lg bg-violet-50 flex items-center justify-center text-violet-600 shrink-0">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-3xl bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+      <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="h-10 w-10 rounded-lg bg-violet-50 dark:bg-violet-950/50 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
           <Truck className="h-5 w-5" />
         </div>
         <div>
-          <h3 className="font-bold text-slate-800 text-base">{t('supplier')}</h3>
-          <p className="text-xs text-slate-500 font-sans">{t('addSupplier')}</p>
+          <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">{t('supplier')}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">{t('addSupplier')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Supplier Name */}
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Label htmlFor="name" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <Truck className="h-3.5 w-3.5 text-slate-400" />
             {t('supplierName')} *
           </Label>
@@ -173,14 +173,14 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             id="name"
             {...register('name')}
             placeholder={t('supplierName')}
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
           />
           {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name.message}</p>}
         </div>
 
         {/* Phone */}
         <div className="space-y-2">
-          <Label htmlFor="phone" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Label htmlFor="phone" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5 text-slate-400" />
             {t('supplierPhone')} *
           </Label>
@@ -193,7 +193,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
                 value={field.value ?? ''}
                 onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
                 placeholder="+998 90 123 45 67"
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
               />
             )}
           />
@@ -202,7 +202,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
 
         {/* Contact Person */}
         <div className="space-y-2">
-          <Label htmlFor="contact_person" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Label htmlFor="contact_person" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <User className="h-3.5 w-3.5 text-slate-400" />
             {t('contactPerson')}
           </Label>
@@ -210,13 +210,13 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             id="contact_person"
             {...register('contact_person')}
             placeholder={t('contactPerson')}
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
           />
         </div>
 
         {/* Email */}
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Label htmlFor="email" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <Mail className="h-3.5 w-3.5 text-slate-400" />
             {tCommon('email')}
           </Label>
@@ -225,14 +225,14 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             type="email"
             {...register('email')}
             placeholder="example@mail.com"
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
           />
           {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
         </div>
 
         {/* TIN */}
         <div className="space-y-2">
-          <Label htmlFor="tin" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Label htmlFor="tin" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <CreditCard className="h-3.5 w-3.5 text-slate-400" />
             {t('tin')}
           </Label>
@@ -240,20 +240,20 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             id="tin"
             {...register('tin')}
             placeholder="123456789"
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
           />
         </div>
 
         {/* Status */}
         <div className="space-y-2">
-          <Label htmlFor="is_active" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Label htmlFor="is_active" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <User className="h-3.5 w-3.5 text-slate-400" />
             {tCommon('status')}
           </Label>
           <select
             id="is_active"
             {...register('is_active', { setValueAs: (v) => v === 'true' })}
-            className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 focus:bg-white"
+            className="flex h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 focus:bg-white dark:focus:bg-slate-800"
           >
             <option value="true">{tCommon('active')}</option>
             <option value="false">{tCommon('inactive')}</option>
@@ -262,11 +262,11 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
 
         {/* Address */}
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="address" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Label htmlFor="address" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-slate-400" />
             {tCommon('address')}
             {hasPreciseLocation && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full normal-case">
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-full normal-case">
                 <MapPin className="h-2.5 w-2.5" />
                 {lang === 'uz' ? 'Xaritada belgilangan' : lang === 'ru' ? 'Отмечено на карте' : 'Pinned on map'}
               </span>
@@ -277,13 +277,13 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
               id="address"
               {...register('address')}
               placeholder={tCommon('address') || 'Address'}
-              className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white flex-1"
+              className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 flex-1"
             />
             <Button
               type="button"
               variant="outline"
               onClick={handleOpenMap}
-              className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+              className="h-10 px-4 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
             >
               <MapPin className="h-4 w-4 text-slate-500" />
               {tSales('locationPicker.button')}
@@ -293,7 +293,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
 
         {/* Notes */}
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="notes" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+          <Label htmlFor="notes" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <FileText className="h-3.5 w-3.5 text-slate-400" />
             {tCommon('notes') || 'Notes'}
           </Label>
@@ -302,12 +302,12 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             {...register('notes')}
             placeholder={tCommon('notes') || 'Notes'}
             rows={3}
-            className="bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white resize-none"
+            className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 resize-none"
           />
         </div>
       </div>
 
-      <div className="flex gap-3 pt-5 justify-end border-t border-slate-100">
+      <div className="flex gap-3 pt-5 justify-end border-t border-slate-100 dark:border-slate-800">
         <Button
           type="button"
           variant="outline"
@@ -325,13 +325,13 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
 
     {isMapOpen && (
       <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-        <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
-          <DialogHeader className="pb-3 border-b border-slate-100">
-            <DialogTitle className="font-bold text-slate-800 text-base flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-violet-600" />
+        <DialogContent className="sm:max-w-2xl bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+          <DialogHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle className="font-bold text-slate-800 dark:text-slate-200 text-base flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               {tSales('locationPicker.dialogTitle')}
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500 font-sans mt-1">
+            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-1">
               {tSales('locationPicker.dialogSubtitle')}
             </DialogDescription>
           </DialogHeader>
@@ -343,12 +343,12 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
               initialLng={tempLng}
             />
           </div>
-          <DialogFooter className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+          <DialogFooter className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsMapOpen(false)}
-              className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors"
+              className="h-10 px-4 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-medium text-sm transition-colors"
             >
               {tCommon('cancel')}
             </Button>

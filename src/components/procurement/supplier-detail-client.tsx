@@ -115,14 +115,14 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl border shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm">
         <div className="flex items-center gap-3.5">
           <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
             <Truck className="h-7 w-7" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{supplier.name}</h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{supplier.name}</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {supplier.contact_person ? `${t('contactPerson')}: ${supplier.contact_person}` : ''}
             </p>
           </div>
@@ -141,37 +141,37 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : 'Всего закупок'}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(totalPurchases)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{purchaseOrders.length} {t('purchaseOrders')}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : 'Всего закупок'}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalPurchases)}</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{purchaseOrders.length} {t('purchaseOrders')}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Jami to\'lovlar' : 'Всего выплачено'}</span>
-            <h3 className="text-2xl font-extrabold text-emerald-700 tracking-tight mt-1">{formatCurrency(totalPayments)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{transactions.length} {lang === 'uz' ? 'ta to\'lov' : 'выплат'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami to\'lovlar' : 'Всего выплачено'}</span>
+            <h3 className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight mt-1">{formatCurrency(totalPayments)}</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{transactions.length} {lang === 'uz' ? 'ta to\'lov' : 'выплат'}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Balans (Qarzimiz)' : 'Баланс (Долг)'}</span>
-            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${outstandingDebt > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Balans (Qarzimiz)' : 'Баланс (Долг)'}</span>
+            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${outstandingDebt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
               {formatCurrency(outstandingDebt)}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{t('tin')}: {supplier.tin || '—'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('tin')}: {supplier.tin || '—'}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{tc('status')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tc('status')}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {supplier.is_active ? tc('active') : tc('inactive')}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{lang === 'uz' ? 'Kontakt' : lang === 'ru' ? 'Контакты' : 'Contact'}: {supplier.phone || '—'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{lang === 'uz' ? 'Kontakt' : lang === 'ru' ? 'Контакты' : 'Contact'}: {supplier.phone || '—'}</span>
           </CardContent>
         </Card>
       </div>
@@ -180,43 +180,43 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border-0 shadow-sm self-start">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-slate-800">{lang === 'uz' ? 'Hamkor ma\'lumotlari' : 'Профиль партнёра'}</CardTitle>
+            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Hamkor ma\'lumotlari' : 'Профиль партнёра'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             {supplier.phone && (
               <div className="flex items-start gap-2.5">
-                <Phone className="h-4 w-4 text-slate-450 text-slate-400 mt-0.5" />
+                <Phone className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 block">{tc('phone')}</span>
-                  <span className="font-medium text-slate-800">{supplier.phone}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('phone')}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{supplier.phone}</span>
                 </div>
               </div>
             )}
             {supplier.email && (
               <div className="flex items-start gap-2.5">
-                <Mail className="h-4 w-4 text-slate-450 text-slate-400 mt-0.5" />
+                <Mail className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 block">{tc('email')}</span>
-                  <span className="font-medium text-slate-800">{supplier.email}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('email')}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{supplier.email}</span>
                 </div>
               </div>
             )}
             {supplier.tin && (
               <div className="flex items-start gap-2.5">
-                <Landmark className="h-4 w-4 text-slate-450 text-slate-400 mt-0.5" />
+                <Landmark className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 block">{t('tin')}</span>
-                  <span className="font-medium text-slate-800">{supplier.tin}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">{t('tin')}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{supplier.tin}</span>
                 </div>
               </div>
             )}
             {(supplier.address || (typeof supplier.latitude === 'number' && typeof supplier.longitude === 'number')) && (
               <div className="flex items-start gap-2.5">
-                <MapPin className="h-4 w-4 text-slate-450 text-slate-400 mt-0.5" />
+                <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div className="flex-1 space-y-2">
                   <div>
-                    <span className="text-xs text-slate-400 block">{tc('address')}</span>
-                    <span className="font-medium text-slate-800">{supplier.address || '—'}</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('address')}</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{supplier.address || '—'}</span>
                   </div>
                   <LocationPreviewMap
                     address={supplier.address}
@@ -227,7 +227,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                   <button
                     type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="block text-xs font-semibold text-violet-600 hover:text-violet-700 hover:underline cursor-pointer"
+                    className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline cursor-pointer"
                   >
                     {lang === 'uz' ? "Kattaroq xaritada ko'rish" : lang === 'ru' ? 'Показать на большой карте' : 'View larger map'}
                   </button>
@@ -236,10 +236,10 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
             )}
             {supplier.website && (
               <div className="flex items-start gap-2.5">
-                <Globe className="h-4 w-4 text-slate-450 text-slate-400 mt-0.5" />
+                <Globe className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 block">Website</span>
-                  <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-violet-600 hover:underline text-xs break-all">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">Website</span>
+                  <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-violet-600 dark:text-violet-400 hover:underline text-xs break-all">
                     {supplier.website}
                   </a>
                 </div>
@@ -250,12 +250,12 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
 
         {/* Tabbed Activity / Documents */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl border shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border shadow-sm">
             <div className="flex border-b overflow-x-auto">
               <button
                 onClick={() => setActiveTab('purchases')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'purchases' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'purchases' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 <Truck className="h-4 w-4" />
@@ -264,7 +264,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
               <button
                 onClick={() => setActiveTab('payments')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'payments' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'payments' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 <DollarSign className="h-4 w-4" />
@@ -276,7 +276,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
               {activeTab === 'purchases' && (
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/50">
+                    <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
                       <TableHead>{t('poNumber')}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
@@ -287,20 +287,20 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                   <TableBody>
                     {purchaseOrders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-slate-400">
+                        <TableCell colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
                           {tc('noData')}
                         </TableCell>
                       </TableRow>
                     ) : (
                       purchaseOrders.map((po, idx) => (
-                        <TableRow key={po.id} className="hover:bg-slate-50/50">
-                          <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                          <TableCell className="font-semibold text-slate-900">{po.po_number}</TableCell>
-                          <TableCell className="text-right font-bold text-rose-600">{formatCurrency(po.total_amount)}</TableCell>
+                        <TableRow key={po.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                          <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{po.po_number}</TableCell>
+                          <TableCell className="text-right font-bold text-rose-600 dark:text-rose-400">{formatCurrency(po.total_amount)}</TableCell>
                           <TableCell>
                             <StatusBadge tone={PO_STATUS_TONES[po.status] ?? 'slate'} label={t(`status.${po.status}`)} />
                           </TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDateTime(po.created_at)}</TableCell>
+                          <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(po.created_at)}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -311,7 +311,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
               {activeTab === 'payments' && (
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/50">
+                    <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
                       <TableHead>{lang === 'uz' ? 'Kategoriya' : 'Категория'}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
@@ -322,22 +322,22 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                   <TableBody>
                     {transactions.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-slate-400">
+                        <TableCell colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
                           {tc('noData')}
                         </TableCell>
                       </TableRow>
                     ) : (
                       transactions.map((tx, idx) => (
-                        <TableRow key={tx.id} className="hover:bg-slate-50/50">
-                          <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                          <TableCell className="font-semibold text-slate-800">
+                        <TableRow key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                          <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                          <TableCell className="font-semibold text-slate-800 dark:text-slate-200">
                             {tx.category}
                           </TableCell>
-                          <TableCell className="text-right font-bold text-rose-600">
+                          <TableCell className="text-right font-bold text-rose-600 dark:text-rose-400">
                             -{formatCurrency(tx.amount)}
                           </TableCell>
-                          <TableCell className="text-slate-600 text-sm">{tx.description || '—'}</TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDateTime(tx.created_at)}</TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-300 text-sm">{tx.description || '—'}</TableCell>
+                          <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(tx.created_at)}</TableCell>
                         </TableRow>
                       ))
                     )}

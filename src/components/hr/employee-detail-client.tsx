@@ -155,28 +155,28 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl border shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm">
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14">
-            <AvatarFallback className="bg-violet-100 text-violet-700 text-lg font-bold">
+            <AvatarFallback className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 text-lg font-bold">
               {employee.full_name?.[0] ?? 'E'}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{employee.full_name ?? '—'}</h1>
-            <p className="text-xs text-slate-500 font-mono mt-1">{employee.position} &bull; {employee.profiles?.departments?.name ?? '—'}</p>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{employee.full_name ?? '—'}</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">{employee.position} &bull; {employee.profiles?.departments?.name ?? '—'}</p>
           </div>
         </div>
 
         {/* Period Filter — drives salary/payout & sales figures below */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg bg-slate-100 p-0.5 shadow-inner border">
+          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 shadow-inner border">
             {(['all', 'today', 'week', 'month'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
-                  period === p ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  period === p ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 {periodLabels[p]}
@@ -210,37 +210,37 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t('salary')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(employee.salary)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{t('employeeCode')}: {employee.employee_code}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('salary')}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(employee.salary)}</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('employeeCode')}: {employee.employee_code}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Ishlagan davri' : 'Срок службы'}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Ishlagan davri' : 'Срок службы'}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {tenureMonths} {lang === 'uz' ? 'oy' : 'мес.'}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{t('hiredAt')}: {formatDate(employee.hired_at)}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('hiredAt')}: {formatDate(employee.hired_at)}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Rasmiylashtirgan savdolar' : 'Оформленные продажи'}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(totalSalesAmount)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{filteredSalesOrders.length} {tc('count') || 'count'}{periodSuffix}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Rasmiylashtirgan savdolar' : 'Оформленные продажи'}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalSalesAmount)}</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredSalesOrders.length} {tc('count') || 'count'}{periodSuffix}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'To\'langan maoshlar' : 'Выплачено'}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'To\'langan maoshlar' : 'Выплачено'}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {formatCurrency(totalPaidAmount)}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{filteredTransactions.length} {tc('count') || 'count'}{periodSuffix}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredTransactions.length} {tc('count') || 'count'}{periodSuffix}</span>
           </CardContent>
         </Card>
       </div>
@@ -249,31 +249,31 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border-0 shadow-sm self-start">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-slate-800">{lang === 'uz' ? 'Kadr ma\'lumotlari' : 'Личное дело'}</CardTitle>
+            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Kadr ma\'lumotlari' : 'Личное дело'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div>
-              <span className="text-xs text-slate-400 block">{tc('email')}</span>
-              <span className="font-medium text-slate-800">{employee.profiles?.email ?? '—'}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('email')}</span>
+              <span className="font-medium text-slate-800 dark:text-slate-200">{employee.profiles?.email ?? '—'}</span>
             </div>
             <div>
-              <span className="text-xs text-slate-400 block">{t('department')}</span>
-              <span className="font-medium text-slate-800">{employee.profiles?.departments?.name ?? '—'}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 block">{t('department')}</span>
+              <span className="font-medium text-slate-800 dark:text-slate-200">{employee.profiles?.departments?.name ?? '—'}</span>
             </div>
             <div>
-              <span className="text-xs text-slate-400 block">{t('hiredAt')}</span>
-              <span className="font-medium text-slate-800">{formatDate(employee.hired_at)}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 block">{t('hiredAt')}</span>
+              <span className="font-medium text-slate-800 dark:text-slate-200">{formatDate(employee.hired_at)}</span>
             </div>
             {!employee.is_active && employee.terminated_at && (
               <div>
-                <span className="text-xs text-rose-500 block font-semibold">{t('terminatedAt') || 'Bo\'shatilgan sana'}</span>
-                <span className="font-bold text-rose-600">{formatDate(employee.terminated_at)}</span>
+                <span className="text-xs text-rose-500 dark:text-rose-400 block font-semibold">{t('terminatedAt') || 'Bo\'shatilgan sana'}</span>
+                <span className="font-bold text-rose-600 dark:text-rose-400">{formatDate(employee.terminated_at)}</span>
               </div>
             )}
             {employee.notes && (
-              <div className="pt-3 border-t border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">{tc('description')}</span>
-                <p className="text-slate-600 leading-relaxed text-xs">{employee.notes}</p>
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1">{tc('description')}</span>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-xs">{employee.notes}</p>
               </div>
             )}
           </CardContent>
@@ -281,12 +281,12 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
         {/* Tabbed Activity / Documents */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl border shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border shadow-sm">
             <div className="flex border-b overflow-x-auto">
               <button
                 onClick={() => setActiveTab('payouts')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'payouts' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'payouts' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 <DollarSign className="h-4 w-4" />
@@ -295,7 +295,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
               <button
                 onClick={() => setActiveTab('sales')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'sales' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'sales' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 <ShoppingCart className="h-4 w-4" />
@@ -306,32 +306,32 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             <div className="p-0">
               {activeTab === 'payouts' && (
                 <>
-                  <div className="flex flex-wrap items-center gap-3 p-4 border-b bg-slate-50/30">
-                    <span className="text-xs text-slate-500 font-medium">
+                  <div className="flex flex-wrap items-center gap-3 p-4 border-b bg-slate-50/30 dark:bg-slate-800/30">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                       {lang === 'uz' ? 'Davr' : lang === 'ru' ? 'Период' : 'Period'}:{' '}
-                      <span className="font-semibold text-slate-700">{activePeriodLabel}</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">{activePeriodLabel}</span>
                     </span>
                     {period !== 'all' && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => { setPeriod('all'); setCustomStart(''); setCustomEnd('') }}
-                        className="h-7 px-2 text-xs text-slate-500 gap-1"
+                        className="h-7 px-2 text-xs text-slate-500 dark:text-slate-400 gap-1"
                       >
                         <X className="h-3.5 w-3.5" />
                         {lang === 'uz' ? 'Tozalash' : lang === 'ru' ? 'Сбросить' : 'Clear'}
                       </Button>
                     )}
-                    <div className="ml-auto text-xs text-slate-500 font-medium">
+                    <div className="ml-auto text-xs text-slate-500 dark:text-slate-400 font-medium">
                       {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}:{' '}
-                      <span className="font-bold text-rose-600">
+                      <span className="font-bold text-rose-600 dark:text-rose-400">
                         {formatCurrency(totalPaidAmount)}
                       </span>
                     </div>
                   </div>
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-50/50">
+                      <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                         <TableHead className="w-10 text-center">#</TableHead>
                         <TableHead>{lang === 'uz' ? 'Kategoriya' : 'Категория'}</TableHead>
                         <TableHead className="text-right">{tc('amount')}</TableHead>
@@ -342,22 +342,22 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                     <TableBody>
                       {filteredTransactions.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-12 text-slate-400">
+                          <TableCell colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
                             {tc('noData')}
                           </TableCell>
                         </TableRow>
                       ) : (
                         filteredTransactions.map((tx, idx) => (
-                          <TableRow key={tx.id} className="hover:bg-slate-50/50">
-                            <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                            <TableCell className="font-semibold text-slate-800">
+                          <TableRow key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                            <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                            <TableCell className="font-semibold text-slate-800 dark:text-slate-200">
                               {tx.category}
                             </TableCell>
-                            <TableCell className="text-right font-bold text-rose-600">
+                            <TableCell className="text-right font-bold text-rose-600 dark:text-rose-400">
                               -{formatCurrency(tx.amount)}
                             </TableCell>
-                            <TableCell className="text-slate-600 text-sm">{tx.description || '—'}</TableCell>
-                            <TableCell className="text-slate-500 text-xs">{formatDateTime(tx.created_at)}</TableCell>
+                            <TableCell className="text-slate-600 dark:text-slate-400 text-sm">{tx.description || '—'}</TableCell>
+                            <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(tx.created_at)}</TableCell>
                           </TableRow>
                         ))
                       )}
@@ -369,7 +369,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
               {activeTab === 'sales' && (
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/50">
+                    <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
                       <TableHead>{lang === 'uz' ? 'Sotuv kodi' : 'Код продажи'}</TableHead>
                       <TableHead>{lang === 'uz' ? 'Mijoz' : 'Клиент'}</TableHead>
@@ -381,21 +381,21 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                   <TableBody>
                     {filteredSalesOrders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                        <TableCell colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">
                           {tc('noData')}
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredSalesOrders.map((o, idx) => (
-                        <TableRow key={o.id} className="hover:bg-slate-50/50">
-                          <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                          <TableCell className="font-semibold text-slate-900">{o.order_number}</TableCell>
+                        <TableRow key={o.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                          <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{o.order_number}</TableCell>
                           <TableCell>{o.customers?.name ?? '—'}</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{formatCurrency(o.total_amount)}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(o.total_amount)}</TableCell>
                           <TableCell>
                             <StatusBadge tone={ORDER_STATUS_TONES[o.status] ?? 'slate'} label={tSales(`status.${o.status}`)} />
                           </TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDateTime(o.created_at)}</TableCell>
+                          <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(o.created_at)}</TableCell>
                         </TableRow>
                       ))
                     )}

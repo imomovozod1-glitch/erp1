@@ -60,8 +60,8 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
         </div>
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
-              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead>{tCommon('date')}</TableHead>
               <TableHead>{t('type')}</TableHead>
               <TableHead>{t('category')}</TableHead>
@@ -84,10 +84,10 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
               paginated.map((tx, index) => (
                 <TableRow 
                   key={tx.id} 
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                   onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
                 >
-                  <TableCell className="text-center font-medium text-slate-500 text-xs">
+                  <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{formatDateTime(tx.created_at)}</TableCell>
@@ -98,7 +98,7 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                     />
                   </TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-700 font-medium">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
                       {tx.category}
                     </span>
                   </TableCell>

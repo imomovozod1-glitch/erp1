@@ -138,16 +138,16 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl border shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm">
         <div className="flex items-center gap-3.5">
           <Avatar className="h-14 w-14">
-            <AvatarFallback className="bg-violet-100 text-violet-700 text-lg font-bold">
+            <AvatarFallback className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 text-lg font-bold">
               {getInitials(customer.name)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{customer.name}</h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{customer.name}</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {customer.phone || customer.email || ''}
             </p>
           </div>
@@ -166,27 +166,27 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : lang === 'ru' ? 'Всего покупок' : 'Total purchases'}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(totalPurchases)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{salesOrders.length} {lang === 'uz' ? 'ta buyurtma' : lang === 'ru' ? 'заказов' : 'orders'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : lang === 'ru' ? 'Всего покупок' : 'Total purchases'}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalPurchases)}</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{salesOrders.length} {lang === 'uz' ? 'ta buyurtma' : lang === 'ru' ? 'заказов' : 'orders'}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Jami to\'langan' : lang === 'ru' ? 'Всего оплачено' : 'Total paid'}</span>
-            <h3 className="text-2xl font-extrabold text-emerald-700 tracking-tight mt-1">{formatCurrency(totalPaid)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{invoices.length} {lang === 'uz' ? 'ta hisob-faktura' : lang === 'ru' ? 'счетов' : 'invoices'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami to\'langan' : lang === 'ru' ? 'Всего оплачено' : 'Total paid'}</span>
+            <h3 className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight mt-1">{formatCurrency(totalPaid)}</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{invoices.length} {lang === 'uz' ? 'ta hisob-faktura' : lang === 'ru' ? 'счетов' : 'invoices'}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</span>
-            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${balance > 0 ? 'text-emerald-600' : balance < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</span>
+            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'}`}>
               {balance > 0 ? '+' : balance < 0 ? '-' : ''}{formatCurrency(Math.abs(balance))}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">
               {lang === 'uz' ? 'Qarz' : lang === 'ru' ? 'Долг' : 'Debt'}: {formatCurrency(outstandingDebt)} · {lang === 'uz' ? 'Haqdorlik' : lang === 'ru' ? 'Депозит' : 'Credit'}: {formatCurrency(creditBalance)}
             </span>
           </CardContent>
@@ -194,11 +194,11 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{tc('status')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tc('status')}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {customer.is_active ? (lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active') : (lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive')}
             </h3>
-            <span className="text-xs text-slate-400 mt-2">{lang === 'uz' ? 'Kontakt' : lang === 'ru' ? 'Контакты' : 'Contact'}: {customer.phone || '—'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{lang === 'uz' ? 'Kontakt' : lang === 'ru' ? 'Контакты' : 'Contact'}: {customer.phone || '—'}</span>
           </CardContent>
         </Card>
       </div>
@@ -207,15 +207,15 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border-0 shadow-sm self-start">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-slate-800">{lang === 'uz' ? "Mijoz ma'lumotlari" : lang === 'ru' ? 'Профиль клиента' : 'Customer profile'}</CardTitle>
+            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? "Mijoz ma'lumotlari" : lang === 'ru' ? 'Профиль клиента' : 'Customer profile'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             {customer.customer_categories?.name && (
               <div className="flex items-start gap-2.5">
                 <Tags className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 block">{tSales('category')}</span>
-                  <span className="font-medium text-slate-800">{customer.customer_categories.name}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">{tSales('category')}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{customer.customer_categories.name}</span>
                 </div>
               </div>
             )}
@@ -223,8 +223,8 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               <div className="flex items-start gap-2.5">
                 <Phone className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 block">{tc('phone')}</span>
-                  <span className="font-medium text-slate-800">{customer.phone}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('phone')}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{customer.phone}</span>
                 </div>
               </div>
             )}
@@ -232,8 +232,8 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               <div className="flex items-start gap-2.5">
                 <Mail className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 block">{tc('email')}</span>
-                  <span className="font-medium text-slate-800">{customer.email}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('email')}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{customer.email}</span>
                 </div>
               </div>
             )}
@@ -241,8 +241,8 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               <div className="flex items-start gap-2.5">
                 <Landmark className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 block">{tSales('tin')}</span>
-                  <span className="font-medium text-slate-800">{customer.tin}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">{tSales('tin')}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{customer.tin}</span>
                 </div>
               </div>
             )}
@@ -251,8 +251,8 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                 <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div className="flex-1 space-y-2">
                   <div>
-                    <span className="text-xs text-slate-400 block">{tc('address')}</span>
-                    <span className="font-medium text-slate-800">{customer.address || '—'}</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('address')}</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{customer.address || '—'}</span>
                   </div>
                   <LocationPreviewMap
                     address={customer.address}
@@ -263,7 +263,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <button
                     type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="block text-xs font-semibold text-violet-600 hover:text-violet-700 hover:underline cursor-pointer"
+                    className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline cursor-pointer"
                   >
                     {lang === 'uz' ? "Kattaroq xaritada ko'rish" : lang === 'ru' ? 'Показать на большой карте' : 'View larger map'}
                   </button>
@@ -271,9 +271,9 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               </div>
             )}
             {customer.notes && (
-              <div className="pt-3 border-t border-slate-100">
-                <span className="text-xs text-slate-400 block mb-1">{tc('description')}</span>
-                <p className="text-slate-600 leading-relaxed text-xs">{customer.notes}</p>
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1">{tc('description')}</span>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">{customer.notes}</p>
               </div>
             )}
           </CardContent>
@@ -281,12 +281,12 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
 
         {/* Tabbed Activity / Documents */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl border shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border shadow-sm">
             <div className="flex border-b overflow-x-auto">
               <button
                 onClick={() => setActiveTab('orders')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'orders' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'orders' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 <ShoppingCart className="h-4 w-4" />
@@ -295,7 +295,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               <button
                 onClick={() => setActiveTab('invoices')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'invoices' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'invoices' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 <FileText className="h-4 w-4" />
@@ -304,7 +304,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               <button
                 onClick={() => setActiveTab('transactions')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'transactions' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'transactions' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 <History className="h-4 w-4" />
@@ -316,7 +316,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               {activeTab === 'orders' && (
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/50">
+                    <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
                       <TableHead>{lang === 'uz' ? 'Sotuv kodi' : lang === 'ru' ? 'Код продажи' : 'Order #'}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
@@ -327,7 +327,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <TableBody>
                     {salesOrders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-slate-400">
+                        <TableCell colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
                           {tc('noData')}
                         </TableCell>
                       </TableRow>
@@ -335,16 +335,16 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                       salesOrders.map((o, idx) => (
                         <TableRow
                           key={o.id}
-                          className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 cursor-pointer transition-colors"
                           onClick={() => router.push(`/${lang}/sales/orders/${o.id}`)}
                         >
-                          <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                          <TableCell className="font-semibold text-slate-900">{o.order_number}</TableCell>
-                          <TableCell className="text-right font-bold text-emerald-600">{formatCurrency(o.total_amount)}</TableCell>
+                          <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{o.order_number}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(o.total_amount)}</TableCell>
                           <TableCell>
                             <StatusBadge tone={ORDER_STATUS_TONES[o.status] ?? 'slate'} label={tSales(`status.${o.status}`)} />
                           </TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDateTime(o.created_at)}</TableCell>
+                          <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(o.created_at)}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -355,7 +355,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               {activeTab === 'invoices' && (
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/50">
+                    <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
                       <TableHead>{lang === 'uz' ? 'Hisob-faktura' : lang === 'ru' ? 'Счёт' : 'Invoice #'}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
@@ -367,7 +367,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <TableBody>
                     {invoices.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                        <TableCell colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">
                           {tc('noData')}
                         </TableCell>
                       </TableRow>
@@ -375,17 +375,17 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                       invoices.map((inv, idx) => (
                         <TableRow
                           key={inv.id}
-                          className="hover:bg-slate-50/80 cursor-pointer transition-colors"
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 cursor-pointer transition-colors"
                           onClick={() => router.push(`/${lang}/sales/invoices/${inv.id}`)}
                         >
-                          <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                          <TableCell className="font-semibold text-slate-900">{inv.invoice_number}</TableCell>
-                          <TableCell className="text-right font-bold text-slate-800">{formatCurrency(inv.total_amount)}</TableCell>
-                          <TableCell className="text-right font-medium text-emerald-600">{formatCurrency(inv.paid_amount)}</TableCell>
+                          <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{inv.invoice_number}</TableCell>
+                          <TableCell className="text-right font-bold text-slate-800 dark:text-slate-200">{formatCurrency(inv.total_amount)}</TableCell>
+                          <TableCell className="text-right font-medium text-emerald-600 dark:text-emerald-400">{formatCurrency(inv.paid_amount)}</TableCell>
                           <TableCell>
                             <StatusBadge tone={INVOICE_STATUS_TONES[inv.status] ?? 'slate'} label={tSales(`status.${inv.status}`)} />
                           </TableCell>
-                          <TableCell className="text-slate-500 text-xs">{formatDate(inv.due_at)}</TableCell>
+                          <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDate(inv.due_at)}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -396,7 +396,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               {activeTab === 'transactions' && (
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/50">
+                    <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
                       <TableHead>{lang === 'uz' ? 'Turi' : lang === 'ru' ? 'Тип' : 'Type'}</TableHead>
                       <TableHead>{lang === 'uz' ? 'Kategoriya' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
@@ -408,7 +408,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <TableBody>
                     {transactions.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                        <TableCell colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">
                           {tc('noData')}
                         </TableCell>
                       </TableRow>
@@ -416,20 +416,20 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                       transactions.map((tx, idx) => {
                         const isIncome = tx.type === 'income'
                         return (
-                          <TableRow key={tx.id} className="hover:bg-slate-50/50">
-                            <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
+                          <TableRow key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                            <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                             <TableCell>
                               <StatusBadge
                                 tone={isIncome ? 'emerald' : 'rose'}
                                 label={isIncome ? (lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income') : (lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense')}
                               />
                             </TableCell>
-                            <TableCell className="text-slate-700 text-xs">{tx.category}</TableCell>
-                            <TableCell className={`text-right font-bold ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            <TableCell className="text-slate-700 dark:text-slate-300 text-xs">{tx.category}</TableCell>
+                            <TableCell className={`text-right font-bold ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                               {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
                             </TableCell>
-                            <TableCell className="text-slate-500 text-xs">{formatDateTime(tx.created_at)}</TableCell>
-                            <TableCell className="text-slate-500 text-xs max-w-50 truncate">{tx.description || '—'}</TableCell>
+                            <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(tx.created_at)}</TableCell>
+                            <TableCell className="text-slate-500 dark:text-slate-400 text-xs max-w-50 truncate">{tx.description || '—'}</TableCell>
                           </TableRow>
                         )
                       })

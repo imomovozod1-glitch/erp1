@@ -22,7 +22,7 @@ import { User, Mail, Phone, MapPin, FileText, CreditCard, Loader2, Tags } from '
 const MapPicker = dynamic(() => import('./map-picker').then(mod => mod.MapPicker), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[320px] bg-slate-50 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
+    <div className="w-full h-[320px] bg-slate-50 dark:bg-slate-800 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
     </div>
   )
@@ -136,21 +136,21 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
     <div className="space-y-6 max-w-4xl mx-auto">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Customer Details Card */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs space-y-6">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="p-2 bg-violet-50 rounded-lg">
-              <User className="h-5 w-5 text-violet-600" />
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs space-y-6">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-2 bg-violet-50 dark:bg-violet-950/50 rounded-lg">
+              <User className="h-5 w-5 text-violet-600 dark:text-violet-400" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-base">{tSales('customer')}</h3>
-              <p className="text-xs text-slate-500 font-sans">{tSales('customerSubtitle')}</p>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">{tSales('customer')}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">{tSales('customerSubtitle')}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Customer Name */}
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Label htmlFor="name" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('customerName')} *
               </Label>
@@ -159,14 +159,14 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 id="name"
                 {...register('name')}
                 placeholder={tSales('customerNamePlaceholder')}
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
               />
               {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name.message}</p>}
             </div>
 
             {/* Phone */}
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Label htmlFor="phone" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <Phone className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('phone')}
               </Label>
@@ -174,13 +174,13 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 id="phone"
                 {...register('phone')}
                 placeholder={tSales('phonePlaceholder')}
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
               />
             </div>
 
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Label htmlFor="email" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('email')}
               </Label>
@@ -189,14 +189,14 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 type="email"
                 {...register('email')}
                 placeholder={tSales('emailPlaceholder')}
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
               />
               {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
             </div>
 
             {/* TIN */}
             <div className="space-y-2">
-              <Label htmlFor="tin" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Label htmlFor="tin" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <CreditCard className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('tin')}
               </Label>
@@ -204,20 +204,20 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 id="tin"
                 {...register('tin')}
                 placeholder={tSales('tinPlaceholder')}
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
               />
             </div>
 
             {/* Category */}
             <div className="space-y-2">
-              <Label htmlFor="category_id" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Label htmlFor="category_id" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <Tags className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('category')}
               </Label>
               <select
                 id="category_id"
                 {...register('category_id')}
-                className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-sm shadow-sm transition-colors focus:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1 text-sm shadow-sm transition-colors focus:bg-white dark:focus:bg-slate-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">{tCommon('select')}</option>
                 {categories.map((c) => (
@@ -228,11 +228,11 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
 
             {/* Address Field */}
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Label htmlFor="address" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('address')}
                 {hasPreciseLocation && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full normal-case">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-full normal-case">
                     <MapPin className="h-2.5 w-2.5" />
                     {lang === 'uz' ? 'Xaritada belgilangan' : lang === 'ru' ? 'Отмечено на карте' : 'Pinned on map'}
                   </span>
@@ -243,13 +243,13 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                   id="address"
                   {...register('address')}
                   placeholder={tSales('addressPlaceholder')}
-                  className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white flex-1"
+                  className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 flex-1"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleOpenMap}
-                  className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+                  className="h-10 px-4 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
                 >
                   <MapPin className="h-4 w-4 text-slate-500" />
                   {tSales('locationPicker.button')}
@@ -259,7 +259,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
 
             {/* Notes */}
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="notes" className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              <Label htmlFor="notes" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('notes')}
               </Label>
@@ -268,14 +268,14 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 {...register('notes')}
                 placeholder={tSales('notesPlaceholder')}
                 rows={3}
-                className="bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white resize-none"
+                className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 resize-none"
               />
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 pt-5 border-t border-slate-100">
+        <div className="flex justify-end gap-3 pt-5 border-t border-slate-100 dark:border-slate-800">
           <Button 
             type="button" 
             variant="outline" 
@@ -293,13 +293,13 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
       {/* Dynamic Map Dialog */}
       {isMapOpen && (
         <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-          <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
-            <DialogHeader className="pb-3 border-b border-slate-100">
-              <DialogTitle className="font-bold text-slate-800 text-base flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-violet-600" />
+          <DialogContent className="sm:max-w-2xl bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+            <DialogHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+              <DialogTitle className="font-bold text-slate-800 dark:text-slate-200 text-base flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                 {tSales('locationPicker.dialogTitle')}
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500 font-sans mt-1">
+              <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-1">
                 {tSales('locationPicker.dialogSubtitle')}
               </DialogDescription>
             </DialogHeader>
@@ -311,12 +311,12 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 initialLng={tempLng}
               />
             </div>
-            <DialogFooter className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+            <DialogFooter className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsMapOpen(false)}
-                className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg font-medium text-sm transition-colors"
+                className="h-10 px-4 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-medium text-sm transition-colors"
               >
                 {tCommon('cancel')}
               </Button>

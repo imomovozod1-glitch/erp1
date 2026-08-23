@@ -107,19 +107,19 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl border shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm">
         <div className="flex items-center gap-3.5">
           <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
             <Package className="h-7 w-7" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{product.name}</h1>
-            <p className="text-xs text-slate-500 font-mono mt-1">SKU: {product.sku}</p>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{product.name}</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">SKU: {product.sku}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge className={product.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-700"}>
+          <Badge className={product.is_active ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}>
             {product.is_active ? tc('active') : tc('inactive')}
           </Badge>
           <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
@@ -133,11 +133,11 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm relative overflow-hidden">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t('costPrice')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(product.cost_price)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{t('incomingCost', { fallback: 'Kirim narxi' })}: {formatCurrency(product.incoming_cost || product.cost_price)}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('costPrice')}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(product.cost_price)}</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('incomingCost', { fallback: 'Kirim narxi' })}: {formatCurrency(product.incoming_cost || product.cost_price)}</span>
             {effectiveCostingMethod && nextSaleCost != null && (
-              <span className="text-xs text-violet-600 font-semibold mt-1 flex items-center gap-1">
+              <span className="text-xs text-violet-600 dark:text-violet-400 font-semibold mt-1 flex items-center gap-1">
                 <Layers className="h-3 w-3" />
                 {t(effectiveCostingMethod)} · {t('nextSaleCost')}: {formatCurrency(nextSaleCost)}
               </span>
@@ -147,9 +147,9 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t('price')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(product.price)}</h3>
-            <span className="text-xs text-emerald-600 font-semibold mt-2 flex items-center gap-1">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('price')}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(product.price)}</h3>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-2 flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
               {lang === 'uz' ? 'Foyda marjasi' : 'Маржа'}: {profitMarginPercent}%
             </span>
@@ -158,11 +158,11 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{t('stock')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('stock')}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {formatNumber(product.stock)} {product.unit}
             </h3>
-            <span className={`text-xs font-semibold mt-2 ${product.stock <= product.min_stock ? 'text-orange-600' : 'text-slate-400'}`}>
+            <span className={`text-xs font-semibold mt-2 ${product.stock <= product.min_stock ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`}>
               {lang === 'uz' ? 'Minimal limit' : 'Мин. запас'}: {formatNumber(product.min_stock)} {product.unit}
             </span>
           </CardContent>
@@ -170,20 +170,20 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Zaxira qiymati' : 'Стоимость запасов'}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(totalValuation)}</h3>
-            <span className="text-xs text-slate-400 mt-2">{t('category')}: {product.categories?.name ?? '—'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Zaxira qiymati' : 'Стоимость запасов'}</span>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalValuation)}</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('category')}: {product.categories?.name ?? '—'}</span>
           </CardContent>
         </Card>
       </div>
 
       {/* Tabs list */}
-      <div className="bg-white rounded-xl border shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border shadow-sm">
         <div className="flex border-b overflow-x-auto">
           <button
             onClick={() => setActiveTab('movements')}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'movements' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+              activeTab === 'movements' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <RefreshCw className="h-4 w-4" />
@@ -192,7 +192,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           <button
             onClick={() => setActiveTab('sales')}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'sales' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+              activeTab === 'sales' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <ShoppingCart className="h-4 w-4" />
@@ -201,7 +201,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           <button
             onClick={() => setActiveTab('purchases')}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'purchases' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+              activeTab === 'purchases' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <Truck className="h-4 w-4" />
@@ -210,7 +210,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           <button
             onClick={() => setActiveTab('costLayers')}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'costLayers' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+              activeTab === 'costLayers' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <Layers className="h-4 w-4" />
@@ -222,7 +222,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           {activeTab === 'movements' && (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50">
+                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
                   <TableHead>{lang === 'uz' ? 'Harakat turi' : 'Тип движения'}</TableHead>
                   <TableHead className="text-right">{lang === 'uz' ? 'Miqdor' : 'Количество'}</TableHead>
@@ -236,19 +236,19 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               <TableBody>
                 {movements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12 text-slate-400">
+                    <TableCell colSpan={8} className="text-center py-12 text-slate-400 dark:text-slate-500">
                       {tc('noData')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   movements.map((m, idx) => (
-                    <TableRow key={m.id} className="hover:bg-slate-50/50">
-                      <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
+                    <TableRow key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                      <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                           m.type === 'incoming' || m.type === 'in'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                            : 'bg-rose-50 text-rose-700 border border-rose-100'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50'
+                            : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50'
                         }`}>
                           {m.type === 'incoming' || m.type === 'in' ? t('stockIn') : t('stockOut')}
                         </span>
@@ -256,31 +256,31 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                       <TableCell className="text-right font-semibold">
                         {m.type === 'incoming' || m.type === 'in' ? '+' : '-'}{formatNumber(m.quantity)}
                       </TableCell>
-                      <TableCell className="text-right text-slate-500">{formatNumber(m.quantity_before)}</TableCell>
-                      <TableCell className="text-right text-slate-700 font-medium">{formatNumber(m.quantity_after)}</TableCell>
+                      <TableCell className="text-right text-slate-500 dark:text-slate-400">{formatNumber(m.quantity_before)}</TableCell>
+                      <TableCell className="text-right text-slate-700 dark:text-slate-300 font-medium">{formatNumber(m.quantity_after)}</TableCell>
                       <TableCell className="text-sm">
                         {m.source?.type === 'purchase_order' ? (
-                          <span className="inline-flex items-center gap-1.5 text-amber-700">
+                          <span className="inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
                             <Truck className="h-3.5 w-3.5 shrink-0" />
                             <span className="font-medium">{m.source.label}</span>
-                            {m.source.supplierOrCustomer && <span className="text-slate-400">· {m.source.supplierOrCustomer}</span>}
+                            {m.source.supplierOrCustomer && <span className="text-slate-400 dark:text-slate-500">· {m.source.supplierOrCustomer}</span>}
                           </span>
                         ) : m.source?.type === 'sales_orders' ? (
-                          <span className="inline-flex items-center gap-1.5 text-violet-700">
+                          <span className="inline-flex items-center gap-1.5 text-violet-700 dark:text-violet-400">
                             <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
                             <span className="font-medium">{m.source.label}</span>
-                            {m.source.supplierOrCustomer && <span className="text-slate-400">· {m.source.supplierOrCustomer}</span>}
+                            {m.source.supplierOrCustomer && <span className="text-slate-400 dark:text-slate-500">· {m.source.supplierOrCustomer}</span>}
                           </span>
                         ) : m.source?.type === 'initial_stock' ? (
-                          <span className="text-slate-500">{lang === 'uz' ? "Boshlang'ich zaxira" : 'Начальный запас'}</span>
+                          <span className="text-slate-500 dark:text-slate-400">{lang === 'uz' ? "Boshlang'ich zaxira" : 'Начальный запас'}</span>
                         ) : m.source?.type === 'product_adjustment' ? (
-                          <span className="text-slate-500">{lang === 'uz' ? "Qo'lda tuzatish" : 'Ручная корректировка'}</span>
+                          <span className="text-slate-500 dark:text-slate-400">{lang === 'uz' ? "Qo'lda tuzatish" : 'Ручная корректировка'}</span>
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-slate-400 dark:text-slate-500">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-slate-600 text-sm">{translateMovementReason(m.reason, lang)}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">{formatDateTime(m.created_at)}</TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-300 text-sm">{translateMovementReason(m.reason, lang)}</TableCell>
+                      <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(m.created_at)}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -291,7 +291,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           {activeTab === 'sales' && (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50">
+                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
                   <TableHead>{lang === 'uz' ? 'Buyurtma raqami' : 'Номер заказа'}</TableHead>
                   <TableHead>{lang === 'uz' ? 'Mijoz' : 'Клиент'}</TableHead>
@@ -303,19 +303,19 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               <TableBody>
                 {sales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">
                       {tc('noData')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   sales.map((s, idx) => (
-                    <TableRow key={idx} className="hover:bg-slate-50/50">
-                      <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                      <TableCell className="font-semibold text-slate-900">{s.sales_orders?.order_number ?? '—'}</TableCell>
+                    <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                      <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                      <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{s.sales_orders?.order_number ?? '—'}</TableCell>
                       <TableCell>{s.sales_orders?.customers?.name ?? '—'}</TableCell>
                       <TableCell className="text-right font-medium">{formatNumber(s.quantity)}</TableCell>
-                      <TableCell className="text-right font-bold text-slate-900">{formatCurrency(s.total_price)}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">
+                      <TableCell className="text-right font-bold text-slate-900 dark:text-slate-100">{formatCurrency(s.total_price)}</TableCell>
+                      <TableCell className="text-slate-500 dark:text-slate-400 text-xs">
                         {s.sales_orders?.created_at ? formatDateTime(s.sales_orders.created_at) : '—'}
                       </TableCell>
                     </TableRow>
@@ -328,7 +328,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           {activeTab === 'purchases' && (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50">
+                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
                   <TableHead>{lang === 'uz' ? 'Xarid kodi' : 'Код закупки'}</TableHead>
                   <TableHead>{lang === 'uz' ? 'Yetkazib beruvchi' : 'Поставщик'}</TableHead>
@@ -340,19 +340,19 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               <TableBody>
                 {purchases.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">
                       {tc('noData')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   purchases.map((p, idx) => (
-                    <TableRow key={idx} className="hover:bg-slate-50/50">
-                      <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                      <TableCell className="font-semibold text-slate-900">{p.purchase_orders?.po_number ?? '—'}</TableCell>
+                    <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                      <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                      <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{p.purchase_orders?.po_number ?? '—'}</TableCell>
                       <TableCell>{p.purchase_orders?.suppliers?.name ?? '—'}</TableCell>
                       <TableCell className="text-right font-medium">{formatNumber(p.quantity)}</TableCell>
-                      <TableCell className="text-right font-bold text-slate-900">{formatCurrency(p.total_cost)}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">
+                      <TableCell className="text-right font-bold text-slate-900 dark:text-slate-100">{formatCurrency(p.total_cost)}</TableCell>
+                      <TableCell className="text-slate-500 dark:text-slate-400 text-xs">
                         {p.purchase_orders?.created_at ? formatDateTime(p.purchase_orders.created_at) : '—'}
                       </TableCell>
                     </TableRow>
@@ -365,7 +365,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           {activeTab === 'costLayers' && (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50">
+                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
                   <TableHead>{t('receivedAt')}</TableHead>
                   <TableHead>{lang === 'uz' ? 'Manba' : 'Источник'}</TableHead>
@@ -377,19 +377,19 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               <TableBody>
                 {costLayers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">
                       {tc('noData')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   costLayers.map((l, idx) => (
-                    <TableRow key={l.id} className="hover:bg-slate-50/50">
-                      <TableCell className="text-center text-xs text-slate-500">{idx + 1}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">{formatDateTime(l.received_at)}</TableCell>
-                      <TableCell className="text-sm text-slate-600">{translateSourceType(l.source_type, lang)}</TableCell>
+                    <TableRow key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                      <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
+                      <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(l.received_at)}</TableCell>
+                      <TableCell className="text-sm text-slate-600 dark:text-slate-300">{translateSourceType(l.source_type, lang)}</TableCell>
                       <TableCell className="text-right font-medium">{formatNumber(l.remaining_qty)} / {formatNumber(l.quantity)}</TableCell>
-                      <TableCell className="text-right text-slate-700">{formatCurrency(l.unit_cost)}</TableCell>
-                      <TableCell className="text-right font-bold text-slate-900">{formatCurrency(l.remaining_qty * l.unit_cost)}</TableCell>
+                      <TableCell className="text-right text-slate-700 dark:text-slate-300">{formatCurrency(l.unit_cost)}</TableCell>
+                      <TableCell className="text-right font-bold text-slate-900 dark:text-slate-100">{formatCurrency(l.remaining_qty * l.unit_cost)}</TableCell>
                     </TableRow>
                   ))
                 )}

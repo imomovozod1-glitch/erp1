@@ -82,7 +82,9 @@
     "importSuccess": "{count} rows imported successfully",
     "importNoValidRows": "No valid rows found. Check column names against the template",
     "importReadError": "Error reading the file",
-    "importFileEmpty": "File is empty"
+    "importFileEmpty": "File is empty",
+    "invalidEmail": "Invalid email address",
+    "invalidAmount": "Invalid amount"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -112,8 +114,9 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "confirmPassword": "Confirm Password",
+    "passwordMismatch": "Passwords don't match",
     "fullName": "Full Name",
-    "forgotPassword": "Forgot Password?",
+    "forgotPassword": "Forgot password?",
     "resetPassword": "Reset Password",
     "loginTitle": "Sign in to your account",
     "loginSubtitle": "Sign in to manage your ERP system",
@@ -126,7 +129,9 @@
     "passwordRequired": "Password is required",
     "invalidEmail": "Invalid email address",
     "invalidCredentials": "Invalid email or password",
-    "tooManyAttempts": "Too many attempts. Try again in 15 minutes."
+    "tooManyAttempts": "Too many attempts. Try again in 15 minutes.",
+    "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a digit",
+    "forgotPasswordHint": "To reset your password, contact your company administrator or support"
   },
   "tenantStatus": {
     "notFoundTitle": "Organization not found",
@@ -412,7 +417,8 @@
     "terminatedAt": "Termination Date",
     "department": "Department",
     "manager": "Manager",
-    "isActive": "Active (Employed)"
+    "isActive": "Active (Employed)",
+    "notes": "Notes"
   },
   "procurement": {
     "title": "Procurement",
@@ -505,6 +511,7 @@
   "settings": {
     "title": "Settings",
     "company": "Company",
+    "companyInfoDesc": "This information was entered by the administrator. Contact the administrator to make changes.",
     "users": "Users",
     "roles": "Roles",
     "companyName": "Company Name",
@@ -525,7 +532,19 @@
     "inventoryCostingDesc": "Choose the default costing method for all products (FIFO, LIFO, or AVECO). Individual products can override it.",
     "companySettingsTableMissing": "The 'company_settings' table was not found in your Supabase database. Run supabase/migration_inventory_costing.sql in your Supabase SQL Editor to create it.",
     "costingMethodSaved": "Costing method saved",
-    "costingMethodSaveFailed": "Failed to save costing method"
+    "costingMethodSaveFailed": "Failed to save costing method",
+    "securityDesc": "Set a new password for your account",
+    "profileDesc": "Update your personal information",
+    "companyCardDesc": "Company info, license and subscription",
+    "usersCardDesc": "Users, roles and permissions",
+    "profileCardDesc": "Your personal details",
+    "securityCardDesc": "Password and account security",
+    "resetUserPassword": "Reset password",
+    "resetUserPasswordDialogTitle": "New password for {name}",
+    "resetUserPasswordSuccess": "Password updated successfully",
+    "resetUserPasswordError": "Failed to update password",
+    "resetUserPasswordSelfHint": "You can change your own password in the Security tab",
+    "cancel": "Cancel"
   },
   "tools": {
     "title": "Tools",
@@ -601,7 +620,8 @@
       "signingIn": "Signing in...",
       "signIn": "Sign in",
       "invalidCredentials": "Invalid email or password",
-      "tooManyAttempts": "Too many attempts. Try again in 15 minutes."
+      "tooManyAttempts": "Too many attempts. Try again in 15 minutes.",
+      "forgotPassword": "Forgot password?"
     },
     "shell": {
       "tenants": "Tenants",
@@ -712,7 +732,7 @@
       "submit": "Reset",
       "success": "Password updated",
       "error": "Failed to update password",
-      "tooShort": "Password must be at least 6 characters"
+      "tooShort": "Password must be at least 8 characters, with an uppercase letter, a lowercase letter, and a digit"
     },
     "delete": {
       "button": "Delete tenant",
@@ -788,7 +808,7 @@
         "save": "Update",
         "success": "Password updated",
         "error": "Could not update password",
-        "tooShort": "Password must be at least 6 characters",
+        "tooShort": "Password must be at least 8 characters, with an uppercase letter, a lowercase letter, and a digit",
         "mismatch": "Passwords don't match"
       },
       "admins": {
@@ -805,8 +825,23 @@
         "confirmDelete": "Remove \"{name}\" from super admins?",
         "created": "Admin added",
         "deleted": "Admin removed",
-        "error": "Could not complete action"
+        "error": "Could not complete action",
+        "passwordTooWeak": "Password must be at least 8 characters, with an uppercase letter, a lowercase letter, and a digit"
       }
+    },
+    "accountRecovery": {
+      "forgotTitle": "Reset password",
+      "forgotSubtitle": "Enter your email — we'll send a reset link",
+      "sendLink": "Send reset link",
+      "sending": "Sending...",
+      "checkEmail": "If that address is registered, a reset link has been sent. Check your inbox.",
+      "backToLogin": "Back to login",
+      "newPasswordTitle": "Set a new password",
+      "newPasswordSubtitle": "Enter a new password for your account",
+      "updatePassword": "Update password",
+      "updateSuccess": "Password updated. You can now sign in.",
+      "invalidOrExpiredLink": "This link is invalid or has expired. Request a new one.",
+      "goToLogin": "Go to login"
     }
   },
   "pageInfo": {
@@ -819,7 +854,7 @@
     "units": "Measurement units — manage the list of units (piece, kg, liter, etc.) used for products.",
     "salesOrders": "Sales orders — a list of all sales made to customers. Create new orders, track status, and view details.",
     "invoices": "Invoices — billing documents issued to customers. Track payment status and overdue invoices.",
-    "customers": "Customers — a list of all your customers, contact info, and outstanding debt. Add new customers or edit existing ones.",
+    "customers": "Customers — a list of all your customers, contact info, and outstanding debt. Add new customers, edit existing ones, or switch to the \"Map\" tab to see their locations.",
     "customersMap": "Customers map — see the location of all your customers on one map.",
     "customerCategories": "Customer categories — group customers into segments to work with them more easily.",
     "purchaseOrders": "Purchase orders — a list of purchases from suppliers. Create new orders and track received quantities.",

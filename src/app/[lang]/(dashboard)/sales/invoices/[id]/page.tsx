@@ -28,11 +28,11 @@ import {
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-slate-100 text-slate-700 border-slate-200",
-  sent: "bg-blue-50 text-blue-700 border-blue-200/50",
-  paid: "bg-emerald-50 text-emerald-700 border-emerald-200/50",
-  overdue: "bg-amber-50 text-amber-700 border-amber-200/50",
-  cancelled: "bg-rose-50 text-rose-700 border-rose-200/50",
+  draft: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+  sent: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/50",
+  paid: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/50",
+  overdue: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/50",
+  cancelled: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200/50 dark:border-rose-900/50",
 };
 
 // Pure data fetch, no React state involved — kept outside the component so both
@@ -182,7 +182,7 @@ export default function InvoiceDetailPage() {
             onClick={() =>
               router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)
             }
-            className="w-full md:w-auto h-9 gap-2 text-xs text-violet-700 bg-violet-50 border-violet-100 hover:bg-violet-100"
+            className="w-full md:w-auto h-9 gap-2 text-xs text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 border-violet-100 dark:border-violet-900/50 hover:bg-violet-100 dark:hover:bg-violet-950/60"
           >
             <Pencil className="h-4 w-4" />
             {tCommon("edit")}
@@ -197,7 +197,7 @@ export default function InvoiceDetailPage() {
                   `/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`,
                 )
               }
-              className="w-full md:w-auto h-9 text-xs border-violet-200 text-violet-700 bg-violet-50/50 hover:bg-violet-100/70"
+              className="w-full md:w-auto h-9 text-xs border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-100/70 dark:hover:bg-violet-950/50"
             >
               {lang === "uz" ? "Kassa orqali to'lash" : "Оплатить через кассу"}
             </Button>
@@ -221,34 +221,34 @@ export default function InvoiceDetailPage() {
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left column - Info card */}
-        <Card className="md:col-span-1 border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden">
-          <CardHeader className="p-5 border-b border-slate-100 flex flex-row items-center gap-3 bg-slate-50/50">
-            <div className="p-2 bg-violet-50 text-violet-600 rounded-xl">
+        <Card className="md:col-span-1 border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
+          <CardHeader className="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+            <div className="p-2 bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 rounded-xl">
               <FileText className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-sm font-bold text-slate-800">
+              <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">
                 {lang === "uz" ? "Faktura ma'lumotlari" : "Информация о счете"}
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-5 space-y-4">
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5" />
                 {t("customer")}
               </span>
-              <p className="font-semibold text-slate-850">
+              <p className="font-semibold text-slate-850 dark:text-slate-200">
                 {invoice.customers?.name ?? "—"}
               </p>
             </div>
             {invoice.sales_orders?.order_number && (
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {lang === "uz" ? "Bog'langan buyurtma" : "Связанный заказ"}
                 </span>
                 <p
-                  className="font-semibold text-violet-650 hover:underline cursor-pointer"
+                  className="font-semibold text-violet-650 dark:text-violet-400 hover:underline cursor-pointer"
                   onClick={() =>
                     router.push(`/${lang}/sales/orders/${invoice.order_id}`)
                   }
@@ -258,62 +258,62 @@ export default function InvoiceDetailPage() {
               </div>
             )}
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 {lang === "uz" ? "Yaratilgan sana" : "Дата выставления"}
               </span>
-              <p className="font-semibold text-slate-850">
+              <p className="font-semibold text-slate-850 dark:text-slate-200">
                 {formatDateTime(invoice.created_at)}
               </p>
             </div>
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 {lang === "uz" ? "To'lov muddati" : "Срок оплаты"}
               </span>
-              <p className="font-semibold text-slate-850">
+              <p className="font-semibold text-slate-850 dark:text-slate-200">
                 {formatDate(invoice.due_at)}
               </p>
             </div>
             {invoice.paid_at && (
               <div className="space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {lang === "uz" ? "To'langan sana" : "Дата оплаты"}
                 </span>
-                <p className="font-semibold text-emerald-705">
+                <p className="font-semibold text-emerald-705 dark:text-emerald-400">
                   {formatDate(invoice.paid_at)}
                 </p>
               </div>
             )}
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 {tCommon("status")}
               </span>
               <div>
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[invoice.status] ?? "bg-slate-50 text-slate-600"}`}
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[invoice.status] ?? "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}
                 >
                   {t(`status.${invoice.status}`)}
                 </span>
               </div>
             </div>
-            <div className="border-t border-slate-100 pt-3 space-y-2">
-              <div className="flex justify-between text-xs text-slate-655">
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
+              <div className="flex justify-between text-xs text-slate-655 dark:text-slate-400">
                 <span>{lang === "uz" ? "Jami summa:" : "Итоговая сумма:"}</span>
-                <span className="font-bold text-slate-850">
+                <span className="font-bold text-slate-850 dark:text-slate-200">
                   {formatCurrency(invoice.total_amount)}
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-slate-655">
+              <div className="flex justify-between text-xs text-slate-655 dark:text-slate-400">
                 <span>
                   {lang === "uz" ? "To'langan summa:" : "Оплаченная сумма:"}
                 </span>
-                <span className="font-bold text-emerald-600">
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(invoice.paid_amount)}
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-slate-655 border-t pt-1">
+              <div className="flex justify-between text-xs text-slate-655 dark:text-slate-400 border-t dark:border-slate-800 pt-1">
                 <span>{lang === "uz" ? "Qoldiq:" : "Остаток:"}</span>
                 <span
-                  className={`font-black ${isUnpaid ? "text-rose-600" : "text-slate-850"}`}
+                  className={`font-black ${isUnpaid ? "text-rose-600 dark:text-rose-400" : "text-slate-850 dark:text-slate-200"}`}
                 >
                   {formatCurrency(
                     Number(invoice.total_amount) - Number(invoice.paid_amount),
@@ -325,15 +325,15 @@ export default function InvoiceDetailPage() {
         </Card>
 
         {/* Right column - Items list */}
-        <Card className="md:col-span-2 border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden">
-          <CardHeader className="p-5 border-b border-slate-100 bg-slate-50/50">
-            <CardTitle className="text-sm font-bold text-slate-800">
+        <Card className="md:col-span-2 border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
+          <CardHeader className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+            <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">
               {t("items")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {items.length === 0 ? (
-              <div className="p-12 text-center text-slate-500 text-sm">
+              <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-sm">
                 {lang === "uz"
                   ? "Ushbu fakturaga bog'liq mahsulotlar topilmadi"
                   : "Товары для этого счета не найдены"}
@@ -342,34 +342,34 @@ export default function InvoiceDetailPage() {
               <div className="overflow-x-auto w-full">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/30">
-                      <TableHead className="font-bold text-slate-400 h-10">
+                    <TableRow className="bg-slate-50/30 dark:bg-slate-800/30">
+                      <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10">
                         {t("productName")}
                       </TableHead>
-                      <TableHead className="font-bold text-slate-400 h-10 text-right">
+                      <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10 text-right">
                         {t("quantity")}
                       </TableHead>
-                      <TableHead className="font-bold text-slate-400 h-10 text-right">
+                      <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10 text-right">
                         {t("unitPrice")}
                       </TableHead>
-                      <TableHead className="font-bold text-slate-400 h-10 text-right">
+                      <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10 text-right">
                         {t("totalPrice")}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {items.map((item) => (
-                      <TableRow key={item.id} className="hover:bg-slate-50/40">
-                        <TableCell className="font-medium text-slate-800">
+                      <TableRow key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/40">
+                        <TableCell className="font-medium text-slate-800 dark:text-slate-200">
                           {item.products?.name ?? "—"}
                         </TableCell>
-                        <TableCell className="text-right text-slate-700">
+                        <TableCell className="text-right text-slate-700 dark:text-slate-300">
                           {item.quantity}
                         </TableCell>
-                        <TableCell className="text-right text-slate-700">
+                        <TableCell className="text-right text-slate-700 dark:text-slate-300">
                           {formatCurrency(item.unit_price)}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-slate-900">
+                        <TableCell className="text-right font-bold text-slate-900 dark:text-slate-100">
                           {formatCurrency(item.total_price)}
                         </TableCell>
                       </TableRow>

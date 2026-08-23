@@ -85,31 +85,31 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
-        <DialogHeader className="pb-3 border-b border-slate-100">
-          <DialogTitle className="font-bold text-slate-800 text-base flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-violet-600" />
+      <DialogContent className="sm:max-w-2xl bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
+        <DialogHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
+          <DialogTitle className="font-bold text-slate-800 dark:text-slate-200 text-base flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-violet-600 dark:text-violet-400" />
             {title}
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500 font-sans mt-1">
+          <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-1">
             {address}
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4 space-y-3">
-          <div className="relative rounded-xl overflow-hidden border border-slate-200/80 shadow-sm bg-slate-100">
+          <div className="relative rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700 shadow-sm bg-slate-100 dark:bg-slate-800">
             {(isResolving) && !notFound && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 z-10 space-y-2">
-                <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
-                <span className="text-xs font-semibold text-slate-600">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 dark:bg-slate-800/90 z-10 space-y-2">
+                <Loader2 className="h-8 w-8 animate-spin text-violet-600 dark:text-violet-400" />
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                   {lang === 'uz' ? 'Manzil aniqlanmoqda...' : lang === 'ru' ? 'Определение адреса...' : 'Locating address...'}
                 </span>
               </div>
             )}
             {notFound && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/95 z-10 space-y-2 text-center px-6">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/95 dark:bg-slate-800/95 z-10 space-y-2 text-center px-6">
                 <AlertCircle className="h-8 w-8 text-amber-500" />
-                <span className="text-xs font-semibold text-slate-600">
+                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                   {lang === 'uz' ? 'Manzil xaritada topilmadi' : lang === 'ru' ? 'Адрес не найден на карте' : 'Address could not be located on the map'}
                 </span>
               </div>
@@ -137,7 +137,7 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
             type="button"
             variant="outline"
             onClick={() => window.open(googleMapsUrl, '_blank')}
-            className="w-full h-10 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-1.5"
+            className="w-full h-10 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-1.5"
           >
             <ExternalLink className="h-4 w-4" />
             {lang === 'uz' ? 'Google Xaritada ochish' : lang === 'ru' ? 'Открыть в Google Картах' : 'Open in Google Maps'}

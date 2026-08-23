@@ -17,7 +17,9 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
-import { formatPhoneInput, isReservedSubdomain } from '@/lib/tenant-auth'
+import { isReservedSubdomain } from '@/lib/tenant-auth'
+import { newPasswordSchema } from '@/lib/password-validation'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { cn } from '@/lib/utils'
 
 export interface TenantFormInitialData {
@@ -126,6 +128,7 @@ function PresetPicker({
 export function TenantForm({ mode, initialData }: TenantFormProps) {
   const t = useTranslations('admin.form')
   const tPassword = useTranslations('admin.password')
+  const tAuth = useTranslations('auth')
   const tCosting = useTranslations('inventory')
   const lang = useLocale()
   const router = useRouter()
@@ -146,8 +149,8 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
           .regex(/^\+?\d[\d\s-]{7,}\d$/, t('phoneInvalid')),
         password:
           mode === 'create'
-            ? z.string().min(6, t('passwordRequired'))
-            : z.string().optional(),
+            ? newPasswordSchema(tAuth('passwordRequirements'))
+            : z.union([newPasswordSchema(tAuth('passwordRequirements')), z.literal('')]).optional(),
         costing_method: z.enum(['fifo', 'lifo', 'aveco']),
         license_count: z.number({ message: t('licenseCountRequired') }).int().min(1, t('licenseCountRequired')),
         license_months: z.number({ message: t('licenseMonthsRequired') }).int().min(1, t('licenseMonthsRequired')),
@@ -162,7 +165,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
         message: t('subscriptionEndBeforeStart'),
         path: ['subscription_ends_at'],
       }),
-    [t, mode]
+    [t, tAuth, mode]
   )
   type TenantFormData = z.infer<typeof tenantFormSchema>
 
@@ -192,6 +195,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
           license_months: 1,
           subscription_started_at: new Date().toISOString().slice(0, 10),
           subscription_ends_at: addMonths(new Date().toISOString().slice(0, 10), 1),
+          price_paid: 0,
         },
   })
 
@@ -268,11 +272,12 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
                   control={control}
                   name="phone"
                   render={({ field }) => (
-                    <Input
+                    <PhoneInput
                       id="phone"
                       placeholder={t('phonePlaceholder')}
                       value={field.value ?? ''}
-                      onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
+                      onChange={field.onChange}
+                      hasError={!!errors.phone}
                     />
                   )}
                 />
@@ -291,7 +296,11 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
                     hideLabel={tPassword('hide')}
                     {...register('password')}
                   />
-                  {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                  {errors.password ? (
+                    <p className="text-sm text-red-500">{errors.password.message}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
+                  )}
                 </div>
               )}
             </div>

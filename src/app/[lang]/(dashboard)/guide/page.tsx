@@ -12,7 +12,6 @@ import {
   ShoppingCart,
   FileText,
   Contact,
-  MapPin,
   Layers,
   Truck,
   Building2,
@@ -70,7 +69,6 @@ const SECTIONS: GuideSection[] = [
     titleKey: ['nav', 'customers'],
     items: [
       { icon: Contact, labelKey: ['nav', 'customers'], infoKey: 'customers', href: 'customers' },
-      { icon: MapPin, labelKey: ['sales', 'customersMap'], infoKey: 'customersMap', href: 'customers/map' },
       { icon: Layers, labelKey: ['sales', 'customerCategories'], infoKey: 'customerCategories', href: 'customers/categories' },
     ],
   },

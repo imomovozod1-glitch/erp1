@@ -66,18 +66,18 @@ export function AllCustomersMapInner({ customers, lang }: { customers: MappableC
     <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-0">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4">
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-slate-500 dark:text-slate-400">
             {t('customersMapCount', { shown: located.length, total: customers.length })}
           </span>
           {missingCount > 0 && (
-            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-full">
+            <span className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/50 px-2.5 py-1 rounded-full">
               {t('customersMapMissing', { count: missingCount })}
             </span>
           )}
         </div>
 
         {located.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-24 text-slate-400">
+          <div className="flex flex-col items-center justify-center gap-2 py-24 text-slate-400 dark:text-slate-500">
             <MapPin className="h-8 w-8 opacity-40" />
             <p className="text-sm">{t('customersMapEmpty')}</p>
           </div>

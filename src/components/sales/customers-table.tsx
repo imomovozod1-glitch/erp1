@@ -105,8 +105,8 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
           </div>
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
-              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead>{tCommon('name')}</TableHead>
               <TableHead>{tCommon('email')}</TableHead>
               <TableHead>{tCommon('phone')}</TableHead>
@@ -130,20 +130,20 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
               paginated.map((customer, index) => (
                 <TableRow 
                   key={customer.id} 
-                  className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                   onClick={() => router.push(`/${lang}/customers/${customer.id}`)}
                 >
-                  <TableCell className="text-center font-medium text-slate-500 text-xs">
+                  <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2.5">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-violet-100 text-violet-700 text-xs">
+                        <AvatarFallback className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 text-xs">
                           {customer.name[0]}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-slate-800">{customer.name}</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{customer.name}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{customer.email ?? '—'}</TableCell>

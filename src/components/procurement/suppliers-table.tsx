@@ -79,7 +79,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
           </div>
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50/50">
+              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableHead className="w-10 font-semibold text-center">#</TableHead>
                 <TableHead>{tCommon('name')}</TableHead>
                 <TableHead>{tCommon('email')}</TableHead>
@@ -106,13 +106,13 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                   <React.Fragment key={supplier.id}>
                     <TableRow 
                       key={supplier.id}
-                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                       onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}`)}
                     >
-                      <TableCell className="text-center font-medium text-slate-500 text-xs">
+                      <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </TableCell>
-                      <TableCell className="font-medium text-slate-800">
+                      <TableCell className="font-medium text-slate-800 dark:text-slate-200">
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/${lang}/procurement/suppliers/${supplier.id}`}
@@ -126,7 +126,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                       <TableCell className="text-muted-foreground">{supplier.phone ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{supplier.contact_person ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{supplier.tin ?? '—'}</TableCell>
-                      <TableCell className={`text-right font-semibold ${(Number(supplier.total_debt) || 0) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                      <TableCell className={`text-right font-semibold ${(Number(supplier.total_debt) || 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
                         {(Number(supplier.total_debt) || 0) > 0 ? formatCurrency(supplier.total_debt) : '—'}
                       </TableCell>
                       <TableCell>

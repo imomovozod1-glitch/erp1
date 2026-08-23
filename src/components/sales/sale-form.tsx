@@ -325,9 +325,9 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
                   className={`flex items-center justify-center gap-1.5 h-10 rounded-lg border text-xs font-semibold transition-all ${
                     isSelected
                       ? pm.key === 'debt'
-                        ? 'bg-amber-50 border-amber-300 text-amber-700'
-                        : 'bg-violet-50 border-violet-300 text-violet-700'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400'
+                        : 'bg-violet-50 dark:bg-violet-950/40 border-violet-300 dark:border-violet-800 text-violet-700 dark:text-violet-400'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
                   <pm.icon className="h-3.5 w-3.5" />
@@ -380,7 +380,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
                 type="text"
                 readOnly
                 value={selectedProductId ? formatCurrency(products.find(p => p.id === selectedProductId)?.price ?? 0) : '—'}
-                className="h-9 bg-slate-50"
+                className="h-9 bg-slate-50 dark:bg-slate-800"
               />
             </div>
             <Button
@@ -402,7 +402,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50">
+                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead>{t('productName')}</TableHead>
                   <TableHead className="text-right">{t('unitPrice')}</TableHead>
                   <TableHead className="text-right">{t('quantity')}</TableHead>
@@ -412,7 +412,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
               </TableHeader>
               <TableBody>
                 {items.map((item, idx) => (
-                  <TableRow key={idx} className="hover:bg-slate-50/50">
+                  <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                     <TableCell className="font-medium">{item.productName}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
@@ -430,7 +430,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow className="bg-slate-50 font-semibold">
+                <TableRow className="bg-slate-50 dark:bg-slate-800 font-semibold">
                   <TableCell colSpan={3} className="text-right">{tCommon('total')}:</TableCell>
                   <TableCell className="text-right text-lg">{formatCurrency(totalAmount)}</TableCell>
                   <TableCell />

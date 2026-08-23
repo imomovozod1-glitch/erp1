@@ -813,7 +813,7 @@ export function POSClient({
             </div>
 
             {/* Checkout Totals & Settings — compact "options" style footer, fixed, never scrolls or shrinks */}
-            <div className="shrink-0 p-3 border-t border-slate-100 bg-slate-50/10 space-y-2">
+            <div className="shrink-0 p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/10 dark:bg-slate-800/10 space-y-2">
               {/* Linked Customer Selection — select + add button on one row, no separate label line */}
               <div className="flex items-center gap-1.5">
                 <Select
@@ -827,14 +827,14 @@ export function POSClient({
                     }
                   }}
                 >
-                  <SelectTrigger className="flex-1 min-w-0 h-8 bg-slate-100/50 border-0 rounded-lg text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 shadow-2xs font-medium text-slate-700">
+                  <SelectTrigger className="flex-1 min-w-0 h-8 bg-slate-100/50 dark:bg-slate-800/50 border-0 rounded-lg text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 shadow-2xs font-medium text-slate-700 dark:text-slate-300">
                     <SelectValue placeholder={t('walkInCustomer')}>
                       {selectedCustomer
                         ? `${selectedCustomer.name}${selectedCustomer.phone ? ` (${selectedCustomer.phone})` : ''}`
                         : t('walkInCustomer')}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-slate-100 bg-white">
+                  <SelectContent className="rounded-xl border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-900">
                     <SelectItem value="walk-in" className="text-xs font-medium">{t('walkInCustomer')}</SelectItem>
                     {customers.map((c) => (
                       <SelectItem key={c.id} value={c.id} className="text-xs font-medium">
@@ -848,7 +848,7 @@ export function POSClient({
                   variant="outline"
                   onClick={() => setIsAddCustomerOpen(true)}
                   title={t('addCustomer')}
-                  className="h-8 w-8 p-0 shrink-0 border-slate-200 text-violet-600 hover:text-violet-700 hover:bg-violet-50/50 rounded-lg cursor-pointer transition-all"
+                  className="h-8 w-8 p-0 shrink-0 border-slate-200 dark:border-slate-700 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:bg-violet-50/50 dark:hover:bg-violet-950/30 rounded-lg cursor-pointer transition-all"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
                 </Button>
@@ -856,7 +856,7 @@ export function POSClient({
 
               {/* General Discount — inline label, no separate row */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide w-14 shrink-0">
+                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide w-14 shrink-0">
                   {t('generalDiscount')}
                 </span>
                 <Input
@@ -865,46 +865,46 @@ export function POSClient({
                   value={generalDiscountValue || ''}
                   onChange={(e) => setGeneralDiscountValue(Number(e.target.value))}
                   placeholder="0"
-                  className="h-8 flex-1 min-w-0 text-xs border-0 bg-slate-100/50 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500/10 focus-visible:border-violet-500 shadow-2xs text-slate-800"
+                  className="h-8 flex-1 min-w-0 text-xs border-0 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500/10 focus-visible:border-violet-500 shadow-2xs text-slate-800 dark:text-slate-200"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setGeneralDiscountType(generalDiscountType === 'flat' ? 'percent' : 'flat')}
-                  className="h-8 px-2.5 shrink-0 text-xs border-0 bg-slate-100 hover:bg-slate-200/80 text-slate-600 rounded-lg transition-all cursor-pointer font-bold shadow-2xs"
+                  className="h-8 px-2.5 shrink-0 text-xs border-0 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 rounded-lg transition-all cursor-pointer font-bold shadow-2xs"
                 >
                   {generalDiscountType === 'percent' ? '%' : 'so\'m'}
                 </Button>
               </div>
 
               {/* Totals Breakdown — receipt-style summary card */}
-              <div className="rounded-lg bg-slate-50/70 border border-slate-100 p-2.5 space-y-1">
-                <div className="flex justify-between text-xs text-slate-500">
+              <div className="rounded-lg bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 p-2.5 space-y-1">
+                <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                   <span>{t('subtotal')}</span>
-                  <span className="font-medium text-slate-600">{formatCurrency(subtotal)}</span>
+                  <span className="font-medium text-slate-600 dark:text-slate-300">{formatCurrency(subtotal)}</span>
                 </div>
                 {calculatedDiscount > 0 && (
-                  <div className="flex justify-between text-xs text-rose-600 font-medium">
+                  <div className="flex justify-between text-xs text-rose-600 dark:text-rose-400 font-medium">
                     <span>{t('discount')}</span>
                     <span>-{formatCurrency(calculatedDiscount)}</span>
                   </div>
                 )}
                 {taxActive && (
-                  <div className="flex justify-between text-xs text-slate-500">
+                  <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
                     <span>{t('tax')}</span>
-                    <span className="font-medium text-slate-600">{formatCurrency(calculatedTax)}</span>
+                    <span className="font-medium text-slate-600 dark:text-slate-300">{formatCurrency(calculatedTax)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center text-sm font-bold text-slate-800 pt-1 border-t border-dashed border-slate-200 mt-1">
+                <div className="flex justify-between items-center text-sm font-bold text-slate-800 dark:text-slate-200 pt-1 border-t border-dashed border-slate-200 dark:border-slate-700 mt-1">
                   <span>{t('total')}</span>
-                  <span className="text-violet-600 text-base font-extrabold">{formatCurrency(totalPayable)}</span>
+                  <span className="text-violet-600 dark:text-violet-400 text-base font-extrabold">{formatCurrency(totalPayable)}</span>
                 </div>
               </div>
 
               {/* Payment Method — minimal segmented control */}
               <div className="space-y-1">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{t('paymentMethod')}</span>
-                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100/70 rounded-lg">
+                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide">{t('paymentMethod')}</span>
+                <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100/70 dark:bg-slate-800/70 rounded-lg">
                   {[
                     { key: 'cash', label: t('cash'), icon: Wallet },
                     { key: 'card', label: t('card'), icon: CreditCard },
@@ -921,8 +921,8 @@ export function POSClient({
                         title={pm.label}
                         className={`flex flex-col items-center justify-center gap-0.5 h-9 rounded-md text-[9px] font-bold transition-all duration-150 cursor-pointer ${
                           isSelected
-                            ? 'bg-white text-violet-700 shadow-[0_1px_4px_rgba(15,23,42,0.08)]'
-                            : 'text-slate-500 hover:text-slate-700'
+                            ? 'bg-white dark:bg-slate-700 text-violet-700 dark:text-violet-400 shadow-[0_1px_4px_rgba(15,23,42,0.08)]'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                         }`}
                       >
                         <Icon className="h-3 w-3" />
@@ -959,9 +959,9 @@ export function POSClient({
 
       {/* QUICK ADD CUSTOMER DIALOG */}
       <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
-        <DialogContent className="max-w-md rounded-2xl bg-white border-0 shadow-xl p-6">
+        <DialogContent className="max-w-md rounded-2xl bg-white dark:bg-slate-900 border-0 shadow-xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-800">{t('quickAddCustomer')}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-slate-800 dark:text-slate-200">{t('quickAddCustomer')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAddCustomer} className="space-y-4 pt-2">
             <div className="space-y-1.5">
@@ -972,7 +972,7 @@ export function POSClient({
                 onChange={(e) => setNewCustomerName(e.target.value)}
                 placeholder="Sherzod Karimov"
                 required
-                className="border-slate-200 focus-visible:ring-violet-500 rounded-lg"
+                className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg"
               />
             </div>
             <div className="space-y-1.5">
@@ -982,14 +982,14 @@ export function POSClient({
                 value={newCustomerPhone}
                 onChange={(e) => setNewCustomerPhone(e.target.value)}
                 placeholder="+998 90 123 45 67"
-                className="border-slate-200 focus-visible:ring-violet-500 rounded-lg"
+                className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg"
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="custAddress" className="flex items-center gap-1.5">
                 {t('customerAddress')}
                 {typeof newCustomerLat === 'number' && typeof newCustomerLng === 'number' && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-full">
                     <MapPin className="h-2.5 w-2.5" />
                     {lang === 'uz' ? 'Xaritada belgilangan' : lang === 'ru' ? 'Отмечено на карте' : 'Pinned'}
                   </span>
@@ -1001,13 +1001,13 @@ export function POSClient({
                   value={newCustomerAddress}
                   onChange={(e) => setNewCustomerAddress(e.target.value)}
                   placeholder="Toshkent sh., Chilonzor t."
-                  className="border-slate-200 focus-visible:ring-violet-500 rounded-lg flex-1"
+                  className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg flex-1"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsCustomerMapOpen(true)}
-                  className="h-9 w-9 p-0 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-violet-600 rounded-lg shrink-0"
+                  className="h-9 w-9 p-0 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg shrink-0"
                   title={lang === 'uz' ? 'Xaritadan belgilash' : lang === 'ru' ? 'Отметить на карте' : 'Pick on map'}
                 >
                   <MapPin className="h-4 w-4" />
@@ -1019,7 +1019,7 @@ export function POSClient({
                 type="button"
                 variant="outline"
                 onClick={() => setIsAddCustomerOpen(false)}
-                className="border-slate-200 hover:bg-slate-50 rounded-lg"
+                className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg"
               >
                 {tCommon('cancel')}
               </Button>
@@ -1036,10 +1036,10 @@ export function POSClient({
 
       {isCustomerMapOpen && (
         <Dialog open={isCustomerMapOpen} onOpenChange={setIsCustomerMapOpen}>
-          <DialogContent className="max-w-2xl rounded-2xl bg-white border-0 shadow-xl p-6">
+          <DialogContent className="max-w-2xl rounded-2xl bg-white dark:bg-slate-900 border-0 shadow-xl p-6">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-violet-600" />
+              <DialogTitle className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                 {lang === 'uz' ? 'Manzilni xaritadan belgilang' : lang === 'ru' ? 'Отметьте адрес на карте' : 'Pick address on map'}
               </DialogTitle>
             </DialogHeader>
@@ -1075,9 +1075,9 @@ export function POSClient({
           if (!val) setCheckoutSuccessOrder(null)
         }}
       >
-        <DialogContent className="max-w-md rounded-2xl bg-slate-100 border-0 shadow-2xl p-6">
+        <DialogContent className="max-w-md rounded-2xl bg-slate-100 dark:bg-slate-800 border-0 shadow-2xl p-6">
           <DialogHeader className="no-print">
-            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-1">
               <CheckCircle2 className="h-5 w-5" />
               <DialogTitle className="text-lg font-bold">{t('orderSuccess')}</DialogTitle>
             </div>
@@ -1178,7 +1178,7 @@ export function POSClient({
             <Button
               variant="outline"
               onClick={() => setCheckoutSuccessOrder(null)}
-              className="border-slate-200 hover:bg-slate-50 rounded-xl flex-1 h-11"
+              className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex-1 h-11"
             >
               {tCommon('close')}
             </Button>

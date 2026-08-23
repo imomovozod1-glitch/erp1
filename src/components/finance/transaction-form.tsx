@@ -119,7 +119,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
   const typeValue = useWatch({ control, name: 'type' })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl bg-white p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="type">{t('finance.type')} *</Label>

@@ -289,10 +289,10 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-linear-to-br from-violet-50/50 to-purple-50/50">
+        <Card className="border shadow-sm bg-linear-to-br from-violet-50/50 to-purple-50/50 dark:from-violet-950/30 dark:to-purple-950/30">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-violet-600" />
+              <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
               {t('scanInvoice')}
             </CardTitle>
           </CardHeader>
@@ -311,17 +311,17 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={isScanning}
-              className="w-full h-20 border-dashed border-2 border-violet-200 hover:border-violet-400 hover:bg-violet-50/50 transition-all"
+              className="w-full h-20 border-dashed border-2 border-violet-200 dark:border-violet-800 hover:border-violet-400 dark:hover:border-violet-600 hover:bg-violet-50/50 dark:hover:bg-violet-950/40 transition-all"
             >
               {isScanning ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
-                  <span className="text-violet-700">{lang === 'uz' ? 'AI tahlil qilmoqda...' : lang === 'ru' ? 'ИИ анализирует...' : 'AI is analyzing...'}</span>
+                  <Loader2 className="h-5 w-5 animate-spin text-violet-600 dark:text-violet-400" />
+                  <span className="text-violet-700 dark:text-violet-400">{lang === 'uz' ? 'AI tahlil qilmoqda...' : lang === 'ru' ? 'ИИ анализирует...' : 'AI is analyzing...'}</span>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1">
-                  <Upload className="h-6 w-6 text-violet-500" />
-                  <span className="text-sm text-violet-700 font-medium">{lang === 'uz' ? 'Rasm yuklash' : lang === 'ru' ? 'Загрузить изображение' : 'Upload image'}</span>
+                  <Upload className="h-6 w-6 text-violet-500 dark:text-violet-400" />
+                  <span className="text-sm text-violet-700 dark:text-violet-400 font-medium">{lang === 'uz' ? 'Rasm yuklash' : lang === 'ru' ? 'Загрузить изображение' : 'Upload image'}</span>
                 </div>
               )}
             </Button>
@@ -384,7 +384,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50">
+                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead>{t('product')}</TableHead>
                   <TableHead className="text-right">{t('quantity')}</TableHead>
                   <TableHead className="text-right">{t('unitCost')}</TableHead>
@@ -394,7 +394,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               </TableHeader>
               <TableBody>
                 {items.map((item, idx) => (
-                  <TableRow key={idx} className="hover:bg-slate-50/50">
+                  <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                     <TableCell className="font-medium">
                       {item.productId ? (
                         item.productName
@@ -414,7 +414,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
                                 } : it))
                               }
                             }}
-                            className="flex h-9 w-full rounded-md border border-red-300 bg-white px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
+                            className="flex h-9 w-full rounded-md border border-red-300 dark:border-red-800 bg-white dark:bg-slate-900 px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
                           >
                             <option value="">{t('selectProduct')}...</option>
                             {products.map(p => (
@@ -440,7 +440,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow className="bg-slate-50 font-semibold">
+                <TableRow className="bg-slate-50 dark:bg-slate-800 font-semibold">
                   <TableCell colSpan={3} className="text-right">{tCommon('total')}:</TableCell>
                   <TableCell className="text-right text-lg">{formatCurrency(totalAmount)}</TableCell>
                   <TableCell />

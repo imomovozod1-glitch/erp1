@@ -52,9 +52,9 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
 
   const getMovementBadge = (type: string) => {
     switch (type) {
-      case 'in': return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">{t('stockIn')}</Badge>
-      case 'out': return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('stockOut')}</Badge>
-      default: return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">{t('adjustment')}</Badge>
+      case 'in': return <Badge className="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50">{t('stockIn')}</Badge>
+      case 'out': return <Badge className="bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50">{t('stockOut')}</Badge>
+      default: return <Badge className="bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/50">{t('adjustment')}</Badge>
     }
   }
 
@@ -78,8 +78,8 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
 
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
-              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead className="w-[180px]">{tCommon('date')}</TableHead>
               <TableHead>{t('productName')}</TableHead>
               <TableHead>{tCommon('type')}</TableHead>
@@ -101,15 +101,15 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
               </TableRow>
             ) : (
               paginated.map((movement, index) => (
-                <TableRow key={movement.id} className="hover:bg-slate-50/50 transition-colors">
-                  <TableCell className="text-center font-medium text-slate-500 text-xs">
+                <TableRow key={movement.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                  <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600">
+                  <TableCell className="text-sm text-slate-600 dark:text-slate-300">
                     {formatDateTime(movement.created_at)}
                   </TableCell>
                   <TableCell>
-                    <p className="font-medium text-slate-800">{movement.products?.name || '—'}</p>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">{movement.products?.name || '—'}</p>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -118,7 +118,7 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
                     </div>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    <span className={movement.type === 'in' ? 'text-emerald-600' : movement.type === 'out' ? 'text-red-600' : 'text-orange-600'}>
+                    <span className={movement.type === 'in' ? 'text-emerald-600 dark:text-emerald-400' : movement.type === 'out' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}>
                       {movement.type === 'in' ? '+' : movement.type === 'out' ? '-' : ''}{formatNumber(movement.quantity)}
                     </span>
                   </TableCell>

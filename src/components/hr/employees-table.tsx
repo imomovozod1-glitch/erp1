@@ -73,22 +73,22 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
               className="pl-9 h-9"
             />
           </div>
-          <div className="flex bg-slate-100 p-0.5 rounded-lg border shadow-inner">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border shadow-inner">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'all' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
             >
               {tCommon("all", { fallback: "Barchasi" })}
             </button>
             <button
               onClick={() => setStatusFilter('hired')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'hired' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'hired' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
             >
               {lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed'}
             </button>
             <button
               onClick={() => setStatusFilter('not_hired')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'not_hired' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'not_hired' ? 'bg-white dark:bg-slate-700 text-rose-700 dark:text-rose-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
             >
               {lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated'}
             </button>
@@ -99,7 +99,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
         </div>
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
               <TableHead>{tCommon('name')}</TableHead>
               <TableHead>{t('employeeCode')}</TableHead>
@@ -125,21 +125,21 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                 <React.Fragment key={emp.id}>
                   <TableRow 
                     key={emp.id}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                     onClick={() => router.push(`/${lang}/hr/employees/${emp.id}`)}
                   >
-                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                    <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-violet-100 text-violet-700 text-xs">
+                          <AvatarFallback className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 text-xs">
                             {emp.full_name?.[0] ?? 'E'}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold text-slate-800">
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">
                             <Link
                               href={`/${lang}/hr/employees/${emp.id}`}
                               className="text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 hover:underline transition-colors"
@@ -152,7 +152,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">{emp.employee_code}</code>
+                      <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">{emp.employee_code}</code>
                     </TableCell>
                     <TableCell className="text-sm">{emp.position || '—'}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(emp.salary)}</TableCell>

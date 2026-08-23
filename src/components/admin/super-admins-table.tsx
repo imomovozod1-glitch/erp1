@@ -12,6 +12,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDateTime, getInitials } from '@/lib/utils'
+import { isStrongPassword } from '@/lib/password-validation'
 
 export interface SuperAdminRow {
   id: string
@@ -29,6 +30,7 @@ export function SuperAdminsTable({
 }) {
   const t = useTranslations('admin.settings.admins')
   const tPassword = useTranslations('admin.password')
+  const tAuth = useTranslations('auth')
   const router = useRouter()
 
   const [showForm, setShowForm] = useState(false)
@@ -40,7 +42,11 @@ export function SuperAdminsTable({
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fullName.trim() || !email.trim() || password.length < 6) return
+    if (!fullName.trim() || !email.trim()) return
+    if (!isStrongPassword(password)) {
+      toast.error(t('passwordTooWeak'))
+      return
+    }
     setIsSubmitting(true)
     try {
       const res = await fetch('/api/admin/admins', {
@@ -114,9 +120,14 @@ export function SuperAdminsTable({
                 showLabel={tPassword('show')}
                 hideLabel={tPassword('hide')}
               />
+              <p className="text-xs text-slate-400 dark:text-slate-500">{tAuth('passwordRequirements')}</p>
             </div>
             <div className="sm:col-span-3 flex justify-end">
-              <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500 gap-2">
+              <Button
+                type="submit"
+                disabled={isSubmitting || !fullName.trim() || !email.trim() || !isStrongPassword(password)}
+                className="bg-violet-600 hover:bg-violet-500 gap-2 disabled:cursor-not-allowed"
+              >
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t('create')}
               </Button>

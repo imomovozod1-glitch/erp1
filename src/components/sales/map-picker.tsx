@@ -167,7 +167,7 @@ export function MapPicker({ onLocationSelect, initialAddress, initialLat, initia
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="pl-9 h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="pl-9 h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
           />
         </div>
         <Button
@@ -182,15 +182,15 @@ export function MapPicker({ onLocationSelect, initialAddress, initialLat, initia
           type="button"
           onClick={handleLocateMe}
           variant="outline"
-          className="h-10 px-3 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors flex items-center justify-center shadow-xs"
+          className="h-10 px-3 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center shadow-xs"
           title={t('locateMe')}
         >
-          <Navigation className="h-4 w-4 text-slate-600" />
+          <Navigation className="h-4 w-4 text-slate-600 dark:text-slate-400" />
         </Button>
       </form>
 
       {/* Map display */}
-      <div className="relative rounded-xl overflow-hidden border border-slate-200/80 shadow-sm bg-slate-100">
+      <div className="relative rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700 shadow-sm bg-slate-100 dark:bg-slate-800">
         <MapContainer
           center={[coords.lat, coords.lng]}
           zoom={hasInitialCoords ? 15 : 13}
@@ -214,22 +214,22 @@ export function MapPicker({ onLocationSelect, initialAddress, initialLat, initia
       </div>
 
       {/* Geolocation info display */}
-      <div className="p-3.5 bg-slate-50 border border-slate-150 rounded-xl space-y-2">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-          <MapPin className="h-3.5 w-3.5 text-violet-500" />
+      <div className="p-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700 rounded-xl space-y-2">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <MapPin className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400" />
           {t('selectedLocation')}
         </div>
         {isResolving ? (
-          <div className="flex items-center gap-2 py-1 text-slate-600 text-xs">
+          <div className="flex items-center gap-2 py-1 text-slate-600 dark:text-slate-300 text-xs">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
             <span>{t('resolvingAddress')}</span>
           </div>
         ) : (
           <div className="space-y-1">
-            <p className="text-slate-700 font-medium text-xs leading-relaxed line-clamp-2">
+            <p className="text-slate-700 dark:text-slate-300 font-medium text-xs leading-relaxed line-clamp-2">
               {resolvedAddress || t('noAddress')}
             </p>
-            <div className="flex items-center gap-3 text-[10px] font-mono text-slate-500">
+            <div className="flex items-center gap-3 text-[10px] font-mono text-slate-500 dark:text-slate-400">
               <span>LAT: {coords.lat.toFixed(6)}</span>
               <span>LNG: {coords.lng.toFixed(6)}</span>
             </div>

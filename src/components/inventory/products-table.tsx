@@ -364,22 +364,22 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 className="pl-9 h-9"
               />
             </div>
-            <div className="flex bg-slate-100 p-0.5 rounded-lg border shadow-inner">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border shadow-inner">
               <button
                 onClick={() => setStatusFilter('all')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'all' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 {t("common.all", { fallback: "Barchasi" })}
               </button>
               <button
                 onClick={() => setStatusFilter('active')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'active' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'active' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 {t("common.active", { fallback: "Faol" })}
               </button>
               <button
                 onClick={() => setStatusFilter('inactive')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'inactive' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'inactive' ? 'bg-white dark:bg-slate-700 text-rose-700 dark:text-rose-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 {t("common.inactive", { fallback: "Nofaol" })}
               </button>
@@ -391,7 +391,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 size="sm"
                 onClick={handleExportProducts}
                 disabled={products.length === 0}
-                className="h-9 gap-2 border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs rounded-lg"
+                className="h-9 gap-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium text-xs rounded-lg"
               >
                 <Download className="h-4 w-4" />
                 {t("common.export", { fallback: "Eksport" })}
@@ -410,24 +410,24 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-2 border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-100/70 hover:text-emerald-800 transition-colors font-medium text-xs rounded-lg animate-pulse"
+                      className="h-9 gap-2 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors font-medium text-xs rounded-lg animate-pulse"
                     />
                   }
                 >
-                  <Upload className="h-4 w-4 text-emerald-600" />
+                  <Upload className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   {t("inventory.importExcel")}
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white rounded-lg shadow-md border p-1">
+                <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-900 rounded-lg shadow-md border p-1">
                   <DropdownMenuItem
                     onClick={() => document.getElementById("excel-upload-input")?.click()}
-                    className="cursor-pointer flex items-center gap-2 text-slate-700 hover:bg-slate-50 focus:bg-slate-50 rounded"
+                    className="cursor-pointer flex items-center gap-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
                   >
                     <Upload className="h-4 w-4 text-slate-500" />
                     Faylni tanlash (Yuklash)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={downloadExcelTemplate}
-                    className="cursor-pointer flex items-center gap-2 text-emerald-700 hover:bg-emerald-50 focus:bg-emerald-50 focus:text-emerald-800 rounded font-medium"
+                    className="cursor-pointer flex items-center gap-2 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus:bg-emerald-50 dark:focus:bg-emerald-950/30 focus:text-emerald-800 dark:focus:text-emerald-300 rounded font-medium"
                   >
                     <Download className="h-4 w-4 text-emerald-600" />
                     Shablonni yuklab olish
@@ -441,9 +441,9 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                       onClick={() => setIsScanModalOpen(true)}
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-2 border-violet-200 text-violet-700 bg-violet-50/50 hover:bg-violet-100/70 hover:text-violet-800 transition-colors font-medium text-xs rounded-lg cursor-pointer"
+                      className="h-9 gap-2 border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-100/70 dark:hover:bg-violet-950/50 hover:text-violet-800 dark:hover:text-violet-300 transition-colors font-medium text-xs rounded-lg cursor-pointer"
                     >
-                      <Sparkles className="h-4 w-4 text-violet-600" />
+                      <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                       {t("inventory.importAI")}
                     </Button>
                   }
@@ -460,7 +460,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
 
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50/50">
+              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableHead className="w-10 font-semibold text-center">#</TableHead>
                 <TableHead className="font-semibold">
                   {t("inventory.productName")}
@@ -491,16 +491,16 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 paginated.map((product, index) => (
                   <TableRow
                     key={product.id}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                     onClick={() => router.push(`/${lang}/inventory/products/${product.id}`)}
                   >
-                    <TableCell className="text-center font-medium text-slate-500 text-xs">
+                    <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div>
-                          <p className="font-semibold text-slate-800">
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">
                             <Link
                               href={`/${lang}/inventory/products/${product.id}`}
                               className="text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 hover:underline transition-colors"
@@ -517,7 +517,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                      <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
                         {product.sku}
                       </code>
                     </TableCell>
@@ -525,18 +525,18 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                     <TableCell className="text-right font-medium">
                       {formatCurrency(product.cost_price)}
                     </TableCell>
-                    <TableCell className="text-right font-medium text-slate-600">
+                    <TableCell className="text-right font-medium text-slate-600 dark:text-slate-300">
                       {formatCurrency(product.incoming_cost || 0)}
                     </TableCell>
-                    <TableCell className="text-right font-bold text-violet-600">
+                    <TableCell className="text-right font-bold text-violet-600 dark:text-violet-400">
                       {formatCurrency(product.price)}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       <span
                         className={
                           product.stock <= product.min_stock
-                            ? "text-rose-600 font-bold"
-                            : "text-slate-700"
+                            ? "text-rose-600 dark:text-rose-400 font-bold"
+                            : "text-slate-700 dark:text-slate-300"
                         }
                       >
                         {formatNumber(product.stock)} {product.unit}

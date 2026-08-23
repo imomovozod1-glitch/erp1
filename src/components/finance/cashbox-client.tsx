@@ -974,14 +974,14 @@ export function CashboxClient({ lang }: { lang: string }) {
         ]}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg bg-slate-100 p-0.5 shadow-inner border">
+          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 shadow-inner border">
             {(['today', 'yesterday', 'week', 'month', 'all'] as const).map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
-                  period === p ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  period === p ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 {tDash(p)}
@@ -998,7 +998,7 @@ export function CashboxClient({ lang }: { lang: string }) {
       </PageHeader>
 
       {isLocalStorageFallback && (
-        <div className="flex gap-3 bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl text-sm animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="flex gap-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 p-4 rounded-2xl text-sm animate-in fade-in slide-in-from-top-1 duration-200">
           <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
           <div className="space-y-1">
             <p className="font-semibold">
@@ -1042,40 +1042,40 @@ export function CashboxClient({ lang }: { lang: string }) {
         </div>
 
         {/* Total Income Card */}
-        <div className="bg-gradient-to-br from-emerald-50 via-emerald-100/80 to-teal-50 text-emerald-955 rounded-3xl p-6 border border-emerald-250/50 shadow-md relative overflow-hidden group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+        <div className="bg-gradient-to-br from-emerald-50 dark:from-emerald-950/40 via-emerald-100/80 dark:via-emerald-950/30 to-teal-50 dark:to-teal-950/30 text-emerald-955 dark:text-emerald-300 rounded-3xl p-6 border border-emerald-250/50 dark:border-emerald-900/40 shadow-md relative overflow-hidden group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
           <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-emerald-500/5 blur-xl group-hover:scale-110 transition-transform duration-300" />
           <div className="flex justify-between items-start">
             <div className="space-y-2.5">
-              <span className="text-xs uppercase tracking-wider font-semibold text-emerald-700">{lang === 'uz' ? 'Jami Kirim' : lang === 'ru' ? 'Всего Приход' : 'Total Income'}</span>
-              <h3 className="text-2xl font-extrabold tracking-tight text-emerald-900">
+              <span className="text-xs uppercase tracking-wider font-semibold text-emerald-700 dark:text-emerald-400">{lang === 'uz' ? 'Jami Kirim' : lang === 'ru' ? 'Всего Приход' : 'Total Income'}</span>
+              <h3 className="text-2xl font-extrabold tracking-tight text-emerald-900 dark:text-emerald-300">
                 {formatCurrency(totalIncome)}
               </h3>
             </div>
-            <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-700 border border-emerald-500/10">
-              <ArrowUpRight className="h-6 w-6 text-emerald-600" />
+            <div className="p-3 bg-emerald-500/10 dark:bg-emerald-500/15 rounded-2xl text-emerald-700 dark:text-emerald-400 border border-emerald-500/10 dark:border-emerald-500/20">
+              <ArrowUpRight className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
-          <div className="mt-6 flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
+          <div className="mt-6 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
             <TrendingUp className="h-4 w-4" />
             <span>{lang === 'uz' ? 'Moliya oqimi' : lang === 'ru' ? 'Денежный приток' : 'Cash inflow'}</span>
           </div>
         </div>
 
         {/* Total Expense Card */}
-        <div className="bg-gradient-to-br from-rose-50 via-rose-100/80 to-orange-50 text-rose-955 rounded-3xl p-6 border border-rose-250/50 shadow-md relative overflow-hidden group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+        <div className="bg-gradient-to-br from-rose-50 dark:from-rose-950/40 via-rose-100/80 dark:via-rose-950/30 to-orange-50 dark:to-orange-950/30 text-rose-955 dark:text-rose-300 rounded-3xl p-6 border border-rose-250/50 dark:border-rose-900/40 shadow-md relative overflow-hidden group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
           <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-rose-500/5 blur-xl group-hover:scale-110 transition-transform duration-300" />
           <div className="flex justify-between items-start">
             <div className="space-y-2.5">
-              <span className="text-xs uppercase tracking-wider font-semibold text-rose-700">{lang === 'uz' ? 'Jami Chiqim' : lang === 'ru' ? 'Всего Расход' : 'Total Expense'}</span>
-              <h3 className="text-2xl font-extrabold tracking-tight text-rose-900">
+              <span className="text-xs uppercase tracking-wider font-semibold text-rose-700 dark:text-rose-400">{lang === 'uz' ? 'Jami Chiqim' : lang === 'ru' ? 'Всего Расход' : 'Total Expense'}</span>
+              <h3 className="text-2xl font-extrabold tracking-tight text-rose-900 dark:text-rose-300">
                 {formatCurrency(totalExpense)}
               </h3>
             </div>
-            <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-700 border border-rose-500/10">
-              <ArrowDownRight className="h-6 w-6 text-rose-600" />
+            <div className="p-3 bg-rose-500/10 dark:bg-rose-500/15 rounded-2xl text-rose-700 dark:text-rose-400 border border-rose-500/10 dark:border-rose-500/20">
+              <ArrowDownRight className="h-6 w-6 text-rose-600 dark:text-rose-400" />
             </div>
           </div>
-          <div className="mt-6 flex items-center gap-1.5 text-xs text-rose-600 font-semibold">
+          <div className="mt-6 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 font-semibold">
             <TrendingDown className="h-4 w-4" />
             <span>{lang === 'uz' ? 'Moliya chiqishi' : lang === 'ru' ? 'Денежный отток' : 'Cash outflow'}</span>
           </div>
@@ -1084,20 +1084,20 @@ export function CashboxClient({ lang }: { lang: string }) {
 
       {/* Balance by payment type */}
       {balanceByType.length > 0 && (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <CreditCard className="h-3.5 w-3.5 text-violet-500" />
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm p-5">
+          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <CreditCard className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400" />
             {t('balanceByType')}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {balanceByType.map((ct) => (
-              <div key={ct.key} className="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-100 bg-slate-50/60">
-                <div className="p-2 bg-white rounded-xl text-violet-600 border border-slate-100 shadow-xs shrink-0">
+              <div key={ct.key} className="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60">
+                <div className="p-2 bg-white dark:bg-slate-900 rounded-xl text-violet-600 dark:text-violet-400 border border-slate-100 dark:border-slate-700 shadow-xs shrink-0">
                   <ct.icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-slate-500 uppercase truncate">{ct.label}</p>
-                  <p className="text-sm font-extrabold text-slate-900 truncate">{formatCurrency(ct.total)}</p>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">{ct.label}</p>
+                  <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">{formatCurrency(ct.total)}</p>
                 </div>
               </div>
             ))}
@@ -1106,11 +1106,11 @@ export function CashboxClient({ lang }: { lang: string }) {
       )}
 
       {/* Actions and List Grid */}
-      <Card className="border border-slate-100 shadow-sm bg-white rounded-3xl overflow-hidden">
-        <CardHeader className="p-6 pb-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <Card className="border border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-3xl overflow-hidden">
+        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
-            <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Landmark className="h-5 w-5 text-violet-600" />
+            <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <Landmark className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               {t('cashboxes')}
             </CardTitle>
             <CardDescription className="text-xs">{lang === 'uz' ? "Moliya kassalari va ularning qoldiqlari ro'yxati" : "Список касс и их остатков"}</CardDescription>
@@ -1122,7 +1122,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                 placeholder={`${tCommon('search')}...`}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9 border-slate-200 rounded-xl text-xs"
+                className="pl-9 h-9 border-slate-200 dark:border-slate-700 rounded-xl text-xs"
               />
             </div>
             <Button onClick={handleOpenAddModal} className="bg-violet-600 hover:bg-violet-700 text-white gap-2 h-9 px-4 rounded-xl text-xs font-semibold shadow-sm shadow-violet-500/10 hover:shadow-violet-500/25">
@@ -1135,18 +1135,18 @@ export function CashboxClient({ lang }: { lang: string }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/70 border-b border-slate-100">
-                  <th className="p-4 pl-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('cashboxName')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tCommon('description')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">{t('balance')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tCommon('date')}</th>
-                  <th className="p-4 pr-6 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">{lang === 'uz' ? 'Amallar' : lang === 'ru' ? 'Действия' : 'Actions'}</th>
+                <tr className="bg-slate-50/70 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800">
+                  <th className="p-4 pl-6 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('cashboxName')}</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('description')}</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-right">{t('balance')}</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('date')}</th>
+                  <th className="p-4 pr-6 text-right text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{lang === 'uz' ? 'Amallar' : lang === 'ru' ? 'Действия' : 'Actions'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                 {isLoading && cashboxes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-12 text-slate-400 text-sm">
+                    <td colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
                       <div className="flex flex-col items-center gap-2">
                         <div className="h-6 w-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
                         <span>{tCommon('loading')}...</span>
@@ -1155,7 +1155,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                   </tr>
                 ) : filteredCashboxes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-12 text-slate-400">
+                    <td colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
                       <div className="flex flex-col items-center gap-2 py-4">
                         <Wallet className="h-10 w-10 opacity-30 text-slate-400" />
                         <p className="text-sm font-semibold">{tCommon('noData')}</p>
@@ -1167,60 +1167,60 @@ export function CashboxClient({ lang }: { lang: string }) {
                     const isMain = cb.name.toLowerCase().includes('asosiy') || cb.name.toLowerCase().includes('main')
                     const typeInfo = CASHBOX_TYPES.find((ct) => ct.key === (cb.type || 'cash'))
                     return (
-                      <tr key={cb.id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="p-4 pl-6 font-semibold text-slate-800">
+                      <tr key={cb.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
+                        <td className="p-4 pl-6 font-semibold text-slate-800 dark:text-slate-200">
                           <div className="flex items-center gap-2.5">
-                            <div className={`p-1.5 rounded-lg ${isMain ? 'bg-violet-50 text-violet-600' : 'bg-slate-105 text-slate-600'}`}>
+                            <div className={`p-1.5 rounded-lg ${isMain ? 'bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400' : 'bg-slate-105 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
                               <Landmark className="h-4 w-4" />
                             </div>
                             <div className="flex flex-col">
-                              <span className="group-hover:text-violet-600 transition-colors">{cb.name}</span>
+                              <span className="group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{cb.name}</span>
                               {typeInfo && (
-                                <span className="text-[10px] font-semibold text-slate-400 uppercase">{typeInfo.label}</span>
+                                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">{typeInfo.label}</span>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 text-xs text-slate-500 max-w-xs truncate">{cb.description || '—'}</td>
-                        <td className="p-4 font-bold text-right text-violet-600 text-base">{formatCurrency(cb.balance)}</td>
-                        <td className="p-4 text-xs text-slate-400">
+                        <td className="p-4 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">{cb.description || '—'}</td>
+                        <td className="p-4 font-bold text-right text-violet-600 dark:text-violet-400 text-base">{formatCurrency(cb.balance)}</td>
+                        <td className="p-4 text-xs text-slate-400 dark:text-slate-500">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5" />
                             <span>{formatDateTime(cb.created_at)}</span>
                           </div>
                         </td>
                         <td className="p-4 pr-6 flex justify-end items-center gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleOpenTransactionModal(cb, 'income')}
-                            className="h-8 border-emerald-100 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 font-semibold text-xs rounded-xl transition-all px-3 hover:-translate-y-0.5 shadow-sm"
+                            className="h-8 border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold text-xs rounded-xl transition-all px-3 hover:-translate-y-0.5 shadow-sm"
                           >
                             <Plus className="h-3 w-3 mr-1" />
                             {lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income'}
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleOpenTransactionModal(cb, 'expense')}
-                            className="h-8 border-rose-100 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 font-semibold text-xs rounded-xl transition-all px-3 hover:-translate-y-0.5 shadow-sm"
+                            className="h-8 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-800 dark:hover:text-rose-300 font-semibold text-xs rounded-xl transition-all px-3 hover:-translate-y-0.5 shadow-sm"
                           >
                             <Minus className="h-3 w-3 mr-1" />
                             {lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense'}
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleOpenEditModal(cb)}
-                            className="h-8 w-8 text-slate-400 hover:text-violet-600 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleDelete(cb.id)}
-                            className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -1236,11 +1236,11 @@ export function CashboxClient({ lang }: { lang: string }) {
       </Card>
 
       {/* Transaction History Card */}
-      <Card className="border border-slate-100 shadow-sm bg-white rounded-3xl overflow-hidden">
-        <CardHeader className="p-6 pb-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <Card className="border border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-3xl overflow-hidden">
+        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-1">
-            <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-violet-600" />
+            <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               {t('transactions')}
             </CardTitle>
             <CardDescription className="text-xs">
@@ -1257,7 +1257,7 @@ export function CashboxClient({ lang }: { lang: string }) {
               placeholder={`${tCommon('search')}...`}
               value={txSearch}
               onChange={(e) => setTxSearch(e.target.value)}
-              className="pl-9 h-9 border-slate-200 rounded-xl text-xs"
+              className="pl-9 h-9 border-slate-200 dark:border-slate-700 rounded-xl text-xs"
             />
           </div>
         </CardHeader>
@@ -1265,20 +1265,20 @@ export function CashboxClient({ lang }: { lang: string }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/70 border-b border-slate-100">
-                  <th className="p-4 pl-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tCommon('date')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('cashbox')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('type')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('category')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{tCommon('description')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">{tCommon('amount')}</th>
+                <tr className="bg-slate-50/70 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800">
+                  <th className="p-4 pl-6 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('date')}</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('cashbox')}</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('type')}</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('category')}</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('description')}</th>
+                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-right">{tCommon('amount')}</th>
                   <th className="p-4 pr-6 w-20"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                 {isLoading && transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-slate-400 text-sm">
+                    <td colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
                       <div className="flex flex-col items-center gap-2">
                         <div className="h-6 w-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
                         <span>{tCommon('loading')}...</span>
@@ -1287,7 +1287,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                   </tr>
                 ) : filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-slate-400">
+                    <td colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500">
                       <div className="flex flex-col items-center gap-2 py-4">
                         <TrendingUp className="h-10 w-10 opacity-30 text-slate-400" />
                         <p className="text-sm font-semibold">{tCommon('noData')}</p>
@@ -1299,23 +1299,23 @@ export function CashboxClient({ lang }: { lang: string }) {
                     const cbName = cashboxes.find(c => c.id === tx.reference_id)?.name || 'Kassa'
                     const isIncome = tx.type === 'income'
                     return (
-                      <tr 
-                        key={tx.id} 
-                        className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                      <tr
+                        key={tx.id}
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                         onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
                       >
-                        <td className="p-4 pl-6 text-xs text-slate-500">
+                        <td className="p-4 pl-6 text-xs text-slate-500 dark:text-slate-400">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5 text-slate-400" />
                             <span>{formatDateTime(tx.created_at)}</span>
                           </div>
                         </td>
-                        <td className="p-4 font-semibold text-slate-800">{cbName}</td>
+                        <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">{cbName}</td>
                         <td className="p-4">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
-                            isIncome 
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50' 
-                              : 'bg-rose-50 text-rose-700 border border-rose-200/50'
+                            isIncome
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/50'
+                              : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/50 dark:border-rose-900/50'
                           }`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${isIncome ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                             {isIncome
@@ -1324,13 +1324,13 @@ export function CashboxClient({ lang }: { lang: string }) {
                           </span>
                         </td>
                         <td className="p-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-slate-105 text-slate-750 font-semibold border border-slate-200/30">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-slate-105 dark:bg-slate-800 text-slate-750 dark:text-slate-300 font-semibold border border-slate-200/30 dark:border-slate-700">
                             {tx.category}
                           </span>
                         </td>
-                        <td className="p-4 text-xs text-slate-500 max-w-xs truncate">{tx.description || '—'}</td>
+                        <td className="p-4 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">{tx.description || '—'}</td>
                         <td className={`p-4 font-extrabold text-right text-base ${
-                          isIncome ? 'text-emerald-600' : 'text-rose-600'
+                          isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                         }`}>
                           {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
                         </td>
@@ -1357,9 +1357,9 @@ export function CashboxClient({ lang }: { lang: string }) {
       {/* Cashbox Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-100 shadow-2xl p-7 relative animate-in zoom-in-95 duration-300 space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-              <div className="p-2 bg-violet-50 text-violet-600 rounded-xl">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl p-7 relative animate-in zoom-in-95 duration-300 space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2 bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 rounded-xl">
                 <Landmark className="h-5 w-5" />
               </div>
               <div>
@@ -1371,21 +1371,21 @@ export function CashboxClient({ lang }: { lang: string }) {
             </div>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="cb_name" className="text-xs font-semibold text-slate-600">{t('cashboxName')} *</Label>
+                <Label htmlFor="cb_name" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t('cashboxName')} *</Label>
                 <Input
                   id="cb_name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={lang === 'uz' ? "Masalan: Asosiy G'azna" : "Например: Основная Касса"}
                   required
-                  className="rounded-xl border-slate-200 focus-visible:ring-violet-500"
+                  className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="cb_type" className="text-xs font-semibold text-slate-600">{t('cashboxType')} *</Label>
+                <Label htmlFor="cb_type" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t('cashboxType')} *</Label>
                 <Select value={cbType} onValueChange={(val: any) => setCbType(val || 'cash')}>
-                  <SelectTrigger className="w-full rounded-xl border-slate-200 focus:ring-violet-500">
+                  <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700 focus:ring-violet-500">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -1399,13 +1399,13 @@ export function CashboxClient({ lang }: { lang: string }) {
 
               {editingCashbox ? (
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-slate-600">
+                  <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                     {lang === 'uz' ? 'Joriy balans' : lang === 'ru' ? 'Текущий баланс' : 'Current balance'}
                   </Label>
-                  <div className="h-9 px-3 flex items-center rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-500">
+                  <div className="h-9 px-3 flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-500 dark:text-slate-400">
                     {formatCurrency(editingCashbox.balance)}
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-snug">
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-snug">
                     {lang === 'uz'
                       ? "Balansni o'zgartirish uchun \"Kirim\" yoki \"Chiqim\" tugmasidan foydalaning"
                       : lang === 'ru'
@@ -1415,30 +1415,30 @@ export function CashboxClient({ lang }: { lang: string }) {
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <Label htmlFor="cb_balance" className="text-xs font-semibold text-slate-600">{t('initialBalance')}</Label>
+                  <Label htmlFor="cb_balance" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t('initialBalance')}</Label>
                   <NumericInput
                     id="cb_balance"
                     value={balance}
                     onChange={(val) => setBalance(val.toString())}
                     placeholder="0"
-                    className="rounded-xl border-slate-200 focus-visible:ring-violet-500"
+                    className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
                   />
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="cb_desc" className="text-xs font-semibold text-slate-600">{tCommon('description')}</Label>
+                <Label htmlFor="cb_desc" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{tCommon('description')}</Label>
                 <Textarea
                   id="cb_desc"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={tCommon('description')}
                   rows={3}
-                  className="rounded-xl border-slate-200 focus-visible:ring-violet-500"
+                  className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <Button
                   type="button"
                   variant="outline"
@@ -1464,9 +1464,9 @@ export function CashboxClient({ lang }: { lang: string }) {
       {/* Kirim (Income) / Chiqim (Expense) Modal */}
       {isTransactionModalOpen && selectedCashboxForTx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-100 shadow-2xl p-7 relative animate-in zoom-in-95 duration-300 space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-              <div className={`p-2.5 rounded-xl ${txType === 'income' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl p-7 relative animate-in zoom-in-95 duration-300 space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className={`p-2.5 rounded-xl ${txType === 'income' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'}`}>
                 {txType === 'income' ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
               </div>
               <div>
@@ -1482,16 +1482,16 @@ export function CashboxClient({ lang }: { lang: string }) {
               </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100/50 flex items-center justify-between text-xs text-slate-600">
+            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100/50 dark:border-slate-700/50 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
               <span>{lang === 'uz' ? 'Joriy kassa qoldigʻi:' : lang === 'ru' ? 'Текущий остаток:' : 'Current balance:'}</span>
-              <span className="font-bold text-slate-900 text-sm">{formatCurrency(selectedCashboxForTx.balance)}</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{formatCurrency(selectedCashboxForTx.balance)}</span>
             </div>
 
             <form onSubmit={handleSaveTransaction} className="space-y-4">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="tx_category" className="text-xs font-semibold text-slate-600">{t('category')} *</Label>
-                  <Link href={`/${lang}/finance/categories`} className="text-[11px] font-semibold text-violet-600 hover:text-violet-700 hover:underline">
+                  <Label htmlFor="tx_category" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t('category')} *</Label>
+                  <Link href={`/${lang}/finance/categories`} className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline">
                     {t('txCategories')}
                   </Link>
                 </div>
@@ -1509,7 +1509,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                     setSelectedSupplierId('')
                   }
                 }}>
-                  <SelectTrigger className="w-full rounded-xl border-slate-200 focus:ring-violet-500">
+                  <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700 focus:ring-violet-500">
                     <SelectValue placeholder={t('selectType')}>
                       {selectedCategoryObj?.name}
                     </SelectValue>
@@ -1530,7 +1530,7 @@ export function CashboxClient({ lang }: { lang: string }) {
 
               {personType === 'customer' && (
                 <div className="space-y-2 animate-in fade-in duration-200">
-                  <Label htmlFor="tx_customer" className="text-xs font-semibold text-slate-600">{lang === 'uz' ? 'Mijoz' : lang === 'ru' ? 'Клиент' : 'Customer'} *</Label>
+                  <Label htmlFor="tx_customer" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{lang === 'uz' ? 'Mijoz' : lang === 'ru' ? 'Клиент' : 'Customer'} *</Label>
                   <Select
                     value={selectedCustomerId}
                     onValueChange={(val) => {
@@ -1538,7 +1538,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                       if (val && txType === 'income') fetchCustomerDebt(val, isLocalStorageFallback)
                     }}
                   >
-                    <SelectTrigger className="w-full rounded-xl border-slate-200">
+                    <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
                       <SelectValue placeholder={lang === 'uz' ? 'Mijozni tanlang' : 'Выберите клиента'}>
                         {selectedCustomerId
                           ? (customers.find(c => c.id === selectedCustomerId)?.name || '')
@@ -1555,7 +1555,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                   </Select>
 
                   {txType === 'income' && selectedCustomerId && (
-                    <div className="bg-rose-50 border border-rose-100 rounded-2xl p-3.5 mt-2 flex items-center justify-between text-xs text-rose-800 animate-in slide-in-from-top-1 duration-200">
+                    <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/50 rounded-2xl p-3.5 mt-2 flex items-center justify-between text-xs text-rose-800 dark:text-rose-300 animate-in slide-in-from-top-1 duration-200">
                       <span className="font-medium">{lang === 'uz' ? 'Umumiy qarzdorlik summasi:' : 'Общая сумма задолженности:'}</span>
                       <span className="font-extrabold text-sm">
                         {isLoadingDebt ? '...' : formatCurrency(customerDebt || 0)}
@@ -1567,14 +1567,14 @@ export function CashboxClient({ lang }: { lang: string }) {
 
               {personType === 'employee' && (
                 <div className="space-y-1.5 animate-in fade-in duration-200">
-                  <Label htmlFor="tx_employee" className="text-xs font-semibold text-slate-600">
+                  <Label htmlFor="tx_employee" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                     {lang === 'uz' ? 'Xodim' : lang === 'ru' ? 'Сотрудник' : 'Employee'} *
                   </Label>
                   <Select
                     value={selectedEmployeeId}
                     onValueChange={(val) => setSelectedEmployeeId(val || '')}
                   >
-                    <SelectTrigger className="w-full rounded-xl border-slate-200">
+                    <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
                       <SelectValue placeholder={lang === 'uz' ? 'Xodimni tanlang' : 'Выберите сотрудника'}>
                         {selectedEmployeeId
                           ? (employees.find(e => e.id === selectedEmployeeId)?.name || '')
@@ -1594,14 +1594,14 @@ export function CashboxClient({ lang }: { lang: string }) {
 
               {personType === 'supplier' && (
                 <div className="space-y-1.5 animate-in fade-in duration-200">
-                  <Label htmlFor="tx_supplier" className="text-xs font-semibold text-slate-600">
+                  <Label htmlFor="tx_supplier" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                     {lang === 'uz' ? 'Yetkazib beruvchi' : lang === 'ru' ? 'Поставщик' : 'Supplier'} *
                   </Label>
                   <Select
                     value={selectedSupplierId}
                     onValueChange={(val) => setSelectedSupplierId(val || '')}
                   >
-                    <SelectTrigger className="w-full rounded-xl border-slate-200">
+                    <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
                       <SelectValue placeholder={lang === 'uz' ? 'Yetkazib beruvchini tanlang' : lang === 'ru' ? 'Выберите поставщика' : 'Select a supplier'}>
                         {selectedSupplierId
                           ? (suppliers.find(s => s.id === selectedSupplierId)?.name || '')
@@ -1620,7 +1620,7 @@ export function CashboxClient({ lang }: { lang: string }) {
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="tx_amount" className="text-xs font-semibold text-slate-600">{tCommon('amount')} *</Label>
+                <Label htmlFor="tx_amount" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{tCommon('amount')} *</Label>
                 <NumericInput
                   id="tx_amount"
                   value={txAmount}
@@ -1628,12 +1628,12 @@ export function CashboxClient({ lang }: { lang: string }) {
                   placeholder="0.00"
                   required
                   autoFocus
-                  className="rounded-xl border-slate-200 text-lg font-extrabold focus-visible:ring-violet-500"
+                  className="rounded-xl border-slate-200 dark:border-slate-700 text-lg font-extrabold focus-visible:ring-violet-500"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="tx_date" className="text-xs font-semibold text-slate-600">{tCommon('date')} *</Label>
+                <Label htmlFor="tx_date" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{tCommon('date')} *</Label>
                 <div className="relative">
                   <Input
                     id="tx_date"
@@ -1641,24 +1641,24 @@ export function CashboxClient({ lang }: { lang: string }) {
                     value={txDate}
                     onChange={(e) => setTxDate(e.target.value)}
                     required
-                    className="rounded-xl border-slate-200"
+                    className="rounded-xl border-slate-200 dark:border-slate-700 dark:scheme-dark"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="tx_desc" className="text-xs font-semibold text-slate-600">{tCommon('description')}</Label>
+                <Label htmlFor="tx_desc" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{tCommon('description')}</Label>
                 <Textarea
                   id="tx_desc"
                   value={txDescription}
                   onChange={(e) => setTxDescription(e.target.value)}
                   placeholder={tCommon('description')}
                   rows={2}
-                  className="rounded-xl border-slate-200 focus-visible:ring-violet-500"
+                  className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <Button
                   type="button"
                   variant="outline"

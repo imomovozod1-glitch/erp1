@@ -73,7 +73,6 @@ const NAV_ITEMS: NavItem[] = [
     key: 'customers', icon: Contact, href: 'customers',
     subItems: [
       { key: 'list', href: 'customers' },
-      { key: 'map', href: 'customers/map' },
       { key: 'categories', href: 'customers/categories' },
     ]
   },
@@ -154,7 +153,6 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       },
       customers: {
         list: tSales('customers'),
-        map: tSales('customersMap'),
         categories: tSales('customerCategories'),
       },
       procurement: {

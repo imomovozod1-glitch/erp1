@@ -8,9 +8,10 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { newPasswordSchema } from '@/lib/password-validation'
 
 export function SecurityForm() {
   const t = useTranslations('settings')
@@ -20,10 +21,10 @@ export function SecurityForm() {
   const supabase = createClient()
 
   const securitySchema = z.object({
-    password: z.string().min(6, tCommon('required') || 'Must be at least 6 characters'),
-    confirmPassword: z.string().min(6, tCommon('required') || 'Must be at least 6 characters'),
+    password: newPasswordSchema(tAuth('passwordRequirements')),
+    confirmPassword: newPasswordSchema(tAuth('passwordRequirements')),
   }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: tAuth('passwordMismatch'),
     path: ['confirmPassword'],
   })
 
@@ -56,40 +57,46 @@ export function SecurityForm() {
   }
 
   return (
-    <Card className="max-w-2xl border-slate-200/60 shadow-sm">
+    <Card className="max-w-2xl border-slate-200/60 dark:border-slate-800 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-slate-800">{t('security')}</CardTitle>
-        <CardDescription>{t('security') || 'Update your security credentials'}</CardDescription>
+        <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200">{t('security')}</CardTitle>
+        <CardDescription>{t('securityDesc')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="password">{tAuth('password')} *</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
+              placeholder="••••••••"
+              showLabel={tAuth('showPassword')}
+              hideLabel={tAuth('hidePassword')}
               {...register('password')}
-              placeholder="••••••"
-              className="border-slate-200 focus-visible:ring-violet-500"
+              className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
             />
-            {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+            {errors.password ? (
+              <p className="text-sm text-red-500">{errors.password.message}</p>
+            ) : (
+              <p className="text-xs text-slate-400 dark:text-slate-500">{tAuth('passwordRequirements')}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">{tAuth('confirmPassword')} *</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
+              placeholder="••••••••"
+              showLabel={tAuth('showPassword')}
+              hideLabel={tAuth('hidePassword')}
               {...register('confirmPassword')}
-              placeholder="••••••"
-              className="border-slate-200 focus-visible:ring-violet-500"
+              className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
             />
             {errors.confirmPassword && (
               <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
             )}
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-slate-100">
+          <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button
               type="submit"
               disabled={isSubmitting}
