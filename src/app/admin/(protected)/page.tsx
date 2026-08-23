@@ -81,7 +81,7 @@ export default async function AdminDashboardPage() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title={tTenants('statTotal')} value={tenants.length} icon={Building2} iconClassName="bg-indigo-500" />
+        <StatsCard title={tTenants('statTotal')} value={tenants.length} icon={Building2} iconClassName="bg-violet-500" />
         <StatsCard title={tTenants('statActive')} value={active} icon={CheckCircle2} iconClassName="bg-emerald-500" />
         <StatsCard title={tTenants('statBlocked')} value={blocked} icon={Ban} iconClassName="bg-rose-500" />
         <StatsCard title={tTenants('statRevenue')} value={formatCurrency(revenue)} icon={Wallet} iconClassName="bg-amber-500" />
@@ -109,7 +109,7 @@ export default async function AdminDashboardPage() {
             </CardTitle>
             <Link
               href="/admin/tenants"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-800 dark:text-violet-400"
             >
               {t('viewAll')} <ArrowRight className="h-3 w-3" />
             </Link>
@@ -124,7 +124,7 @@ export default async function AdminDashboardPage() {
                   href={`/admin/tenants/${tenant.id}`}
                   className="flex items-center gap-3 rounded-lg px-2 py-2 -mx-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-xs font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-xs font-bold text-violet-600 dark:bg-violet-950/30 dark:text-violet-400">
                     {getInitials(tenant.company_name)}
                   </div>
                   <div className="min-w-0 flex-1">

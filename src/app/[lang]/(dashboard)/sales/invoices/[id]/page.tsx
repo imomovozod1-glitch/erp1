@@ -146,7 +146,7 @@ export default function InvoiceDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
       </div>
     );
   }
@@ -182,7 +182,7 @@ export default function InvoiceDetailPage() {
             onClick={() =>
               router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)
             }
-            className="w-full md:w-auto h-9 gap-2 text-xs text-indigo-700 bg-indigo-50 border-indigo-100 hover:bg-indigo-100"
+            className="w-full md:w-auto h-9 gap-2 text-xs text-violet-700 bg-violet-50 border-violet-100 hover:bg-violet-100"
           >
             <Pencil className="h-4 w-4" />
             {tCommon("edit")}
@@ -197,7 +197,7 @@ export default function InvoiceDetailPage() {
                   `/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`,
                 )
               }
-              className="w-full md:w-auto h-9 text-xs border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70"
+              className="w-full md:w-auto h-9 text-xs border-violet-200 text-violet-700 bg-violet-50/50 hover:bg-violet-100/70"
             >
               {lang === "uz" ? "Kassa orqali to'lash" : "Оплатить через кассу"}
             </Button>
@@ -223,7 +223,7 @@ export default function InvoiceDetailPage() {
         {/* Left column - Info card */}
         <Card className="md:col-span-1 border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden">
           <CardHeader className="p-5 border-b border-slate-100 flex flex-row items-center gap-3 bg-slate-50/50">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+            <div className="p-2 bg-violet-50 text-violet-600 rounded-xl">
               <FileText className="h-5 w-5" />
             </div>
             <div>
@@ -248,7 +248,7 @@ export default function InvoiceDetailPage() {
                   {lang === "uz" ? "Bog'langan buyurtma" : "Связанный заказ"}
                 </span>
                 <p
-                  className="font-semibold text-indigo-650 hover:underline cursor-pointer"
+                  className="font-semibold text-violet-650 hover:underline cursor-pointer"
                   onClick={() =>
                     router.push(`/${lang}/sales/orders/${invoice.order_id}`)
                   }

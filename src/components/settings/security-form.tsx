@@ -70,7 +70,7 @@ export function SecurityForm() {
               type="password"
               {...register('password')}
               placeholder="••••••"
-              className="border-slate-200 focus-visible:ring-indigo-500"
+              className="border-slate-200 focus-visible:ring-violet-500"
             />
             {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
           </div>
@@ -82,7 +82,7 @@ export function SecurityForm() {
               type="password"
               {...register('confirmPassword')}
               placeholder="••••••"
-              className="border-slate-200 focus-visible:ring-indigo-500"
+              className="border-slate-200 focus-visible:ring-violet-500"
             />
             {errors.confirmPassword && (
               <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
@@ -93,7 +93,7 @@ export function SecurityForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white transition-colors px-6 shadow-sm"
+              className="bg-violet-600 hover:bg-violet-700 text-white transition-colors px-6 shadow-sm"
             >
               {isSubmitting ? tCommon('loading') : tCommon('save')}
             </Button>

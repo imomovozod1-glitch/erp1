@@ -36,7 +36,7 @@ export default async function AdminSecurityPage() {
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title={t('statTotalToday')} value={totalToday} icon={Activity} iconClassName="bg-indigo-500" />
+        <StatsCard title={t('statTotalToday')} value={totalToday} icon={Activity} iconClassName="bg-violet-500" />
         <StatsCard title={t('statFailedToday')} value={failedToday} icon={ShieldX} iconClassName="bg-rose-500" />
         <StatsCard title={t('statLocked')} value={currentlyLocked} icon={Lock} iconClassName="bg-amber-500" />
         <StatsCard title={t('statTracked')} value={attempts.length} icon={ShieldAlert} iconClassName="bg-slate-500" />

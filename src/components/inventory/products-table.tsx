@@ -441,9 +441,9 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                       onClick={() => setIsScanModalOpen(true)}
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-2 border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70 hover:text-indigo-800 transition-colors font-medium text-xs rounded-lg cursor-pointer"
+                      className="h-9 gap-2 border-violet-200 text-violet-700 bg-violet-50/50 hover:bg-violet-100/70 hover:text-violet-800 transition-colors font-medium text-xs rounded-lg cursor-pointer"
                     >
-                      <Sparkles className="h-4 w-4 text-indigo-600" />
+                      <Sparkles className="h-4 w-4 text-violet-600" />
                       {t("inventory.importAI")}
                     </Button>
                   }
@@ -503,7 +503,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                           <p className="font-semibold text-slate-800">
                             <Link
                               href={`/${lang}/inventory/products/${product.id}`}
-                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-colors"
+                              className="text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 hover:underline transition-colors"
                             >
                               {product.name}
                             </Link>
@@ -528,7 +528,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                     <TableCell className="text-right font-medium text-slate-600">
                       {formatCurrency(product.incoming_cost || 0)}
                     </TableCell>
-                    <TableCell className="text-right font-bold text-indigo-600">
+                    <TableCell className="text-right font-bold text-violet-600">
                       {formatCurrency(product.price)}
                     </TableCell>
                     <TableCell className="text-right font-semibold">
@@ -602,7 +602,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
               >
                 {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
               </Button>
-              <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md">
+              <span className="text-xs font-semibold bg-violet-50 text-violet-700 px-2.5 py-1 rounded-md">
                 {currentPage} / {totalPages}
               </span>
               <Button

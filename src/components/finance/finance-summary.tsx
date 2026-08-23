@@ -39,17 +39,17 @@ export function FinanceSummary({ totalIncome, totalExpenses }: FinanceSummaryPro
           <p className="text-2xl font-bold text-red-700">{formatCurrency(totalExpenses)}</p>
         </CardContent>
       </Card>
-      <Card className={`border-0 shadow-sm bg-gradient-to-br ${isPositive ? 'from-indigo-50 to-white' : 'from-orange-50 to-white'}`}>
+      <Card className={`border-0 shadow-sm bg-gradient-to-br ${isPositive ? 'from-violet-50 to-white' : 'from-orange-50 to-white'}`}>
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className={`text-sm font-medium ${isPositive ? 'text-indigo-700' : 'text-orange-700'}`}>
+            <span className={`text-sm font-medium ${isPositive ? 'text-violet-700' : 'text-orange-700'}`}>
               {t('balance')}
             </span>
-            <div className={`p-1.5 rounded-lg ${isPositive ? 'bg-indigo-100' : 'bg-orange-100'}`}>
-              <Minus className={`h-4 w-4 ${isPositive ? 'text-indigo-600' : 'text-orange-600'}`} />
+            <div className={`p-1.5 rounded-lg ${isPositive ? 'bg-violet-100' : 'bg-orange-100'}`}>
+              <Minus className={`h-4 w-4 ${isPositive ? 'text-violet-600' : 'text-orange-600'}`} />
             </div>
           </div>
-          <p className={`text-2xl font-bold ${isPositive ? 'text-indigo-700' : 'text-orange-700'}`}>
+          <p className={`text-2xl font-bold ${isPositive ? 'text-violet-700' : 'text-orange-700'}`}>
             {formatCurrency(balance)}
           </p>
         </CardContent>

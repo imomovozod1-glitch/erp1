@@ -91,7 +91,7 @@ function PresetPicker({
             className={cn(
               'px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
               !customOpen && value === n
-                ? 'bg-indigo-600 border-indigo-600 text-white'
+                ? 'bg-violet-600 border-violet-600 text-white'
                 : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
             )}
           >
@@ -105,7 +105,7 @@ function PresetPicker({
           className={cn(
             'flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
             customOpen
-              ? 'bg-indigo-600 border-indigo-600 text-white'
+              ? 'bg-violet-600 border-violet-600 text-white'
               : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
           )}
         >
@@ -434,7 +434,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-500">
+            <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500">
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {mode === 'create' ? t('create') : t('save')}
             </Button>

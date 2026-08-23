@@ -13,8 +13,9 @@ export const metadata: Metadata = { title: 'Orders' }
 export default async function OrdersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, orders] = await Promise.all([
+  const [t, tInfo, orders] = await Promise.all([
     getTranslations('sales'),
+    getTranslations('pageInfo'),
     getCachedOrders(tenantId),
   ])
 
@@ -23,6 +24,7 @@ export default async function OrdersPage({ params }: { params: Promise<{ lang: s
       <PageHeader
         title={t('orders')}
         subtitle={t('title')}
+        info={tInfo('salesOrders')}
         action={{ label: t('addSale'), href: `/${lang}/sales/orders/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },

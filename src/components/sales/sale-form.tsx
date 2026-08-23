@@ -326,7 +326,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
                     isSelected
                       ? pm.key === 'debt'
                         ? 'bg-amber-50 border-amber-300 text-amber-700'
-                        : 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                        : 'bg-violet-50 border-violet-300 text-violet-700'
                       : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -387,7 +387,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
               type="button"
               onClick={addItem}
               size="sm"
-              className="h-9 bg-indigo-600 hover:bg-indigo-500"
+              className="h-9 bg-violet-600 hover:bg-violet-500"
               disabled={!selectedProductId}
             >
               <Plus className="h-4 w-4 mr-1" /> {t('addItem')}
@@ -461,7 +461,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
         <Button
           type="submit"
           disabled={isSubmitting || items.length === 0 || (paymentMethod === 'debt' && !customerId)}
-          className="bg-indigo-600 hover:bg-indigo-500"
+          className="bg-violet-600 hover:bg-violet-500"
         >
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>

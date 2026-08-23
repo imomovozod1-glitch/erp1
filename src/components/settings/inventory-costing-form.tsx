@@ -71,7 +71,7 @@ export function InventoryCostingForm() {
     <Card className="border-0 shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Layers className="h-4 w-4 text-indigo-600" />
+          <Layers className="h-4 w-4 text-violet-600" />
           {t('inventoryCosting')}
         </CardTitle>
         <CardDescription>{t('inventoryCostingDesc')}</CardDescription>

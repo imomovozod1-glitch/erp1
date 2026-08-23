@@ -116,7 +116,7 @@ export function SuperAdminsTable({
               />
             </div>
             <div className="sm:col-span-3 flex justify-end">
-              <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-500 gap-2">
+              <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500 gap-2">
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t('create')}
               </Button>
@@ -138,12 +138,12 @@ export function SuperAdminsTable({
               <TableRow key={admin.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-xs font-bold text-violet-600 dark:bg-violet-950/30 dark:text-violet-400">
                       {getInitials(admin.full_name)}
                     </div>
                     {admin.full_name}
                     {admin.id === currentAdminId && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:text-indigo-400 px-1.5 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-violet-600 bg-violet-50 dark:bg-violet-950/30 dark:text-violet-400 px-1.5 py-0.5 rounded-full">
                         <ShieldCheck className="h-2.5 w-2.5" /> {t('you')}
                       </span>
                     )}

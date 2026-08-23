@@ -23,12 +23,16 @@ export default async function UnitsPage({
     redirect(`/${lang}/login`)
   }
 
-  const t = await getTranslations('inventory')
+  const [t, tInfo] = await Promise.all([
+    getTranslations('inventory'),
+    getTranslations('pageInfo'),
+  ])
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={t('unit')}
+        info={tInfo('units')}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/inventory/products` },

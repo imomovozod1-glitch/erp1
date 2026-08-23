@@ -12,8 +12,9 @@ export const metadata: Metadata = { title: 'Employees' }
 export default async function EmployeesPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, employees] = await Promise.all([
+  const [t, tInfo, employees] = await Promise.all([
     getTranslations('hr'),
+    getTranslations('pageInfo'),
     getCachedEmployees(tenantId),
   ])
 
@@ -22,6 +23,7 @@ export default async function EmployeesPage({ params }: { params: Promise<{ lang
       <PageHeader
         title={t('employees')}
         subtitle={t('title')}
+        info={tInfo('employees')}
         action={{ label: t('addEmployee'), href: `/${lang}/hr/employees/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },

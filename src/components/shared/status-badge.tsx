@@ -7,7 +7,7 @@ const TONE_STYLES: Record<StatusTone, string> = {
   rose: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50',
   amber: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50',
   blue: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50',
-  indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/50',
+  indigo: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900/50',
   slate: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700',
 }
 
@@ -16,7 +16,7 @@ const DOT_STYLES: Record<StatusTone, string> = {
   rose: 'bg-rose-500',
   amber: 'bg-amber-500',
   blue: 'bg-blue-500',
-  indigo: 'bg-indigo-500',
+  indigo: 'bg-violet-500',
   slate: 'bg-slate-400',
 }
 

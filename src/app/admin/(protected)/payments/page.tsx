@@ -46,7 +46,7 @@ export default async function AdminPaymentsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard title={t('statTotal')} value={formatCurrency(totalRevenue)} icon={Wallet} iconClassName="bg-emerald-500" />
-        <StatsCard title={t('statThisMonth')} value={formatCurrency(monthRevenue)} icon={TrendingUp} iconClassName="bg-indigo-500" />
+        <StatsCard title={t('statThisMonth')} value={formatCurrency(monthRevenue)} icon={TrendingUp} iconClassName="bg-violet-500" />
         <StatsCard title={t('statCount')} value={payments.length} icon={Receipt} iconClassName="bg-amber-500" />
         <StatsCard title={t('statTenants')} value={uniqueTenants} icon={Building2} iconClassName="bg-blue-500" />
       </div>

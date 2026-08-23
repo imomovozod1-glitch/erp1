@@ -109,7 +109,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
       {/* Top Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl border shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/50 rounded-xl text-indigo-600 dark:text-indigo-400">
+          <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
             <Package className="h-7 w-7" />
           </div>
           <div>
@@ -122,7 +122,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           <Badge className={product.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-700"}>
             {product.is_active ? tc('active') : tc('inactive')}
           </Badge>
-          <Button onClick={handleExport} size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-medium">
+          <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
             {tc('export') || 'Eksport'}
           </Button>
@@ -137,7 +137,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">{formatCurrency(product.cost_price)}</h3>
             <span className="text-xs text-slate-400 mt-2">{t('incomingCost', { fallback: 'Kirim narxi' })}: {formatCurrency(product.incoming_cost || product.cost_price)}</span>
             {effectiveCostingMethod && nextSaleCost != null && (
-              <span className="text-xs text-indigo-600 font-semibold mt-1 flex items-center gap-1">
+              <span className="text-xs text-violet-600 font-semibold mt-1 flex items-center gap-1">
                 <Layers className="h-3 w-3" />
                 {t(effectiveCostingMethod)} · {t('nextSaleCost')}: {formatCurrency(nextSaleCost)}
               </span>
@@ -183,7 +183,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           <button
             onClick={() => setActiveTab('movements')}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'movements' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+              activeTab === 'movements' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <RefreshCw className="h-4 w-4" />
@@ -192,7 +192,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           <button
             onClick={() => setActiveTab('sales')}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'sales' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+              activeTab === 'sales' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <ShoppingCart className="h-4 w-4" />
@@ -201,7 +201,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           <button
             onClick={() => setActiveTab('purchases')}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'purchases' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+              activeTab === 'purchases' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Truck className="h-4 w-4" />
@@ -210,7 +210,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
           <button
             onClick={() => setActiveTab('costLayers')}
             className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'costLayers' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+              activeTab === 'costLayers' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Layers className="h-4 w-4" />
@@ -266,7 +266,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                             {m.source.supplierOrCustomer && <span className="text-slate-400">· {m.source.supplierOrCustomer}</span>}
                           </span>
                         ) : m.source?.type === 'sales_orders' ? (
-                          <span className="inline-flex items-center gap-1.5 text-indigo-700">
+                          <span className="inline-flex items-center gap-1.5 text-violet-700">
                             <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
                             <span className="font-medium">{m.source.label}</span>
                             {m.source.supplierOrCustomer && <span className="text-slate-400">· {m.source.supplierOrCustomer}</span>}

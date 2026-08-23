@@ -38,7 +38,7 @@ export function PageClock({ lang }: PageClockProps) {
 
   return (
     <div className="flex items-center gap-1.5 h-8 pl-1.5 pr-2.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xs shrink-0">
-      <span className="flex items-center justify-center h-5 w-5 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400">
+      <span className="flex items-center justify-center h-5 w-5 rounded-full bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400">
         <Clock className="h-3 w-3" />
       </span>
       <span className="text-xs font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">

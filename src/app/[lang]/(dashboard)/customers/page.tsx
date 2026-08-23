@@ -14,9 +14,10 @@ export const metadata: Metadata = { title: 'Customers' }
 export default async function CustomersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, tNav, customers] = await Promise.all([
+  const [t, tNav, tInfo, customers] = await Promise.all([
     getTranslations('sales'),
     getTranslations('nav'),
+    getTranslations('pageInfo'),
     getCachedCustomers(tenantId),
   ])
 
@@ -30,6 +31,7 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
     <div>
       <PageHeader
         title={t('customers')}
+        info={tInfo('customers')}
         action={{ label: t('addCustomer'), href: `/${lang}/customers/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },

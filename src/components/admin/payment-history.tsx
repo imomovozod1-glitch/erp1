@@ -65,7 +65,7 @@ export function PaymentHistory({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-        <Wallet className="h-4 w-4 text-indigo-600" />
+        <Wallet className="h-4 w-4 text-violet-600" />
         {t('totalPaid')}: <span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(totalPaid)}</span>
       </div>
 
@@ -84,7 +84,7 @@ export function PaymentHistory({
           <Label htmlFor="payment-note">{t('note')}</Label>
           <Input id="payment-note" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
-        <Button onClick={handleAdd} disabled={isSubmitting || !amount} className="gap-2 bg-indigo-600 hover:bg-indigo-500">
+        <Button onClick={handleAdd} disabled={isSubmitting || !amount} className="gap-2 bg-violet-600 hover:bg-violet-500">
           {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           {t('addPayment')}
         </Button>

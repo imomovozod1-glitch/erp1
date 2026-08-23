@@ -29,8 +29,8 @@ export function StatsCard({
     <Card className={cn('relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow duration-200', className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className={cn('p-2 rounded-lg', iconClassName ?? 'bg-indigo-50')}>
-          <Icon className={cn('h-4 w-4', iconClassName ? 'text-white' : 'text-indigo-600')} />
+        <div className={cn('p-2 rounded-lg', iconClassName ?? 'bg-violet-50')}>
+          <Icon className={cn('h-4 w-4', iconClassName ? 'text-white' : 'text-violet-600')} />
         </div>
       </CardHeader>
       <CardContent>

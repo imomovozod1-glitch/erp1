@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database.types'
 
@@ -230,7 +231,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
   return (
     <header
-      className={`flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4 fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
+      className={`flex h-16 shrink-0 items-center gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-4 fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
         isSidebarMobile ? 'left-0' : sidebarState === 'expanded' ? 'left-0 md:left-(--sidebar-width)' : 'left-0 md:left-(--sidebar-width-icon)'
       }`}
     >
@@ -275,15 +276,22 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
               <DropdownMenuItem
                 key={locale.code}
                 onClick={() => handleLocaleChange(locale.code)}
-                className={`rounded-lg gap-2 py-2 cursor-pointer ${isActive ? 'bg-indigo-50 text-indigo-700 font-semibold' : ''}`}
+                className={`rounded-lg gap-2 py-2 cursor-pointer ${isActive ? 'bg-violet-50 text-violet-700 font-semibold' : ''}`}
               >
                 <span className="flex-1 text-sm">{locale.label}</span>
-                {isActive && <Check className="h-3.5 w-3.5 text-indigo-600" />}
+                {isActive && <Check className="h-3.5 w-3.5 text-violet-600" />}
               </DropdownMenuItem>
             )
           })}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ThemeToggle
+        labels={{
+          light: lang === 'uz' ? "Yorug' rejim" : lang === 'ru' ? 'Светлая тема' : 'Light mode',
+          dark: lang === 'uz' ? "Qorong'i rejim" : lang === 'ru' ? 'Тёмная тема' : 'Dark mode',
+        }}
+      />
 
       {/* Notifications */}
       <DropdownMenu open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
@@ -303,7 +311,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             <span className="font-semibold text-slate-800 text-sm">
               {lang === 'uz' ? 'Bildirishnomalar' : lang === 'ru' ? 'Уведомления' : 'Notifications'}
               {unreadCount > 0 && (
-                <span className="ml-2 px-1.5 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                <span className="ml-2 px-1.5 py-0.5 text-xs font-medium rounded-full bg-violet-50 text-violet-600 border border-violet-100">
                   {unreadCount}
                 </span>
               )}
@@ -311,7 +319,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1 hover:underline cursor-pointer"
+                className="text-xs font-semibold text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 hover:underline cursor-pointer"
               >
                 <Check className="h-3 w-3" />
                 {lang === 'uz' ? 'Hammasini o\'qilgan qilish' : lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
@@ -341,7 +349,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
                       router.push(n.href)
                     }}
                     className={`flex items-start gap-3 p-4 cursor-pointer transition-colors ${
-                      isUnread ? 'bg-indigo-50/20 hover:bg-indigo-50/40' : 'bg-white hover:bg-slate-50/80'
+                      isUnread ? 'bg-violet-50/20 hover:bg-violet-50/40' : 'bg-white hover:bg-slate-50/80'
                     }`}
                   >
                     <div className={`p-2 rounded-xl mt-0.5 ${
@@ -367,7 +375,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
                       </p>
                     </div>
                     {isUnread && (
-                      <div className="h-2 w-2 rounded-full bg-indigo-600 mt-2 self-start shrink-0" />
+                      <div className="h-2 w-2 rounded-full bg-violet-600 mt-2 self-start shrink-0" />
                     )}
                   </div>
                 )
@@ -381,7 +389,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" className="gap-2 pl-2" />}>
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-semibold">
+              <AvatarFallback className="bg-violet-100 text-violet-700 text-xs font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>

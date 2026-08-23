@@ -20,6 +20,7 @@ import { subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { SoldProductsTable } from './sold-products-table'
 import { RecentOrders } from '@/components/dashboard/recent-orders'
 import { LowStockAlert } from '@/components/dashboard/low-stock-alert'
+import { useTheme } from '@/components/providers/theme-provider'
 
 interface AnalyticsClientProps {
   lang: string
@@ -46,10 +47,10 @@ const KPICard = ({ title, value, subtitle, icon: Icon, color }: any) => (
           <Icon className="w-6 h-6" />
         </div>
         <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-900 mt-1">{value}</h3>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{value}</h3>
           {subtitle && (
-            <p className="text-xs text-slate-400 mt-1">{subtitle}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{subtitle}</p>
           )}
         </div>
       </div>
@@ -68,6 +69,8 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
   const t = useTranslations('analytics')
   const tc = useTranslations('common')
   const td = useTranslations('dashboard')
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
   const [period, setPeriod] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -478,20 +481,20 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
   return (
     <div className="space-y-6">
       {/* Period Selection Bar */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white p-4 rounded-2xl border shadow-sm">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border shadow-sm">
         <div>
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-indigo-650" />
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-violet-650 dark:text-violet-400" />
             {tc('filter')}
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
             {t('subtitle')}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
           {/* Quick presets inline - scrollable horizontally on mobile */}
-          <div className="flex items-center gap-1 bg-slate-50/75 p-1 rounded-xl border border-slate-100/80 overflow-x-auto scrollbar-none w-full sm:w-auto">
+          <div className="flex items-center gap-1 bg-slate-50/75 dark:bg-slate-800/75 p-1 rounded-xl border border-slate-100/80 dark:border-slate-700/80 overflow-x-auto scrollbar-none w-full sm:w-auto">
             {PRESETS.filter((p) => p.value !== 'custom').map((p) => {
               const active = period === p.value
               return (
@@ -500,8 +503,8 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                   onClick={() => handlePresetClick(p.value)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
                     active
-                      ? 'bg-white text-indigo-650 shadow-xs border border-slate-200/50'
-                      : 'text-slate-500 hover:text-slate-800 hover:bg-white/40'
+                      ? 'bg-white dark:bg-slate-700 text-violet-650 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/40 dark:hover:bg-slate-700/40'
                   }`}
                 >
                   {p.label}
@@ -515,13 +518,13 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
             <PopoverTrigger
               render={
                 <button
-                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold border rounded-xl hover:bg-slate-50 transition-all duration-200 shadow-xs cursor-pointer h-[38px] w-full sm:w-auto justify-center sm:justify-start ${
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 shadow-xs cursor-pointer h-[38px] w-full sm:w-auto justify-center sm:justify-start ${
                     period === 'custom'
-                      ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                      : 'bg-white border-slate-200 text-slate-700'
+                      ? 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <Calendar className={`h-4 w-4 ${period === 'custom' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                  <Calendar className={`h-4 w-4 ${period === 'custom' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400'}`} />
                   <span>
                     {period === 'custom' ? getPeriodDisplayLabel() : t('presets.custom')}
                   </span>
@@ -529,19 +532,19 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                 </button>
               }
             />
-            <PopoverContent align="end" className="w-[360px] p-4 bg-white border border-slate-150 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-4">
+            <PopoverContent align="end" className="w-[360px] p-4 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-4">
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                   {t('customFilter.title')}
                 </h4>
-                
+
                 {/* Mode Selector */}
-                <div className="grid grid-cols-2 p-1 bg-slate-100/80 rounded-xl">
+                <div className="grid grid-cols-2 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl">
                   <button
                     type="button"
                     onClick={() => setTempMode('single')}
                     className={`py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                      tempMode === 'single' ? 'bg-white text-indigo-650 shadow-xs border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                      tempMode === 'single' ? 'bg-white dark:bg-slate-700 text-violet-650 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
                     }`}
                   >
                     {t('customFilter.singleDay')}
@@ -550,7 +553,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                     type="button"
                     onClick={() => setTempMode('range')}
                     className={`py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                      tempMode === 'range' ? 'bg-white text-indigo-650 shadow-xs border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                      tempMode === 'range' ? 'bg-white dark:bg-slate-700 text-violet-650 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
                     }`}
                   >
                     {t('customFilter.dateRange')}
@@ -561,37 +564,37 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                 {tempMode === 'single' ? (
                   <div className="space-y-3 pt-1">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                         {t('customFilter.date')}
                       </span>
                       <input
                         type="date"
                         value={tempSingleDate}
                         onChange={(e) => setTempSingleDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                           {t('customFilter.startTime')}
                         </span>
                         <input
                           type="time"
                           value={tempSingleStartHour}
                           onChange={(e) => setTempSingleStartHour(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                           {t('customFilter.endTime')}
                         </span>
                         <input
                           type="time"
                           value={tempSingleEndHour}
                           onChange={(e) => setTempSingleEndHour(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                       </div>
                     </div>
@@ -599,7 +602,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                 ) : (
                   <div className="space-y-3 pt-1">
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                         {t('customFilter.startDateTime')}
                       </span>
                       <div className="grid grid-cols-5 gap-2">
@@ -607,18 +610,18 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                           type="date"
                           value={tempStartDateVal}
                           onChange={(e) => setTempStartDateVal(e.target.value)}
-                          className="col-span-3 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                         <input
                           type="time"
                           value={tempStartTimeVal}
                           onChange={(e) => setTempStartTimeVal(e.target.value)}
-                          className="col-span-2 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                         {t('customFilter.endDateTime')}
                       </span>
                       <div className="grid grid-cols-5 gap-2">
@@ -626,13 +629,13 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                           type="date"
                           value={tempEndDateVal}
                           onChange={(e) => setTempEndDateVal(e.target.value)}
-                          className="col-span-3 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                         <input
                           type="time"
                           value={tempEndTimeVal}
                           onChange={(e) => setTempEndTimeVal(e.target.value)}
-                          className="col-span-2 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                       </div>
                     </div>
@@ -640,11 +643,11 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={handleApply}
-                  className="px-3.5 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-750 text-white rounded-lg transition-all shadow-sm cursor-pointer"
+                  className="px-3.5 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-750 text-white rounded-lg transition-all shadow-sm cursor-pointer"
                 >
                   {t('customFilter.confirm')}
                 </button>
@@ -661,28 +664,28 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
           value={formatCurrency(totalRevenue)}
           subtitle={`${tc('total')} ${t('revenue')}`}
           icon={BanknotesIcon}
-          color="bg-emerald-100 text-emerald-600"
+          color="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400"
         />
         <KPICard
           title={t('sales')}
           value={totalOrders.toString()}
           subtitle={`${tc('total')} ${tc('sum')}`}
           icon={ShoppingCartIcon}
-          color="bg-blue-100 text-blue-600"
+          color="bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400"
         />
         <KPICard
           title={tc('profit')}
           value={formatCurrency(totalProfit)}
           subtitle={`${tc('total')} ${tc('profit')}`}
           icon={ChartBarIcon}
-          color="bg-indigo-100 text-indigo-600"
+          color="bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400"
         />
         <KPICard
           title={tc('quantity')}
           value={totalSold.toString()}
           subtitle={`${tc('total')} ${tc('pieces')}`}
           icon={TagIcon}
-          color="bg-amber-100 text-amber-600"
+          color="bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400"
         />
       </div>
 
@@ -690,11 +693,11 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
         {/* Revenue Over Time Chart */}
         <Card className="border-0 shadow-sm lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-slate-800">{t('revenueOverTime')}</CardTitle>
+            <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-200">{t('revenueOverTime')}</CardTitle>
           </CardHeader>
           <CardContent>
             {formattedChartData.length === 0 ? (
-              <div className="h-[300px] flex items-center justify-center text-slate-400 text-sm">
+              <div className="h-[300px] flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
                 {tc('noData')}
               </div>
             ) : (
@@ -706,18 +709,18 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#f1f5f9'} vertical={false} />
                   <XAxis
                     dataKey="monthLabel"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }}
                     dy={10}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }}
                     tickFormatter={(v) => {
                       if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
                       if (v >= 1000) return `${(v / 1000).toFixed(1)}k`
@@ -726,7 +729,12 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                   />
                   <Tooltip
                     formatter={(value: any) => formatCurrency(value as number)}
-                    contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    contentStyle={
+                      isDark
+                        ? { borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: '#e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)' }
+                        : { borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }
+                    }
+                    labelStyle={isDark ? { color: '#e2e8f0' } : undefined}
                   />
                   <Area
                     type="monotone"
@@ -745,26 +753,26 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
         {/* Top Products */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-slate-800">{t('topProducts')}</CardTitle>
+            <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-200">{t('topProducts')}</CardTitle>
           </CardHeader>
           <CardContent>
             {topProducts.length === 0 ? (
-              <div className="text-slate-500 text-sm">{tc('noData')}</div>
+              <div className="text-slate-500 dark:text-slate-400 text-sm">{tc('noData')}</div>
             ) : (
               <div className="space-y-5">
                 {topProducts.map((p, i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-semibold text-sm">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-semibold text-sm">
                         {i + 1}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-slate-900 truncate max-w-[150px]">{p.name}</p>
-                        <p className="text-xs text-slate-500">{p.quantity} {tc('pieces')}</p>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate max-w-[150px]">{p.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{p.quantity} {tc('pieces')}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-slate-900">{formatCurrency(p.totalSum)}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(p.totalSum)}</p>
                     </div>
                   </div>
                 ))}
@@ -784,7 +792,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
 
       {/* Sold Products Table */}
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-3">{t('soldProducts')}</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">{t('soldProducts')}</h2>
         <SoldProductsTable products={aggregatedProducts} lang={lang} />
       </div>
     </div>

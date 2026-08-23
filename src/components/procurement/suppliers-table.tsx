@@ -116,7 +116,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/${lang}/procurement/suppliers/${supplier.id}`}
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-colors font-semibold"
+                            className="text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 hover:underline transition-colors font-semibold"
                           >
                             {supplier.name}
                           </Link>
@@ -180,7 +180,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
             >
               {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
             </Button>
-            <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md">
+            <span className="text-xs font-semibold bg-violet-50 text-violet-700 px-2.5 py-1 rounded-md">
               {currentPage} / {totalPages}
             </span>
             <Button

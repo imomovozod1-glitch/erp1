@@ -44,7 +44,7 @@ export function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/admin" prefetch={true} />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-600 text-white">
                 <ShieldCheck className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -89,7 +89,7 @@ export function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="cursor-default hover:bg-transparent active:bg-transparent">
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg bg-indigo-100 text-indigo-700 text-xs font-semibold">
+                <AvatarFallback className="rounded-lg bg-violet-100 text-violet-700 text-xs font-semibold">
                   {getInitials(adminName) || 'A'}
                 </AvatarFallback>
               </Avatar>
@@ -97,7 +97,7 @@ export function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
                 <span className="truncate font-semibold">{adminName}</span>
                 <span className="truncate text-xs text-muted-foreground">{adminEmail}</span>
               </div>
-              <Badge variant="outline" className="ml-auto text-[10px] px-1.5 border-indigo-200 text-indigo-600">
+              <Badge variant="outline" className="ml-auto text-[10px] px-1.5 border-violet-200 text-violet-600">
                 {t('badge')}
               </Badge>
             </SidebarMenuButton>

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 
 const pinIcon = L.divIcon({
-  html: `<div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 shadow-lg border-2 border-white">
+  html: `<div class="flex items-center justify-center w-8 h-8 rounded-full bg-violet-600 shadow-lg border-2 border-white">
            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
          </div>`,
   className: '',
@@ -88,7 +88,7 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
       <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
         <DialogHeader className="pb-3 border-b border-slate-100">
           <DialogTitle className="font-bold text-slate-800 text-base flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-indigo-600" />
+            <MapPin className="h-5 w-5 text-violet-600" />
             {title}
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500 font-sans mt-1">
@@ -100,7 +100,7 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
           <div className="relative rounded-xl overflow-hidden border border-slate-200/80 shadow-sm bg-slate-100">
             {(isResolving) && !notFound && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 z-10 space-y-2">
-                <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
                 <span className="text-xs font-semibold text-slate-600">
                   {lang === 'uz' ? 'Manzil aniqlanmoqda...' : lang === 'ru' ? 'Определение адреса...' : 'Locating address...'}
                 </span>
@@ -137,7 +137,7 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
             type="button"
             variant="outline"
             onClick={() => window.open(googleMapsUrl, '_blank')}
-            className="w-full h-10 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-1.5"
+            className="w-full h-10 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-1.5"
           >
             <ExternalLink className="h-4 w-4" />
             {lang === 'uz' ? 'Google Xaritada ochish' : lang === 'ru' ? 'Открыть в Google Картах' : 'Open in Google Maps'}

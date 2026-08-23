@@ -6,12 +6,16 @@ export const metadata: Metadata = { title: 'Settings' }
 
 export default async function SettingsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
-  const t = await getTranslations('settings')
+  const [t, tInfo] = await Promise.all([
+    getTranslations('settings'),
+    getTranslations('pageInfo'),
+  ])
 
   return (
     <div>
       <PageHeader
         title={t('title')}
+        info={tInfo('settings')}
         breadcrumbs={[{ label: 'ERP', href: `/${lang}/dashboard` }, { label: t('title') }]}
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -24,9 +28,9 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
           <a
             key={item.key}
             href={item.href}
-            className="block p-6 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 group"
+            className="block p-6 bg-white rounded-xl border border-slate-200 hover:border-violet-300 hover:shadow-md transition-all duration-200 group"
           >
-            <h3 className="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">
+            <h3 className="font-semibold text-slate-800 group-hover:text-violet-700 transition-colors">
               {t(item.key as any)}
             </h3>
           </a>

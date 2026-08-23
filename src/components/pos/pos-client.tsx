@@ -26,7 +26,7 @@ import dynamic from 'next/dynamic'
 const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod => mod.MapPicker), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-70 bg-slate-50 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
+    <div className="w-full h-70 bg-slate-50 dark:bg-slate-800 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
       <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
     </div>
   )
@@ -571,20 +571,20 @@ export function POSClient({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearchKeyPress}
-                  className="pl-10 h-12 bg-slate-100/50 border-0 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 rounded-xl transition-all shadow-inner text-sm text-slate-800"
+                  className="pl-10 h-12 bg-slate-100/50 dark:bg-slate-800/50 border-0 focus-visible:bg-white dark:focus-visible:bg-slate-800 focus-visible:ring-2 focus-visible:ring-violet-500/10 focus-visible:border-violet-500 rounded-xl transition-all shadow-inner text-sm text-slate-800 dark:text-slate-200"
                 />
               </div>
-              
+
               {/* Category Select */}
               <Select value={selectedCategory} onValueChange={(val) => setSelectedCategory(val || 'all')}>
-                <SelectTrigger className="w-full md:w-56 h-12 bg-slate-100/50 border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-xs font-semibold text-slate-700">
+                <SelectTrigger className="w-full md:w-56 h-12 bg-slate-100/50 dark:bg-slate-800/50 border-0 rounded-xl shadow-inner focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 transition-all text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <SelectValue placeholder={t('selectCategory')}>
                     {selectedCategory === 'all'
                       ? t('selectCategory')
                       : categories.find((c) => c.id === selectedCategory)?.name || selectedCategory}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-100 shadow-xl bg-white">
+                <SelectContent className="rounded-xl border-slate-100 dark:border-slate-700 shadow-xl bg-white dark:bg-slate-900">
                   <SelectItem value="all" className="text-xs font-medium">{t('selectCategory')}</SelectItem>
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id} className="text-xs font-medium">
@@ -602,8 +602,8 @@ export function POSClient({
                 onClick={() => setSelectedCategory('all')}
                 className={`rounded-full shrink-0 text-xs px-4 h-9 shadow-xs transition-all duration-200 border-0 ${
                   selectedCategory === 'all'
-                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
-                    : 'bg-slate-100/70 hover:bg-slate-200/80 text-slate-600 hover:text-slate-800'
+                    ? 'bg-gradient-to-r from-violet-600 to-violet-600 hover:from-violet-700 hover:to-violet-700 text-white font-semibold shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
+                    : 'bg-slate-100/70 dark:bg-slate-800/70 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100'
                 }`}
               >
                 {t('selectCategory')}
@@ -615,8 +615,8 @@ export function POSClient({
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`rounded-full shrink-0 text-xs px-4 h-9 shadow-xs transition-all duration-200 border-0 ${
                     selectedCategory === cat.id
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
-                      : 'bg-slate-100/70 hover:bg-slate-200/80 text-slate-600 hover:text-slate-800'
+                      ? 'bg-gradient-to-r from-violet-600 to-violet-600 hover:from-violet-700 hover:to-violet-700 text-white font-semibold shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
+                      : 'bg-slate-100/70 dark:bg-slate-800/70 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100'
                   }`}
                 >
                   {cat.name}
@@ -628,10 +628,10 @@ export function POSClient({
           {/* Products Grid Wrapper — the only scrollable region on this page */}
           <div className="md:flex-1 md:overflow-y-auto md:min-h-0 pr-1 pb-4 scrollbar-thin">
             {filteredProducts.length === 0 ? (
-              <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.02)] py-20 text-center bg-white rounded-2xl">
+              <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.02)] py-20 text-center bg-white dark:bg-slate-900 rounded-2xl">
                 <CardContent className="flex flex-col items-center gap-3">
-                  <Scale className="h-10 w-10 text-slate-300" />
-                  <p className="text-slate-400 font-semibold text-sm">{t('noProducts')}</p>
+                  <Scale className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+                  <p className="text-slate-400 dark:text-slate-500 font-semibold text-sm">{t('noProducts')}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -643,22 +643,22 @@ export function POSClient({
                     <Card
                       key={p.id}
                       onClick={() => !isOutOfStock && addToCart(p)}
-                      className={`border border-slate-200 hover:border-indigo-300 hover:-translate-y-0.5 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl cursor-pointer bg-white overflow-hidden group select-none py-0 ${
+                      className={`border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700 hover:-translate-y-0.5 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl cursor-pointer bg-white dark:bg-slate-900 overflow-hidden group select-none py-0 ${
                         isOutOfStock ? 'opacity-50 pointer-events-none' : ''
                       }`}
                     >
                       <CardContent className="p-3.5 flex flex-col justify-between h-34 gap-2">
                         <div className="space-y-1">
-                          <p className="font-semibold text-slate-800 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-indigo-700 transition-colors">
+                          <p className="font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">
                             {p.name}
                           </p>
-                          <code className="text-[10px] text-slate-400 font-mono tracking-wider">
+                          <code className="text-[10px] text-slate-400 dark:text-slate-500 font-mono tracking-wider">
                             {p.sku}
                           </code>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                          <p className="font-bold text-indigo-700 text-sm md:text-base">
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <p className="font-bold text-violet-700 dark:text-violet-400 text-sm md:text-base">
                             {formatCurrency(p.price)}
                           </p>
 
@@ -683,16 +683,16 @@ export function POSClient({
 
         {/* Right Side: Cart, customer selector, checkout — fixed to the viewport, never scrolls as a whole */}
         <div className="md:col-span-1 md:h-full md:flex md:flex-col md:min-h-0 overflow-hidden">
-          <Card className="border pt-0 border-slate-100/60 shadow-[0_8px_30px_rgba(0,0,0,0.03)] rounded-2xl bg-white flex flex-col h-full min-h-0 overflow-hidden">
+          <Card className="border pt-0 border-slate-100/60 dark:border-slate-800 shadow-[0_8px_30px_rgba(0,0,0,0.03)] rounded-2xl bg-white dark:bg-slate-900 flex flex-col h-full min-h-0 overflow-hidden">
             {/* Cart Header */}
-            <CardHeader className="shrink-0  p-4 bg-gradient-to-br from-indigo-50/70 via-white to-white border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="shrink-0  p-4 bg-gradient-to-br from-violet-50/70 dark:from-violet-950/30 via-white dark:via-slate-900 to-white dark:to-slate-900 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between space-y-0">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-xl shadow-[0_4px_10px_rgba(99,102,241,0.25)]">
+                <div className="p-2.5 bg-gradient-to-br from-violet-500 to-violet-600 text-white rounded-xl shadow-[0_4px_10px_rgba(99,102,241,0.25)]">
                   <ShoppingBag className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <CardTitle className="text-sm font-bold text-slate-800">{t('cart')}</CardTitle>
-                  <span className="inline-flex items-center mt-0.5 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">
+                  <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">{t('cart')}</CardTitle>
+                  <span className="inline-flex items-center mt-0.5 text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/50 px-1.5 py-0.5 rounded-md">
                     {cart.length} {tCommon('rows')}
                   </span>
                 </div>
@@ -702,7 +702,7 @@ export function POSClient({
                   variant="ghost"
                   size="sm"
                   onClick={clearCart}
-                  className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs px-2.5 h-8 rounded-lg cursor-pointer transition-all"
+                  className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs px-2.5 h-8 rounded-lg cursor-pointer transition-all"
                 >
                   {tCommon('clear')}
                 </Button>
@@ -713,12 +713,12 @@ export function POSClient({
             <div className="flex-1 min-h-58 overflow-y-auto scrollbar-thin p-3 space-y-2">
               {cart.length === 0 ? (
                 <div className="h-full min-h-52 flex flex-col items-center justify-center text-center text-slate-400 gap-3">
-                  <div className="p-5 rounded-full border-2 border-dashed border-slate-200 animate-pulse">
-                    <ShoppingBag className="h-7 w-7 text-slate-300" />
+                  <div className="p-5 rounded-full border-2 border-dashed border-slate-200 dark:border-slate-700 animate-pulse">
+                    <ShoppingBag className="h-7 w-7 text-slate-300 dark:text-slate-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-500">{t('emptyCart')}</p>
-                    <p className="text-[11px] text-slate-350">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('emptyCart')}</p>
+                    <p className="text-[11px] text-slate-350 dark:text-slate-500">
                       {lang === 'uz' ? "Mahsulotni bosing yoki SKU'ni skanerlang" : lang === 'ru' ? 'Нажмите на товар или отсканируйте SKU' : 'Click a product or scan its SKU'}
                     </p>
                   </div>
@@ -729,18 +729,18 @@ export function POSClient({
                   return (
                     <div
                       key={item.product.id}
-                      className="p-2.5 bg-slate-50/30 hover:bg-slate-50/60 transition-all border border-slate-100/70 rounded-xl shadow-2xs"
+                      className="p-2.5 bg-slate-50/30 dark:bg-slate-800/30 hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition-all border border-slate-100/70 dark:border-slate-700/70 rounded-xl shadow-2xs"
                     >
                       <div className="flex justify-between items-center gap-2">
-                        <p className="text-xs font-bold text-slate-800 leading-tight truncate">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">
                           {item.product.name}
-                          <span className="font-medium text-slate-400"> · {formatCurrency(item.product.price)}</span>
+                          <span className="font-medium text-slate-400 dark:text-slate-500"> · {formatCurrency(item.product.price)}</span>
                         </p>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => removeFromCart(item.product.id)}
-                          className="h-6 w-6 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md cursor-pointer shrink-0"
+                          className="h-6 w-6 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md cursor-pointer shrink-0"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -748,11 +748,11 @@ export function POSClient({
 
                       <div className="flex items-center justify-between gap-1.5 mt-1.5">
                         {/* Quantity picker */}
-                        <div className="flex items-center border border-slate-200/50 bg-white rounded-lg overflow-hidden h-7 shadow-3xs shrink-0">
+                        <div className="flex items-center border border-slate-200/50 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg overflow-hidden h-7 shadow-3xs shrink-0">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                            className="px-2 h-full text-slate-500 hover:bg-slate-50 transition-colors border-r border-slate-100"
+                            className="px-2 h-full text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-r border-slate-100 dark:border-slate-700"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
@@ -777,12 +777,12 @@ export function POSClient({
                                 removeFromCart(item.product.id)
                               }
                             }}
-                            className="w-8 text-center text-xs font-bold text-slate-800 focus:outline-none focus:bg-slate-50 h-full border-0 p-0"
+                            className="w-8 text-center text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:bg-slate-50 dark:focus:bg-slate-800 h-full border-0 p-0"
                           />
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            className="px-2 h-full text-slate-500 hover:bg-slate-50 transition-colors border-l border-slate-100"
+                            className="px-2 h-full text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-l border-slate-100 dark:border-slate-700"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
@@ -798,11 +798,11 @@ export function POSClient({
                             value={item.discountPercent || ''}
                             onChange={(e) => updateItemDiscount(item.product.id, Number(e.target.value))}
                             placeholder="0"
-                            className="w-9 h-7 text-xs text-center border border-slate-200/50 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all p-1 shadow-3xs"
+                            className="w-9 h-7 text-xs text-center border border-slate-200/50 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 transition-all p-1 shadow-3xs"
                           />
                         </div>
 
-                        <p className="text-xs font-bold text-slate-800 ml-auto truncate">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 ml-auto truncate">
                           {formatCurrency(finalPrice * item.quantity)}
                         </p>
                       </div>
@@ -827,7 +827,7 @@ export function POSClient({
                     }
                   }}
                 >
-                  <SelectTrigger className="flex-1 min-w-0 h-8 bg-slate-100/50 border-0 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 shadow-2xs font-medium text-slate-700">
+                  <SelectTrigger className="flex-1 min-w-0 h-8 bg-slate-100/50 border-0 rounded-lg text-xs focus:ring-2 focus:ring-violet-500/10 focus:border-violet-500 shadow-2xs font-medium text-slate-700">
                     <SelectValue placeholder={t('walkInCustomer')}>
                       {selectedCustomer
                         ? `${selectedCustomer.name}${selectedCustomer.phone ? ` (${selectedCustomer.phone})` : ''}`
@@ -848,7 +848,7 @@ export function POSClient({
                   variant="outline"
                   onClick={() => setIsAddCustomerOpen(true)}
                   title={t('addCustomer')}
-                  className="h-8 w-8 p-0 shrink-0 border-slate-200 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/50 rounded-lg cursor-pointer transition-all"
+                  className="h-8 w-8 p-0 shrink-0 border-slate-200 text-violet-600 hover:text-violet-700 hover:bg-violet-50/50 rounded-lg cursor-pointer transition-all"
                 >
                   <UserPlus className="h-3.5 w-3.5" />
                 </Button>
@@ -865,7 +865,7 @@ export function POSClient({
                   value={generalDiscountValue || ''}
                   onChange={(e) => setGeneralDiscountValue(Number(e.target.value))}
                   placeholder="0"
-                  className="h-8 flex-1 min-w-0 text-xs border-0 bg-slate-100/50 rounded-lg focus-visible:ring-2 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500 shadow-2xs text-slate-800"
+                  className="h-8 flex-1 min-w-0 text-xs border-0 bg-slate-100/50 rounded-lg focus-visible:ring-2 focus-visible:ring-violet-500/10 focus-visible:border-violet-500 shadow-2xs text-slate-800"
                 />
                 <Button
                   type="button"
@@ -897,7 +897,7 @@ export function POSClient({
                 )}
                 <div className="flex justify-between items-center text-sm font-bold text-slate-800 pt-1 border-t border-dashed border-slate-200 mt-1">
                   <span>{t('total')}</span>
-                  <span className="text-indigo-600 text-base font-extrabold">{formatCurrency(totalPayable)}</span>
+                  <span className="text-violet-600 text-base font-extrabold">{formatCurrency(totalPayable)}</span>
                 </div>
               </div>
 
@@ -921,7 +921,7 @@ export function POSClient({
                         title={pm.label}
                         className={`flex flex-col items-center justify-center gap-0.5 h-9 rounded-md text-[9px] font-bold transition-all duration-150 cursor-pointer ${
                           isSelected
-                            ? 'bg-white text-indigo-700 shadow-[0_1px_4px_rgba(15,23,42,0.08)]'
+                            ? 'bg-white text-violet-700 shadow-[0_1px_4px_rgba(15,23,42,0.08)]'
                             : 'text-slate-500 hover:text-slate-700'
                         }`}
                       >
@@ -972,7 +972,7 @@ export function POSClient({
                 onChange={(e) => setNewCustomerName(e.target.value)}
                 placeholder="Sherzod Karimov"
                 required
-                className="border-slate-200 focus-visible:ring-indigo-500 rounded-lg"
+                className="border-slate-200 focus-visible:ring-violet-500 rounded-lg"
               />
             </div>
             <div className="space-y-1.5">
@@ -982,7 +982,7 @@ export function POSClient({
                 value={newCustomerPhone}
                 onChange={(e) => setNewCustomerPhone(e.target.value)}
                 placeholder="+998 90 123 45 67"
-                className="border-slate-200 focus-visible:ring-indigo-500 rounded-lg"
+                className="border-slate-200 focus-visible:ring-violet-500 rounded-lg"
               />
             </div>
             <div className="space-y-1.5">
@@ -1001,13 +1001,13 @@ export function POSClient({
                   value={newCustomerAddress}
                   onChange={(e) => setNewCustomerAddress(e.target.value)}
                   placeholder="Toshkent sh., Chilonzor t."
-                  className="border-slate-200 focus-visible:ring-indigo-500 rounded-lg flex-1"
+                  className="border-slate-200 focus-visible:ring-violet-500 rounded-lg flex-1"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsCustomerMapOpen(true)}
-                  className="h-9 w-9 p-0 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 rounded-lg shrink-0"
+                  className="h-9 w-9 p-0 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-violet-600 rounded-lg shrink-0"
                   title={lang === 'uz' ? 'Xaritadan belgilash' : lang === 'ru' ? 'Отметить на карте' : 'Pick on map'}
                 >
                   <MapPin className="h-4 w-4" />
@@ -1025,7 +1025,7 @@ export function POSClient({
               </Button>
               <Button
                 type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg"
               >
                 {tCommon('save')}
               </Button>
@@ -1039,7 +1039,7 @@ export function POSClient({
           <DialogContent className="max-w-2xl rounded-2xl bg-white border-0 shadow-xl p-6">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-indigo-600" />
+                <MapPin className="h-5 w-5 text-violet-600" />
                 {lang === 'uz' ? 'Manzilni xaritadan belgilang' : lang === 'ru' ? 'Отметьте адрес на карте' : 'Pick address on map'}
               </DialogTitle>
             </DialogHeader>
@@ -1059,7 +1059,7 @@ export function POSClient({
               <Button
                 type="button"
                 onClick={() => setIsCustomerMapOpen(false)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg"
               >
                 {tCommon('save')}
               </Button>
@@ -1184,7 +1184,7 @@ export function POSClient({
             </Button>
             <Button
               onClick={triggerPrintReceipt}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl flex-1 h-11"
+              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl flex-1 h-11"
             >
               <Printer className="h-4 w-4 mr-2" />
               {t('printReceipt')}

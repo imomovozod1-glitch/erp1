@@ -74,7 +74,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
                 className={cn(
                   'px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
                   outcomeFilter === f.value
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    ? 'bg-violet-600 border-violet-600 text-white'
                     : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
                 )}
               >

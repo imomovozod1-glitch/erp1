@@ -92,7 +92,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
               >
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-xs font-bold text-violet-600 dark:bg-violet-950/30 dark:text-violet-400">
                       {getInitials(p.tenant_company_name)}
                     </div>
                     <div>

@@ -61,8 +61,8 @@ export function AdminLoginForm() {
       <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-500/20 rounded-xl border border-indigo-500/30">
-              <ShieldCheck className="h-6 w-6 text-indigo-400" />
+            <div className="p-2.5 bg-violet-500/20 rounded-xl border border-violet-500/30">
+              <ShieldCheck className="h-6 w-6 text-violet-400" />
             </div>
             <div>
               <h1 className="text-white font-bold text-xl leading-none">{t('brandTitle')}</h1>
@@ -88,7 +88,7 @@ export function AdminLoginForm() {
                 placeholder={t('emailPlaceholder')}
                 {...register('email')}
                 className={cn(
-                  'pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 h-11',
+                  'pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11',
                   errors.email && 'border-red-500/50'
                 )}
               />
@@ -105,7 +105,7 @@ export function AdminLoginForm() {
               hideLabel={tPassword('hide')}
               {...register('password')}
               className={cn(
-                'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20 h-11',
+                'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11',
                 errors.password && 'border-red-500/50'
               )}
             />
@@ -115,7 +115,7 @@ export function AdminLoginForm() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 mt-2"
+            className="w-full h-11 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 mt-2"
           >
             {isLoading ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t('signingIn')}</>
@@ -124,7 +124,7 @@ export function AdminLoginForm() {
         </form>
       </div>
 
-      <div className="absolute -inset-1 bg-[linear-gradient-to-r] from-indigo-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
+      <div className="absolute -inset-1 bg-[linear-gradient-to-r] from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
     </div>
   )
 }

@@ -35,7 +35,7 @@ export function AdminLocaleSwitcher() {
           className={cn(
             'px-2 py-1 text-xs font-semibold rounded-md transition-colors',
             locale === l.code
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-violet-600 text-white shadow-sm'
               : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
           )}
         >

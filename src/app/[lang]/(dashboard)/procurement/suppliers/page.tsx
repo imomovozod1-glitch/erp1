@@ -11,6 +11,7 @@ export const metadata: Metadata = { title: 'Suppliers' }
 export default async function SuppliersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   const t = await getTranslations('procurement')
+  const tInfo = await getTranslations('pageInfo')
   const supabase = await createClient()
 
   const [{ data: suppliers }, { data: purchaseOrders }, { data: supplierPayments }] = await Promise.all([
@@ -39,6 +40,7 @@ export default async function SuppliersPage({ params }: { params: Promise<{ lang
       <PageHeader
         title={t('suppliers')}
         subtitle={t('title')}
+        info={tInfo('suppliers')}
         action={{ label: t('addSupplier'), href: `/${lang}/procurement/suppliers/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },

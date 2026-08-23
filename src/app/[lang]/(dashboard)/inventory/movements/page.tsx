@@ -20,8 +20,9 @@ export default async function MovementsPage({
 }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, movements] = await Promise.all([
+  const [t, tInfo, movements] = await Promise.all([
     getTranslations('inventory'),
+    getTranslations('pageInfo'),
     getCachedMovements(tenantId),
   ])
 
@@ -29,6 +30,7 @@ export default async function MovementsPage({
     <div>
       <PageHeader
         title={t('stockMovements')}
+        info={tInfo('movements')}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/inventory` },

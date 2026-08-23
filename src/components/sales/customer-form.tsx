@@ -138,8 +138,8 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
         {/* Customer Details Card */}
         <div className="bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs space-y-6">
           <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="p-2 bg-indigo-50 rounded-lg">
-              <User className="h-5 w-5 text-indigo-600" />
+            <div className="p-2 bg-violet-50 rounded-lg">
+              <User className="h-5 w-5 text-violet-600" />
             </div>
             <div>
               <h3 className="font-bold text-slate-800 text-base">{tSales('customer')}</h3>
@@ -159,7 +159,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 id="name"
                 {...register('name')}
                 placeholder={tSales('customerNamePlaceholder')}
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
               />
               {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name.message}</p>}
             </div>
@@ -174,7 +174,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 id="phone"
                 {...register('phone')}
                 placeholder={tSales('phonePlaceholder')}
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
               />
             </div>
 
@@ -189,7 +189,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 type="email"
                 {...register('email')}
                 placeholder={tSales('emailPlaceholder')}
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
               />
               {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
             </div>
@@ -204,7 +204,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 id="tin"
                 {...register('tin')}
                 placeholder={tSales('tinPlaceholder')}
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
               />
             </div>
 
@@ -217,7 +217,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
               <select
                 id="category_id"
                 {...register('category_id')}
-                className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-sm shadow-sm transition-colors focus:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-sm shadow-sm transition-colors focus:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">{tCommon('select')}</option>
                 {categories.map((c) => (
@@ -243,13 +243,13 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                   id="address"
                   {...register('address')}
                   placeholder={tSales('addressPlaceholder')}
-                  className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white flex-1"
+                  className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white flex-1"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleOpenMap}
-                  className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+                  className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
                 >
                   <MapPin className="h-4 w-4 text-slate-500" />
                   {tSales('locationPicker.button')}
@@ -268,7 +268,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 {...register('notes')}
                 placeholder={tSales('notesPlaceholder')}
                 rows={3}
-                className="bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white resize-none"
+                className="bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white resize-none"
               />
             </div>
           </div>
@@ -296,7 +296,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
           <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
             <DialogHeader className="pb-3 border-b border-slate-100">
               <DialogTitle className="font-bold text-slate-800 text-base flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-indigo-600" />
+                <MapPin className="h-5 w-5 text-violet-600" />
                 {tSales('locationPicker.dialogTitle')}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 font-sans mt-1">
@@ -323,7 +323,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
               <Button
                 type="button"
                 onClick={handleConfirmLocation}
-                className="h-10 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
+                className="h-10 px-4 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
               >
                 {tCommon('save')}
               </Button>

@@ -47,7 +47,7 @@ const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-700 border-slate-200',
   pending: 'bg-amber-50 text-amber-700 border-amber-200/60',
   confirmed: 'bg-blue-50 text-blue-700 border-blue-200/60',
-  shipped: 'bg-indigo-50 text-indigo-700 border-indigo-200/60',
+  shipped: 'bg-violet-50 text-violet-700 border-violet-200/60',
   delivered: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
   cancelled: 'bg-rose-50 text-rose-700 border-rose-200/60',
 }
@@ -103,7 +103,7 @@ export default function OrderDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
       </div>
     )
   }
@@ -134,7 +134,7 @@ export default function OrderDetailPage() {
         </Button>
         <Button
           onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}
-          className="w-full md:w-auto h-9 gap-2 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+          className="w-full md:w-auto h-9 gap-2 text-xs bg-violet-600 hover:bg-violet-700 text-white"
         >
           <Pencil className="h-4 w-4" />
           {tCommon('edit')}
@@ -145,7 +145,7 @@ export default function OrderDetailPage() {
         {/* Left column - Info card */}
         <Card className="md:col-span-1 border-slate-100 shadow-sm bg-white rounded-2xl overflow-hidden">
           <CardHeader className="p-5 border-b border-slate-100 flex flex-row items-center gap-3 bg-slate-50/50">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+            <div className="p-2 bg-violet-50 text-violet-600 rounded-xl">
               <ShoppingBag className="h-5 w-5" />
             </div>
             <div>
@@ -182,7 +182,7 @@ export default function OrderDetailPage() {
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 {lang === 'uz' ? 'Jami summa' : 'Итоговая сумма'}
               </span>
-              <p className="text-lg font-black text-indigo-600">{formatCurrency(order.total_amount)}</p>
+              <p className="text-lg font-black text-violet-600">{formatCurrency(order.total_amount)}</p>
             </div>
             {order.notes && (
               <div className="space-y-1 pt-3 border-t border-slate-100">

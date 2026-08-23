@@ -44,7 +44,7 @@ export function AdminProfileForm({ fullName, email }: { fullName: string; email:
     <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <User className="h-4 w-4 text-indigo-600" /> {t('title')}
+          <User className="h-4 w-4 text-violet-600" /> {t('title')}
         </CardTitle>
         <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
@@ -61,7 +61,7 @@ export function AdminProfileForm({ fullName, email }: { fullName: string; email:
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-500 gap-2">
+            <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500 gap-2">
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {t('save')}
             </Button>

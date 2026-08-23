@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
+import { PageInfoButton } from '@/components/shared/page-info-button'
 
 const formatDateISO = (d: Date) => {
   const year = d.getFullYear()
@@ -105,6 +106,7 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
   }, [])
 
   const td = useTranslations('dashboard')
+  const tInfo = useTranslations('pageInfo')
   const tSales = useTranslations('sales')
   const tInventory = useTranslations('inventory')
   const tProcurement = useTranslations('procurement')
@@ -327,11 +329,12 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
   return (
     <div className="space-y-6">
       {/* Top Bar with Period Presets */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl border shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            {/* <Sparkles className="h-5 w-5 text-indigo-600 animate-pulse" /> */}
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
+            {/* <Sparkles className="h-5 w-5 text-violet-600 animate-pulse" /> */}
             {t.title}
+            <PageInfoButton text={tInfo('dashboard')} />
           </h1>
           <p className="text-xs text-muted-foreground">
             {/* {t.subtitle} */}
@@ -340,15 +343,15 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
 
         {/* Period Selector Tabs */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg bg-slate-100 p-0.5 shadow-inner border">
+          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 shadow-inner border">
             {(['today', 'yesterday', 'week', 'month', 'all'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
                   period === p
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 {t[p]}
@@ -366,9 +369,9 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
       </div>
 
       {/* Quick Action Launchpad — every "create new" page in the sidebar, one tap away */}
-      <div className="bg-white p-5 rounded-xl border shadow-sm space-y-3">
-        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-          <Zap className="h-4 w-4 text-indigo-600" />
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm space-y-3">
+        <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <Zap className="h-4 w-4 text-violet-600 dark:text-violet-400" />
           {t.quickActions}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -387,12 +390,12 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
           ].map((action) => {
             const Icon = action.icon
             const toneClasses: Record<string, string> = {
-              indigo: 'border-indigo-100 bg-indigo-50/20 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800',
-              emerald: 'border-emerald-100 bg-emerald-50/20 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800',
-              rose: 'border-rose-100 bg-rose-50/20 text-rose-700 hover:bg-rose-50 hover:text-rose-800',
-              blue: 'border-blue-100 bg-blue-50/20 text-blue-700 hover:bg-blue-50 hover:text-blue-800',
-              amber: 'border-amber-100 bg-amber-50/20 text-amber-700 hover:bg-amber-50 hover:text-amber-800',
-              slate: 'border-slate-200 bg-slate-50/40 text-slate-700 hover:bg-slate-100 hover:text-slate-900',
+              indigo: 'border-violet-100 dark:border-violet-900/50 bg-violet-50/20 dark:bg-violet-950/20 text-violet-700 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/40 hover:text-violet-800 dark:hover:text-violet-300',
+              emerald: 'border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/20 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-800 dark:hover:text-emerald-300',
+              rose: 'border-rose-100 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-800 dark:hover:text-rose-300',
+              blue: 'border-blue-100 dark:border-blue-900/50 bg-blue-50/20 dark:bg-blue-950/20 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-800 dark:hover:text-blue-300',
+              amber: 'border-amber-100 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-800 dark:hover:text-amber-300',
+              slate: 'border-slate-200 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-800/40 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100',
             }
             return (
               <Link
@@ -411,106 +414,106 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
       {/* Main KPI Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {/* Sales Card */}
-        <div className="bg-white p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-indigo-50 opacity-40 group-hover:scale-110 transition-transform duration-300" />
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-50 dark:bg-violet-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold uppercase">{t.sales}</span>
-              <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t.sales}</span>
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                 {formatCurrency(metrics.revenue)}
               </h3>
             </div>
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+            <div className="p-2 bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 rounded-lg">
               <ShoppingCart className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>{td('ordersCountText', { count: metrics.ordersCount })}</span>
-            <span className="font-semibold text-indigo-600">{td('averageCheckText', { amount: formatCurrency(metrics.avgCheck) })}</span>
+            <span className="font-semibold text-violet-600 dark:text-violet-400">{td('averageCheckText', { amount: formatCurrency(metrics.avgCheck) })}</span>
           </div>
         </div>
 
         {/* Profit Card */}
-        <div className="bg-white p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-emerald-50 opacity-40 group-hover:scale-110 transition-transform duration-300" />
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-emerald-50 dark:bg-emerald-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold uppercase">{t.profit}</span>
-              <h3 className="text-2xl font-extrabold text-emerald-700 tracking-tight">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t.profit}</span>
+              <h3 className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight">
                 {formatCurrency(metrics.profit)}
               </h3>
             </div>
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-lg">
               <DollarSign className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-            <span className="text-emerald-600 font-semibold">{td('profitabilityText', { percentage: ((metrics.profit) / (metrics.revenue || 1) * 100).toFixed(1) })}</span>
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{td('profitabilityText', { percentage: ((metrics.profit) / (metrics.revenue || 1) * 100).toFixed(1) })}</span>
             <span>{td('expenseText', { amount: formatCurrency(metrics.expenses) })}</span>
           </div>
         </div>
 
         {/* Cash Balance Card */}
-        <div className="bg-white p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-blue-50 opacity-40 group-hover:scale-110 transition-transform duration-300" />
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-blue-50 dark:bg-blue-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold uppercase">{t.cashBalance}</span>
-              <h3 className="text-2xl font-extrabold text-blue-700 tracking-tight">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t.cashBalance}</span>
+              <h3 className="text-2xl font-extrabold text-blue-700 dark:text-blue-400 tracking-tight">
                 {formatCurrency(realCashboxBalance)}
               </h3>
             </div>
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-lg">
               <Layers className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 gap-1 border-t pt-2 mt-2">
+          <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 gap-1 border-t pt-2 mt-2">
             <div className="flex flex-col">
-              <span className="text-slate-400 font-medium text-[9px] uppercase">{t.receivables}</span>
-              <span className="font-bold text-emerald-600 mt-0.5">{formatCurrency(realReceivables)}</span>
+              <span className="text-slate-400 dark:text-slate-500 font-medium text-[9px] uppercase">{t.receivables}</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{formatCurrency(realReceivables)}</span>
             </div>
             <div className="flex flex-col text-right">
-              <span className="text-slate-400 font-medium text-[9px] uppercase">{t.payables}</span>
-              <span className="font-bold text-rose-600 mt-0.5">{formatCurrency(realPayables)}</span>
+              <span className="text-slate-400 dark:text-slate-500 font-medium text-[9px] uppercase">{t.payables}</span>
+              <span className="font-bold text-rose-600 dark:text-rose-400 mt-0.5">{formatCurrency(realPayables)}</span>
             </div>
           </div>
         </div>
 
         {/* Warehouse Card */}
-        <div className="bg-white p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-amber-50 opacity-40 group-hover:scale-110 transition-transform duration-300" />
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-amber-50 dark:bg-amber-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold uppercase">{t.warehouseValue}</span>
-              <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t.warehouseValue}</span>
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                 {formatCurrency(realWarehouseValue)}
               </h3>
             </div>
-            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 rounded-lg">
               <Package className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span>{td('productsCountText', { count: totalProducts ?? 0 })}</span>
-            <span className="text-orange-600 font-semibold">{td('lowStockCountText', { count: lowStock.length })}</span>
+            <span className="text-orange-600 dark:text-orange-400 font-semibold">{td('lowStockCountText', { count: lowStock.length })}</span>
           </div>
         </div>
 
         {/* Sold on Credit (Customer Debt) Card */}
-        <div className="bg-white p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-amber-50 opacity-40 group-hover:scale-110 transition-transform duration-300" />
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-amber-50 dark:bg-amber-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-xs text-slate-500 font-semibold uppercase">{lang === 'uz' ? 'Qarzga sotilgan' : lang === 'ru' ? 'Продано в долг' : 'Sold on credit'}</span>
-              <h3 className="text-2xl font-extrabold text-amber-700 tracking-tight">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Qarzga sotilgan' : lang === 'ru' ? 'Продано в долг' : 'Sold on credit'}</span>
+              <h3 className="text-2xl font-extrabold text-amber-700 dark:text-amber-400 tracking-tight">
                 {formatCurrency(realReceivables)}
               </h3>
             </div>
-            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 rounded-lg">
               <AlertTriangle className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center text-xs text-slate-500">
+          <div className="mt-3 flex items-center text-xs text-slate-500 dark:text-slate-400">
             <span>{lang === 'uz' ? "Mijozlardan kutilayotgan to'lov" : lang === 'ru' ? 'Ожидаемая оплата от клиентов' : 'Expected from customers'}</span>
           </div>
         </div>
@@ -518,17 +521,17 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
 
       {/* Small Secondary Meta info row (Customers & Employees) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
-          <Users className="h-4 w-4 text-blue-600" />
-          <span className="text-xs font-semibold text-slate-700">{td('customersCountText', { count: totalCustomers ?? 0 })}</span>
+        <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
+          <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('customersCountText', { count: totalCustomers ?? 0 })}</span>
         </div>
-        <div className="bg-white px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
-          <Users className="h-4 w-4 text-slate-600" />
-          <span className="text-xs font-semibold text-slate-700">{td('employeesCountText', { count: totalEmployees ?? 0 })}</span>
+        <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
+          <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('employeesCountText', { count: totalEmployees ?? 0 })}</span>
         </div>
-        <div className="bg-white px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
-          <Truck className="h-4 w-4 text-amber-600" />
-          <span className="text-xs font-semibold text-slate-700">{td('suppliersCountText', { count: totalSuppliers ?? 0 })}</span>
+        <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
+          <Truck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('suppliersCountText', { count: totalSuppliers ?? 0 })}</span>
         </div>
       </div>
 

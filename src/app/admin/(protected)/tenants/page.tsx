@@ -50,7 +50,7 @@ export default async function AdminTenantsPage({
       <PageHeader title={t('title')} subtitle={t('count', { count: tenants.length })} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title={t('statTotal')} value={tenants.length} icon={Building2} iconClassName="bg-indigo-500" />
+        <StatsCard title={t('statTotal')} value={tenants.length} icon={Building2} iconClassName="bg-violet-500" />
         <StatsCard title={t('statActive')} value={active} icon={CheckCircle2} iconClassName="bg-emerald-500" />
         <StatsCard title={t('statBlocked')} value={blocked} icon={Ban} iconClassName="bg-rose-500" />
         <StatsCard title={t('statRevenue')} value={formatCurrency(revenue)} icon={Wallet} iconClassName="bg-amber-500" />

@@ -104,7 +104,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
                           <FileText className="h-4 w-4" />
                         </div>
                         <div>
@@ -130,7 +130,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                             variant="outline"
                             size="sm"
                             onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
-                            className="h-7 border-indigo-200 text-indigo-700 bg-indigo-50/50 hover:bg-indigo-100/70 hover:text-indigo-800 font-medium text-[10px] rounded-md transition-all px-2 mt-1"
+                            className="h-7 border-violet-200 text-violet-700 bg-violet-50/50 hover:bg-violet-100/70 hover:text-violet-800 font-medium text-[10px] rounded-md transition-all px-2 mt-1"
                           >
                             To&apos;lov qilish
                           </Button>
@@ -159,7 +159,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                           {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
                             <DropdownMenuItem
                               onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
-                              className="text-indigo-600 focus:text-indigo-700 font-medium"
+                              className="text-violet-600 focus:text-violet-700 font-medium"
                             >
                               <CheckCircle2 className="h-4 w-4 mr-2" />
                               To&apos;lov qilish (Kassa orqali)

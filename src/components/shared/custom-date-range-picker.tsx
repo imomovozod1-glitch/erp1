@@ -106,31 +106,31 @@ export function CustomDateRangePicker({ isActive, start, end, onApply }: CustomD
       <PopoverTrigger
         render={
           <button
-            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold border rounded-xl hover:bg-slate-50 transition-all duration-200 shadow-xs cursor-pointer h-[38px] w-full sm:w-auto justify-center sm:justify-start ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 shadow-xs cursor-pointer h-[38px] w-full sm:w-auto justify-center sm:justify-start ${
               isActive
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                : 'bg-white border-slate-200 text-slate-700'
+                ? 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
             }`}
           >
-            <Calendar className={`h-4 w-4 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+            <Calendar className={`h-4 w-4 ${isActive ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400'}`} />
             <span>{isActive ? getPeriodDisplayLabel() : t('presets.custom')}</span>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
           </button>
         }
       />
-      <PopoverContent align="end" className="w-[360px] p-4 bg-white border border-slate-150 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-4">
+      <PopoverContent align="end" className="w-[360px] p-4 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-4">
         <div className="space-y-3">
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+          <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
             {t('customFilter.title')}
           </h4>
 
           {/* Mode Selector */}
-          <div className="grid grid-cols-2 p-1 bg-slate-100/80 rounded-xl">
+          <div className="grid grid-cols-2 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl">
             <button
               type="button"
               onClick={() => setTempMode('single')}
               className={`py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                tempMode === 'single' ? 'bg-white text-indigo-650 shadow-xs border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                tempMode === 'single' ? 'bg-white dark:bg-slate-700 text-violet-650 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
               }`}
             >
               {t('customFilter.singleDay')}
@@ -139,7 +139,7 @@ export function CustomDateRangePicker({ isActive, start, end, onApply }: CustomD
               type="button"
               onClick={() => setTempMode('range')}
               className={`py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                tempMode === 'range' ? 'bg-white text-indigo-650 shadow-xs border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                tempMode === 'range' ? 'bg-white dark:bg-slate-700 text-violet-650 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
               }`}
             >
               {t('customFilter.dateRange')}
@@ -149,37 +149,37 @@ export function CustomDateRangePicker({ isActive, start, end, onApply }: CustomD
           {tempMode === 'single' ? (
             <div className="space-y-3 pt-1">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {t('customFilter.date')}
                 </span>
                 <input
                   type="date"
                   value={tempSingleDate}
                   onChange={(e) => setTempSingleDate(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     {t('customFilter.startTime')}
                   </span>
                   <input
                     type="time"
                     value={tempSingleStartHour}
                     onChange={(e) => setTempSingleStartHour(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     {t('customFilter.endTime')}
                   </span>
                   <input
                     type="time"
                     value={tempSingleEndHour}
                     onChange={(e) => setTempSingleEndHour(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                   />
                 </div>
               </div>
@@ -187,7 +187,7 @@ export function CustomDateRangePicker({ isActive, start, end, onApply }: CustomD
           ) : (
             <div className="space-y-3 pt-1">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {t('customFilter.startDateTime')}
                 </span>
                 <div className="grid grid-cols-5 gap-2">
@@ -195,18 +195,18 @@ export function CustomDateRangePicker({ isActive, start, end, onApply }: CustomD
                     type="date"
                     value={tempStartDateVal}
                     onChange={(e) => setTempStartDateVal(e.target.value)}
-                    className="col-span-3 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                   />
                   <input
                     type="time"
                     value={tempStartTimeVal}
                     onChange={(e) => setTempStartTimeVal(e.target.value)}
-                    className="col-span-2 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                   />
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {t('customFilter.endDateTime')}
                 </span>
                 <div className="grid grid-cols-5 gap-2">
@@ -214,13 +214,13 @@ export function CustomDateRangePicker({ isActive, start, end, onApply }: CustomD
                     type="date"
                     value={tempEndDateVal}
                     onChange={(e) => setTempEndDateVal(e.target.value)}
-                    className="col-span-3 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                   />
                   <input
                     type="time"
                     value={tempEndTimeVal}
                     onChange={(e) => setTempEndTimeVal(e.target.value)}
-                    className="col-span-2 bg-slate-50 border border-slate-200/80 rounded-lg px-3 py-1.5 text-xs text-slate-850 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                   />
                 </div>
               </div>
@@ -228,11 +228,11 @@ export function CustomDateRangePicker({ isActive, start, end, onApply }: CustomD
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
           <button
             type="button"
             onClick={handleApply}
-            className="px-3.5 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-750 text-white rounded-lg transition-all shadow-sm cursor-pointer"
+            className="px-3.5 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-750 text-white rounded-lg transition-all shadow-sm cursor-pointer"
           >
             {t('customFilter.confirm')}
           </button>

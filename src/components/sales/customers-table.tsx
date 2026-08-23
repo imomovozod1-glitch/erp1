@@ -139,7 +139,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                   <TableCell>
                     <div className="flex items-center gap-2.5">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs">
+                        <AvatarFallback className="bg-violet-100 text-violet-700 text-xs">
                           {customer.name[0]}
                         </AvatarFallback>
                       </Avatar>
@@ -219,7 +219,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
             >
               {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
             </Button>
-            <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md">
+            <span className="text-xs font-semibold bg-violet-50 text-violet-700 px-2.5 py-1 rounded-md">
               {currentPage} / {totalPages}
             </span>
             <Button

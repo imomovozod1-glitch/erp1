@@ -289,10 +289,10 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
           </CardContent>
         </Card>
 
-        <Card className="border shadow-sm bg-linear-to-br from-indigo-50/50 to-purple-50/50">
+        <Card className="border shadow-sm bg-linear-to-br from-violet-50/50 to-purple-50/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-indigo-600" />
+              <Sparkles className="h-4 w-4 text-violet-600" />
               {t('scanInvoice')}
             </CardTitle>
           </CardHeader>
@@ -311,17 +311,17 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={isScanning}
-              className="w-full h-20 border-dashed border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all"
+              className="w-full h-20 border-dashed border-2 border-violet-200 hover:border-violet-400 hover:bg-violet-50/50 transition-all"
             >
               {isScanning ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
-                  <span className="text-indigo-700">{lang === 'uz' ? 'AI tahlil qilmoqda...' : lang === 'ru' ? 'ИИ анализирует...' : 'AI is analyzing...'}</span>
+                  <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
+                  <span className="text-violet-700">{lang === 'uz' ? 'AI tahlil qilmoqda...' : lang === 'ru' ? 'ИИ анализирует...' : 'AI is analyzing...'}</span>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1">
-                  <Upload className="h-6 w-6 text-indigo-500" />
-                  <span className="text-sm text-indigo-700 font-medium">{lang === 'uz' ? 'Rasm yuklash' : lang === 'ru' ? 'Загрузить изображение' : 'Upload image'}</span>
+                  <Upload className="h-6 w-6 text-violet-500" />
+                  <span className="text-sm text-violet-700 font-medium">{lang === 'uz' ? 'Rasm yuklash' : lang === 'ru' ? 'Загрузить изображение' : 'Upload image'}</span>
                 </div>
               )}
             </Button>
@@ -369,7 +369,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               type="button"
               onClick={addItem}
               size="sm"
-              className="h-9 bg-indigo-600 hover:bg-indigo-500"
+              className="h-9 bg-violet-600 hover:bg-violet-500"
               disabled={!selectedProductId}
             >
               <Plus className="h-4 w-4 mr-1" /> {t('addItem')}
@@ -414,7 +414,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
                                 } : it))
                               }
                             }}
-                            className="flex h-9 w-full rounded-md border border-red-300 bg-white px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500"
+                            className="flex h-9 w-full rounded-md border border-red-300 bg-white px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
                           >
                             <option value="">{t('selectProduct')}...</option>
                             {products.map(p => (
@@ -464,7 +464,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
         <Button
           type="submit"
           disabled={isSubmitting || items.length === 0 || !supplierId || items.some(item => !item.productId)}
-          className="bg-indigo-600 hover:bg-indigo-500"
+          className="bg-violet-600 hover:bg-violet-500"
         >
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>

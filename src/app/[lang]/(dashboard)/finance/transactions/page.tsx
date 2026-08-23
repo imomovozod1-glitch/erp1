@@ -15,6 +15,7 @@ export default async function TransactionsPage({ params }: { params: Promise<{ l
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
   const t = await getTranslations('finance')
+  const tInfo = await getTranslations('pageInfo')
   const transactions = await getCachedTransactions(tenantId)
 
   const totalIncome = transactions
@@ -30,6 +31,7 @@ export default async function TransactionsPage({ params }: { params: Promise<{ l
       <PageHeader
         title={t('transactions')}
         subtitle={t('title')}
+        info={tInfo('transactions')}
         // action={{ label: t('addTransaction'), href: `/${lang}/finance/transactions/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },

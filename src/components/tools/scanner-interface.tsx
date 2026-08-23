@@ -94,7 +94,7 @@ export function ScannerInterface() {
             )}
           </div>
 
-          <div className="flex-1 relative border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-indigo-300">
+          <div className="flex-1 relative border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-violet-300">
             {preview ? (
               <div className="relative w-full h-full p-2 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -106,7 +106,7 @@ export function ScannerInterface() {
               </div>
             ) : (
               <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer p-6">
-                <div className="h-16 w-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-indigo-500">
+                <div className="h-16 w-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-violet-500">
                   <UploadCloud className="h-8 w-8" />
                 </div>
                 <p className="text-sm font-medium text-slate-700">
@@ -129,7 +129,7 @@ export function ScannerInterface() {
           <Button
             onClick={handleScan}
             disabled={!file || isLoading}
-            className="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 h-12 text-sm font-semibold rounded-xl gap-2"
+            className="w-full mt-4 bg-violet-600 hover:bg-violet-500 h-12 text-sm font-semibold rounded-xl gap-2"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -146,7 +146,7 @@ export function ScannerInterface() {
         <CardContent className="p-6 h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-indigo-600" />
+              <FileText className="h-5 w-5 text-violet-600" />
               <h3 className="font-semibold text-slate-800 text-lg">Natija</h3>
             </div>
             {result && (
@@ -161,8 +161,8 @@ export function ScannerInterface() {
             {isLoading ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-3">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75" />
-                  <div className="relative bg-white p-3 rounded-full shadow-sm text-indigo-600">
+                  <div className="absolute inset-0 bg-violet-100 rounded-full animate-ping opacity-75" />
+                  <div className="relative bg-white p-3 rounded-full shadow-sm text-violet-600">
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 </div>

@@ -72,8 +72,8 @@ export function SoldProductsTable({ products, lang }: SoldProductsTableProps) {
         </div>
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50">
-              <TableHead className="w-10 text-center font-semibold text-slate-500">#</TableHead>
+            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+              <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead className="font-semibold">{t('productName')}</TableHead>
               <TableHead className="text-right">{t('costPrice')}</TableHead>
               <TableHead className="text-right">{t('sellingPrice')}</TableHead>
@@ -95,24 +95,24 @@ export function SoldProductsTable({ products, lang }: SoldProductsTableProps) {
              ) : (
                <>
                  {paginated.map((product, idx) => (
-                   <TableRow key={idx} className="hover:bg-slate-50/50 transition-colors">
-                     <TableCell className="text-center font-medium text-slate-500 text-xs">
+                   <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                     <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                        {(currentPage - 1) * itemsPerPage + idx + 1}
                      </TableCell>
-                    <TableCell className="font-medium text-slate-800">{product.name}</TableCell>
+                    <TableCell className="font-medium text-slate-800 dark:text-slate-200">{product.name}</TableCell>
                     <TableCell className="text-right text-muted-foreground">{formatCurrency(product.costPrice)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(product.sellingPrice)}</TableCell>
                     <TableCell className="text-right font-medium">{formatNumber(product.quantity)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(product.totalSum)}</TableCell>
                     <TableCell className="text-right">
-                      <span className={product.profit >= 0 ? 'text-emerald-600 font-semibold' : 'text-red-600 font-semibold'}>
+                      <span className={product.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>
                         {formatCurrency(product.profit)}
                       </span>
                     </TableCell>
                   </TableRow>
                 ))}
                  {/* Totals row */}
-                 <TableRow className="bg-slate-50 border-t-2 font-semibold">
+                 <TableRow className="bg-slate-50 dark:bg-slate-800 border-t-2 font-semibold">
                    <TableCell className="text-center text-xs">#</TableCell>
                    <TableCell>{tCommon('total')}</TableCell>
                    <TableCell />
@@ -120,7 +120,7 @@ export function SoldProductsTable({ products, lang }: SoldProductsTableProps) {
                   <TableCell className="text-right">{formatNumber(totals.quantity)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(totals.totalSum)}</TableCell>
                   <TableCell className="text-right">
-                    <span className={totals.profit >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                    <span className={totals.profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
                       {formatCurrency(totals.profit)}
                     </span>
                   </TableCell>

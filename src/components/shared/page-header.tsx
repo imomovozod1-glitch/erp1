@@ -1,11 +1,13 @@
 import { cn } from '@/lib/utils'
 import { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageInfoButton } from '@/components/shared/page-info-button'
 import Link from 'next/link'
 
 interface PageHeaderProps {
   title: string
   subtitle?: string
+  info?: string
   action?: {
     label: string
     href?: string
@@ -20,6 +22,7 @@ interface PageHeaderProps {
 export function PageHeader({
   title,
   subtitle,
+  info,
   action,
   breadcrumbs,
   children,
@@ -46,7 +49,10 @@ export function PageHeader({
             ))}
           </nav>
         )}
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{title}</h1>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{title}</h1>
+          {info && <PageInfoButton text={info} />}
+        </div>
         {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
       </div>
 
@@ -57,7 +63,7 @@ export function PageHeader({
             <Link
               href={action.href}
               prefetch={true}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[0.8rem] font-medium rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+              className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[0.8rem] font-medium rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition-colors"
             >
               {ActionIcon && <ActionIcon className="h-3.5 w-3.5" />}
               {action.label}
@@ -66,7 +72,7 @@ export function PageHeader({
             <Button
               size="sm"
               onClick={action.onClick}
-              className="bg-indigo-600 hover:bg-indigo-500 gap-1.5"
+              className="bg-violet-600 hover:bg-violet-500 gap-1.5"
             >
               {ActionIcon && <ActionIcon className="h-4 w-4" />}
               {action.label}

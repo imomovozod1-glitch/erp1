@@ -106,7 +106,7 @@ export function TenantsTable({
                 className={cn(
                   'px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
                   statusFilter === f.value
-                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    ? 'bg-violet-600 border-violet-600 text-white'
                     : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
                 )}
               >
@@ -119,7 +119,7 @@ export function TenantsTable({
           <span className="hidden sm:inline text-xs text-slate-400 font-medium whitespace-nowrap">
             {t('showing', { start: startItem, end: endItem, total: filtered.length })}
           </span>
-          <Button onClick={() => router.push('/admin/tenants/new')} className="gap-2 bg-indigo-600 hover:bg-indigo-500">
+          <Button onClick={() => router.push('/admin/tenants/new')} className="gap-2 bg-violet-600 hover:bg-violet-500">
             <Plus className="h-4 w-4" /> {t('newTenant')}
           </Button>
         </div>

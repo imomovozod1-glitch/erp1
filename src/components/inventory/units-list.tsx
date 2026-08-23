@@ -127,7 +127,7 @@ export function UnitsList({ lang }: UnitsListProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Statistics Card */}
         <Card className="border-slate-200/60 shadow-sm flex items-center p-6 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
-          <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+          <div className="p-3 bg-violet-50 rounded-xl text-violet-600">
             <Scale className="h-6 w-6" />
           </div>
           <div className="text-center">
@@ -156,9 +156,9 @@ export function UnitsList({ lang }: UnitsListProps) {
                 placeholder={lang === 'uz' ? 'Masalan: Juft, Quti' : lang === 'ru' ? 'Например: Коробка, Пара' : 'e.g. Pair, Box'}
                 value={newUnit}
                 onChange={(e) => setNewUnit(e.target.value)}
-                className="border-slate-200 focus-visible:ring-indigo-500 flex-1"
+                className="border-slate-200 focus-visible:ring-violet-500 flex-1"
               />
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 cursor-pointer">
+              <Button type="submit" className="bg-violet-600 hover:bg-violet-700 text-white shrink-0 cursor-pointer">
                 <Plus className="h-4 w-4 mr-1" />
                 {tCommon('add') || 'Add'}
               </Button>
@@ -210,7 +210,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                             <Input
                               value={editingValue}
                               onChange={(e) => setEditingValue(e.target.value)}
-                              className="h-8 py-1 px-2 text-sm border-slate-200 focus-visible:ring-indigo-500 max-w-[200px]"
+                              className="h-8 py-1 px-2 text-sm border-slate-200 focus-visible:ring-violet-500 max-w-[200px]"
                               autoFocus
                             />
                           ) : (
@@ -251,7 +251,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                                   setEditingUnit(u)
                                   setEditingValue(u)
                                 }}
-                                className="h-8 w-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 cursor-pointer"
+                                className="h-8 w-8 text-violet-600 hover:text-violet-900 hover:bg-violet-50 cursor-pointer"
                                 title={tCommon('edit') || 'Edit'}
                               >
                                 <Pencil className="h-4 w-4" />

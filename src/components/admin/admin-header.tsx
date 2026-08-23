@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import { AdminLocaleSwitcher } from '@/components/admin/admin-locale-switcher'
 import { AdminLogoutButton } from '@/components/admin/admin-logout-button'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
 
 export function AdminHeader() {
   const t = useTranslations('admin.shell')
@@ -17,6 +18,7 @@ export function AdminHeader() {
     >
       <SidebarTrigger className="-ml-1" />
       <div className="flex-1" />
+      <ThemeToggle />
       <AdminLocaleSwitcher />
       <AdminLogoutButton label={t('logout')} />
     </header>

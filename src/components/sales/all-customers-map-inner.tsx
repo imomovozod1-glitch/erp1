@@ -13,7 +13,7 @@ import { formatCurrency } from '@/lib/utils'
 const DEFAULT_CENTER: [number, number] = [41.2995, 69.2401] // Tashkent
 
 const pinIcon = L.divIcon({
-  html: `<div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 shadow-lg border-2 border-white">
+  html: `<div class="flex items-center justify-center w-8 h-8 rounded-full bg-violet-600 shadow-lg border-2 border-white">
            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
          </div>`,
   className: '',
@@ -118,7 +118,7 @@ export function AllCustomersMapInner({ customers, lang }: { customers: MappableC
                       )}
                       <Link
                         href={`/${lang}/customers/${customer.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 pt-1"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-800 pt-1"
                       >
                         {tCommon('details')} <ArrowRight className="h-3 w-3" />
                       </Link>

@@ -117,7 +117,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
       {/* Top Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl border shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-indigo-50 dark:bg-indigo-950/50 rounded-xl text-indigo-600 dark:text-indigo-400">
+          <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
             <Truck className="h-7 w-7" />
           </div>
           <div>
@@ -130,7 +130,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
 
         <div className="flex items-center gap-2">
           <StatusBadge tone={supplier.is_active ? 'emerald' : 'slate'} label={supplier.is_active ? tc('active') : tc('inactive')} />
-          <Button onClick={handleExport} size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-medium">
+          <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
             {tc('export') || 'Eksport'}
           </Button>
@@ -227,7 +227,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                   <button
                     type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="block text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline cursor-pointer"
+                    className="block text-xs font-semibold text-violet-600 hover:text-violet-700 hover:underline cursor-pointer"
                   >
                     {lang === 'uz' ? "Kattaroq xaritada ko'rish" : lang === 'ru' ? 'Показать на большой карте' : 'View larger map'}
                   </button>
@@ -239,7 +239,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                 <Globe className="h-4 w-4 text-slate-450 text-slate-400 mt-0.5" />
                 <div>
                   <span className="text-xs text-slate-400 block">Website</span>
-                  <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-600 hover:underline text-xs break-all">
+                  <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-violet-600 hover:underline text-xs break-all">
                     {supplier.website}
                   </a>
                 </div>
@@ -255,7 +255,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
               <button
                 onClick={() => setActiveTab('purchases')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'purchases' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'purchases' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
                 }`}
               >
                 <Truck className="h-4 w-4" />
@@ -264,7 +264,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
               <button
                 onClick={() => setActiveTab('payments')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'payments' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'payments' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
                 }`}
               >
                 <DollarSign className="h-4 w-4" />

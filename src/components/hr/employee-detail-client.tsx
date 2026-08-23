@@ -158,7 +158,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-xl border shadow-sm">
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14">
-            <AvatarFallback className="bg-indigo-100 text-indigo-700 text-lg font-bold">
+            <AvatarFallback className="bg-violet-100 text-violet-700 text-lg font-bold">
               {employee.full_name?.[0] ?? 'E'}
             </AvatarFallback>
           </Avatar>
@@ -176,7 +176,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
-                  period === p ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  period === p ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {periodLabels[p]}
@@ -199,7 +199,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
               ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
               : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated')}
           />
-          <Button onClick={handleExport} size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-medium">
+          <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
             {tc('export') || 'Eksport'}
           </Button>
@@ -286,7 +286,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
               <button
                 onClick={() => setActiveTab('payouts')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'payouts' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'payouts' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
                 }`}
               >
                 <DollarSign className="h-4 w-4" />
@@ -295,7 +295,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
               <button
                 onClick={() => setActiveTab('sales')}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === 'sales' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-900'
+                  activeTab === 'sales' ? 'border-violet-600 text-violet-600' : 'border-transparent text-slate-500 hover:text-slate-900'
                 }`}
               >
                 <ShoppingCart className="h-4 w-4" />

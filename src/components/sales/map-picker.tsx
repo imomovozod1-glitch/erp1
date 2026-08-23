@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 const DEFAULT_CENTER: [number, number] = [41.2995, 69.2401] // Tashkent
 
 const pinIcon = L.divIcon({
-  html: `<div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 shadow-lg border-2 border-white transform transition-transform duration-200 hover:scale-110">
+  html: `<div class="flex items-center justify-center w-8 h-8 rounded-full bg-violet-600 shadow-lg border-2 border-white transform transition-transform duration-200 hover:scale-110">
            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
          </div>`,
   className: '',
@@ -167,13 +167,13 @@ export function MapPicker({ onLocationSelect, initialAddress, initialLat, initia
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="pl-9 h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="pl-9 h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
           />
         </div>
         <Button
           type="submit"
           disabled={isSearching}
-          className="h-10 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm flex items-center gap-1.5"
+          className="h-10 px-4 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm flex items-center gap-1.5"
         >
           {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           {t('search')}
@@ -216,7 +216,7 @@ export function MapPicker({ onLocationSelect, initialAddress, initialLat, initia
       {/* Geolocation info display */}
       <div className="p-3.5 bg-slate-50 border border-slate-150 rounded-xl space-y-2">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-          <MapPin className="h-3.5 w-3.5 text-indigo-500" />
+          <MapPin className="h-3.5 w-3.5 text-violet-500" />
           {t('selectedLocation')}
         </div>
         {isResolving ? (

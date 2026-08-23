@@ -134,7 +134,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                     <TableCell>
                       <div className="flex items-center gap-2.5">
                         <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs">
+                          <AvatarFallback className="bg-violet-100 text-violet-700 text-xs">
                             {emp.full_name?.[0] ?? 'E'}
                           </AvatarFallback>
                         </Avatar>
@@ -142,7 +142,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                           <p className="font-semibold text-slate-800">
                             <Link
                               href={`/${lang}/hr/employees/${emp.id}`}
-                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline transition-colors"
+                              className="text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 hover:underline transition-colors"
                             >
                               {emp.full_name ?? '—'}
                             </Link>

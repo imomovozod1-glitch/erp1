@@ -21,8 +21,9 @@ export default async function TransactionCategoriesPage({
 }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, categories] = await Promise.all([
+  const [t, tInfo, categories] = await Promise.all([
     getTranslations('finance'),
+    getTranslations('pageInfo'),
     getCachedTransactionCategories(tenantId),
   ])
 
@@ -31,6 +32,7 @@ export default async function TransactionCategoriesPage({
       <PageHeader
         title={t('txCategories')}
         subtitle={t('txCategoriesSubtitle')}
+        info={tInfo('txCategories')}
         action={{
           label: t('addTxCategory'),
           href: `/${lang}/finance/categories/new`,

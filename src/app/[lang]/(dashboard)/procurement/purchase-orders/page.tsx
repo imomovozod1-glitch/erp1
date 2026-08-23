@@ -13,8 +13,9 @@ export const metadata: Metadata = { title: 'Purchase Orders' }
 export default async function PurchaseOrdersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, orders] = await Promise.all([
+  const [t, tInfo, orders] = await Promise.all([
     getTranslations('procurement'),
+    getTranslations('pageInfo'),
     getCachedPurchaseOrders(tenantId),
   ])
 
@@ -23,6 +24,7 @@ export default async function PurchaseOrdersPage({ params }: { params: Promise<{
       <PageHeader
         title={t('purchases')}
         subtitle={t('title')}
+        info={tInfo('purchaseOrders')}
         action={{ label: t('addPurchase'), href: `/${lang}/procurement/purchase-orders/new`, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },

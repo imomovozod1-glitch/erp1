@@ -21,9 +21,10 @@ export default async function CustomerCategoriesPage({
 }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, tNav, categories] = await Promise.all([
+  const [t, tNav, tInfo, categories] = await Promise.all([
     getTranslations('sales'),
     getTranslations('nav'),
+    getTranslations('pageInfo'),
     getCachedCustomerCategories(tenantId),
   ])
 
@@ -32,6 +33,7 @@ export default async function CustomerCategoriesPage({
       <PageHeader
         title={t('customerCategories')}
         subtitle={t('customers')}
+        info={tInfo('customerCategories')}
         action={{
           label: t('addCustomerCategory'),
           href: `/${lang}/customers/categories/new`,

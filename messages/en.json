@@ -96,7 +96,8 @@
     "settings": "Settings",
     "tools": "Tools",
     "pos": "POS (Kassa)",
-    "customers": "Customers"
+    "customers": "Customers",
+    "guide": "Guide"
   },
   "auth": {
     "loading": "Signing in...",
@@ -807,5 +808,31 @@
         "error": "Could not complete action"
       }
     }
+  },
+  "pageInfo": {
+    "dashboard": "Dashboard — shows today's sales, revenue, and key metrics in one place. Track your business's overall health from here.",
+    "analytics": "Analytics — detailed sales, profit, and product reports for a selected period. Analyze business trends with charts and tables.",
+    "pos": "POS (checkout) — for quick in-store sales to customers. Pick a product, enter the quantity, choose a payment method, and complete the sale.",
+    "products": "Products — a list of all your goods, their prices, and stock levels. Add new products, edit them, or import/export via Excel.",
+    "categories": "Categories — group your products for tidy organization and quick lookup.",
+    "movements": "Stock movements — a history of every stock in, out, and adjustment, each recorded with its reason.",
+    "units": "Measurement units — manage the list of units (piece, kg, liter, etc.) used for products.",
+    "salesOrders": "Sales orders — a list of all sales made to customers. Create new orders, track status, and view details.",
+    "invoices": "Invoices — billing documents issued to customers. Track payment status and overdue invoices.",
+    "customers": "Customers — a list of all your customers, contact info, and outstanding debt. Add new customers or edit existing ones.",
+    "customersMap": "Customers map — see the location of all your customers on one map.",
+    "customerCategories": "Customer categories — group customers into segments to work with them more easily.",
+    "purchaseOrders": "Purchase orders — a list of purchases from suppliers. Create new orders and track received quantities.",
+    "suppliers": "Suppliers — a list of all your vendors and your account balances with them.",
+    "cashbox": "Cashbox — manage the balance of your cash, card, and transfer accounts. Record income and expense transactions here.",
+    "transactions": "Transactions — a history of all financial income and expenses, each recorded with a type and reason.",
+    "txCategories": "Transaction categories — group income and expenses by type for more accurate financial reporting.",
+    "employees": "Employees — a list of all staff, their positions, and salaries. Hire new employees or edit existing records.",
+    "settings": "Settings — manage company info, users, and security settings from here.",
+    "support": "Support — ask a question or report an issue.",
+    "guide": "Guide — a step-by-step explanation of how to use the system.",
+    "guideIntro": "Move between sections using the menu on the left. Click the (i) icon next to any page title to learn what that page is for. Use the top bar to change language, switch light/dark mode, and check notifications.",
+    "guideTitle": "Guide",
+    "guideSubtitle": "A quick guide to using the system"
   }
 }

@@ -96,7 +96,8 @@
     "settings": "Sozlamalar",
     "tools": "Vositalar",
     "pos": "POS",
-    "customers": "Mijozlar"
+    "customers": "Mijozlar",
+    "guide": "Qo'llanma"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -806,5 +807,31 @@
         "error": "Amalni bajarib bo'lmadi"
       }
     }
+  },
+  "pageInfo": {
+    "dashboard": "Bosh sahifa — bugungi savdo, daromad va asosiy ko'rsatkichlarni bir joyda ko'rsatadi. Bu yerdan biznesingizning umumiy holatini kuzatib borishingiz mumkin.",
+    "analytics": "Analitika — tanlangan davr bo'yicha savdo, foyda va mahsulotlar bo'yicha batafsil hisobotlarni ko'rsatadi. Grafik va jadvallar orqali biznes tendensiyalarini tahlil qiling.",
+    "pos": "Kassa (POS) — do'kon peshtaxtasida mijozga tezkor sotuv qilish uchun. Mahsulot tanlang, miqdorni kiriting, to'lov turini tanlab, chekni yakunlang.",
+    "products": "Mahsulotlar — barcha tovarlaringiz ro'yxati, narxi va qoldig'i shu yerda. Yangi mahsulot qo'shing, tahrirlang yoki Excel orqali import/eksport qiling.",
+    "categories": "Kategoriyalar — mahsulotlaringizni guruhlarga ajratish uchun. Bu tovarlarni tartibli saqlash va tez topishga yordam beradi.",
+    "movements": "Ombor harakatlari — mahsulotlarning kirim, chiqim va tuzatishlar tarixini ko'rsatadi. Har bir o'zgarish sababi bilan birga qayd etiladi.",
+    "units": "O'lchov birliklari — mahsulotlar uchun ishlatiladigan birliklar (dona, kg, litr va h.k.) ro'yxatini shu yerdan boshqaring.",
+    "salesOrders": "Sotuv buyurtmalari — mijozlarga qilingan barcha sotuvlar ro'yxati. Yangi buyurtma yarating, holatini kuzating va tafsilotlarini ko'ring.",
+    "invoices": "Hisob-fakturalar — mijozlarga chiqarilgan to'lov hujjatlari. To'lov holatini kuzating va muddati o'tgan fakturalarni nazorat qiling.",
+    "customers": "Mijozlar — barcha mijozlaringiz ro'yxati, aloqa ma'lumotlari va qarzdorligi shu yerda. Yangi mijoz qo'shing yoki mavjudlarini tahrirlang.",
+    "customersMap": "Mijozlar xaritasi — barcha mijozlaringizning joylashuvini bitta xaritada ko'ring.",
+    "customerCategories": "Mijoz toifalari — mijozlarni turkumlarga ajratib, ular bilan ishlashni osonlashtiring.",
+    "purchaseOrders": "Xarid buyurtmalari — yetkazib beruvchilardan qilingan xaridlar ro'yxati. Yangi xarid yarating va qabul qilingan miqdorni kuzating.",
+    "suppliers": "Yetkazib beruvchilar — barcha ta'minotchilaringiz ro'yxati va ular bilan bo'lgan hisob-kitoblar.",
+    "cashbox": "Kassa — naqd, karta va o'tkazma hisoblaringiz balansini shu yerdan boshqaring. Kirim va chiqim tranzaksiyalarini kiriting.",
+    "transactions": "Tranzaksiyalar — barcha moliyaviy kirim va chiqimlar tarixi. Har bir tranzaksiya turi va sababi bilan qayd etiladi.",
+    "txCategories": "Tranzaksiya turlari — kirim va chiqimlaringizni turlarga ajratib, moliyaviy hisobotlarni aniqroq yuriting.",
+    "employees": "Xodimlar — barcha xodimlar ro'yxati, lavozimi va maoshi shu yerda. Yangi xodim qabul qiling yoki mavjudlarini tahrirlang.",
+    "settings": "Sozlamalar — tashkilot ma'lumotlari, foydalanuvchilar va xavfsizlik sozlamalarini shu yerdan boshqaring.",
+    "support": "Qo'llab-quvvatlash — savol yoki muammolaringiz bo'yicha yordam so'rang.",
+    "guide": "Qo'llanma — tizimdan qanday foydalanishni bosqichma-bosqich tushuntiradi.",
+    "guideIntro": "Chap tomondagi menyu orqali bo'limlar orasida harakatlaning. Har bir sahifa sarlavhasi yonidagi (i) belgisini bosib, o'sha sahifa nima uchun kerakligini bilib olishingiz mumkin. Yuqori panelda til, yorug'/qorong'i rejim va bildirishnomalarni sozlashingiz mumkin.",
+    "guideTitle": "Qo'llanma",
+    "guideSubtitle": "Tizimdan qanday foydalanish bo'yicha qisqacha ko'rsatma"
   }
 }

@@ -56,7 +56,7 @@ export function SupportChatbot({ lang }: { lang: string }) {
     <>
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-50 flex h-[28rem] w-80 flex-col overflow-hidden rounded-2xl border border-slate-200/65 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:w-96">
-          <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-indigo-500 px-4 py-3 text-white">
+          <div className="flex items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 px-4 py-3 text-white">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
               <span className="text-sm font-semibold">{t('chatbotTitle')}</span>
@@ -82,7 +82,7 @@ export function SupportChatbot({ lang }: { lang: string }) {
                   className={cn(
                     'max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm',
                     m.role === 'user'
-                      ? 'rounded-tr-sm bg-indigo-600 text-white'
+                      ? 'rounded-tr-sm bg-violet-600 text-white'
                       : 'rounded-tl-sm bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200'
                   )}
                 >
@@ -116,7 +116,7 @@ export function SupportChatbot({ lang }: { lang: string }) {
               size="icon"
               onClick={handleSend}
               disabled={isSending || !input.trim()}
-              className="h-9 w-9 shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-500"
+              className="h-9 w-9 shrink-0 rounded-xl bg-violet-600 hover:bg-violet-500"
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -128,7 +128,7 @@ export function SupportChatbot({ lang }: { lang: string }) {
         type="button"
         onClick={() => setIsOpen((v) => !v)}
         aria-label={t('chatbotTitle')}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30 transition-transform hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-500/30 transition-transform hover:scale-105"
       >
         {isOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
       </button>

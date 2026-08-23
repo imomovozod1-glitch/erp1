@@ -19,6 +19,7 @@ import {
   Store,
   LifeBuoy,
   Contact,
+  BookOpen,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -98,6 +99,7 @@ const NAV_ITEMS: NavItem[] = [
     ]
   },
   { key: 'settings', icon: Settings, href: 'settings' },
+  { key: 'guide', icon: BookOpen, href: 'guide' },
 ]
 
 interface AppSidebarProps {
@@ -179,7 +181,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href={`/${lang}/dashboard`} prefetch={true} />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-600 text-white">
                 <Building2 className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -276,10 +278,10 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
               <SidebarMenuButton
                 size="lg"
                 render={<Link href={`/${lang}/support`} prefetch={true} />}
-                className="gap-3 text-slate-700 hover:text-indigo-700 hover:bg-slate-100 transition-colors duration-200"
+                className="gap-3 text-slate-700 hover:text-violet-700 hover:bg-slate-100 transition-colors duration-200"
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors">
-                  <LifeBuoy className="size-4 text-indigo-600 animate-pulse" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600 group-hover:bg-violet-100 transition-colors">
+                  <LifeBuoy className="size-4 text-violet-600 animate-pulse" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{lang === 'uz' ? 'Qo\'llab-quvvatlash' : lang === 'ru' ? 'Поддержка' : 'Support'}</span>
@@ -292,7 +294,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 render={<Link href={`/${lang}/settings/profile`} prefetch={true} />}
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg bg-indigo-100 text-indigo-700 text-xs font-semibold">
+                  <AvatarFallback className="rounded-lg bg-violet-100 text-violet-700 text-xs font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -302,7 +304,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 </div>
                 <Badge
                   variant="outline"
-                  className="ml-auto text-[10px] px-1.5 capitalize border-indigo-200 text-indigo-600"
+                  className="ml-auto text-[10px] px-1.5 capitalize border-violet-200 text-violet-600"
                 >
                   {profile?.role ? tSettings(`role.${profile.role}`) : ''}
                 </Badge>

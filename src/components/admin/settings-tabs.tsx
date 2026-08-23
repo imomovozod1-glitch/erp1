@@ -26,7 +26,7 @@ export function SettingsTabs() {
             className={cn(
               'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
               isActive
-                ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-900 dark:text-indigo-400'
+                ? 'bg-white text-violet-700 shadow-2xs dark:bg-slate-900 dark:text-violet-400'
                 : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
             )}
           >

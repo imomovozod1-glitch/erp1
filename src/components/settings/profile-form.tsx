@@ -81,7 +81,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
             <Label className="text-slate-600 font-medium">{t('role.admin') || 'Role'}</Label>
-            <div className="h-9 flex items-center px-3 rounded-md bg-indigo-50/50 border border-indigo-100 text-indigo-700 text-sm font-semibold capitalize w-fit">
+            <div className="h-9 flex items-center px-3 rounded-md bg-violet-50/50 border border-violet-100 text-violet-700 text-sm font-semibold capitalize w-fit">
               {roleLabels[profile?.role || ''] || profile?.role || 'Staff'}
             </div>
           </div>
@@ -99,7 +99,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           </div>
 
           <div className="flex justify-end pt-4 border-t border-slate-100">
-            <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-700 text-white transition-colors px-6 shadow-sm">
+            <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-700 text-white transition-colors px-6 shadow-sm">
               {isSubmitting ? tCommon('loading') : tCommon('save')}
             </Button>
           </div>

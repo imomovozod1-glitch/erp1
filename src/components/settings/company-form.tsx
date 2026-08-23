@@ -135,7 +135,7 @@ export function CompanyForm() {
               id="name"
               {...register('name')}
               placeholder="e.g. Acme Corp"
-              className="border-slate-200 focus-visible:ring-indigo-500"
+              className="border-slate-200 focus-visible:ring-violet-500"
             />
             {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
           </div>
@@ -148,7 +148,7 @@ export function CompanyForm() {
                 type="email"
                 {...register('email')}
                 placeholder="info@company.com"
-                className="border-slate-200 focus-visible:ring-indigo-500"
+                className="border-slate-200 focus-visible:ring-violet-500"
               />
               {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
             </div>
@@ -159,7 +159,7 @@ export function CompanyForm() {
                 id="phone"
                 {...register('phone')}
                 placeholder="+998901234567"
-                className="border-slate-200 focus-visible:ring-indigo-500"
+                className="border-slate-200 focus-visible:ring-violet-500"
               />
               {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
             </div>
@@ -181,13 +181,13 @@ export function CompanyForm() {
                 {...register('address')}
                 placeholder="123 Main St, City"
                 rows={3}
-                className="border-slate-200 focus-visible:ring-indigo-500 flex-1"
+                className="border-slate-200 focus-visible:ring-violet-500 flex-1"
               />
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleOpenMap}
-                className="h-10 px-3 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg shrink-0 self-start"
+                className="h-10 px-3 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600 rounded-lg shrink-0 self-start"
                 title={tSales('locationPicker.button')}
               >
                 <MapPin className="h-4 w-4" />
@@ -200,7 +200,7 @@ export function CompanyForm() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white transition-colors px-6 shadow-sm"
+              className="bg-violet-600 hover:bg-violet-700 text-white transition-colors px-6 shadow-sm"
             >
               {isSubmitting ? tCommon('loading') : tCommon('save')}
             </Button>
@@ -214,7 +214,7 @@ export function CompanyForm() {
         <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
           <DialogHeader className="pb-3 border-b border-slate-100">
             <DialogTitle className="font-bold text-slate-800 text-base flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-indigo-600" />
+              <MapPin className="h-5 w-5 text-violet-600" />
               {tSales('locationPicker.dialogTitle')}
             </DialogTitle>
           </DialogHeader>
@@ -242,7 +242,7 @@ export function CompanyForm() {
             <Button
               type="button"
               onClick={handleConfirmLocation}
-              className="h-10 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
+              className="h-10 px-4 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
             >
               {tCommon('save')}
             </Button>

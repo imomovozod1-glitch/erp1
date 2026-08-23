@@ -128,7 +128,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
       {/* Stats Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-slate-200/60 shadow-sm flex items-center p-6 gap-4">
-          <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+          <div className="p-3 bg-violet-50 rounded-xl text-violet-600">
             <Users className="h-6 w-6" />
           </div>
           <div>
@@ -175,7 +175,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
               placeholder={tCommon('search') || 'Search...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 border-slate-200 focus-visible:ring-indigo-500"
+              className="pl-9 border-slate-200 focus-visible:ring-violet-500"
             />
           </div>
         </CardHeader>
@@ -213,7 +213,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
-                              <AvatarFallback className="bg-indigo-50 text-indigo-700 text-xs font-semibold">
+                              <AvatarFallback className="bg-violet-50 text-violet-700 text-xs font-semibold">
                                 {initials}
                               </AvatarFallback>
                             </Avatar>
@@ -221,7 +221,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                               <p className="font-semibold text-slate-800 text-sm">
                                 {p.full_name}
                                 {isSelf && (
-                                  <Badge className="ml-2 bg-indigo-50 text-indigo-700 border-indigo-100 text-[10px] font-medium py-0 px-1.5">
+                                  <Badge className="ml-2 bg-violet-50 text-violet-700 border-violet-100 text-[10px] font-medium py-0 px-1.5">
                                     {lang === 'uz' ? 'Siz' : lang === 'ru' ? 'Вы' : 'You'}
                                   </Badge>
                                 )}
@@ -279,8 +279,8 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                                   type="button"
                                   disabled={updatingUserId === p.id}
                                   onClick={() => handleStatusChange(p.id, p.is_active)}
-                                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                                    p.is_active ? 'bg-indigo-600' : 'bg-slate-200'
+                                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-violet-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                                    p.is_active ? 'bg-violet-600' : 'bg-slate-200'
                                   }`}
                                 >
                                   <span
@@ -331,7 +331,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
       {/* Info Card on Registration */}
       <Card className="border-slate-100 bg-slate-50/50">
         <CardContent className="p-4 flex items-start gap-3">
-          <div className="p-1.5 bg-white rounded border border-slate-100 text-indigo-600 mt-0.5">
+          <div className="p-1.5 bg-white rounded border border-slate-100 text-violet-600 mt-0.5">
             <Shield className="h-4 w-4" />
           </div>
           <div className="space-y-1">

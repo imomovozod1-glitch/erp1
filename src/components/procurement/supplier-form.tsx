@@ -153,7 +153,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
     <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-3xl bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
       <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-        <div className="h-10 w-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+        <div className="h-10 w-10 rounded-lg bg-violet-50 flex items-center justify-center text-violet-600 shrink-0">
           <Truck className="h-5 w-5" />
         </div>
         <div>
@@ -173,7 +173,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             id="name"
             {...register('name')}
             placeholder={t('supplierName')}
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
           />
           {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name.message}</p>}
         </div>
@@ -193,7 +193,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
                 value={field.value ?? ''}
                 onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
                 placeholder="+998 90 123 45 67"
-                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+                className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
               />
             )}
           />
@@ -210,7 +210,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             id="contact_person"
             {...register('contact_person')}
             placeholder={t('contactPerson')}
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
           />
         </div>
 
@@ -225,7 +225,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             type="email"
             {...register('email')}
             placeholder="example@mail.com"
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
           />
           {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
         </div>
@@ -240,7 +240,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             id="tin"
             {...register('tin')}
             placeholder="123456789"
-            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white"
+            className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white"
           />
         </div>
 
@@ -253,7 +253,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
           <select
             id="is_active"
             {...register('is_active', { setValueAs: (v) => v === 'true' })}
-            className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 focus:bg-white"
+            className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 focus:bg-white"
           >
             <option value="true">{tCommon('active')}</option>
             <option value="false">{tCommon('inactive')}</option>
@@ -277,13 +277,13 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
               id="address"
               {...register('address')}
               placeholder={tCommon('address') || 'Address'}
-              className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white flex-1"
+              className="h-10 bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white flex-1"
             />
             <Button
               type="button"
               variant="outline"
               onClick={handleOpenMap}
-              className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+              className="h-10 px-4 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-violet-600 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
             >
               <MapPin className="h-4 w-4 text-slate-500" />
               {tSales('locationPicker.button')}
@@ -302,7 +302,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             {...register('notes')}
             placeholder={tCommon('notes') || 'Notes'}
             rows={3}
-            className="bg-slate-50 border-slate-200 focus-visible:ring-indigo-500 rounded-lg text-sm transition-all focus:bg-white resize-none"
+            className="bg-slate-50 border-slate-200 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white resize-none"
           />
         </div>
       </div>
@@ -317,7 +317,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
         >
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="bg-indigo-600 hover:bg-indigo-500 rounded-lg">
+        <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500 rounded-lg">
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>
       </div>
@@ -328,7 +328,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
         <DialogContent className="sm:max-w-2xl bg-white p-6 rounded-xl border border-slate-200 shadow-lg">
           <DialogHeader className="pb-3 border-b border-slate-100">
             <DialogTitle className="font-bold text-slate-800 text-base flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-indigo-600" />
+              <MapPin className="h-5 w-5 text-violet-600" />
               {tSales('locationPicker.dialogTitle')}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500 font-sans mt-1">
@@ -355,7 +355,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             <Button
               type="button"
               onClick={handleConfirmLocation}
-              className="h-10 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
+              className="h-10 px-4 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
             >
               {tCommon('save')}
             </Button>

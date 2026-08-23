@@ -21,8 +21,9 @@ export default async function CategoriesPage({
 }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, categories] = await Promise.all([
+  const [t, tInfo, categories] = await Promise.all([
     getTranslations('inventory'),
+    getTranslations('pageInfo'),
     getCachedCategories(tenantId),
   ])
 
@@ -31,6 +32,7 @@ export default async function CategoriesPage({
       <PageHeader
         title={t('categories')}
         subtitle={t('title')}
+        info={tInfo('categories')}
         action={{
           label: t('addCategory'),
           href: `/${lang}/inventory/categories/new`,

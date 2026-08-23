@@ -69,7 +69,7 @@ export default async function TenantDetailPage({
       />
 
       <div className="flex items-center gap-3 -mt-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-600 dark:bg-violet-950/30 dark:text-violet-400">
           {getInitials(tenant.company_name)}
         </div>
         <StatusBadge label={statusLabel} tone={STATUS_TONE[tenant.status] ?? 'slate'} />
@@ -94,7 +94,7 @@ export default async function TenantDetailPage({
       <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Receipt className="h-4 w-4 text-indigo-600" /> {t('paymentHistory')}
+            <Receipt className="h-4 w-4 text-violet-600" /> {t('paymentHistory')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -105,7 +105,7 @@ export default async function TenantDetailPage({
       <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <KeyRound className="h-4 w-4 text-indigo-600" /> {t('ownerLogin')}
+            <KeyRound className="h-4 w-4 text-violet-600" /> {t('ownerLogin')}
           </CardTitle>
         </CardHeader>
         <CardContent>

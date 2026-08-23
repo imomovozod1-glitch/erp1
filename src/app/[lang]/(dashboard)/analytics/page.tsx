@@ -11,6 +11,7 @@ interface AnalyticsPageProps {
 export default async function AnalyticsPage({ params }: AnalyticsPageProps) {
   const { lang } = await params
   const t = await getTranslations('analytics')
+  const tInfo = await getTranslations('pageInfo')
   const tenantId = await getCurrentTenantId()
 
   // getCachedDashboardStats() shares the same underlying cache entry as the
@@ -26,7 +27,7 @@ export default async function AnalyticsPage({ params }: AnalyticsPageProps) {
     <div className="flex flex-col gap-4">
       <PageHeader
         title={t('title')}
-        // description={t('description')}
+        info={tInfo('analytics')}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') }
