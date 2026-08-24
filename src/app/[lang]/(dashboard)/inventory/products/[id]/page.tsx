@@ -2,7 +2,6 @@ import { getCachedProductDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { ProductDetailClient } from '@/components/inventory/product-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 
@@ -29,9 +28,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           { label: t('title', { fallback: 'Ombor' }), href: `/${lang}/inventory/products` },
           { label: product.name }
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <ProductDetailClient
         lang={lang}

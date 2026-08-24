@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select, SelectContent,
   SelectItem, SelectTrigger, SelectValue
@@ -161,7 +162,19 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="order_date">{t('orderDate')}</Label>
-          <Input id="order_date" type="date" {...register('order_date')} />
+          <Controller
+            control={control}
+            name="order_date"
+            render={({ field }) => (
+              <DatePicker
+                id="order_date"
+                value={field.value}
+                onChange={field.onChange}
+                lang={lang}
+                placeholder={t('orderDate')}
+              />
+            )}
+          />
         </div>
 
         <div className="space-y-2">
@@ -177,7 +190,19 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="delivery_date">{t('deliveryDate')}</Label>
-          <Input id="delivery_date" type="date" {...register('delivery_date')} />
+          <Controller
+            control={control}
+            name="delivery_date"
+            render={({ field }) => (
+              <DatePicker
+                id="delivery_date"
+                value={field.value}
+                onChange={field.onChange}
+                lang={lang}
+                placeholder={t('deliveryDate')}
+              />
+            )}
+          />
         </div>
 
         <div className="space-y-2 md:col-span-2">

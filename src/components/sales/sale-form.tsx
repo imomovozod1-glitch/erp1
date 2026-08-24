@@ -387,9 +387,10 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
             </div>
             <Button
               type="button"
+              variant="outline"
               onClick={addItem}
               size="sm"
-              className="h-9 bg-violet-600 hover:bg-violet-500"
+              className="h-9 bg-white text-violet-600 border-violet-300 hover:bg-violet-50 dark:bg-slate-900 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-950/30"
               disabled={!selectedProductId}
             >
               <Plus className="h-4 w-4 mr-1" /> {t('addItem')}
@@ -405,6 +406,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <TableHead className="w-10 text-center">#</TableHead>
                   <TableHead>{t('productName')}</TableHead>
                   <TableHead className="text-right">{t('unitPrice')}</TableHead>
                   <TableHead className="text-right">{t('quantity')}</TableHead>
@@ -415,6 +417,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
               <TableBody>
                 {items.map((item, idx) => (
                   <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                    <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                     <TableCell className="font-medium">{item.productName}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
@@ -424,7 +427,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="h-7 w-7 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
                         onClick={() => removeItem(idx)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -433,7 +436,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
                   </TableRow>
                 ))}
                 <TableRow className="bg-slate-50 dark:bg-slate-800 font-semibold">
-                  <TableCell colSpan={3} className="text-right">{tCommon('total')}:</TableCell>
+                  <TableCell colSpan={4} className="text-right">{tCommon('total')}:</TableCell>
                   <TableCell className="text-right text-lg">{formatCurrency(totalAmount)}</TableCell>
                   <TableCell />
                 </TableRow>

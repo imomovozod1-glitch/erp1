@@ -67,6 +67,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-10 text-center">#</TableHead>
             <TableHead>{t('colTenant')}</TableHead>
             <TableHead>{t('colAmount')}</TableHead>
             <TableHead>{t('colNote')}</TableHead>
@@ -76,7 +77,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
         <TableBody>
           {paginated.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="h-32 text-center">
+              <TableCell colSpan={5} className="h-32 text-center">
                 <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                   <Wallet className="h-8 w-8 opacity-40" />
                   <p className="text-sm">{t('empty')}</p>
@@ -84,12 +85,15 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
               </TableCell>
             </TableRow>
           ) : (
-            paginated.map((p) => (
+            paginated.map((p, index) => (
               <TableRow
                 key={p.id}
                 className="cursor-pointer"
                 onClick={() => router.push(`/admin/tenants/${p.tenant_id}`)}
               >
+                <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">
+                  {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                </TableCell>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2.5">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-xs font-bold text-violet-600 dark:bg-violet-950/30 dark:text-violet-400">

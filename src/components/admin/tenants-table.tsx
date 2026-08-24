@@ -72,7 +72,6 @@ export function TenantsTable({
     { value: 'all', label: t('filterAll') },
     { value: 'active', label: t('statusActive') },
     { value: 'blocked', label: t('statusBlocked') },
-    { value: 'inactive', label: t('statusInactive') },
   ]
 
   const startItem = filtered.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0
@@ -128,6 +127,7 @@ export function TenantsTable({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-10 text-center">#</TableHead>
             <TableHead>{t('colCompany')}</TableHead>
             <TableHead>{t('colSubdomain')}</TableHead>
             <TableHead>{t('colPhone')}</TableHead>
@@ -140,17 +140,20 @@ export function TenantsTable({
         <TableBody>
           {paginated.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="h-32 text-center text-slate-400 dark:text-slate-500">
+              <TableCell colSpan={8} className="h-32 text-center text-slate-400 dark:text-slate-500">
                 {t('empty')}
               </TableCell>
             </TableRow>
           ) : (
-            paginated.map((tenant) => (
+            paginated.map((tenant, index) => (
               <TableRow
                 key={tenant.id}
                 className="cursor-pointer"
                 onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
               >
+                <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">
+                  {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                </TableCell>
                 <TableCell className="font-medium">{tenant.company_name}</TableCell>
                 <TableCell className="text-slate-500 dark:text-slate-400">{tenant.subdomain}</TableCell>
                 <TableCell className="text-slate-500 dark:text-slate-400 tabular-nums">{formatPhoneInput(tenant.phone)}</TableCell>

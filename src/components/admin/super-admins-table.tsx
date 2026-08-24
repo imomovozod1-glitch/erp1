@@ -138,6 +138,7 @@ export function SuperAdminsTable({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10 text-center">#</TableHead>
               <TableHead>{t('colName')}</TableHead>
               <TableHead>{t('colEmail')}</TableHead>
               <TableHead>{t('colSince')}</TableHead>
@@ -145,8 +146,9 @@ export function SuperAdminsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {admins.map((admin) => (
+            {admins.map((admin, index) => (
               <TableRow key={admin.id}>
+                <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{index + 1}</TableCell>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2.5">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-xs font-bold text-violet-600 dark:bg-violet-950/30 dark:text-violet-400">

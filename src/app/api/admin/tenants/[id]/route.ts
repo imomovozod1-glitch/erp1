@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
+import { phoneSchema } from '@/lib/phone-validation'
 
 const updateTenantSchema = z.object({
   subdomain: z
@@ -12,7 +13,7 @@ const updateTenantSchema = z.object({
     .refine((v) => !isReservedSubdomain(v), { message: 'This subdomain is reserved' })
     .optional(),
   company_name: z.string().min(1).optional(),
-  phone: z.string().min(7).optional(),
+  phone: phoneSchema('Invalid phone number').optional(),
   costing_method: z.enum(['fifo', 'lifo', 'aveco']).optional(),
   license_count: z.number().int().min(1).optional(),
   license_months: z.number().int().min(1).optional(),

@@ -14,10 +14,7 @@ This is a style guide for building UI/logic in this ERP, benchmarked against top
 
 ## 1. Clock & Time Display
 
-Every dashboard, analytics, and primary management (detail/list) page must show a live clock with date + time down to the minute.
-
-- Reference implementation: `src/components/shared/page-clock.tsx` (`PageClock`). It uses `useSyncExternalStore` (not `useEffect` + `setInterval` + `setState` — that trips the project's `react-hooks/set-state-in-effect` lint rule; see root `AGENTS.md` breaking-changes note).
-- Render it inside `<PageHeader>`'s children slot: `<PageHeader ...><PageClock lang={lang} /></PageHeader>`.
+Do not show a live current-time clock anywhere in the app. `src/components/shared/page-clock.tsx` (`PageClock`) is kept only as an unused, undeleted component — don't render it on new pages.
 - Locale formatting: `lang === 'uz' ? 'uz-UZ' : lang === 'ru' ? 'ru-RU' : 'en-US'`.
 
 ## 2. Visual & UX Standards

@@ -260,7 +260,9 @@
     "remainingQty": "Qolgan miqdor",
     "unitCost": "Birlik tannarxi",
     "receivedAt": "Kirim sanasi",
-    "nextSaleCost": "Keyingi sotuv tannarxi"
+    "nextSaleCost": "Keyingi sotuv tannarxi",
+    "uploadExcelFile": "Excel faylini yuklash",
+    "downloadTemplateAction": "Shablonni yuklab olish"
   },
   "sales": {
     "title": "Sotuv",
@@ -736,7 +738,8 @@
       "sectionNotes": "Qo'shimcha",
       "subscriptionEndRequired": "Obuna tugash sanasini tanlang",
       "custom": "Boshqa",
-      "months": "oy"
+      "months": "oy",
+      "selectDatePlaceholder": "Sanani tanlang"
     },
     "password": {
       "show": "Parolni ko'rsatish",

@@ -15,7 +15,6 @@ import {
   Bot
 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,9 +65,7 @@ export function SupportClient({ lang }: SupportClientProps) {
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') },
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Telegram Card */}

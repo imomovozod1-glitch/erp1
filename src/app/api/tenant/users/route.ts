@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
+import { phoneSchema } from '@/lib/phone-validation'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
 const modulePermissionSchema = z.object({ view: z.boolean(), edit: z.boolean() })
 // A partial map keyed by module — z.record() with an enum key requires
@@ -12,7 +13,7 @@ const permissionsSchema = z.record(z.string(), modulePermissionSchema).optional(
 
 const createUserSchema = z.object({
   full_name: z.string().min(1),
-  phone: z.string().min(7),
+  phone: phoneSchema('weak'),
   password: newPasswordSchema('weak'),
   permissions: permissionsSchema,
 })

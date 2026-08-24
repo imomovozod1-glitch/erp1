@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
@@ -11,8 +11,10 @@ import { invalidateProfile } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { optionalPhoneSchema } from '@/lib/phone-validation'
 import type { Profile } from '@/types/database.types'
 
 interface ProfileFormProps {
@@ -22,18 +24,19 @@ interface ProfileFormProps {
 export function ProfileForm({ profile }: ProfileFormProps) {
   const t = useTranslations('settings')
   const tCommon = useTranslations('common')
+  const tAuth = useTranslations('auth')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
 
   const profileSchema = z.object({
     full_name: z.string().min(1, tCommon('required')),
-    phone: z.string().optional().nullable(),
+    phone: optionalPhoneSchema(tAuth('invalidPhone')),
   })
 
   type FormData = z.infer<typeof profileSchema>
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       full_name: profile?.full_name || '',
@@ -94,7 +97,20 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="phone" className="text-slate-600 dark:text-slate-400 font-medium">{t('phone')}</Label>
-            <Input id="phone" {...register('phone')} placeholder="+998901234567" className="border-slate-200 dark:border-slate-700" />
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field }) => (
+                <PhoneInput
+                  id="phone"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  hasError={!!errors.phone}
+                  triggerClassName="border-slate-200 dark:border-slate-700"
+                  inputClassName="border-slate-200 dark:border-slate-700"
+                />
+              )}
+            />
             {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
           </div>
 

@@ -25,6 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
 import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
 import { isStrongPassword } from '@/lib/password-validation'
+import { isValidPhone } from '@/lib/phone-validation'
 import { cn } from '@/lib/utils'
 
 
@@ -119,6 +120,10 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   })
 
   const onSubmit = async (data: FormData) => {
+    if (accessMode === 'create' && !isValidPhone(newPhone)) {
+      toast.error(tAuth('invalidPhone'))
+      return
+    }
     if (accessMode === 'create' && !isStrongPassword(newPassword)) {
       toast.error(tAuth('passwordRequirements'))
       return

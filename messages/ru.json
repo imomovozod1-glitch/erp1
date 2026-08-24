@@ -260,7 +260,9 @@
     "remainingQty": "Остаток",
     "unitCost": "Себестоимость за ед.",
     "receivedAt": "Дата поступления",
-    "nextSaleCost": "Себестоимость след. продажи"
+    "nextSaleCost": "Себестоимость след. продажи",
+    "uploadExcelFile": "Загрузить файл Excel",
+    "downloadTemplateAction": "Скачать шаблон"
   },
   "sales": {
     "title": "Продажи",
@@ -728,7 +730,8 @@
       "sectionNotes": "Дополнительно",
       "subscriptionEndRequired": "Выберите дату окончания подписки",
       "custom": "Другое",
-      "months": "мес"
+      "months": "мес",
+      "selectDatePlaceholder": "Выберите дату"
     },
     "password": {
       "show": "Показать пароль",

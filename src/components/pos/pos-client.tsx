@@ -61,6 +61,8 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { isValidPhone } from '@/lib/phone-validation'
 
 // Module-level pure helper functions to satisfy strict React compiler rules
 function generatePOSOrderNumber(): string {
@@ -100,6 +102,7 @@ export function POSClient({
 }: POSClientProps) {
   const t = useTranslations('pos')
   const tCommon = useTranslations('common')
+  const tAuth = useTranslations('auth')
   const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
 
   // State
@@ -244,6 +247,10 @@ export function POSClient({
   const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newCustomerName.trim()) return
+    if (newCustomerPhone.trim() && !isValidPhone(newCustomerPhone)) {
+      toast.error(tAuth('invalidPhone'))
+      return
+    }
 
     const supabase = createClient() as any
     const { data, error } = await supabase
@@ -973,12 +980,11 @@ export function POSClient({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="custPhone">{t('customerPhone')}</Label>
-              <Input
+              <PhoneInput
                 id="custPhone"
                 value={newCustomerPhone}
-                onChange={(e) => setNewCustomerPhone(e.target.value)}
-                placeholder="+998 90 123 45 67"
-                className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg"
+                onChange={setNewCustomerPhone}
+                inputClassName="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg"
               />
             </div>
             <div className="space-y-1.5">

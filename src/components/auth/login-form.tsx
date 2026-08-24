@@ -13,16 +13,17 @@ import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { phoneSchema } from '@/lib/phone-validation'
 import { cn } from '@/lib/utils'
-
-const loginSchema = z.object({
-  phone: z.string().min(7).regex(/^\+?\d[\d\s-]*\d$/),
-  password: z.string().min(6),
-})
-type LoginForm = z.infer<typeof loginSchema>
 
 export function LoginForm({ lang }: { lang: string }) {
   const t = useTranslations('auth')
+
+  const loginSchema = z.object({
+    phone: phoneSchema(t('invalidPhone')),
+    password: z.string().min(6, t('passwordRequired')),
+  })
+  type LoginForm = z.infer<typeof loginSchema>
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 

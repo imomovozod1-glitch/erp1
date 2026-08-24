@@ -18,6 +18,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { isReservedSubdomain } from '@/lib/tenant-auth'
+import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { cn } from '@/lib/utils'
@@ -143,10 +144,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
           .regex(/^[a-z0-9-]+$/, t('subdomainInvalid'))
           .refine((v) => !isReservedSubdomain(v), t('subdomainReserved')),
         company_name: z.string().min(1, t('companyNameRequired')),
-        phone: z
-          .string()
-          .min(9, t('phoneInvalid'))
-          .regex(/^\+?\d[\d\s-]{7,}\d$/, t('phoneInvalid')),
+        phone: phoneSchema(t('phoneInvalid')),
         password:
           mode === 'create'
             ? newPasswordSchema(tAuth('passwordRequirements'))
@@ -386,7 +384,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
                       value={field.value}
                       onChange={field.onChange}
                       lang={lang}
-                      placeholder={t('subscriptionStart')}
+                      placeholder={t('selectDatePlaceholder')}
                     />
                   )}
                 />
@@ -408,7 +406,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
                       value={field.value}
                       onChange={field.onChange}
                       lang={lang}
-                      placeholder={t('subscriptionEnd')}
+                      placeholder={t('selectDatePlaceholder')}
                     />
                   )}
                 />

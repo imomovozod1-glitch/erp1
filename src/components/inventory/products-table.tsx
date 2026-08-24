@@ -424,14 +424,14 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                     className="cursor-pointer flex items-center gap-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 dark:focus:bg-slate-800 rounded"
                   >
                     <Upload className="h-4 w-4 text-slate-500" />
-                    Faylni tanlash (Yuklash)
+                    {t("inventory.uploadExcelFile")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={downloadExcelTemplate}
                     className="cursor-pointer flex items-center gap-2 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 focus:bg-emerald-50 dark:focus:bg-emerald-950/30 focus:text-emerald-800 dark:focus:text-emerald-300 rounded font-medium"
                   >
                     <Download className="h-4 w-4 text-emerald-600" />
-                    Shablonni yuklab olish
+                    {t("inventory.downloadTemplateAction")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

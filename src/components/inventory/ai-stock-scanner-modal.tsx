@@ -484,6 +484,7 @@ export function AIStockScannerModal({
                 <Table>
                   <TableHeader className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10">
                     <TableRow>
+                      <TableHead className="w-10 text-xs font-semibold text-center">#</TableHead>
                       <TableHead className="w-[30%] text-xs font-semibold">{lang === 'uz' ? 'Mahsulot nomi' : lang === 'ru' ? 'Название товара' : 'Product name'}</TableHead>
                       <TableHead className="w-[15%] text-xs font-semibold">{lang === 'uz' ? 'Artikul (SKU)' : lang === 'ru' ? 'Артикул (SKU)' : 'SKU'}</TableHead>
                       <TableHead className="w-[12%] text-xs font-semibold">{lang === 'uz' ? 'Birligi' : lang === 'ru' ? 'Ед. изм.' : 'Unit'}</TableHead>
@@ -494,8 +495,9 @@ export function AIStockScannerModal({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {items.map((item) => (
+                    {items.map((item, idx) => (
                       <TableRow key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/70">
+                        <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                         <TableCell className="p-2">
                           <Input
                             value={item.name}

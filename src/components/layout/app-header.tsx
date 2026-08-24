@@ -245,7 +245,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           variant="outline"
           size="sm"
           onClick={() => router.push(`/${lang}/sales/invoices`)}
-          className="h-8 border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 font-semibold text-xs rounded-lg animate-pulse gap-1.5 transition-all mr-2"
+          className="h-8 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-800 dark:hover:text-rose-300 font-semibold text-xs rounded-lg animate-pulse gap-1.5 transition-all mr-2"
         >
           <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
           {lang === 'uz' ? "Muddati o'tgan" : lang === 'ru' ? 'Просрочено' : 'Overdue'}
@@ -258,13 +258,13 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           render={
             <button
               type="button"
-              className="flex items-center gap-1.5 h-8 pl-1.5 pr-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 h-8 pl-1.5 pr-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer shadow-2xs"
             />
           }
         >
-          <Languages className="h-3.5 w-3.5 text-slate-500" />
-          <span className="text-xs font-semibold text-slate-700">{currentLocale?.code.toUpperCase()}</span>
-          <ChevronDown className="h-3 w-3 text-slate-400" />
+          <Languages className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{currentLocale?.code.toUpperCase()}</span>
+          <ChevronDown className="h-3 w-3 text-slate-400 dark:text-slate-500" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
           <DropdownMenuLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-1 pb-1.5">
@@ -276,7 +276,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
               <DropdownMenuItem
                 key={locale.code}
                 onClick={() => handleLocaleChange(locale.code)}
-                className={`rounded-lg gap-2 py-2 cursor-pointer ${isActive ? 'bg-violet-50 text-violet-700 font-semibold' : ''}`}
+                className={`rounded-lg gap-2 py-2 cursor-pointer ${isActive ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 font-semibold' : ''}`}
               >
                 <span className="flex-1 text-sm">{locale.label}</span>
                 {isActive && <Check className="h-3.5 w-3.5 text-violet-600" />}
@@ -296,7 +296,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       {/* Notifications */}
       <DropdownMenu open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
         <DropdownMenuTrigger render={
-          <Button variant="ghost" size="icon" className="relative text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+          <Button variant="ghost" size="icon" className="relative text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <span className="absolute top-2 right-2 flex h-2 w-2">
@@ -306,12 +306,12 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             )}
           </Button>
         } />
-        <DropdownMenuContent align="end" className="w-80 sm:w-96 p-0 border border-slate-200/60 shadow-lg rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between p-4 bg-slate-50/50 border-b border-slate-100">
-            <span className="font-semibold text-slate-800 text-sm">
+        <DropdownMenuContent align="end" className="w-80 sm:w-96 p-0 border border-slate-200/60 dark:border-slate-700 shadow-lg rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
+            <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
               {lang === 'uz' ? 'Bildirishnomalar' : lang === 'ru' ? 'Уведомления' : 'Notifications'}
               {unreadCount > 0 && (
-                <span className="ml-2 px-1.5 py-0.5 text-xs font-medium rounded-full bg-violet-50 text-violet-600 border border-violet-100">
+                <span className="ml-2 px-1.5 py-0.5 text-xs font-medium rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 border border-violet-100 dark:border-violet-900">
                   {unreadCount}
                 </span>
               )}
@@ -319,21 +319,21 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs font-semibold text-violet-600 hover:text-violet-800 transition-colors flex items-center gap-1 hover:underline cursor-pointer"
+                className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 transition-colors flex items-center gap-1 hover:underline cursor-pointer"
               >
                 <Check className="h-3 w-3" />
                 {lang === 'uz' ? 'Hammasini o\'qilgan qilish' : lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
               </button>
             )}
           </div>
-          <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-100">
+          <div className="max-h-[300px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
             {notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
-                <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
-                <p className="text-sm font-medium text-slate-700">
+              <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400 dark:text-slate-500">
+                <CheckCircle2 className="h-8 w-8 text-emerald-500 dark:text-emerald-400 mb-2" />
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   {lang === 'uz' ? 'Hamma bildirishnomalar o\'qildi' : lang === 'ru' ? 'Все прочитано' : 'All caught up!'}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   {lang === 'uz' ? 'Hozircha yangi bildirishnomalar yo\'q' : lang === 'ru' ? 'Нет новых уведомлений' : 'No new notifications.'}
                 </p>
               </div>
@@ -349,11 +349,11 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
                       router.push(n.href)
                     }}
                     className={`flex items-start gap-3 p-4 cursor-pointer transition-colors ${
-                      isUnread ? 'bg-violet-50/20 hover:bg-violet-50/40' : 'bg-white hover:bg-slate-50/80'
+                      isUnread ? 'bg-violet-50/20 dark:bg-violet-950/20 hover:bg-violet-50/40 dark:hover:bg-violet-950/30' : 'bg-white dark:bg-slate-900 hover:bg-slate-50/80 dark:hover:bg-slate-800/80'
                     }`}
                   >
                     <div className={`p-2 rounded-xl mt-0.5 ${
-                      n.type === 'low_stock' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'
+                      n.type === 'low_stock' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'
                     }`}>
                       {n.type === 'low_stock' ? (
                         <AlertTriangle className="h-4 w-4" />
@@ -363,19 +363,19 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
                     </div>
                     <div className="flex-1 space-y-0.5">
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-semibold ${isUnread ? 'text-slate-800' : 'text-slate-500'}`}>
+                        <span className={`text-xs font-semibold ${isUnread ? 'text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}>
                           {n.title}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-normal">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">
                           {new Date(n.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className={`text-xs ${isUnread ? 'text-slate-700 font-medium' : 'text-slate-500'}`}>
+                      <p className={`text-xs ${isUnread ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
                         {n.description}
                       </p>
                     </div>
                     {isUnread && (
-                      <div className="h-2 w-2 rounded-full bg-violet-600 mt-2 self-start shrink-0" />
+                      <div className="h-2 w-2 rounded-full bg-violet-600 dark:bg-violet-400 mt-2 self-start shrink-0" />
                     )}
                   </div>
                 )
@@ -393,7 +393,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium text-slate-700 hidden sm:block">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 hidden sm:block">
               {profile?.full_name?.split(' ')[0] ?? 'User'}
             </span>
         </DropdownMenuTrigger>
@@ -416,7 +416,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={handleLogout}
-            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+            className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
           >
             <LogOut className="mr-2 h-4 w-4" />
             {t('logout')}

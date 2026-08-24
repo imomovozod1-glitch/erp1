@@ -387,6 +387,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <TableHead className="w-10 text-center">#</TableHead>
                   <TableHead>{t('product')}</TableHead>
                   <TableHead className="text-right">{t('quantity')}</TableHead>
                   <TableHead className="text-right">{t('unitCost')}</TableHead>
@@ -397,6 +398,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
               <TableBody>
                 {items.map((item, idx) => (
                   <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                    <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                     <TableCell className="font-medium">
                       {item.productId ? (
                         item.productName

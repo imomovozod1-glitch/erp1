@@ -8,8 +8,9 @@ import { notFound } from 'next/navigation'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
+  const tCommon = await getTranslations({ locale: lang, namespace: 'common' })
   const t = await getTranslations({ locale: lang, namespace: 'finance' })
-  return { title: 'Edit Transaction' }
+  return { title: `${tCommon('edit')} — ${t('transactions')}` }
 }
 
 export default async function EditTransactionPage({
@@ -32,7 +33,7 @@ export default async function EditTransactionPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Edit Transaction"
+        title={tCommon('edit')}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/finance` },

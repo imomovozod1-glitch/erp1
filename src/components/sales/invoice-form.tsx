@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select, SelectContent,
   SelectItem, SelectTrigger, SelectValue
@@ -238,19 +239,55 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
 
         <div className="space-y-2">
           <Label htmlFor="issued_at">{tCommon('date')} *</Label>
-          <Input id="issued_at" type="date" {...register('issued_at')} />
+          <Controller
+            control={control}
+            name="issued_at"
+            render={({ field }) => (
+              <DatePicker
+                id="issued_at"
+                value={field.value}
+                onChange={field.onChange}
+                lang={lang}
+                placeholder={tCommon('date')}
+              />
+            )}
+          />
           {errors.issued_at && <p className="text-sm text-red-500">{errors.issued_at.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="due_at">{t('dueDate')} *</Label>
-          <Input id="due_at" type="date" {...register('due_at')} />
+          <Controller
+            control={control}
+            name="due_at"
+            render={({ field }) => (
+              <DatePicker
+                id="due_at"
+                value={field.value}
+                onChange={field.onChange}
+                lang={lang}
+                placeholder={t('dueDate')}
+              />
+            )}
+          />
           {errors.due_at && <p className="text-sm text-red-500">{errors.due_at.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="paid_at">{t('paidDate')}</Label>
-          <Input id="paid_at" type="date" {...register('paid_at')} />
+          <Controller
+            control={control}
+            name="paid_at"
+            render={({ field }) => (
+              <DatePicker
+                id="paid_at"
+                value={field.value}
+                onChange={field.onChange}
+                lang={lang}
+                placeholder={t('paidDate')}
+              />
+            )}
+          />
         </div>
 
         <div className="space-y-2 md:col-span-2">

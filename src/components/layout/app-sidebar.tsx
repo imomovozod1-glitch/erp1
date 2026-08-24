@@ -286,9 +286,9 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
               <SidebarMenuButton
                 size="lg"
                 render={<Link href={`/${lang}/support`} prefetch={true} />}
-                className="gap-3 text-slate-700 hover:text-violet-700 hover:bg-slate-100 transition-colors duration-200"
+                className="gap-3 text-slate-700 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600 group-hover:bg-violet-100 transition-colors">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-900/40 transition-colors">
                   <LifeBuoy className="size-4 text-violet-600 animate-pulse" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

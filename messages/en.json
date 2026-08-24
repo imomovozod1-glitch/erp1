@@ -260,7 +260,9 @@
     "remainingQty": "Remaining qty",
     "unitCost": "Unit cost",
     "receivedAt": "Received at",
-    "nextSaleCost": "Next sale cost"
+    "nextSaleCost": "Next sale cost",
+    "uploadExcelFile": "Upload Excel file",
+    "downloadTemplateAction": "Download template"
   },
   "sales": {
     "title": "Sales",
@@ -737,7 +739,8 @@
       "sectionNotes": "Additional",
       "subscriptionEndRequired": "Select the subscription end date",
       "custom": "Custom",
-      "months": "mo"
+      "months": "mo",
+      "selectDatePlaceholder": "Select a date"
     },
     "password": {
       "show": "Show password",

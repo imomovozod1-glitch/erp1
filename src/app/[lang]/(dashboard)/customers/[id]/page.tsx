@@ -2,7 +2,6 @@ import { getCachedCustomerDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { CustomerDetailClient } from '@/components/sales/customer-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 
@@ -35,9 +34,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
           { label: t('customers', { fallback: 'Mijozlar' }), href: `/${lang}/customers` },
           { label: customer.name }
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <CustomerDetailClient
         lang={lang}

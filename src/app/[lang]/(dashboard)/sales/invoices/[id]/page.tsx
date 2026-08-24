@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/shared/page-header";
-import { PageClock } from "@/components/shared/page-clock";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -164,9 +163,7 @@ export default function InvoiceDetailPage() {
           { label: t("invoices"), href: `/${lang}/sales/invoices` },
           { label: invoice.invoice_number },
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="flex items-center gap-3 w-full md:w-auto">

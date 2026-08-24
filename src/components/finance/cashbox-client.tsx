@@ -515,7 +515,7 @@ export function CashboxClient({ lang }: { lang: string }) {
   const handleDelete = async (id: string) => {
     const cashbox = cashboxes.find(cb => cb.id === id);
     if (cashbox && cashbox.balance > 0) {
-      toast.error(lang === 'uz' ? 'Puli bor kassani o\'chirib bo\'lmaydi' : 'Cannot delete cashbox with balance > 0');
+      toast.error(lang === 'uz' ? 'Puli bor kassani o\'chirib bo\'lmaydi' : lang === 'ru' ? 'Нельзя удалить кассу с положительным балансом' : 'Cannot delete cashbox with balance > 0');
       return;
     }
     
@@ -1113,7 +1113,7 @@ export function CashboxClient({ lang }: { lang: string }) {
               <Landmark className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               {t('cashboxes')}
             </CardTitle>
-            <CardDescription className="text-xs">{lang === 'uz' ? "Moliya kassalari va ularning qoldiqlari ro'yxati" : "Список касс и их остатков"}</CardDescription>
+            <CardDescription className="text-xs">{lang === 'uz' ? "Moliya kassalari va ularning qoldiqlari ro'yxati" : lang === 'ru' ? "Список касс и их остатков" : "List of cashboxes and their balances"}</CardDescription>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative min-w-[200px] flex-1">
@@ -1364,9 +1364,9 @@ export function CashboxClient({ lang }: { lang: string }) {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                  {editingCashbox ? (lang === 'uz' ? "Kassani tahrirlash" : "Редактировать кассу") : t('addCashbox')}
+                  {editingCashbox ? (lang === 'uz' ? "Kassani tahrirlash" : lang === 'ru' ? "Редактировать кассу" : "Edit cashbox") : t('addCashbox')}
                 </h3>
-                <p className="text-xs text-muted-foreground">{lang === 'uz' ? "Kassa ma'lumotlarini kiriting" : "Введите параметры кассы"}</p>
+                <p className="text-xs text-muted-foreground">{lang === 'uz' ? "Kassa ma'lumotlarini kiriting" : lang === 'ru' ? "Введите параметры кассы" : "Enter the cashbox details"}</p>
               </div>
             </div>
             <form onSubmit={handleSave} className="space-y-4">
@@ -1376,7 +1376,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                   id="cb_name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder={lang === 'uz' ? "Masalan: Asosiy G'azna" : "Например: Основная Касса"}
+                  placeholder={lang === 'uz' ? "Masalan: Asosiy G'azna" : lang === 'ru' ? "Например: Основная Касса" : "e.g. Main Cashbox"}
                   required
                   className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
                 />
@@ -1539,10 +1539,10 @@ export function CashboxClient({ lang }: { lang: string }) {
                     }}
                   >
                     <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
-                      <SelectValue placeholder={lang === 'uz' ? 'Mijozni tanlang' : 'Выберите клиента'}>
+                      <SelectValue placeholder={lang === 'uz' ? 'Mijozni tanlang' : lang === 'ru' ? 'Выберите клиента' : 'Select a customer'}>
                         {selectedCustomerId
                           ? (customers.find(c => c.id === selectedCustomerId)?.name || '')
-                          : (lang === 'uz' ? 'Mijozni tanlang' : 'Выберите клиента')}
+                          : (lang === 'uz' ? 'Mijozni tanlang' : lang === 'ru' ? 'Выберите клиента' : 'Select a customer')}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
@@ -1556,7 +1556,7 @@ export function CashboxClient({ lang }: { lang: string }) {
 
                   {txType === 'income' && selectedCustomerId && (
                     <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/50 rounded-2xl p-3.5 mt-2 flex items-center justify-between text-xs text-rose-800 dark:text-rose-300 animate-in slide-in-from-top-1 duration-200">
-                      <span className="font-medium">{lang === 'uz' ? 'Umumiy qarzdorlik summasi:' : 'Общая сумма задолженности:'}</span>
+                      <span className="font-medium">{lang === 'uz' ? 'Umumiy qarzdorlik summasi:' : lang === 'ru' ? 'Общая сумма задолженности:' : 'Total debt amount:'}</span>
                       <span className="font-extrabold text-sm">
                         {isLoadingDebt ? '...' : formatCurrency(customerDebt || 0)}
                       </span>
@@ -1575,10 +1575,10 @@ export function CashboxClient({ lang }: { lang: string }) {
                     onValueChange={(val) => setSelectedEmployeeId(val || '')}
                   >
                     <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
-                      <SelectValue placeholder={lang === 'uz' ? 'Xodimni tanlang' : 'Выберите сотрудника'}>
+                      <SelectValue placeholder={lang === 'uz' ? 'Xodimni tanlang' : lang === 'ru' ? 'Выберите сотрудника' : 'Select an employee'}>
                         {selectedEmployeeId
                           ? (employees.find(e => e.id === selectedEmployeeId)?.name || '')
-                          : (lang === 'uz' ? 'Xodimni tanlang' : 'Выберите сотрудника')}
+                          : (lang === 'uz' ? 'Xodimni tanlang' : lang === 'ru' ? 'Выберите сотрудника' : 'Select an employee')}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">

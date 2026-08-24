@@ -2,7 +2,6 @@ import { getCachedEmployeeDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { EmployeeDetailClient } from '@/components/hr/employee-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 
@@ -31,9 +30,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
           { label: t('employees', { fallback: 'Xodimlar' }), href: `/${lang}/hr/employees` },
           { label: employee?.full_name ?? '—' }
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <EmployeeDetailClient
         lang={lang}

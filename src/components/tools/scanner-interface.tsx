@@ -76,7 +76,7 @@ export function ScannerInterface() {
       <Card className="border-0 shadow-sm flex flex-col h-full min-h-125">
         <CardContent className="p-6 flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-800 text-lg">Hujjat rasmi</h3>
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-lg">Hujjat rasmi</h3>
             {file && (
               <Button
                 variant="ghost"
@@ -94,7 +94,7 @@ export function ScannerInterface() {
             )}
           </div>
 
-          <div className="flex-1 relative border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-violet-300">
+          <div className="flex-1 relative border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-violet-300">
             {preview ? (
               <div className="relative w-full h-full p-2 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,7 +109,7 @@ export function ScannerInterface() {
                 <div className="h-16 w-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-violet-500">
                   <UploadCloud className="h-8 w-8" />
                 </div>
-                <p className="text-sm font-medium text-slate-700">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Rasmni yuklang yoki bu yerga tashlang
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -147,7 +147,7 @@ export function ScannerInterface() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-violet-600" />
-              <h3 className="font-semibold text-slate-800 text-lg">Natija</h3>
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-lg">Natija</h3>
             </div>
             {result && (
               <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 rounded-lg h-8">
@@ -157,7 +157,7 @@ export function ScannerInterface() {
             )}
           </div>
 
-          <div className="flex-1 bg-slate-50 rounded-xl border border-slate-100 p-4 overflow-auto">
+          <div className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 overflow-auto">
             {isLoading ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-3">
                 <div className="relative">
@@ -170,7 +170,7 @@ export function ScannerInterface() {
               </div>
             ) : result ? (
               <div className="prose prose-sm prose-slate max-w-none dark:prose-invert">
-                <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700 bg-transparent p-0 m-0 border-0">
+                <pre className="whitespace-pre-wrap font-sans text-sm text-slate-700 dark:text-slate-300 bg-transparent p-0 m-0 border-0">
                   {result}
                 </pre>
               </div>

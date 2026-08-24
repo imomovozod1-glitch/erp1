@@ -144,7 +144,7 @@ export function TransactionCategoriesTable({ categories, lang }: TransactionCate
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDelete(category.id)}
-                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
                           disabled={isDeleting === category.id}
                         >
                           <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}

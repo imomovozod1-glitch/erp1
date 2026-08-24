@@ -218,9 +218,9 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Ishlagan davri' : 'Срок службы'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Ishlagan davri' : lang === 'ru' ? 'Срок службы' : 'Tenure'}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
-              {tenureMonths} {lang === 'uz' ? 'oy' : 'мес.'}
+              {tenureMonths} {lang === 'uz' ? 'oy' : lang === 'ru' ? 'мес.' : 'mo.'}
             </h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('hiredAt')}: {formatDate(employee.hired_at)}</span>
           </CardContent>
@@ -228,7 +228,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Rasmiylashtirgan savdolar' : 'Оформленные продажи'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Rasmiylashtirgan savdolar' : lang === 'ru' ? 'Оформленные продажи' : 'Processed sales'}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalSalesAmount)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredSalesOrders.length} {tc('count') || 'count'}{periodSuffix}</span>
           </CardContent>
@@ -236,7 +236,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'To\'langan maoshlar' : 'Выплачено'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'To\'langan maoshlar' : lang === 'ru' ? 'Выплачено' : 'Paid out'}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {formatCurrency(totalPaidAmount)}
             </h3>
@@ -249,7 +249,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border-0 shadow-sm self-start">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Kadr ma\'lumotlari' : 'Личное дело'}</CardTitle>
+            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Kadr ma\'lumotlari' : lang === 'ru' ? 'Личное дело' : 'Personnel details'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div>
@@ -290,7 +290,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                 }`}
               >
                 <DollarSign className="h-4 w-4" />
-                {lang === 'uz' ? 'To\'lovlar tarixi' : 'История выплат'}
+                {lang === 'uz' ? 'To\'lovlar tarixi' : lang === 'ru' ? 'История выплат' : 'Payout history'}
               </button>
               <button
                 onClick={() => setActiveTab('sales')}
@@ -299,7 +299,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                 }`}
               >
                 <ShoppingCart className="h-4 w-4" />
-                {lang === 'uz' ? 'Sotuvlar ro\'yxati' : 'Список продаж'}
+                {lang === 'uz' ? 'Sotuvlar ro\'yxati' : lang === 'ru' ? 'Список продаж' : 'Sales list'}
               </button>
             </div>
 
@@ -333,9 +333,9 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                     <TableHeader>
                       <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                         <TableHead className="w-10 text-center">#</TableHead>
-                        <TableHead>{lang === 'uz' ? 'Kategoriya' : 'Категория'}</TableHead>
+                        <TableHead>{lang === 'uz' ? 'Kategoriya' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
                         <TableHead className="text-right">{tc('amount')}</TableHead>
-                        <TableHead>{lang === 'uz' ? 'Izoh' : 'Комментарий'}</TableHead>
+                        <TableHead>{lang === 'uz' ? 'Izoh' : lang === 'ru' ? 'Комментарий' : 'Note'}</TableHead>
                         <TableHead>{tc('date')}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -371,8 +371,8 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Sotuv kodi' : 'Код продажи'}</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Mijoz' : 'Клиент'}</TableHead>
+                      <TableHead>{lang === 'uz' ? 'Sotuv kodi' : lang === 'ru' ? 'Код продажи' : 'Sale code'}</TableHead>
+                      <TableHead>{lang === 'uz' ? 'Mijoz' : lang === 'ru' ? 'Клиент' : 'Customer'}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
                       <TableHead>{tc('status')}</TableHead>
                       <TableHead>{tc('date')}</TableHead>

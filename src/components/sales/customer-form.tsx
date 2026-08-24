@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Resolver } from 'react-hook-form'
+import { Resolver, Controller } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -17,6 +17,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import dynamic from 'next/dynamic'
 import { User, Mail, Phone, MapPin, FileText, CreditCard, Loader2, Tags } from 'lucide-react'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { optionalPhoneSchema } from '@/lib/phone-validation'
 
 // Load MapPicker dynamically for Next.js SSR compatibility
 const MapPicker = dynamic(() => import('./map-picker').then(mod => mod.MapPicker), {
@@ -37,6 +39,7 @@ interface CustomerFormProps {
 export function CustomerForm({ initialData, categories = [], lang }: CustomerFormProps) {
   const tCommon = useTranslations('common')
   const tSales = useTranslations('sales')
+  const tAuth = useTranslations('auth')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
@@ -51,7 +54,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
   const innerFormSchema = z.object({
     name: z.string().min(1, tCommon('required')),
     email: z.string().email(tCommon('invalidEmail')).optional().or(z.literal('')),
-    phone: z.string().optional().or(z.literal('')),
+    phone: optionalPhoneSchema(tAuth('invalidPhone')),
     address: z.string().optional().or(z.literal('')),
     latitude: z.number().nullable().optional(),
     longitude: z.number().nullable().optional(),
@@ -62,7 +65,7 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
 
   type FormData = z.infer<typeof innerFormSchema>
 
-  const { register, handleSubmit, setValue, getValues, formState: { errors } } = usePersistedForm<FormData>('customer-form-v3', {
+  const { register, handleSubmit, setValue, getValues, control, formState: { errors } } = usePersistedForm<FormData>('customer-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
@@ -170,12 +173,21 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 <Phone className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('phone')}
               </Label>
-              <Input
-                id="phone"
-                {...register('phone')}
-                placeholder={tSales('phonePlaceholder')}
-                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
+              <Controller
+                control={control}
+                name="phone"
+                render={({ field }) => (
+                  <PhoneInput
+                    id="phone"
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    hasError={!!errors.phone}
+                    triggerClassName="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg"
+                    inputClassName="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
+                  />
+                )}
               />
+              {errors.phone && <p className="text-xs text-red-500 font-medium">{errors.phone.message as string}</p>}
             </div>
 
             {/* Email */}

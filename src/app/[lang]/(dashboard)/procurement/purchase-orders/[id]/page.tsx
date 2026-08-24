@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -94,9 +93,7 @@ export default function PurchaseOrderDetailPage() {
           { label: t('purchaseOrders'), href: `/${lang}/procurement/purchase-orders` },
           { label: order.po_number }
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <div>
         <Button

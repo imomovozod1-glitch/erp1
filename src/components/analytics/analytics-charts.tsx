@@ -82,9 +82,9 @@ export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps
                   <div key={idx} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                      <span className="text-slate-700 truncate max-w-30">{p.name}</span>
+                      <span className="text-slate-700 dark:text-slate-300 truncate max-w-30">{p.name}</span>
                     </div>
-                    <span className="font-medium text-slate-900">{formatCurrency(p.totalSum)}</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{formatCurrency(p.totalSum)}</span>
                   </div>
                 ))}
               </div>

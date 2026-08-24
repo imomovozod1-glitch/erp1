@@ -42,8 +42,8 @@ export function RevenueChart({ data, title }: RevenueChartProps) {
     return (
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-slate-800">{title}</CardTitle>
-          <p className="text-sm text-slate-500">{t('common.noData')}</p>
+          <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">{title}</CardTitle>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('common.noData')}</p>
         </CardHeader>
       </Card>
     )
@@ -54,7 +54,7 @@ export function RevenueChart({ data, title }: RevenueChartProps) {
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-base font-semibold text-slate-800">{title}</CardTitle>
+        <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-100">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={280}>

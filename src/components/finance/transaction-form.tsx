@@ -125,7 +125,9 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
           <Label htmlFor="type">{t('finance.type')} *</Label>
           <Select value={typeValue} onValueChange={(val: any) => setValue('type', val)}>
             <SelectTrigger>
-              <SelectValue placeholder={t('finance.selectType')} />
+              <SelectValue placeholder={t('finance.selectType')}>
+                {typeValue ? t(`finance.${typeValue}Type`) : ''}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="income">{t('finance.incomeType')}</SelectItem>

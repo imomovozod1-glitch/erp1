@@ -93,6 +93,7 @@ export function PaymentHistory({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-10 text-center">#</TableHead>
             <TableHead>{t('amount')}</TableHead>
             <TableHead>{t('note')}</TableHead>
             <TableHead className="text-right">{tCommon('date')}</TableHead>
@@ -101,13 +102,14 @@ export function PaymentHistory({
         <TableBody>
           {payments.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={3} className="h-20 text-center text-slate-400 dark:text-slate-500">
+              <TableCell colSpan={4} className="h-20 text-center text-slate-400 dark:text-slate-500">
                 {t('noPayments')}
               </TableCell>
             </TableRow>
           ) : (
-            payments.map((p) => (
+            payments.map((p, index) => (
               <TableRow key={p.id}>
+                <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{index + 1}</TableCell>
                 <TableCell className="font-medium tabular-nums">{formatCurrency(p.amount)}</TableCell>
                 <TableCell className="text-slate-500 dark:text-slate-400">{p.note || '—'}</TableCell>
                 <TableCell className="text-right text-slate-500 dark:text-slate-400">{formatDateTime(p.created_at)}</TableCell>

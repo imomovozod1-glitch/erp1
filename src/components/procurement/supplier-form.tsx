@@ -8,10 +8,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateSuppliers } from '@/lib/data/revalidate'
-import { formatPhoneInput } from '@/lib/tenant-auth'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PhoneInput } from '@/components/ui/phone-input'
+import { phoneSchema } from '@/lib/phone-validation'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -37,6 +38,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
   const t = useTranslations('procurement')
   const tSales = useTranslations('sales')
   const tCommon = useTranslations('common')
+  const tAuth = useTranslations('auth')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
@@ -49,7 +51,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
 
   const formSchema = z.object({
     name: z.string().min(1, tCommon('required')),
-    phone: z.string().min(1, tCommon('required')),
+    phone: phoneSchema(tAuth('invalidPhone')),
     email: z.string().email(tCommon('invalidEmail')).optional().or(z.literal('')),
     address: z.string().optional().or(z.literal('')),
     latitude: z.number().nullable().optional(),
@@ -188,12 +190,13 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             control={control}
             name="phone"
             render={({ field }) => (
-              <Input
+              <PhoneInput
                 id="phone"
                 value={field.value ?? ''}
-                onChange={(e) => field.onChange(formatPhoneInput(e.target.value))}
-                placeholder="+998 90 123 45 67"
-                className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
+                onChange={field.onChange}
+                hasError={!!errors.phone}
+                triggerClassName="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg"
+                inputClassName="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
               />
             )}
           />

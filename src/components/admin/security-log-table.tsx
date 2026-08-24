@@ -91,6 +91,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-10 text-center">#</TableHead>
             <TableHead>{t('colIdentifier')}</TableHead>
             <TableHead>{t('colIp')}</TableHead>
             <TableHead>{t('colOutcome')}</TableHead>
@@ -100,7 +101,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
         <TableBody>
           {paginated.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="h-32 text-center">
+              <TableCell colSpan={5} className="h-32 text-center">
                 <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                   <ShieldAlert className="h-8 w-8 opacity-40" />
                   <p className="text-sm">{tCommon('noData')}</p>
@@ -108,8 +109,11 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
               </TableCell>
             </TableRow>
           ) : (
-            paginated.map((a) => (
+            paginated.map((a, index) => (
               <TableRow key={a.id}>
+                <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">
+                  {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                </TableCell>
                 <TableCell className="font-medium text-slate-700 dark:text-slate-300">{a.identifier}</TableCell>
                 <TableCell className="text-slate-500 dark:text-slate-400 tabular-nums">{a.ip}</TableCell>
                 <TableCell>

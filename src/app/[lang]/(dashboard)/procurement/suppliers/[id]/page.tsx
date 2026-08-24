@@ -2,7 +2,6 @@ import { getCachedSupplierDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { SupplierDetailClient } from '@/components/procurement/supplier-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { PageClock } from '@/components/shared/page-clock'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 
@@ -31,9 +30,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
           { label: t('suppliers', { fallback: 'Yetkazib beruvchilar' }), href: `/${lang}/procurement/suppliers` },
           { label: supplier.name }
         ]}
-      >
-        <PageClock lang={lang} />
-      </PageHeader>
+      />
 
       <SupplierDetailClient
         lang={lang}
