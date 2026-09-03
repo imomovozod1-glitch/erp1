@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import dynamic from 'next/dynamic'
 import { User, Mail, Phone, MapPin, FileText, CreditCard, Loader2, Tags } from 'lucide-react'
@@ -226,16 +227,25 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
                 <Tags className="h-3.5 w-3.5 text-slate-400" />
                 {tSales('category')}
               </Label>
-              <select
-                id="category_id"
-                {...register('category_id')}
-                className="flex h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1 text-sm shadow-sm transition-colors focus:bg-white dark:focus:bg-slate-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">{tCommon('select')}</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="category_id"
+                render={({ field }) => (
+                  <Select value={field.value || 'none'} onValueChange={(val) => field.onChange(val === 'none' ? '' : val)}>
+                    <SelectTrigger id="category_id" className="w-full">
+                      <SelectValue placeholder={tCommon('select')}>
+                        {field.value ? categories.find((c) => c.id === field.value)?.name : tCommon('select')}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{tCommon('select')}</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Address Field */}

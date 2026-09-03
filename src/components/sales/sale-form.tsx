@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
@@ -291,16 +292,19 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
           <CardTitle className="text-base">{t('customer')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <select
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="flex h-10 w-full max-w-sm rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            <option value="">{tCommon('select')}</option>
-            {customers.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <Select value={customerId || 'none'} onValueChange={(val) => setCustomerId(!val || val === 'none' ? '' : val)}>
+            <SelectTrigger className="w-full max-w-sm">
+              <SelectValue placeholder={tCommon('select')}>
+                {customerId ? customers.find((c) => c.id === customerId)?.name : tCommon('select')}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">{tCommon('select')}</SelectItem>
+              {customers.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
@@ -354,18 +358,20 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-50 space-y-1">
               <Label className="text-xs">{t('selectProduct')}</Label>
-              <select
-                value={selectedProductId}
-                onChange={(e) => handleProductChange(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="">{tCommon('select')}</option>
-                {products.map(p => (
-                  <option key={p.id} value={p.id} disabled={p.stock === 0}>
-                    {p.name} — {formatCurrency(p.price)} ({t('availableStock')}: {p.stock} {p.unit})
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedProductId} onValueChange={(val) => handleProductChange(val || '')}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={tCommon('select')}>
+                    {selectedProductId ? products.find((p) => p.id === selectedProductId)?.name : tCommon('select')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={p.id} disabled={p.stock === 0}>
+                      {p.name} — {formatCurrency(p.price)} ({t('availableStock')}: {p.stock} {p.unit})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="w-24 space-y-1">
               <Label className="text-xs">{t('quantity')}</Label>

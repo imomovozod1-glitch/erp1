@@ -15,6 +15,7 @@ import { PhoneInput } from '@/components/ui/phone-input'
 import { phoneSchema } from '@/lib/phone-validation'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import dynamic from 'next/dynamic'
 import { Truck, Mail, Phone, MapPin, CreditCard, FileText, User, Loader2 } from 'lucide-react'
@@ -76,13 +77,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
       contact_person: initialData?.contact_person || '',
       tin: initialData?.tin || '',
       notes: initialData?.notes || '',
-      // A STRING matching the <option value> below, not a raw boolean — see
-      // product-form.tsx for why: setValueAs: v => v === 'true' only
-      // transforms whatever RHF is currently holding, and an untouched
-      // select still holds this defaultValues entry. A boolean `true` here
-      // makes that comparison always false, silently submitting
-      // is_active: false for a supplier nobody ever set inactive.
-      is_active: String(initialData?.is_active ?? true) as any,
+      is_active: initialData?.is_active ?? true,
     },
   })
 
@@ -253,14 +248,21 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             <User className="h-3.5 w-3.5 text-slate-400" />
             {tCommon('status')}
           </Label>
-          <select
-            id="is_active"
-            {...register('is_active', { setValueAs: (v) => v === 'true' })}
-            className="flex h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 focus:bg-white dark:focus:bg-slate-800"
-          >
-            <option value="true">{tCommon('active')}</option>
-            <option value="false">{tCommon('inactive')}</option>
-          </select>
+          <Controller
+            control={control}
+            name="is_active"
+            render={({ field }) => (
+              <Select value={field.value ? 'true' : 'false'} onValueChange={(val) => field.onChange(val === 'true')}>
+                <SelectTrigger id="is_active" className="w-full">
+                  <SelectValue>{field.value ? tCommon('active') : tCommon('inactive')}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">{tCommon('active')}</SelectItem>
+                  <SelectItem value="false">{tCommon('inactive')}</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
 
         {/* Address */}

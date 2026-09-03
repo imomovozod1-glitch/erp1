@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface ProductFormProps {
   initialData?: any
@@ -105,14 +106,7 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
       stock: initialData?.stock ?? '' as any,
       min_stock: initialData?.min_stock ?? '' as any,
       description: initialData?.description || '',
-      // Deliberately a STRING matching the <option value> below, not a raw
-      // boolean: register('is_active', { setValueAs: v => v === 'true' })
-      // only ever transforms whatever RHF is currently holding for this
-      // field — if the user never touches the select, that's still this
-      // defaultValues entry untouched. A boolean `true` here means the
-      // transform evaluates `true === 'true'` (always false), silently
-      // submitting is_active: false for a product nobody ever set inactive.
-      is_active: String(initialData?.is_active ?? true) as any,
+      is_active: initialData?.is_active ?? true,
     },
   })
 
@@ -324,32 +318,46 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
 
         <div className="space-y-2">
           <Label htmlFor="category_id">{t('category')}</Label>
-          <select 
-            id="category_id" 
-            {...register('category_id')}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          >
-            <option value="">{tCommon('select')}</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name="category_id"
+            render={({ field }) => (
+              <Select value={field.value || 'none'} onValueChange={(val) => field.onChange(val === 'none' ? '' : val)}>
+                <SelectTrigger id="category_id" className="w-full">
+                  <SelectValue placeholder={tCommon('select')}>
+                    {field.value ? categories.find((c) => c.id === field.value)?.name : tCommon('select')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{tCommon('select')}</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.category_id && <p className="text-sm text-red-500">{errors.category_id.message}</p>}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="unit">{t('unit')} *</Label>
-          {/* <Input id="unit" {...register('unit')} placeholder={t('unit')} /> */}
-                    <select 
-            id="unit" 
-            {...register('unit')}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          >
-            <option value="">{tCommon('select')}</option>
-            {units.map(u => (
-              <option key={u} value={u}>{u}</option>
-            ))}
-          </select>
+          <Controller
+            control={control}
+            name="unit"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger id="unit" className="w-full">
+                  <SelectValue placeholder={tCommon('select')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {units.map((u) => (
+                    <SelectItem key={u} value={u}>{u}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.unit && <p className="text-sm text-red-500">{errors.unit.message}</p>}
         </div>
 
@@ -516,14 +524,21 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
 
         <div className="space-y-2">
           <Label htmlFor="is_active">{tCommon('status')}</Label>
-          <select 
-            id="is_active" 
-            {...register('is_active', { setValueAs: (v) => v === 'true' })}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          >
-            <option value="true">{tCommon('active')}</option>
-            <option value="false">{tCommon('inactive')}</option>
-          </select>
+          <Controller
+            control={control}
+            name="is_active"
+            render={({ field }) => (
+              <Select value={field.value ? 'true' : 'false'} onValueChange={(val) => field.onChange(val === 'true')}>
+                <SelectTrigger id="is_active" className="w-full">
+                  <SelectValue>{field.value ? tCommon('active') : tCommon('inactive')}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">{tCommon('active')}</SelectItem>
+                  <SelectItem value="false">{tCommon('inactive')}</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.is_active && <p className="text-sm text-red-500">{errors.is_active.message}</p>}
         </div>
 

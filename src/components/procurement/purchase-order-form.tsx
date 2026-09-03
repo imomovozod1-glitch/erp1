@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
@@ -267,16 +268,18 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>{t('selectSupplier')} *</Label>
-              <select
-                value={supplierId}
-                onChange={(e) => setSupplierId(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="">{tCommon('select')}</option>
-                {suppliers.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
+              <Select value={supplierId} onValueChange={(val) => setSupplierId(val || '')}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={tCommon('select')}>
+                    {supplierId ? suppliers.find((s) => s.id === supplierId)?.name : tCommon('select')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>{tCommon('notes')}</Label>
@@ -339,16 +342,18 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-50 space-y-1">
               <Label className="text-xs">{t('selectProduct')}</Label>
-              <select
-                value={selectedProductId}
-                onChange={(e) => handleProductChange(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="">{tCommon('select')}</option>
-                {products.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+              <Select value={selectedProductId} onValueChange={(val) => handleProductChange(val || '')}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={tCommon('select')}>
+                    {selectedProductId ? products.find((p) => p.id === selectedProductId)?.name : tCommon('select')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="w-24 space-y-1">
               <Label className="text-xs">{t('quantity')}</Label>
@@ -405,10 +410,9 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
                       ) : (
                         <div className="flex flex-col gap-1.5 max-w-md">
                           <span className="text-red-500 text-xs font-semibold">Tizimdagi tovar bilan bog&apos;lanmagan: &quot;{item.productName}&quot;</span>
-                          <select
-                            value={item.productId}
-                            onChange={(e) => {
-                              const prodId = e.target.value
+                          <Select
+                            value={item.productId || undefined}
+                            onValueChange={(prodId) => {
                               const prod = products.find(p => p.id === prodId)
                               if (prod) {
                                 setItems(prev => prev.map((it, i) => i === idx ? {
@@ -418,13 +422,16 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
                                 } : it))
                               }
                             }}
-                            className="flex h-9 w-full rounded-md border border-red-300 dark:border-red-800 bg-white dark:bg-slate-900 px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
                           >
-                            <option value="">{t('selectProduct')}...</option>
-                            {products.map(p => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="w-full border-red-300 dark:border-red-800">
+                              <SelectValue placeholder={`${t('selectProduct')}...`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {products.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       )}
                     </TableCell>
