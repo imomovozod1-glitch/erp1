@@ -86,7 +86,8 @@
     "invalidEmail": "Invalid email address",
     "invalidAmount": "Invalid amount",
     "created": "Created successfully",
-    "saved": "Saved successfully"
+    "saved": "Saved successfully",
+    "testPrint": "Test"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -562,7 +563,51 @@
     "permissionsSaved": "Permissions saved",
     "permissionsSaveError": "Failed to save permissions",
     "permissionsAdminHint": "Users with the Admin role always have full access to every module",
-    "moduleColumn": "Module"
+    "moduleColumn": "Module",
+    "printerTitle": "Receipt printer",
+    "printerCardDesc": "Connect and configure a receipt printer",
+    "printer": {
+      "title": "Receipt printer settings",
+      "description": "Print POS receipts directly to a printer (USB/Bluetooth) or through the system print dialog",
+      "usbSupportLabel": "USB (WebUSB)",
+      "bluetoothSupportLabel": "Bluetooth",
+      "connectionType": "Connection type",
+      "connectionType_usb": "USB",
+      "connectionType_bluetooth": "Bluetooth",
+      "connectionType_network": "Network (WiFi)",
+      "connectionType_system": "Via system",
+      "pairUsbButton": "Pair USB printer",
+      "pairBluetoothButton": "Pair Bluetooth printer",
+      "pairSuccess": "Printer paired successfully",
+      "pairedDevice": "Paired device",
+      "noDevicePaired": "No printer paired",
+      "usbUnsupportedWarning": "This browser doesn't support direct USB printing (only works in Chrome/Edge on desktop). Use the \"Via system\" option instead.",
+      "bluetoothUnsupportedWarning": "This browser doesn't support Bluetooth printing (unavailable on Safari/iOS). Use the \"Via system\" option instead.",
+      "usbDriverHint": "If pairing fails, the printer may already be claimed by an OS-installed driver — remove it from your system's printer list and try again.",
+      "bluetoothSppWarning": "Note: some inexpensive printers only speak \"Classic\" Bluetooth (SPP), while the browser can only see Bluetooth Low Energy (BLE) devices — if your printer doesn't show up in the picker, this is likely why.",
+      "bluetoothReconnectHint": "Browser security policy may require reconnecting the Bluetooth printer after every page reload.",
+      "bleServiceUuid": "Service UUID (advanced)",
+      "bleCharacteristicUuid": "Characteristic UUID (advanced)",
+      "networkLimitationWarning": "A browser tab cannot send raw commands directly to a network printer (a technical limitation of the web platform). The most reliable path is installing the printer as a network printer on Windows/Mac and using the \"Via system\" option.",
+      "networkIpLabel": "Printer IP address (for reference)",
+      "networkDriverHint": "Install Xprinter's network driver, add it as a printer in the OS, then select the \"Via system\" connection type.",
+      "systemHint": "The receipt prints through the browser's standard Print dialog — works with any printer (USB or network) installed in the system.",
+      "paperWidth": "Paper width",
+      "cyrillicToggle": "Cyrillic support",
+      "openDrawerToggle": "Open cash drawer on sale",
+      "testPrintButton": "Print test receipt",
+      "testPrintSuccess": "Test receipt sent",
+      "testPrintFailed": "Print failed — check the connection",
+      "testPrintSystemHint": "\"Via system\" is selected — complete a real POS sale to test printing",
+      "testItemName": "Test item",
+      "testCompanyName": "ERP System",
+      "testThankYou": "This is a test receipt",
+      "labelReceipt": "Receipt",
+      "labelCashier": "Cashier",
+      "labelSubtotal": "Subtotal",
+      "labelTax": "Tax",
+      "labelPaymentMethod": "Payment method"
+    }
   },
   "tools": {
     "title": "Tools",
@@ -601,7 +646,9 @@
     "stock": "Stock",
     "selectCategory": "All Categories",
     "generalDiscount": "General Discount",
-    "itemDiscount": "Item Discount"
+    "itemDiscount": "Item Discount",
+    "thankYou": "Thank you for your purchase!",
+    "printedDirectly": "Receipt sent to printer"
   },
   "support": {
     "title": "Support Service",

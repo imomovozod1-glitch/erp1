@@ -86,7 +86,8 @@
     "invalidEmail": "Неверный адрес электронной почты",
     "invalidAmount": "Неверная сумма",
     "created": "Успешно создано",
-    "saved": "Успешно сохранено"
+    "saved": "Успешно сохранено",
+    "testPrint": "Тест"
   },
   "nav": {
     "dashboard": "Панель управления",
@@ -553,7 +554,51 @@
     "permissionsSaved": "Права доступа сохранены",
     "permissionsSaveError": "Не удалось сохранить права доступа",
     "permissionsAdminHint": "Пользователи с ролью Администратор всегда имеют полный доступ ко всем разделам",
-    "moduleColumn": "Раздел"
+    "moduleColumn": "Раздел",
+    "printerTitle": "Чековый принтер",
+    "printerCardDesc": "Подключение и настройка чекового принтера",
+    "printer": {
+      "title": "Настройки чекового принтера",
+      "description": "Печатайте чеки в POS напрямую на принтер (USB/Bluetooth) или через систему",
+      "usbSupportLabel": "USB (WebUSB)",
+      "bluetoothSupportLabel": "Bluetooth",
+      "connectionType": "Тип подключения",
+      "connectionType_usb": "USB",
+      "connectionType_bluetooth": "Bluetooth",
+      "connectionType_network": "Сеть (WiFi)",
+      "connectionType_system": "Через систему",
+      "pairUsbButton": "Подключить USB принтер",
+      "pairBluetoothButton": "Подключить Bluetooth принтер",
+      "pairSuccess": "Принтер успешно подключен",
+      "pairedDevice": "Подключенное устройство",
+      "noDevicePaired": "Принтер не подключен",
+      "usbUnsupportedWarning": "Этот браузер не поддерживает прямую печать через USB (работает только в Chrome/Edge на компьютере). Используйте вариант \"Через систему\".",
+      "bluetoothUnsupportedWarning": "Этот браузер не поддерживает печать через Bluetooth (недоступно в Safari/iOS). Используйте вариант \"Через систему\".",
+      "usbDriverHint": "Если подключение не удалось, возможно принтер занят драйвером операционной системы — удалите его из списка системных принтеров и попробуйте снова.",
+      "bluetoothSppWarning": "Примечание: некоторые дешевые принтеры работают только через \"классический\" Bluetooth (SPP), а браузер видит только устройства Bluetooth Low Energy (BLE) — если принтер не отображается в списке, вероятно причина в этом.",
+      "bluetoothReconnectHint": "Из-за политики безопасности браузера может потребоваться повторное подключение Bluetooth принтера при каждом обновлении страницы.",
+      "bleServiceUuid": "Service UUID (для опытных)",
+      "bleCharacteristicUuid": "Characteristic UUID (для опытных)",
+      "networkLimitationWarning": "Страница браузера не может напрямую отправлять сырые команды на сетевой принтер (техническое ограничение веб-платформы). Самый надежный способ — установить принтер как сетевой принтер в Windows/Mac и использовать вариант \"Через систему\".",
+      "networkIpLabel": "IP-адрес принтера (для справки)",
+      "networkDriverHint": "Загрузите сетевой драйвер Xprinter, добавьте его как принтер в операционную систему, затем выберите тип подключения \"Через систему\".",
+      "systemHint": "Чек печатается через стандартное окно \"Печать\" браузера — работает с любым принтером (USB или сетевым), установленным в системе.",
+      "paperWidth": "Ширина бумаги",
+      "cyrillicToggle": "Поддержка кириллицы",
+      "openDrawerToggle": "Открывать денежный ящик при продаже",
+      "testPrintButton": "Тестовая печать чека",
+      "testPrintSuccess": "Тестовый чек отправлен",
+      "testPrintFailed": "Не удалось напечатать — проверьте подключение",
+      "testPrintSystemHint": "Выбрано \"Через систему\" — для теста завершите реальную продажу в POS",
+      "testItemName": "Тестовый товар",
+      "testCompanyName": "ERP System",
+      "testThankYou": "Это тестовый чек",
+      "labelReceipt": "Чек",
+      "labelCashier": "Кассир",
+      "labelSubtotal": "Промежуточный итог",
+      "labelTax": "Налог",
+      "labelPaymentMethod": "Способ оплаты"
+    }
   },
   "tools": {
     "title": "Инструменты",
@@ -592,7 +637,9 @@
     "stock": "Остаток",
     "selectCategory": "Все категории",
     "generalDiscount": "Общая скидка",
-    "itemDiscount": "Скидка на товар"
+    "itemDiscount": "Скидка на товар",
+    "thankYou": "Спасибо! Поздравляем с покупкой.",
+    "printedDirectly": "Чек отправлен на принтер"
   },
   "support": {
     "title": "Служба поддержки",

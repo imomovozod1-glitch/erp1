@@ -63,6 +63,7 @@ import { formatCurrency } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { isValidPhone } from '@/lib/phone-validation'
+import { printReceiptDirect } from '@/lib/printer/print'
 
 // Module-level pure helper functions to satisfy strict React compiler rules
 function generatePOSOrderNumber(): string {
@@ -122,6 +123,7 @@ export function POSClient({
 
   const [isLoadingCheckout, setIsLoadingCheckout] = useState(false)
   const [checkoutSuccessOrder, setCheckoutSuccessOrder] = useState<any>(null)
+  const [companyInfo, setCompanyInfo] = useState<{ name: string; phone?: string }>({ name: 'ERP System' })
   
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false)
   const [newCustomerName, setNewCustomerName] = useState('')
@@ -138,6 +140,19 @@ export function POSClient({
     if (searchInputRef.current) {
       searchInputRef.current.focus()
     }
+  }, [])
+
+  // Company name/phone for the receipt header — RLS scopes this to the caller's own tenant row.
+  useEffect(() => {
+    const supabase = createClient() as any
+    supabase
+      .from('tenants')
+      .select('company_name, phone')
+      .limit(1)
+      .single()
+      .then(({ data }: any) => {
+        if (data?.company_name) setCompanyInfo({ name: data.company_name, phone: data.phone || undefined })
+      })
   }, [])
 
   // Filtered products list
@@ -507,8 +522,28 @@ export function POSClient({
     }
   }
 
-  // Native POS Printing trigger
-  const triggerPrintReceipt = () => {
+  // Tries a direct ESC/POS print via the printer configured in Settings →
+  // Printer first (no OS print dialog); falls back to the browser's Print
+  // dialog if no direct printer is paired/configured or the send fails.
+  const triggerPrintReceipt = async () => {
+    if (checkoutSuccessOrder) {
+      const result = await printReceiptDirect(checkoutSuccessOrder, companyInfo, {
+        receipt: t('receipt'),
+        date: tCommon('date'),
+        cashier: t('cashier'),
+        customer: t('customer'),
+        subtotal: t('subtotal'),
+        discount: t('discount'),
+        tax: t('tax'),
+        total: t('total'),
+        paymentMethod: t('paymentMethod'),
+        thankYou: t('thankYou'),
+      })
+      if (result.ok) {
+        toast.success(t('printedDirectly'))
+        return
+      }
+    }
     window.print()
   }
 
@@ -1091,9 +1126,8 @@ export function POSClient({
             className="p-5 bg-white border border-slate-200 rounded-xl shadow-xs mx-auto max-w-[320mm]"
           >
             <div className="text-center space-y-1 mb-4">
-              <h2 className="text-base font-bold text-slate-800">MEBEL ERP SYSTEM</h2>
-              <p className="text-[10px] text-slate-400">123 Furkat Street, Tashkent, Uzbekistan</p>
-              <p className="text-[10px] text-slate-400">Tel: +998 71 200 40 40</p>
+              <h2 className="text-base font-bold text-slate-800">{companyInfo.name}</h2>
+              {companyInfo.phone && <p className="text-[10px] text-slate-400">{companyInfo.phone}</p>}
               <div className="border-b border-dashed border-slate-200 my-2" />
             </div>
 
@@ -1171,7 +1205,7 @@ export function POSClient({
               <div className="inline-block tracking-widest font-mono text-[9px] bg-slate-100 text-slate-500 px-3 py-1 rounded">
                 |||| | ||||| | || |||| | | ||| | |||
               </div>
-              <p className="text-[10px] text-slate-400">Rahmat! Xaridingiz bilan tabriklaymiz.</p>
+              <p className="text-[10px] text-slate-400">{t('thankYou')}</p>
               <p className="text-[9px] text-slate-400 font-bold">powered by ERP System</p>
             </div>
           </div>

@@ -86,7 +86,8 @@
     "invalidEmail": "Noto'g'ri elektron pochta manzili",
     "invalidAmount": "Noto'g'ri summa",
     "created": "Muvaffaqiyatli yaratildi",
-    "saved": "Muvaffaqiyatli saqlandi"
+    "saved": "Muvaffaqiyatli saqlandi",
+    "testPrint": "Test"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -561,7 +562,51 @@
     "permissionsSaved": "Ruxsatlar saqlandi",
     "permissionsSaveError": "Ruxsatlarni saqlab bo'lmadi",
     "permissionsAdminHint": "Administrator rolidagi foydalanuvchilar har doim barcha bo'limlarga to'liq kirish huquqiga ega",
-    "moduleColumn": "Bo'lim"
+    "moduleColumn": "Bo'lim",
+    "printerTitle": "Chek printeri",
+    "printerCardDesc": "Chek (kvitansiya) printerini ulash va sozlash",
+    "printer": {
+      "title": "Chek printeri sozlamalari",
+      "description": "POS savdolarida chekni to'g'ridan-to'g'ri printerga (USB/Bluetooth) yoki tizim orqali chop eting",
+      "usbSupportLabel": "USB (WebUSB)",
+      "bluetoothSupportLabel": "Bluetooth",
+      "connectionType": "Ulanish turi",
+      "connectionType_usb": "USB",
+      "connectionType_bluetooth": "Bluetooth",
+      "connectionType_network": "Tarmoq (WiFi)",
+      "connectionType_system": "Tizim orqali",
+      "pairUsbButton": "USB printerni ulash",
+      "pairBluetoothButton": "Bluetooth printerni ulash",
+      "pairSuccess": "Printer muvaffaqiyatli ulandi",
+      "pairedDevice": "Ulangan qurilma",
+      "noDevicePaired": "Hech qanday printer ulanmagan",
+      "usbUnsupportedWarning": "Bu brauzer USB orqali to'g'ridan-to'g'ri chop etishni qo'llab-quvvatlamaydi (faqat Chrome/Edge kompyuterda ishlaydi). \"Tizim orqali\" variantidan foydalaning.",
+      "bluetoothUnsupportedWarning": "Bu brauzer Bluetooth orqali chop etishni qo'llab-quvvatlamaydi (Safari/iOS'da mavjud emas). \"Tizim orqali\" variantidan foydalaning.",
+      "usbDriverHint": "Agar ulash muvaffaqiyatsiz tugasa, printer operatsion tizimda o'rnatilgan drayver tomonidan band qilingan bo'lishi mumkin — uni tizim printerlari ro'yxatidan olib tashlab qayta urinib ko'ring.",
+      "bluetoothSppWarning": "Eslatma: ba'zi arzon printerlar faqat \"Classic\" Bluetooth (SPP) orqali ishlaydi, brauzer esa faqat Bluetooth Low Energy (BLE) qurilmalarini ko'radi — agar printeringiz ro'yxatda chiqmasa, bu sabab bo'lishi mumkin.",
+      "bluetoothReconnectHint": "Brauzer xavfsizlik siyosati tufayli har safar sahifa yangilanganda Bluetooth printerni qayta ulash kerak bo'lishi mumkin.",
+      "bleServiceUuid": "Service UUID (ilg'or)",
+      "bleCharacteristicUuid": "Characteristic UUID (ilg'or)",
+      "networkLimitationWarning": "Brauzer sahifasi tarmoq printeriga to'g'ridan-to'g'ri xom (raw) buyruq yubora olmaydi (bu veb-platformaning texnik cheklovi). Eng ishonchli yo'l — printerni Windows/Mac'da tarmoq printeri sifatida o'rnatib, \"Tizim orqali\" variantidan foydalanish.",
+      "networkIpLabel": "Printer IP-manzili (ma'lumot uchun)",
+      "networkDriverHint": "Xprinter'ning tarmoq drayverini yuklab, uni operatsion tizimga printer sifatida qo'shing, so'ng \"Tizim orqali\" ulanish turini tanlang.",
+      "systemHint": "Chek brauzerning standart \"Chop etish\" oynasi orqali chiqariladi — bu operatsion tizimga o'rnatilgan istalgan printer (USB yoki tarmoq) bilan ishlaydi.",
+      "paperWidth": "Qog'oz kengligi",
+      "cyrillicToggle": "Kirill harflarini qo'llab-quvvatlash",
+      "openDrawerToggle": "Sotuvda kassa tortmasini ochish",
+      "testPrintButton": "Test chek chiqarish",
+      "testPrintSuccess": "Test chek yuborildi",
+      "testPrintFailed": "Chop etib bo'lmadi — ulanishni tekshiring",
+      "testPrintSystemHint": "\"Tizim orqali\" tanlangan — test uchun POS'da haqiqiy sotuvni yakunlab ko'ring",
+      "testItemName": "Test mahsuloti",
+      "testCompanyName": "ERP System",
+      "testThankYou": "Bu test cheki",
+      "labelReceipt": "Chek",
+      "labelCashier": "Kassir",
+      "labelSubtotal": "Oraliq summa",
+      "labelTax": "Soliq",
+      "labelPaymentMethod": "To'lov turi"
+    }
   },
   "tools": {
     "title": "Vositalar",
@@ -600,7 +645,9 @@
     "stock": "Qoldiq",
     "selectCategory": "Barcha kategoriyalar",
     "generalDiscount": "Umumiy chegirma",
-    "itemDiscount": "Mahsulot chegirmasi"
+    "itemDiscount": "Mahsulot chegirmasi",
+    "thankYou": "Rahmat! Xaridingiz bilan tabriklaymiz.",
+    "printedDirectly": "Chek printerga yuborildi"
   },
   "support": {
     "title": "Qo'llab-quvvatlash xizmati",
