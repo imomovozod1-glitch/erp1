@@ -7,17 +7,31 @@ class InsufficientFundsError extends Error {
   }
 }
 
-/** Picks which cashbox a payment should land in: prefer one matching `cashboxType`
- *  (e.g. a card payment goes into the "card" cashbox), then the main/first cashbox. */
+export const CASHBOX_TYPE_NAMES: Record<string, string> = {
+  cash: 'Naqd kassa',
+  card: 'Karta kassasi',
+  transfer: "O'tkazma kassasi",
+  other: 'Boshqa kassa',
+};
+
+/**
+ * Picks which cashbox a payment should land in: prefer one matching
+ * `cashboxType` (e.g. a card payment goes into the "card" cashbox), then the
+ * main/first cashbox. Returns `null` when a specific `cashboxType` was
+ * requested but no cashbox of that type exists yet — the caller must create
+ * one rather than silently crediting an unrelated cashbox (a card sale
+ * landing in the cash drawer's balance was a real reported bug: with no
+ * "card" cashbox configured, every payment method funneled into whichever
+ * cashbox happened to be first).
+ */
 function pickTargetCashbox(cashboxes: any[], cashboxType?: string) {
   if (cashboxType) {
-    const typed = cashboxes.find((c: any) => c.type === cashboxType);
-    if (typed) return typed;
+    return cashboxes.find((c: any) => c.type === cashboxType) || null;
   }
   return cashboxes.find((c: any) =>
     c.name.toLowerCase().includes('asosiy') ||
     c.name.toLowerCase().includes('main')
-  ) || cashboxes[0];
+  ) || cashboxes[0] || null;
 }
 
 function updateLocalCashboxes(change: number, amount: number, type: 'income' | 'expense', cashboxType?: string) {
@@ -31,6 +45,24 @@ function updateLocalCashboxes(change: number, amount: number, type: 'income' | '
     if (localCashboxes.length === 0) return;
 
     const target = pickTargetCashbox(localCashboxes, cashboxType);
+
+    if (!target) {
+      // No cashbox of the requested type exists locally either — create one
+      // rather than silently crediting an unrelated cashbox.
+      if (type === 'expense' && amount > 0) {
+        throw new InsufficientFundsError(0, amount);
+      }
+      localCashboxes.push({
+        id: `local-${Date.now()}`,
+        name: CASHBOX_TYPE_NAMES[cashboxType || 'other'] || 'Boshqa kassa',
+        type: cashboxType || 'other',
+        balance: change,
+        description: 'Sotuvlar va tolovlar uchun avtomatik yaratilgan kassa',
+      });
+      localStorage.setItem('erp_cashboxes', JSON.stringify(localCashboxes));
+      return;
+    }
+
     const index = localCashboxes.findIndex((c: any) => c.id === target.id);
     const currentBalance = Number(localCashboxes[index].balance) || 0;
 
@@ -105,38 +137,35 @@ export async function adjustCashboxBalance(amount: number, type: 'income' | 'exp
       throw error;
     }
 
-    let targetCashboxId = null;
-    let currentBalance = 0;
-
-    if (cashboxes && cashboxes.length > 0) {
-      // Prefer a cashbox matching the payment method (e.g. card payment → the "card" cashbox),
-      // falling back to the primary/first cashbox when none matches.
-      const targetCb = pickTargetCashbox(cashboxes, cashboxType);
-      targetCashboxId = targetCb.id;
-      currentBalance = Number(targetCb.balance) || 0;
-    }
+    // Prefer a cashbox matching the payment method (e.g. card payment → the
+    // "card" cashbox), falling back to the primary/first cashbox only when
+    // no `cashboxType` was requested. `null` here means either no cashboxes
+    // exist yet, or none of them match the requested type — both cases need
+    // a new cashbox created rather than crediting an unrelated one.
+    const targetCb = cashboxes && cashboxes.length > 0 ? pickTargetCashbox(cashboxes, cashboxType) : null;
+    const currentBalance = targetCb ? Number(targetCb.balance) || 0 : 0;
 
     // A cashbox can never go negative — block any expense larger than what's actually in it
     if (type === 'expense' && amount > currentBalance) {
       throw new InsufficientFundsError(currentBalance, amount);
     }
 
-    const newBalance = currentBalance + change;
-
-    if (targetCashboxId) {
-      // Update existing cashbox
+    if (targetCb) {
       const { error: updateErr } = await supabase
         .from('cashboxes')
-        .update({ balance: newBalance })
-        .eq('id', targetCashboxId);
+        .update({ balance: currentBalance + change })
+        .eq('id', targetCb.id);
 
       if (updateErr) throw updateErr;
     } else {
-      // Insert a new cashbox if none exists
+      // No cashbox exists yet for this payment method — create one instead
+      // of silently mixing the funds into whichever cashbox happens to be first.
+      const resolvedType = cashboxType || 'cash';
       const { error: insertErr } = await supabase
         .from('cashboxes')
         .insert({
-          name: 'Asosiy Kassa',
+          name: CASHBOX_TYPE_NAMES[resolvedType] || 'Asosiy Kassa',
+          type: resolvedType,
           balance: change,
           description: 'Sotuvlar va tolovlar uchun avtomatik yaratilgan kassa'
         });
@@ -150,8 +179,8 @@ export async function adjustCashboxBalance(amount: number, type: 'income' | 'exp
       if (localData) {
         try {
           const localCashboxes = JSON.parse(localData);
-          if (localCashboxes.length > 0) {
-            const target = pickTargetCashbox(localCashboxes, cashboxType);
+          const target = localCashboxes.length > 0 ? pickTargetCashbox(localCashboxes, cashboxType) : null;
+          if (target) {
             const index = localCashboxes.findIndex((c: any) => c.id === target.id);
             localCashboxes[index].balance = (Number(localCashboxes[index].balance) || 0) + change;
             localStorage.setItem('erp_cashboxes', JSON.stringify(localCashboxes));
