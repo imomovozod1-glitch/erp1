@@ -4,7 +4,6 @@ import { getTranslations } from 'next-intl/server'
 import { getSessionUser } from '@/lib/auth'
 import { PageHeader } from '@/components/shared/page-header'
 import { CompanyForm } from '@/components/settings/company-form'
-import { InventoryCostingForm } from '@/components/settings/inventory-costing-form'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -37,7 +36,6 @@ export default async function CompanySettingsPage({
         ]}
       />
       <CompanyForm />
-      {/* <InventoryCostingForm /> */}
     </div>
   )
 }

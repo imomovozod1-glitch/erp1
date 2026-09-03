@@ -377,8 +377,8 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { href: 'sales/orders/new', label: t.newSale, icon: Plus, tone: 'indigo' },
-            { href: 'finance/transactions/new?type=income', label: t.addIncome, icon: ArrowUpRight, tone: 'emerald' },
-            { href: 'finance/transactions/new?type=expense', label: t.addExpense, icon: ArrowDownRight, tone: 'rose' },
+            { href: 'finance/cashbox?action=kirim', label: t.addIncome, icon: ArrowUpRight, tone: 'emerald' },
+            { href: 'finance/cashbox?action=chiqim', label: t.addExpense, icon: ArrowDownRight, tone: 'rose' },
             { href: 'customers/new', label: tSales('addCustomer'), icon: Contact, tone: 'slate' },
             // { href: 'customers/categories/new', label: tSales('addCustomerCategory'), icon: FolderPlus, tone: 'blue' },
             { href: 'inventory/products/new', label: tInventory('addProduct'), icon: Package, tone: 'amber' },

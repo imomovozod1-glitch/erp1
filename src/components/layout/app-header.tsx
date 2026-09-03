@@ -231,7 +231,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
   return (
     <header
-      className={`flex h-16 shrink-0 items-center gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-4 fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
+      className={`flex min-h-16 shrink-0 items-center gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-4 pt-[env(safe-area-inset-top)] fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
         isSidebarMobile ? 'left-0' : sidebarState === 'expanded' ? 'left-0 md:left-(--sidebar-width)' : 'left-0 md:left-(--sidebar-width-icon)'
       }`}
     >

@@ -22,7 +22,8 @@ import {
   Coins,
   Receipt,
   CreditCard,
-  ArrowLeftRight
+  ArrowLeftRight,
+  X
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { NumericInput } from '@/components/ui/numeric-input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { PageHeader } from '@/components/shared/page-header'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
@@ -340,18 +342,19 @@ export function CashboxClient({ lang }: { lang: string }) {
     const type = searchParams.get('type')
     const customerId = searchParams.get('customerId')
 
-    if (action === 'kirim') {
+    if (action === 'kirim' || action === 'chiqim') {
       setTimeout(() => {
         const targetCb = cashboxes.find(c => c.name.toLowerCase().includes('asosiy') || c.name.toLowerCase().includes('main')) || cashboxes[0]
         if (targetCb) {
+          const actionTxType = action === 'kirim' ? 'income' : 'expense'
           // "debt_collection" resolves to whichever income category is linked to customers —
           // that's the one that pays down unpaid invoices (see handleSaveTransaction).
           const targetCategory = type === 'debt_collection'
             ? categories.find(c => c.type === 'income' && c.person_type === 'customer')
-            : categories.find(c => c.type === 'income')
+            : categories.find(c => c.type === actionTxType)
 
           setSelectedCashboxForTx(targetCb)
-          setTxType('income')
+          setTxType(actionTxType)
           setTxAmount('')
           setTxCategory(targetCategory?.id || '')
           setTxDate(new Date().toISOString().split('T')[0])
@@ -370,6 +373,20 @@ export function CashboxClient({ lang }: { lang: string }) {
       }, 0)
     }
   }, [searchParams, cashboxes, categories, isLocalStorageFallback])
+
+  // Escape closes whichever modal is open — the standard affordance was
+  // missing entirely (no close button, no backdrop-click, no Escape).
+  useEffect(() => {
+    if (!isTransactionModalOpen && !isModalOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsTransactionModalOpen(false)
+        setIsModalOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isTransactionModalOpen, isModalOpen])
 
   const handleOpenAddModal = () => {
     setEditingCashbox(null)
@@ -1463,16 +1480,51 @@ export function CashboxClient({ lang }: { lang: string }) {
 
       {/* Kirim (Income) / Chiqim (Expense) Modal */}
       {isTransactionModalOpen && selectedCashboxForTx && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl p-7 relative animate-in zoom-in-95 duration-300 space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
+          onClick={() => setIsTransactionModalOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl p-7 relative animate-in zoom-in-95 duration-300 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsTransactionModalOpen(false)}
+              aria-label={tCommon('cancel')}
+              className="absolute right-5 top-5 rounded-full p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-3 pb-3 pr-8 border-b border-slate-100 dark:border-slate-800">
               <div className={`p-2.5 rounded-xl ${txType === 'income' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'}`}>
                 {txType === 'income' ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
               </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                  {selectedCashboxForTx.name}
-                </h3>
+              <div className="flex-1 min-w-0">
+                {cashboxes.length > 1 ? (
+                  <Select
+                    value={selectedCashboxForTx.id}
+                    onValueChange={(val) => {
+                      const cb = cashboxes.find(c => c.id === val)
+                      if (cb) setSelectedCashboxForTx(cb)
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-full border-0 bg-transparent p-0 shadow-none font-bold text-base text-slate-800 dark:text-slate-100 hover:bg-transparent focus:ring-0 [&_svg]:opacity-60">
+                      <SelectValue>{selectedCashboxForTx.name}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {cashboxes.map((cb) => (
+                        <SelectItem key={cb.id} value={cb.id} className="rounded-lg">
+                          {cb.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                    {selectedCashboxForTx.name}
+                  </h3>
+                )}
                 <p className="text-xs text-muted-foreground">
                   {txType === 'income'
                     ? (lang === 'uz' ? 'Kirim operatsiyasini kiritish' : lang === 'ru' ? 'Внести приходную операцию' : 'Register Income')
@@ -1634,16 +1686,14 @@ export function CashboxClient({ lang }: { lang: string }) {
 
               <div className="space-y-1.5">
                 <Label htmlFor="tx_date" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{tCommon('date')} *</Label>
-                <div className="relative">
-                  <Input
-                    id="tx_date"
-                    type="date"
-                    value={txDate}
-                    onChange={(e) => setTxDate(e.target.value)}
-                    required
-                    className="rounded-xl border-slate-200 dark:border-slate-700 dark:scheme-dark"
-                  />
-                </div>
+                <DatePicker
+                  id="tx_date"
+                  value={txDate}
+                  onChange={setTxDate}
+                  lang={lang}
+                  placeholder={tCommon('date')}
+                  className="rounded-xl border-slate-200 dark:border-slate-700"
+                />
               </div>
 
               <div className="space-y-1.5">
