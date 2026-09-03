@@ -606,7 +606,9 @@
       "labelCashier": "Cashier",
       "labelSubtotal": "Subtotal",
       "labelTax": "Tax",
-      "labelPaymentMethod": "Payment method"
+      "labelPaymentMethod": "Payment method",
+      "paperWidthCustom": "Custom",
+      "customColumnsHint": "Characters per line ({min}-{max})"
     }
   },
   "tools": {

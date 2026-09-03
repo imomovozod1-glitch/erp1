@@ -1,4 +1,4 @@
-import type { PaperWidth } from './receipt'
+import { DEFAULT_CUSTOM_COLUMNS, type PaperWidth } from './receipt'
 
 /**
  * A receipt printer is a physical device wired to one specific computer or
@@ -14,6 +14,8 @@ export type PrinterConnectionType = 'usb' | 'bluetooth' | 'network' | 'system'
 export interface PrinterConfig {
   connectionType: PrinterConnectionType
   paperWidth: PaperWidth
+  /** Character columns per line, used only when paperWidth === 'custom'. */
+  customColumns: number
   cyrillic: boolean
   codepage: number
   openDrawerOnSale: boolean
@@ -30,6 +32,7 @@ export const DEFAULT_BLE_CHARACTERISTIC_UUID = '00002af1-0000-1000-8000-00805f9b
 export const DEFAULT_PRINTER_CONFIG: PrinterConfig = {
   connectionType: 'system',
   paperWidth: '80mm',
+  customColumns: DEFAULT_CUSTOM_COLUMNS,
   cyrillic: false,
   codepage: 17,
   openDrawerOnSale: false,

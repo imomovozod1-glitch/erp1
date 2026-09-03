@@ -42,6 +42,7 @@ export async function printReceiptDirect(
 
   const bytes = buildReceiptBytes(order, company, labels, {
     paperWidth: config.paperWidth,
+    customColumns: config.customColumns,
     cyrillic: config.cyrillic,
     codepage: config.codepage,
     openDrawer: config.openDrawerOnSale,

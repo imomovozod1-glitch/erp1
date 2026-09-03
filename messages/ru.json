@@ -597,7 +597,9 @@
       "labelCashier": "Кассир",
       "labelSubtotal": "Промежуточный итог",
       "labelTax": "Налог",
-      "labelPaymentMethod": "Способ оплаты"
+      "labelPaymentMethod": "Способ оплаты",
+      "paperWidthCustom": "Другое",
+      "customColumnsHint": "Количество символов в строке (от {min} до {max})"
     }
   },
   "tools": {

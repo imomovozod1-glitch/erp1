@@ -605,7 +605,9 @@
       "labelCashier": "Kassir",
       "labelSubtotal": "Oraliq summa",
       "labelTax": "Soliq",
-      "labelPaymentMethod": "To'lov turi"
+      "labelPaymentMethod": "To'lov turi",
+      "paperWidthCustom": "Boshqa",
+      "customColumnsHint": "Bir qatordagi belgilar soni ({min}-{max} oralig'ida)"
     }
   },
   "tools": {

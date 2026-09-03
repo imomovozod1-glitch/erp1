@@ -41,17 +41,31 @@ export interface ReceiptLabels {
   thankYou: string
 }
 
-/** Paper widths in character columns at the standard 12x24 font — 58mm and 80mm cover the whole thermal-receipt-printer market. */
+/** Paper widths in character columns at the standard 12x24 font — 58mm and 80mm cover most thermal receipt printers; 'custom' covers the rest (e.g. wider kitchen-printer rolls). */
 export const PAPER_WIDTH_COLUMNS = { '58mm': 32, '80mm': 48 } as const
-export type PaperWidth = keyof typeof PAPER_WIDTH_COLUMNS
+export type PresetPaperWidth = keyof typeof PAPER_WIDTH_COLUMNS
+export type PaperWidth = PresetPaperWidth | 'custom'
+
+export const DEFAULT_CUSTOM_COLUMNS = 32
+/** ESC/POS text mode gets unreadable outside this range — far too few columns for a total line, or wide enough that no realistic thermal printer supports it. */
+export const CUSTOM_COLUMNS_MIN = 16
+export const CUSTOM_COLUMNS_MAX = 64
+
+export function resolveColumns(paperWidth: PaperWidth, customColumns?: number): number {
+  if (paperWidth === 'custom') {
+    const n = customColumns ?? DEFAULT_CUSTOM_COLUMNS
+    return Math.min(CUSTOM_COLUMNS_MAX, Math.max(CUSTOM_COLUMNS_MIN, Math.round(n)))
+  }
+  return PAPER_WIDTH_COLUMNS[paperWidth]
+}
 
 export function buildReceiptBytes(
   order: ReceiptOrder,
   company: ReceiptCompanyInfo,
   labels: ReceiptLabels,
-  opts: { paperWidth: PaperWidth; cyrillic: boolean; codepage: number; openDrawer: boolean }
+  opts: { paperWidth: PaperWidth; customColumns?: number; cyrillic: boolean; codepage: number; openDrawer: boolean }
 ): Uint8Array {
-  const cols = PAPER_WIDTH_COLUMNS[opts.paperWidth]
+  const cols = resolveColumns(opts.paperWidth, opts.customColumns)
   const p = new EscPosBuilder({ columns: cols, cyrillic: opts.cyrillic, codepage: opts.codepage })
 
   p.align('center').bold(true).size(1, 1).line(company.name).bold(false)

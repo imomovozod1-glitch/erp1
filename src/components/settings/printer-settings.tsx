@@ -24,7 +24,12 @@ import {
   type PrinterConfig,
   type PrinterConnectionType,
 } from '@/lib/printer/storage'
-import type { PaperWidth } from '@/lib/printer/receipt'
+import {
+  type PaperWidth,
+  CUSTOM_COLUMNS_MIN,
+  CUSTOM_COLUMNS_MAX,
+  DEFAULT_CUSTOM_COLUMNS,
+} from '@/lib/printer/receipt'
 import {
   isWebUsbSupported,
   isWebBluetoothSupported,
@@ -132,6 +137,7 @@ export function PrinterSettings() {
         },
         {
           paperWidth: config.paperWidth,
+          customColumns: config.customColumns,
           cyrillic: config.cyrillic,
           codepage: config.codepage,
           openDrawer: false,
@@ -307,7 +313,7 @@ export function PrinterSettings() {
           <div className="space-y-2">
             <Label>{t('paperWidth')}</Label>
             <div className="flex gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 p-1 w-fit">
-              {(['58mm', '80mm'] as PaperWidth[]).map((w) => (
+              {(['58mm', '80mm', 'custom'] as PaperWidth[]).map((w) => (
                 <button
                   key={w}
                   type="button"
@@ -319,10 +325,25 @@ export function PrinterSettings() {
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                   )}
                 >
-                  {w}
+                  {w === 'custom' ? t('paperWidthCustom') : w}
                 </button>
               ))}
             </div>
+            {config.paperWidth === 'custom' && (
+              <div className="flex items-center gap-2 pt-1">
+                <Input
+                  type="number"
+                  min={CUSTOM_COLUMNS_MIN}
+                  max={CUSTOM_COLUMNS_MAX}
+                  value={config.customColumns}
+                  onChange={(e) => updateConfig({ customColumns: Number(e.target.value) || DEFAULT_CUSTOM_COLUMNS })}
+                  className="h-8 w-24 text-xs rounded-lg"
+                />
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                  {t('customColumnsHint', { min: CUSTOM_COLUMNS_MIN, max: CUSTOM_COLUMNS_MAX })}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Cyrillic + drawer toggles */}
