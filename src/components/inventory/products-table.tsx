@@ -466,10 +466,10 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 <TableHead className="font-semibold">
                   {t("inventory.productName")}
                 </TableHead>
-                <TableHead>{t("inventory.sku")}</TableHead>
-                <TableHead>{t("inventory.category")}</TableHead>
-                <TableHead className="text-right">{t("inventory.costPrice")}</TableHead>
-                <TableHead className="text-right">
+                <TableHead className="hidden md:table-cell">{t("inventory.sku")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("inventory.category")}</TableHead>
+                <TableHead className="hidden md:table-cell text-right">{t("inventory.costPrice")}</TableHead>
+                <TableHead className="hidden lg:table-cell text-right">
                   {t("inventory.incomingCost")}
                 </TableHead>
                 <TableHead className="text-right">{t("inventory.price")}</TableHead>
@@ -517,16 +517,16 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
                         {product.sku}
                       </code>
                     </TableCell>
-                    <TableCell>{product.categories?.name ?? "—"}</TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="hidden md:table-cell">{product.categories?.name ?? "—"}</TableCell>
+                    <TableCell className="hidden md:table-cell text-right font-medium">
                       {formatCurrency(product.cost_price)}
                     </TableCell>
-                    <TableCell className="text-right font-medium text-slate-600 dark:text-slate-300">
+                    <TableCell className="hidden lg:table-cell text-right font-medium text-slate-600 dark:text-slate-300">
                       {formatCurrency(product.incoming_cost || 0)}
                     </TableCell>
                     <TableCell className="text-right font-bold text-violet-600 dark:text-violet-400">

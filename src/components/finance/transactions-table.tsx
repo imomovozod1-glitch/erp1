@@ -64,8 +64,8 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead>{tCommon('date')}</TableHead>
               <TableHead>{t('type')}</TableHead>
-              <TableHead>{t('category')}</TableHead>
-              <TableHead>{tCommon('description')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('category')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{tCommon('description')}</TableHead>
               <TableHead className="text-right">{tCommon('amount')}</TableHead>
               <TableHead className="w-17.5"></TableHead>
             </TableRow>
@@ -97,12 +97,12 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                       label={tx.type === 'income' ? t('incomeType') : t('expenseType')}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
                       {tx.category}
                     </span>
                   </TableCell>
-                  <TableCell className="text-muted-foreground max-w-50 truncate">
+                  <TableCell className="hidden lg:table-cell text-muted-foreground max-w-50 truncate">
                     {tx.description ?? '—'}
                   </TableCell>
                   <TableCell className="text-right">
@@ -112,7 +112,7 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100" />}>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
                         <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">

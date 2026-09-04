@@ -80,8 +80,8 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                 <TableHead>{t('customer')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
                 <TableHead className="text-right">{tCommon('total')}</TableHead>
-                <TableHead className="text-right">{t('status.paid')}</TableHead>
-                <TableHead className="text-right">{tCommon('date')}</TableHead>
+                <TableHead className="hidden md:table-cell text-right">{t('status.paid')}</TableHead>
+                <TableHead className="hidden md:table-cell text-right">{tCommon('date')}</TableHead>
                 <TableHead className="w-17.5"></TableHead>
               </TableRow>
             </TableHeader>
@@ -140,15 +140,15 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     <TableCell className="text-right font-medium">
                       {formatCurrency(invoice.total_amount)}
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
+                    <TableCell className="hidden md:table-cell text-right text-muted-foreground">
                       {formatCurrency(invoice.paid_amount)}
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
+                    <TableCell className="hidden md:table-cell text-right text-muted-foreground">
                       {formatDateTime(invoice.created_at)}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100" />}>
+                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
                           <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">

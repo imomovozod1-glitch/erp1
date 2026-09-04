@@ -82,10 +82,10 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableHead className="w-10 font-semibold text-center">#</TableHead>
                 <TableHead>{tCommon('name')}</TableHead>
-                <TableHead>{tCommon('email')}</TableHead>
+                <TableHead className="hidden md:table-cell">{tCommon('email')}</TableHead>
                 <TableHead>{tCommon('phone')}</TableHead>
-                <TableHead>{t('contactPerson')}</TableHead>
-                <TableHead>{t('tin')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('contactPerson')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('tin')}</TableHead>
                 <TableHead className="text-right">{lang === 'uz' ? 'Qarzimiz' : lang === 'ru' ? 'Наш долг' : 'Debt owed'}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
                 <TableHead className="w-12" />
@@ -122,10 +122,10 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                           </Link>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{supplier.email ?? '—'}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">{supplier.email ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground">{supplier.phone ?? '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{supplier.contact_person ?? '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{supplier.tin ?? '—'}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">{supplier.contact_person ?? '—'}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">{supplier.tin ?? '—'}</TableCell>
                       <TableCell className={`text-right font-semibold ${(Number(supplier.total_debt) || 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
                         {(Number(supplier.total_debt) || 0) > 0 ? formatCurrency(supplier.total_debt) : '—'}
                       </TableCell>

@@ -108,9 +108,9 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead>{tCommon('name')}</TableHead>
-              <TableHead>{tCommon('email')}</TableHead>
+              <TableHead className="hidden md:table-cell">{tCommon('email')}</TableHead>
               <TableHead>{tCommon('phone')}</TableHead>
-              <TableHead>{lang === 'uz' ? 'Toifa' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
+              <TableHead className="hidden md:table-cell">{lang === 'uz' ? 'Toifa' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
               <TableHead className="text-right">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12" />
@@ -146,9 +146,9 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                       <span className="font-medium text-slate-800 dark:text-slate-200">{customer.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{customer.email ?? '—'}</TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground">{customer.email ?? '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer.phone ?? '—'}</TableCell>
-                  <TableCell className="text-muted-foreground">{customer.customer_categories?.name ?? '—'}</TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground">{customer.customer_categories?.name ?? '—'}</TableCell>
                   <TableCell className="text-right">
                     {(() => {
                       const balance = (Number(customer.credit_balance) || 0) - (Number(customer.total_debt) || 0)

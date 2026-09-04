@@ -102,10 +102,10 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
               <TableHead>{tCommon('name')}</TableHead>
-              <TableHead>{t('employeeCode')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('employeeCode')}</TableHead>
               <TableHead>{t('position')}</TableHead>
-              <TableHead className="text-right">{t('salary')}</TableHead>
-              <TableHead>{t('hiredAt')}</TableHead>
+              <TableHead className="hidden md:table-cell text-right">{t('salary')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('hiredAt')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12.5"></TableHead>
             </TableRow>
@@ -151,12 +151,12 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">{emp.employee_code}</code>
                     </TableCell>
                     <TableCell className="text-sm">{emp.position || '—'}</TableCell>
-                    <TableCell className="text-right font-semibold">{formatCurrency(emp.salary)}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(emp.hired_at)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-right font-semibold">{formatCurrency(emp.salary)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground">{formatDate(emp.hired_at)}</TableCell>
                     <TableCell>
                       <StatusBadge
                         tone={emp.is_active ? 'emerald' : 'rose'}

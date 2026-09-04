@@ -84,9 +84,9 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
               <TableHead>{t('productName')}</TableHead>
               <TableHead>{tCommon('type')}</TableHead>
               <TableHead className="text-right">{t('quantity')}</TableHead>
-              <TableHead className="text-right">{t('before')}</TableHead>
-              <TableHead className="text-right">{t('after')}</TableHead>
-              <TableHead>{tCommon('notes')}</TableHead>
+              <TableHead className="hidden lg:table-cell text-right">{t('before')}</TableHead>
+              <TableHead className="hidden md:table-cell text-right">{t('after')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{tCommon('notes')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -122,13 +122,13 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
                       {movement.type === 'in' ? '+' : movement.type === 'out' ? '-' : ''}{formatNumber(movement.quantity)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right text-muted-foreground text-sm">
+                  <TableCell className="hidden lg:table-cell text-right text-muted-foreground text-sm">
                     {formatNumber(movement.quantity_before)}
                   </TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="hidden md:table-cell text-right font-medium">
                     {formatNumber(movement.quantity_after)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <span className="text-sm text-muted-foreground max-w-[200px] truncate block">
                       {translateMovementReason(movement.reason, lang)}
                     </span>

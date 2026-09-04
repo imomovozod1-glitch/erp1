@@ -79,7 +79,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                 <TableHead className="w-10 font-semibold text-center">#</TableHead>
                 <TableHead>{t('poNumber')}</TableHead>
                 <TableHead>{t('supplier')}</TableHead>
-                <TableHead>{tCommon('date')}</TableHead>
+                <TableHead className="hidden md:table-cell">{tCommon('date')}</TableHead>
                 <TableHead className="text-right">{tCommon('total')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
               </TableRow>
@@ -110,7 +110,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                       </code>
                     </TableCell>
                     <TableCell className="font-medium text-slate-800 dark:text-slate-200">{order.suppliers?.name ?? '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatDateTime(order.created_at)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground">{formatDateTime(order.created_at)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(order.total_amount)}</TableCell>
                     <TableCell>
                       <StatusBadge tone={STATUS_TONES[order.status] ?? 'slate'} label={t(`status.${order.status}`)} />

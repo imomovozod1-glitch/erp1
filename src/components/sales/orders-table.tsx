@@ -81,7 +81,7 @@ export function OrdersTable({ orders, lang }: OrdersTableProps) {
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
               <TableHead>{t('orderNumber')}</TableHead>
               <TableHead>{t('customer')}</TableHead>
-              <TableHead>{t('orderDate')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('orderDate')}</TableHead>
               <TableHead className="text-right">{tCommon('total')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12" />
@@ -113,7 +113,7 @@ export function OrdersTable({ orders, lang }: OrdersTableProps) {
                      </code>
                    </TableCell>
                    <TableCell className="font-medium">{order.customers?.name ?? '—'}</TableCell>
-                   <TableCell className="text-muted-foreground">{formatDateTime(order.created_at)}</TableCell>
+                   <TableCell className="hidden md:table-cell text-muted-foreground">{formatDateTime(order.created_at)}</TableCell>
                    <TableCell className="text-right font-semibold">{formatCurrency(order.total_amount)}</TableCell>
                    <TableCell>
                      <StatusBadge tone={STATUS_TONES[order.status] ?? 'slate'} label={t(`status.${order.status}`)} />
