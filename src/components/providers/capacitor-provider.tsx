@@ -17,6 +17,7 @@ export function CapacitorProvider() {
     if (!Capacitor.isNativePlatform()) return
 
     let backListener: { remove: () => void } | undefined
+    let stateListener: { remove: () => void } | undefined
     let cancelled = false
 
     ;(async () => {
@@ -38,6 +39,27 @@ export function CapacitorProvider() {
         }
       })
 
+      // Unlike a browser tab, resuming this native shell from the background
+      // never re-fetches the page on its own — it keeps showing whatever was
+      // loaded at launch, even after a new deploy has gone out. On resume,
+      // compare the running page's build id against the server's current one
+      // (src/app/api/build-id/route.ts) and reload only when they differ, so
+      // switching apps briefly doesn't lose in-progress form state for
+      // nothing.
+      const runningBuildId = process.env.NEXT_PUBLIC_BUILD_ID
+      stateListener = await App.addListener('appStateChange', async ({ isActive }) => {
+        if (!isActive || !runningBuildId) return
+        try {
+          const res = await fetch('/api/build-id', { cache: 'no-store' })
+          const { buildId } = await res.json()
+          if (buildId && buildId !== runningBuildId) {
+            window.location.reload()
+          }
+        } catch {
+          // Offline or request failed — keep showing the current page.
+        }
+      })
+
       // Both targetSdk 35+ on Android (edge-to-edge is OS-enforced, can no
       // longer be opted out of) and iOS notch devices otherwise draw the
       // WebView under the status bar — env(safe-area-inset-top) alone isn't
@@ -55,6 +77,7 @@ export function CapacitorProvider() {
     return () => {
       cancelled = true
       backListener?.remove()
+      stateListener?.remove()
     }
   }, [router])
 

@@ -37,6 +37,14 @@ const securityHeaders = [
 
 const nextConfig: any = {
   outputFileTracingRoot: process.cwd(),
+  // Baked into the client bundle at build time. Vercel sets
+  // VERCEL_GIT_COMMIT_SHA per-deployment, so this changes on every deploy —
+  // the Capacitor shell (src/components/providers/capacitor-provider.tsx)
+  // compares it against src/app/api/build-id/route.ts on resume to detect a
+  // stale WebView page and reload it.
+  env: {
+    NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA || 'dev',
+  },
   images: {
     remotePatterns: [
       {
