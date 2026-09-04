@@ -481,7 +481,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-12">
+                  <TableCell colSpan={10} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Package className="h-8 w-8 opacity-40" />
                       <p className="text-sm">{t("common.noData")}</p>

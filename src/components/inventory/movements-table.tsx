@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { Search, ArrowDownRight, ArrowUpRight, Settings2, Activity } from 'lucide-react'
@@ -23,6 +24,7 @@ interface MovementsTableProps {
 export function MovementsTable({ movements, lang }: MovementsTableProps) {
   const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -101,7 +103,11 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
               </TableRow>
             ) : (
               paginated.map((movement, index) => (
-                <TableRow key={movement.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                <TableRow
+                  key={movement.id}
+                  className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors ${movement.product_id ? 'cursor-pointer' : ''}`}
+                  onClick={() => movement.product_id && router.push(`/${lang}/inventory/products/${movement.product_id}`)}
+                >
                   <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>

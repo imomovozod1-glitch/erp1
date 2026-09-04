@@ -94,7 +94,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
+                  <TableCell colSpan={9} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Truck className="h-8 w-8 opacity-40" />
                       <p className="text-sm">{tCommon('noData')}</p>
