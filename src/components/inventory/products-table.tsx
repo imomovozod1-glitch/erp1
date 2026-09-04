@@ -385,7 +385,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 {t("common.inactive", { fallback: "Nofaol" })}
               </button>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 type="button"
                 variant="outline"
