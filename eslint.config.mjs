@@ -18,6 +18,10 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "seed_furniture.js",
+    // Native Capacitor projects — generated/vendored Java/Kotlin/Swift
+    // projects and their build output, not application source.
+    "android/**",
+    "ios/**",
   ]),
 ]);
 

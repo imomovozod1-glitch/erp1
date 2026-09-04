@@ -401,10 +401,10 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
               <Link
                 key={action.href}
                 href={`/${lang}/${action.href}`}
-                className={`flex items-center justify-start gap-2 h-12 px-4 py-2 border transition-colors text-sm font-semibold rounded-lg ${toneClasses[action.tone]}`}
+                className={`flex items-center justify-start gap-2 min-h-12 px-4 py-2.5 border transition-colors text-sm font-semibold rounded-lg ${toneClasses[action.tone]}`}
               >
-                <Icon className="h-4 w-4" />
-                <span className="truncate">{action.label}</span>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="leading-tight">{action.label}</span>
               </Link>
             )
           })}

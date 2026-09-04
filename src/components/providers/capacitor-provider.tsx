@@ -38,6 +38,14 @@ export function CapacitorProvider() {
         }
       })
 
+      // Both targetSdk 35+ on Android (edge-to-edge is OS-enforced, can no
+      // longer be opted out of) and iOS notch devices otherwise draw the
+      // WebView under the status bar — env(safe-area-inset-top) alone isn't
+      // reliably wired through the Android WebView, so ask the native layer
+      // to push web content below the status bar explicitly rather than
+      // depending on CSS insets to do it.
+      await StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
+
       const isDark = document.documentElement.classList.contains('dark')
       await StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {})
 

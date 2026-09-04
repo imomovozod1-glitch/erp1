@@ -134,8 +134,18 @@ function touchTenantLastActive(tenantId: string) {
   patchTenant(tenantId, { last_active_at: new Date().toISOString() })
 }
 
+const IPV4_PATTERN = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/
+
 function getTenantSubdomain(host: string): string | null {
   const hostname = host.split(':')[0]
+
+  // A raw IP address (e.g. the Android emulator's 10.0.2.2 loopback alias,
+  // or anyone hitting the app directly by IP) has dot-separated segments
+  // just like "tenant.example.com" does — without this check its first
+  // octet gets misread as a tenant subdomain that doesn't exist.
+  if (IPV4_PATTERN.test(hostname)) {
+    return null
+  }
 
   // If local development, check for subdomain before "localhost"
   // e.g. "tenant1.localhost" -> "tenant1"
