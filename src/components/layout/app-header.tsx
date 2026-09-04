@@ -231,7 +231,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
   return (
     <header
-      className={`flex min-h-16 shrink-0 items-center gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-4 pt-[env(safe-area-inset-top)] fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
+      className={`flex min-h-16 shrink-0 items-center gap-1.5 sm:gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-3 sm:px-4 pt-[env(safe-area-inset-top)] fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
         isSidebarMobile ? 'left-0' : sidebarState === 'expanded' ? 'left-0 md:left-(--sidebar-width)' : 'left-0 md:left-(--sidebar-width-icon)'
       }`}
     >
@@ -245,10 +245,11 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           variant="outline"
           size="sm"
           onClick={() => router.push(`/${lang}/sales/invoices`)}
-          className="h-8 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-800 dark:hover:text-rose-300 font-semibold text-xs rounded-lg animate-pulse gap-1.5 transition-all mr-2"
+          className="h-8 w-8 sm:w-auto justify-center px-0 sm:px-3 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-800 dark:hover:text-rose-300 font-semibold text-xs rounded-lg sm:rounded-full animate-pulse gap-1.5 transition-all mr-0.5 sm:mr-2"
+          title={lang === 'uz' ? "Muddati o'tgan" : lang === 'ru' ? 'Просрочено' : 'Overdue'}
         >
-          <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
-          {lang === 'uz' ? "Muddati o'tgan" : lang === 'ru' ? 'Просрочено' : 'Overdue'}
+          <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
+          <span className="hidden sm:inline">{lang === 'uz' ? "Muddati o'tgan" : lang === 'ru' ? 'Просрочено' : 'Overdue'}</span>
         </Button>
       )}
 
@@ -258,13 +259,13 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           render={
             <button
               type="button"
-              className="flex items-center gap-1.5 h-8 pl-1.5 pr-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer shadow-2xs"
+              className="flex items-center justify-center gap-1.5 h-8 w-8 sm:w-auto px-0 sm:pl-1.5 sm:pr-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer shadow-2xs"
             />
           }
         >
-          <Languages className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{currentLocale?.code.toUpperCase()}</span>
-          <ChevronDown className="h-3 w-3 text-slate-400 dark:text-slate-500" />
+          <Languages className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
+          <span className="hidden sm:inline text-xs font-semibold text-slate-700 dark:text-slate-300">{currentLocale?.code.toUpperCase()}</span>
+          <ChevronDown className="hidden sm:block h-3 w-3 text-slate-400 dark:text-slate-500" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
           <DropdownMenuLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-1 pb-1.5">
