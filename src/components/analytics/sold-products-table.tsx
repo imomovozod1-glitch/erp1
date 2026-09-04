@@ -58,7 +58,7 @@ export function SoldProductsTable({ products, lang }: SoldProductsTableProps) {
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
-        <div className="flex items-center gap-3 p-4 border-b">
+        <div className="flex flex-wrap items-center gap-3 p-4 border-b">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input

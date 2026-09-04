@@ -31,7 +31,7 @@ export function PageHeader({
   const ActionIcon = action?.icon
 
   return (
-    <div className={cn('flex items-start justify-between gap-4 mb-6', className)}>
+    <div className={cn('flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6', className)}>
       <div>
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
@@ -56,7 +56,7 @@ export function PageHeader({
         {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
         {children}
         {action && (
           action.href ? (
