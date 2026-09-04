@@ -36,6 +36,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -116,6 +117,10 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
   const tProcurement = useTranslations('procurement')
   const tSettings = useTranslations('settings')
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
+  const closeOnMobile = () => {
+    if (isMobile) setOpenMobile(false)
+  }
 
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
@@ -188,7 +193,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href={`/${lang}/dashboard`} prefetch={true} />}>
+            <SidebarMenuButton size="lg" render={<Link href={`/${lang}/dashboard`} prefetch={true} onClick={closeOnMobile} />}>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-600 text-white">
                 <Building2 className="size-4" />
               </div>
@@ -215,7 +220,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
-                        render={<Link href={fullHref} prefetch={true} />}
+                        render={<Link href={fullHref} prefetch={true} onClick={closeOnMobile} />}
                         isActive={isActive}
                         tooltip={tNav(item.key as string)}
                       >
@@ -263,7 +268,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                           const isSubActive = sub.key === bestSubKey
                           return (
                             <SidebarMenuSubItem key={sub.key}>
-                              <SidebarMenuSubButton render={<Link href={subFullHref} prefetch={true} />} isActive={isSubActive}>
+                              <SidebarMenuSubButton render={<Link href={subFullHref} prefetch={true} onClick={closeOnMobile} />} isActive={isSubActive}>
                                 <span>{getSubLabel(item.key, sub.key)}</span>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -285,7 +290,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
             {profile?.role === 'admin' ? (
               <SidebarMenuButton
                 size="lg"
-                render={<Link href={`/${lang}/support`} prefetch={true} />}
+                render={<Link href={`/${lang}/support`} prefetch={true} onClick={closeOnMobile} />}
                 className="gap-3 text-slate-700 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
               >
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-900/40 transition-colors">
@@ -299,7 +304,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
             ) : (
               <SidebarMenuButton
                 size="lg"
-                render={<Link href={`/${lang}/settings/profile`} prefetch={true} />}
+                render={<Link href={`/${lang}/settings/profile`} prefetch={true} onClick={closeOnMobile} />}
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarFallback className="rounded-lg bg-violet-100 text-violet-700 text-xs font-semibold">
