@@ -113,7 +113,46 @@ export function POSClient({
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [cart, setCart] = useState<CartItem[]>([])
+
+  // Switching language re-mounts this whole component (see
+  // src/components/layout/app-header.tsx's handleLocaleChange — [lang] is
+  // the top-most route segment, so a locale change necessarily remounts
+  // everything below it). Persisting the cart to sessionStorage survives
+  // that remount; only product id + quantity + discount are stored, and
+  // re-resolved against the freshly-fetched product list below, so stale
+  // product data (or a since-deleted product) can never leak into the cart.
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const raw = sessionStorage.getItem('pos_cart')
+      if (!raw) return []
+      const saved: { productId: string; quantity: number; discountPercent: number }[] = JSON.parse(raw)
+      return saved
+        .map((entry) => {
+          const product = initialProducts.find((p) => p.id === entry.productId)
+          return product ? { product, quantity: entry.quantity, discountPercent: entry.discountPercent } : null
+        })
+        .filter((item): item is CartItem => item !== null)
+    } catch {
+      return []
+    }
+  })
+
+  useEffect(() => {
+    try {
+      if (cart.length === 0) {
+        sessionStorage.removeItem('pos_cart')
+      } else {
+        sessionStorage.setItem(
+          'pos_cart',
+          JSON.stringify(cart.map((i) => ({ productId: i.product.id, quantity: i.quantity, discountPercent: i.discountPercent })))
+        )
+      }
+    } catch {
+      // Storage unavailable (private browsing, quota) — cart just won't
+      // survive a locale switch this time, not worth surfacing to the user.
+    }
+  }, [cart])
   
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [generalDiscountType, setGeneralDiscountType] = useState<'percent' | 'flat'>('flat')

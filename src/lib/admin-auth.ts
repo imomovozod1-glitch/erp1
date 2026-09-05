@@ -55,3 +55,43 @@ export async function isSuperAdmin(userId: string): Promise<boolean> {
   const { data } = await serviceClient.from('super_admins').select('id').eq('id', userId).maybeSingle()
   return !!data
 }
+
+export interface SupportAgentSession {
+  userId: string
+  fullName: string
+  phone: string
+}
+
+/**
+ * Support-agent session resolution — same shape and same reasoning as
+ * getSuperAdminSession() above: support_agents (migration_support_agents.sql)
+ * has no `authenticated`-role RLS policy either, so membership can only be
+ * checked with the service-role client.
+ */
+export async function getSupportAgentSession(): Promise<SupportAgentSession | null> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const serviceClient = getCacheClient() as any
+  const { data: agent } = await serviceClient
+    .from('support_agents')
+    .select('id, full_name, phone')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!agent) return null
+  return { userId: agent.id, fullName: agent.full_name, phone: agent.phone }
+}
+
+/**
+ * Support agents also get a stray `profiles` row via handle_new_user() like
+ * every other auth.users row — the tenant dashboard layout calls this to
+ * redirect such sessions to their own /support portal instead of rendering
+ * the tenant dashboard using that stray profile.
+ */
+export async function isSupportAgent(userId: string): Promise<boolean> {
+  const serviceClient = getCacheClient() as any
+  const { data } = await serviceClient.from('support_agents').select('id').eq('id', userId).maybeSingle()
+  return !!data
+}

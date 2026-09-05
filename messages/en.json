@@ -431,7 +431,21 @@
     "systemAccessLink": "Link existing account",
     "systemAccessCreate": "Create new account",
     "createAccountError": "Failed to create account",
-    "newAccountFields": "New account details"
+    "newAccountFields": "New account details",
+    "roles": "Roles",
+    "addRole": "Add Role",
+    "roleName": "Role name",
+    "roleNamePlaceholder": "e.g. Sales rep",
+    "roleModulesGranted": "Granted modules",
+    "roleModulesCount": "{count, plural, one {# module} other {# modules}}",
+    "selectRoleTemplate": "Select a role",
+    "noRoleTemplate": "No role (manual)",
+    "isPaid": "Paid employee (subscribed)",
+    "isPaidHint": "Only paid employees can be given a system login",
+    "systemAccessRequiresPaid": "System access is only available when \"Paid employee\" is checked",
+    "cashbox": "Cashbox",
+    "cashboxAuto": "Create automatically (named after employee)",
+    "cashboxHint": "If left unselected, a dedicated cashbox will be created automatically for this employee"
   },
   "procurement": {
     "title": "Procurement",
@@ -698,7 +712,8 @@
       "badge": "Super admin",
       "payments": "Payments",
       "security": "Security",
-      "settings": "Settings"
+      "settings": "Settings",
+      "support": "Support"
     },
     "tenants": {
       "title": "Tenants",
@@ -786,6 +801,8 @@
       "sectionBasics": "Company & login",
       "sectionSubscription": "Subscription & pricing",
       "sectionNotes": "Additional",
+      "sectionSupport": "Support",
+      "noSupportAgent": "No support agent assigned",
       "subscriptionEndRequired": "Select the subscription end date",
       "custom": "Custom",
       "months": "mo",
@@ -910,6 +927,44 @@
       "updateSuccess": "Password updated. You can now sign in.",
       "invalidOrExpiredLink": "This link is invalid or has expired. Request a new one.",
       "goToLogin": "Go to login"
+    },
+    "support": {
+      "title": "Support",
+      "count": "{count, plural, one {# agent} other {# agents}}",
+      "searchPlaceholder": "Search by name or phone...",
+      "newAgent": "Add Support Agent",
+      "colName": "Full name",
+      "colPhone": "Phone",
+      "colAssignedTenants": "Assigned tenants",
+      "empty": "No support agents found",
+      "noneAssigned": "None assigned",
+      "prev": "Previous",
+      "next": "Next",
+      "new": {
+        "title": "New support agent",
+        "subtitle": "Create a login and password for a support agent"
+      },
+      "form": {
+        "fullName": "Full name",
+        "fullNameRequired": "Full name is required",
+        "phone": "Phone",
+        "phoneInvalid": "Invalid phone number",
+        "password": "Password",
+        "phonePlaceholder": "90 123 45 67",
+        "passwordPlaceholder": "••••••••",
+        "create": "Create",
+        "save": "Save",
+        "cancel": "Cancel",
+        "createSuccess": "Support agent created",
+        "updateSuccess": "Details updated",
+        "genericError": "Something went wrong"
+      },
+      "detail": {
+        "back": "Back to support list",
+        "assignedTenants": "Assigned tenants",
+        "deleteAgent": "Delete support agent",
+        "deleteConfirm": "Are you sure? This agent will no longer be able to log in."
+      }
     }
   },
   "pageInfo": {
@@ -937,5 +992,20 @@
     "guideIntro": "Move between sections using the menu on the left. Click the (i) icon next to any page title to learn what that page is for. Use the top bar to change language, switch light/dark mode, and check notifications.",
     "guideTitle": "Guide",
     "guideSubtitle": "A quick guide to using the system"
+  },
+  "supportPortal": {
+    "brandTitle": "Support",
+    "brandSubtitle": "Support desk panel",
+    "loginHeading": "Sign in",
+    "loginSubheading": "Sign in with your phone number and password",
+    "phone": "Phone",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "invalidCredentials": "Invalid phone or password",
+    "tooManyAttempts": "Too many attempts, try again later",
+    "assignedTenantsHeading": "Tenants assigned to you",
+    "noAssignedTenants": "No tenants have been assigned to you yet",
+    "logout": "Log out"
   }
 }

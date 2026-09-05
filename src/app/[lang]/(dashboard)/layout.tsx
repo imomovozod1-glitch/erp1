@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
-import { isSuperAdmin } from '@/lib/admin-auth'
+import { isSuperAdmin, isSupportAgent } from '@/lib/admin-auth'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
@@ -28,6 +28,12 @@ export default async function DashboardLayout({
   // dashboard using their own stray profile (see src/lib/admin-auth.ts).
   if (await isSuperAdmin(user.id)) {
     redirect('/admin/tenants')
+  }
+
+  // Support agents share the same auth cookies too — same reasoning as the
+  // super-admin check above (src/lib/admin-auth.ts).
+  if (await isSupportAgent(user.id)) {
+    redirect('/support')
   }
 
   // Profile is cached for 5 min per user id — only DB on first render.

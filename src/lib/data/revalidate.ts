@@ -64,6 +64,10 @@ export async function invalidateEmployees() {
   updateTag(CACHE_TAGS.employees)
 }
 
+export async function invalidateRoleTemplates() {
+  updateTag(CACHE_TAGS.roleTemplates)
+}
+
 export async function invalidateDepartments() {
   updateTag(CACHE_TAGS.departments)
 }

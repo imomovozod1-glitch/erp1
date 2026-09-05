@@ -14,7 +14,6 @@ import {
   Info, 
   Search, 
   TrendingUp, 
-  TrendingDown,
   ArrowUpRight,
   ArrowDownRight,
   Calendar,
@@ -926,10 +925,8 @@ export function CashboxClient({ lang }: { lang: string }) {
   const incomeCategories = categories.filter(c => c.type === 'income')
   const expenseCategories = categories.filter(c => c.type === 'expense')
 
-  const totalBalance = cashboxes.reduce((sum, cb) => sum + (Number(cb.balance) || 0), 0)
-
   // Time-filtered transactions (period only, independent of the text search box below) —
-  // drives both the Income/Expense stat cards and the transaction history table.
+  // drives the transaction history table.
   const todayStr = formatDateISO(now)
   const yesterdayStr = formatDateISO(new Date(now.getTime() - 24 * 60 * 60 * 1000))
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -949,20 +946,12 @@ export function CashboxClient({ lang }: { lang: string }) {
     return true
   })
 
-  const totalIncome = periodTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0)
-  const totalExpense = periodTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0)
-
   const CASHBOX_TYPES: { key: CashboxType; label: string; icon: typeof Coins }[] = [
     { key: 'cash', label: t('cashboxTypeCash'), icon: Coins },
     { key: 'card', label: t('cashboxTypeCard'), icon: CreditCard },
     { key: 'transfer', label: t('cashboxTypeTransfer'), icon: ArrowLeftRight },
     { key: 'other', label: t('cashboxTypeOther'), icon: Wallet },
   ]
-  const balanceByType = CASHBOX_TYPES.map((ct) => ({
-    ...ct,
-    total: cashboxes.filter((cb) => (cb.type || 'cash') === ct.key).reduce((sum, cb) => sum + (Number(cb.balance) || 0), 0),
-    count: cashboxes.filter((cb) => (cb.type || 'cash') === ct.key).length,
-  })).filter((ct) => ct.count > 0)
 
   const filteredCashboxes = cashboxes.filter((cb) =>
     cb.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -1032,92 +1021,6 @@ export function CashboxClient({ lang }: { lang: string }) {
                 ? "Эта страница временно работает через локальное хранилище LocalStorage. Для полноценного сохранения данных выполните SQL скрипт в конце файла supabase/schema.sql в редакторе SQL в панели управления Supabase."
                 : "This page is temporarily running on local LocalStorage. For persistent cloud storage, run the SQL script appended to supabase/schema.sql in your Supabase SQL Editor."}
             </p>
-          </div>
-        </div>
-      )}
-
-      {/* Aggregate Stats Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Total Balance Card */}
-        <div className="bg-gradient-to-br from-violet-600 via-violet-700 to-violet-800 text-white rounded-3xl p-6 shadow-xl shadow-violet-500/10 relative overflow-hidden group hover:scale-[1.02] hover:shadow-violet-500/20 transition-all duration-300">
-          <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-white/10 blur-xl group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-2.5">
-              <span className="text-xs uppercase tracking-wider font-semibold text-violet-200/90">{t('balance')} ({t('cashboxes')})</span>
-              <h3 className="text-3xl font-extrabold tracking-tight">
-                {formatCurrency(totalBalance)}
-              </h3>
-            </div>
-            <div className="p-3 bg-white/15 backdrop-blur-md rounded-2xl text-white shadow-inner">
-              <Wallet className="h-6 w-6 animate-pulse" />
-            </div>
-          </div>
-          <div className="mt-6 flex items-center gap-1.5 text-xs text-violet-200">
-            <Coins className="h-4 w-4" />
-            <span className="font-medium">{cashboxes.length} {t('cashboxes').toLowerCase()}</span>
-          </div>
-        </div>
-
-        {/* Total Income Card */}
-        <div className="bg-gradient-to-br from-emerald-50 dark:from-emerald-950/40 via-emerald-100/80 dark:via-emerald-950/30 to-teal-50 dark:to-teal-950/30 text-emerald-955 dark:text-emerald-300 rounded-3xl p-6 border border-emerald-250/50 dark:border-emerald-900/40 shadow-md relative overflow-hidden group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-          <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-emerald-500/5 blur-xl group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-2.5">
-              <span className="text-xs uppercase tracking-wider font-semibold text-emerald-700 dark:text-emerald-400">{lang === 'uz' ? 'Jami Kirim' : lang === 'ru' ? 'Всего Приход' : 'Total Income'}</span>
-              <h3 className="text-2xl font-extrabold tracking-tight text-emerald-900 dark:text-emerald-300">
-                {formatCurrency(totalIncome)}
-              </h3>
-            </div>
-            <div className="p-3 bg-emerald-500/10 dark:bg-emerald-500/15 rounded-2xl text-emerald-700 dark:text-emerald-400 border border-emerald-500/10 dark:border-emerald-500/20">
-              <ArrowUpRight className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-          </div>
-          <div className="mt-6 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-            <TrendingUp className="h-4 w-4" />
-            <span>{lang === 'uz' ? 'Moliya oqimi' : lang === 'ru' ? 'Денежный приток' : 'Cash inflow'}</span>
-          </div>
-        </div>
-
-        {/* Total Expense Card */}
-        <div className="bg-gradient-to-br from-rose-50 dark:from-rose-950/40 via-rose-100/80 dark:via-rose-950/30 to-orange-50 dark:to-orange-950/30 text-rose-955 dark:text-rose-300 rounded-3xl p-6 border border-rose-250/50 dark:border-rose-900/40 shadow-md relative overflow-hidden group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-          <div className="absolute right-0 top-0 h-32 w-32 translate-x-4 -translate-y-4 rounded-full bg-rose-500/5 blur-xl group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-2.5">
-              <span className="text-xs uppercase tracking-wider font-semibold text-rose-700 dark:text-rose-400">{lang === 'uz' ? 'Jami Chiqim' : lang === 'ru' ? 'Всего Расход' : 'Total Expense'}</span>
-              <h3 className="text-2xl font-extrabold tracking-tight text-rose-900 dark:text-rose-300">
-                {formatCurrency(totalExpense)}
-              </h3>
-            </div>
-            <div className="p-3 bg-rose-500/10 dark:bg-rose-500/15 rounded-2xl text-rose-700 dark:text-rose-400 border border-rose-500/10 dark:border-rose-500/20">
-              <ArrowDownRight className="h-6 w-6 text-rose-600 dark:text-rose-400" />
-            </div>
-          </div>
-          <div className="mt-6 flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 font-semibold">
-            <TrendingDown className="h-4 w-4" />
-            <span>{lang === 'uz' ? 'Moliya chiqishi' : lang === 'ru' ? 'Денежный отток' : 'Cash outflow'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Balance by payment type */}
-      {balanceByType.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm p-5">
-          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-            <CreditCard className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400" />
-            {t('balanceByType')}
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {balanceByType.map((ct) => (
-              <div key={ct.key} className="flex items-center gap-3 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60">
-                <div className="p-2 bg-white dark:bg-slate-900 rounded-xl text-violet-600 dark:text-violet-400 border border-slate-100 dark:border-slate-700 shadow-xs shrink-0">
-                  <ct.icon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase truncate">{ct.label}</p>
-                  <p className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">{formatCurrency(ct.total)}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}
@@ -1285,10 +1188,14 @@ export function CashboxClient({ lang }: { lang: string }) {
                 <tr className="bg-slate-50/70 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800">
                   <th className="p-4 pl-6 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('date')}</th>
                   <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('cashbox')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('type')}</th>
                   <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('category')}</th>
                   <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('description')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-right">{tCommon('amount')}</th>
+                  <th className="p-4 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-right">
+                    {lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income'}
+                  </th>
+                  <th className="p-4 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider text-right">
+                    {lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense'}
+                  </th>
                   <th className="p-4 pr-6 w-20"></th>
                 </tr>
               </thead>
@@ -1329,32 +1236,21 @@ export function CashboxClient({ lang }: { lang: string }) {
                         </td>
                         <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">{cbName}</td>
                         <td className="p-4">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
-                            isIncome
-                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/50'
-                              : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/50 dark:border-rose-900/50'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${isIncome ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                            {isIncome
-                              ? (lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income')
-                              : (lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense')}
-                          </span>
-                        </td>
-                        <td className="p-4">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-slate-105 dark:bg-slate-800 text-slate-750 dark:text-slate-300 font-semibold border border-slate-200/30 dark:border-slate-700">
                             {tx.category}
                           </span>
                         </td>
                         <td className="p-4 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">{tx.description || '—'}</td>
-                        <td className={`p-4 font-extrabold text-right text-base ${
-                          isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                        }`}>
-                          {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
+                        <td className="p-4 font-extrabold text-right text-base text-emerald-600 dark:text-emerald-400">
+                          {isIncome ? formatCurrency(tx.amount) : '—'}
+                        </td>
+                        <td className="p-4 font-extrabold text-right text-base text-rose-600 dark:text-rose-400">
+                          {!isIncome ? formatCurrency(tx.amount) : '—'}
                         </td>
                         {/* <td className="p-4 pr-6 flex justify-end">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleDeleteTransaction(tx)}
                             className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                           >
@@ -1366,6 +1262,22 @@ export function CashboxClient({ lang }: { lang: string }) {
                   })
                 )}
               </tbody>
+              {filteredTransactions.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/70 font-bold">
+                    <td className="p-4 pl-6" colSpan={3}>
+                      {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}
+                    </td>
+                    <td className="p-4 text-right text-emerald-600 dark:text-emerald-400">
+                      {formatCurrency(filteredTransactions.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + Number(tx.amount), 0))}
+                    </td>
+                    <td className="p-4 text-right text-rose-600 dark:text-rose-400">
+                      {formatCurrency(filteredTransactions.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + Number(tx.amount), 0))}
+                    </td>
+                    <td className="p-4 pr-6" />
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </CardContent>

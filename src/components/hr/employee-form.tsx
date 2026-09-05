@@ -41,6 +41,17 @@ interface AccountOption {
   permissions: unknown
 }
 
+interface RoleTemplateOption {
+  id: string
+  name: string
+  permissions: unknown
+}
+
+interface CashboxOption {
+  id: string
+  name: string
+}
+
 export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   const t = useTranslations('hr')
   const tCommon = useTranslations('common')
@@ -56,6 +67,41 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   const [permsValue, setPermsValue] = useState<Permissions>(EMPTY_PERMISSIONS)
   const [newPhone, setNewPhone] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [isPaid, setIsPaid] = useState<boolean>(initialData?.is_paid ?? false)
+  const [roleTemplates, setRoleTemplates] = useState<RoleTemplateOption[]>([])
+  const [selectedRoleTemplateId, setSelectedRoleTemplateId] = useState<string | null>(initialData?.role_template_id ?? null)
+  const [cashboxes, setCashboxes] = useState<CashboxOption[]>([])
+  const [selectedCashboxId, setSelectedCashboxId] = useState<string | null>(initialData?.cashbox_id ?? null)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase.from('cashboxes').select('id, name').order('name')
+      if (!cancelled) setCashboxes(data ?? [])
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Role templates are tenant-scoped by RLS (see migration_roles_and_seats.sql)
+  // — the browser client only ever sees the caller's own tenant's rows, no
+  // need to pass tenant_id explicitly.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase.from('role_templates').select('id, name, permissions').order('name')
+      if (!cancelled) setRoleTemplates(data ?? [])
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleSelectRoleTemplate = (roleId: string | null) => {
+    const next = !roleId || roleId === 'none' ? null : roleId
+    setSelectedRoleTemplateId(next)
+    const chosen = roleTemplates.find((r) => r.id === next)
+    setPermsValue(chosen?.permissions && typeof chosen.permissions === 'object' ? (chosen.permissions as Permissions) : EMPTY_PERMISSIONS)
+  }
 
   // Available login accounts to link this employee to — profiles not
   // already claimed by a different employee (employees.profile_id is
@@ -120,6 +166,10 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   })
 
   const onSubmit = async (data: FormData) => {
+    if (accessMode !== 'none' && !isPaid) {
+      toast.error(t('systemAccessRequiresPaid'))
+      return
+    }
     if (accessMode === 'create' && !isValidPhone(newPhone)) {
       toast.error(tAuth('invalidPhone'))
       return
@@ -144,6 +194,8 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
             phone: newPhone,
             password: newPassword,
             permissions: permsValue,
+            role_template_id: selectedRoleTemplateId,
+            is_paid: isPaid,
           }),
         })
         const json = await res.json().catch(() => ({}))
@@ -155,10 +207,26 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
         profileId = json.profile.id
       }
 
+      // Every employee needs a cashbox — if the admin didn't pick an
+      // existing one, create a personal one named after them rather than
+      // leaving cashbox_id unset.
+      let cashboxId = selectedCashboxId
+      if (!cashboxId) {
+        const { data: newCashbox, error: cashboxError } = await supabase
+          .from('cashboxes')
+          .insert({ name: data.full_name, type: 'cash' })
+          .select('id')
+          .single()
+        if (cashboxError) throw cashboxError
+        cashboxId = newCashbox.id
+      }
+
       const payload = {
         ...data,
         terminated_at: !data.is_active && data.terminated_at ? data.terminated_at : null,
         profile_id: profileId,
+        is_paid: isPaid,
+        cashbox_id: cashboxId,
       }
       if (initialData?.id) {
         const { error } = await supabase
@@ -182,7 +250,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       if (accessMode === 'link' && profileId) {
         const { error: permError } = await supabase
           .from('profiles')
-          .update({ permissions: permsValue })
+          .update({ permissions: permsValue, role_template_id: selectedRoleTemplateId })
           .eq('id', profileId)
         if (permError) throw permError
         await invalidateProfile(profileId)
@@ -264,8 +332,29 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
                 <p className="text-sm text-red-500">{errors.hired_at.message}</p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cashbox">{t('cashbox')}</Label>
+              <Select value={selectedCashboxId ?? 'auto'} onValueChange={(v) => setSelectedCashboxId(v === 'auto' ? null : v)}>
+                <SelectTrigger id="cashbox" className="w-full">
+                  <SelectValue>
+                    {(val: string) => {
+                      if (val === 'auto' || !val) return t('cashboxAuto')
+                      return cashboxes.find((cb) => cb.id === val)?.name ?? t('cashboxAuto')
+                    }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">{t('cashboxAuto')}</SelectItem>
+                  {cashboxes.map((cb) => (
+                    <SelectItem key={cb.id} value={cb.id}>{cb.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t('cashboxHint')}</p>
+            </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="notes">{t('notes')}</Label>
             <Textarea id="notes" {...register('notes')} />
@@ -275,7 +364,23 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
           </div>
 
           <div className="space-y-3 pt-2 border-t dark:border-slate-800">
-            <Label className="flex items-center gap-1.5 pt-4">
+            <div className="flex items-center space-x-2 pt-4">
+              <Checkbox
+                id="is_paid"
+                checked={isPaid}
+                onCheckedChange={(checked) => {
+                  const next = checked as boolean
+                  setIsPaid(next)
+                  if (!next) setAccessMode('none')
+                }}
+              />
+              <Label htmlFor="is_paid" className="cursor-pointer">
+                {t('isPaid')}
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground">{t('isPaidHint')}</p>
+
+            <Label className="flex items-center gap-1.5 pt-2">
               <KeyRound className="h-3.5 w-3.5 text-muted-foreground" /> {t('systemAccess')}
             </Label>
 
@@ -284,12 +389,15 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
                 <button
                   key={mode}
                   type="button"
+                  disabled={mode !== 'none' && !isPaid}
                   onClick={() => setAccessMode(mode)}
                   className={cn(
                     'px-3 py-1.5 text-xs font-semibold rounded-md transition-colors',
-                    accessMode === mode
-                      ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    mode !== 'none' && !isPaid
+                      ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                      : accessMode === mode
+                        ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                   )}
                 >
                   {mode === 'none' ? t('systemAccessNone') : mode === 'link' ? t('systemAccessLink') : t('systemAccessCreate')}
@@ -297,7 +405,11 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
               ))}
             </div>
 
-            {accessMode === 'none' && (
+            {!isPaid && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">{t('systemAccessRequiresPaid')}</p>
+            )}
+
+            {isPaid && accessMode === 'none' && (
               <p className="text-xs text-muted-foreground">{t('systemAccessHint')}</p>
             )}
 
@@ -321,9 +433,30 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
                   </SelectContent>
                 </Select>
                 {selectedProfileId && (
-                  <div className="space-y-2">
-                    <Label>{tSettings('permissions')}</Label>
-                    <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label>{t('selectRoleTemplate')}</Label>
+                      <Select value={selectedRoleTemplateId ?? 'none'} onValueChange={handleSelectRoleTemplate}>
+                        <SelectTrigger className="w-full sm:w-80">
+                          <SelectValue>
+                            {(val: string) => {
+                              if (val === 'none' || !val) return t('noRoleTemplate')
+                              return roleTemplates.find((r) => r.id === val)?.name ?? t('noRoleTemplate')
+                            }}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">{t('noRoleTemplate')}</SelectItem>
+                          {roleTemplates.map((r) => (
+                            <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{tSettings('permissions')}</Label>
+                      <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
+                    </div>
                   </div>
                 )}
               </div>
@@ -349,6 +482,25 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
                     />
                     <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
                   </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t('selectRoleTemplate')}</Label>
+                  <Select value={selectedRoleTemplateId ?? 'none'} onValueChange={handleSelectRoleTemplate}>
+                    <SelectTrigger className="w-full sm:w-80">
+                      <SelectValue>
+                        {(val: string) => {
+                          if (val === 'none' || !val) return t('noRoleTemplate')
+                          return roleTemplates.find((r) => r.id === val)?.name ?? t('noRoleTemplate')
+                        }}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t('noRoleTemplate')}</SelectItem>
+                      {roleTemplates.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>{tSettings('permissions')}</Label>

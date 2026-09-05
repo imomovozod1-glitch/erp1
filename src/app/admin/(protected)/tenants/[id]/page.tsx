@@ -35,13 +35,14 @@ export default async function TenantDetailPage({
   ])
 
   const supabase = getCacheClient() as any
-  const [{ data: tenant }, { data: payments }] = await Promise.all([
+  const [{ data: tenant }, { data: payments }, { data: supportAgents }] = await Promise.all([
     supabase.from('tenants').select('*').eq('id', id).maybeSingle(),
     supabase
       .from('tenant_payments')
       .select('id, amount, paid_at, created_at, note')
       .eq('tenant_id', id)
       .order('paid_at', { ascending: false }),
+    supabase.from('support_agents').select('id, full_name').order('full_name'),
   ])
 
   if (!tenant) notFound()
@@ -88,7 +89,9 @@ export default async function TenantDetailPage({
           subscription_started_at: tenant.subscription_started_at,
           subscription_ends_at: tenant.subscription_ends_at,
           details: tenant.details,
+          support_agent_id: tenant.support_agent_id,
         }}
+        supportAgents={supportAgents ?? []}
       />
 
       <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">

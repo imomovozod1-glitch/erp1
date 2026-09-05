@@ -20,6 +20,7 @@ const updateTenantSchema = z.object({
   subscription_started_at: z.string().optional().nullable(),
   subscription_ends_at: z.string().optional().nullable(),
   details: z.string().optional().nullable(),
+  support_agent_id: z.string().uuid().nullable().optional(),
 })
 
 const INACTIVITY_THRESHOLD_MS = 180 * 24 * 60 * 60 * 1000 // 180 days
@@ -58,6 +59,7 @@ export async function PATCH(
   if (input.subscription_started_at !== undefined) update.subscription_started_at = input.subscription_started_at || null
   if (input.subscription_ends_at !== undefined) update.subscription_ends_at = input.subscription_ends_at || null
   if (input.details !== undefined) update.details = input.details || null
+  if (input.support_agent_id !== undefined) update.support_agent_id = input.support_agent_id || null
 
   // Status is never set directly — it's purely date-derived (see
   // src/lib/tenant-status.ts). Editing the subscription term here can just

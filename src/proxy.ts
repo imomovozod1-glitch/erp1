@@ -230,6 +230,16 @@ export async function proxy(request: NextRequest) {
     })
   }
 
+  // Same reasoning for the support-agent portal (support_agents, its own
+  // auth model — see src/lib/admin-auth.ts's getSupportAgentSession()).
+  if (pathname === '/support' || pathname.startsWith('/support/')) {
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      }
+    })
+  }
+
   // Extract locale from pathname
   const pathnameLocale = routing.locales.find(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`

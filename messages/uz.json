@@ -431,7 +431,21 @@
     "systemAccessLink": "Mavjud hisobni bog'lash",
     "systemAccessCreate": "Yangi hisob yaratish",
     "createAccountError": "Hisob yaratib bo'lmadi",
-    "newAccountFields": "Yangi hisob ma'lumotlari"
+    "newAccountFields": "Yangi hisob ma'lumotlari",
+    "roles": "Ruxsatlar",
+    "addRole": "Rol qo'shish",
+    "roleName": "Rol nomi",
+    "roleNamePlaceholder": "Masalan: Sotuvchi",
+    "roleModulesGranted": "Ruxsat berilgan bo'limlar",
+    "roleModulesCount": "{count, plural, other {# ta bo'lim}}",
+    "selectRoleTemplate": "Rolni tanlang",
+    "noRoleTemplate": "Rolsiz (qo'lda belgilash)",
+    "isPaid": "Pullik xodim (obunali)",
+    "isPaidHint": "Faqat pullik xodimlar tizimga kirish uchun login/parolga ega bo'lishi mumkin",
+    "systemAccessRequiresPaid": "Tizimga kirish faqat \"Pullik xodim\" belgilanganda mavjud bo'ladi",
+    "cashbox": "Kassa",
+    "cashboxAuto": "Avtomatik yaratish (xodim nomida)",
+    "cashboxHint": "Tanlamasangiz, xodim nomiga alohida kassa avtomatik yaratiladi"
   },
   "procurement": {
     "title": "Ta'minot",
@@ -697,7 +711,8 @@
       "badge": "Super-admin",
       "payments": "To'lovlar",
       "security": "Xavfsizlik",
-      "settings": "Sozlamalar"
+      "settings": "Sozlamalar",
+      "support": "Support"
     },
     "tenants": {
       "title": "Tenantlar",
@@ -785,6 +800,8 @@
       "sectionBasics": "Kompaniya va login",
       "sectionSubscription": "Obuna va narx",
       "sectionNotes": "Qo'shimcha",
+      "sectionSupport": "Support",
+      "noSupportAgent": "Support biriktirilmagan",
       "subscriptionEndRequired": "Obuna tugash sanasini tanlang",
       "custom": "Boshqa",
       "months": "oy",
@@ -909,6 +926,44 @@
       "updateSuccess": "Parol yangilandi. Endi tizimga kirishingiz mumkin.",
       "invalidOrExpiredLink": "Havola yaroqsiz yoki muddati o'tgan. Qaytadan so'rang.",
       "goToLogin": "Kirish sahifasiga o'tish"
+    },
+    "support": {
+      "title": "Support",
+      "count": "{count, plural, other {# ta support}}",
+      "searchPlaceholder": "Ism yoki telefon bo'yicha qidirish...",
+      "newAgent": "Support qo'shish",
+      "colName": "F.I.Sh.",
+      "colPhone": "Telefon",
+      "colAssignedTenants": "Biriktirilgan tashkilotlar",
+      "empty": "Support xodimlari topilmadi",
+      "noneAssigned": "Hech biri yo'q",
+      "prev": "Orqaga",
+      "next": "Oldinga",
+      "new": {
+        "title": "Yangi support",
+        "subtitle": "Support xodimi uchun login va parol yarating"
+      },
+      "form": {
+        "fullName": "F.I.Sh.",
+        "fullNameRequired": "F.I.Sh. kiritilishi shart",
+        "phone": "Telefon",
+        "phoneInvalid": "Telefon raqami noto'g'ri",
+        "password": "Parol",
+        "phonePlaceholder": "90 123 45 67",
+        "passwordPlaceholder": "••••••••",
+        "create": "Yaratish",
+        "save": "Saqlash",
+        "cancel": "Bekor qilish",
+        "createSuccess": "Support xodimi yaratildi",
+        "updateSuccess": "Ma'lumotlar yangilandi",
+        "genericError": "Xatolik yuz berdi"
+      },
+      "detail": {
+        "back": "Support ro'yxatiga qaytish",
+        "assignedTenants": "Biriktirilgan tashkilotlar",
+        "deleteAgent": "Support xodimini o'chirish",
+        "deleteConfirm": "Rostdan ham o'chirmoqchimisiz? Bu xodim login qila olmay qoladi."
+      }
     }
   },
   "pageInfo": {
@@ -936,5 +991,20 @@
     "guideIntro": "Chap tomondagi menyu orqali bo'limlar orasida harakatlaning. Har bir sahifa sarlavhasi yonidagi (i) belgisini bosib, o'sha sahifa nima uchun kerakligini bilib olishingiz mumkin. Yuqori panelda til, yorug'/qorong'i rejim va bildirishnomalarni sozlashingiz mumkin.",
     "guideTitle": "Qo'llanma",
     "guideSubtitle": "Tizimdan qanday foydalanish bo'yicha qisqacha ko'rsatma"
+  },
+  "supportPortal": {
+    "brandTitle": "Support",
+    "brandSubtitle": "Yordam xizmati paneli",
+    "loginHeading": "Kirish",
+    "loginSubheading": "Telefon raqamingiz va parolingiz bilan kiring",
+    "phone": "Telefon",
+    "password": "Parol",
+    "signIn": "Kirish",
+    "signingIn": "Kirilmoqda...",
+    "invalidCredentials": "Telefon yoki parol noto'g'ri",
+    "tooManyAttempts": "Juda ko'p urinish, keyinroq qayta urinib ko'ring",
+    "assignedTenantsHeading": "Sizga biriktirilgan tashkilotlar",
+    "noAssignedTenants": "Sizga hali hech qanday tashkilot biriktirilmagan",
+    "logout": "Chiqish"
   }
 }

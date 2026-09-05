@@ -49,6 +49,7 @@ export const CACHE_TAGS = {
   analytics: 'analytics',
   cashbox: 'cashbox',
   tenants: 'tenants',
+  roleTemplates: 'role_templates',
 } as const
 
 // ─── Inventory ─────────────────────────────────────────────────────────────────
@@ -163,6 +164,36 @@ export const getCachedEmployees = unstable_cache(
   },
   ['employees-list'],
   { tags: [CACHE_TAGS.employees, CACHE_TAGS.departments], revalidate: 60 }
+)
+
+export const getCachedRoleTemplates = unstable_cache(
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const { data } = await supabase
+      .from('role_templates')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('name')
+    return data ?? []
+  },
+  ['role-templates-list'],
+  { tags: [CACHE_TAGS.roleTemplates], revalidate: 120 }
+)
+
+export const getCachedRoleTemplateById = unstable_cache(
+  async (id: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const { data, error } = await supabase
+      .from('role_templates')
+      .select('*')
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .single()
+    if (error) throw error
+    return data
+  },
+  ['role-template-by-id'],
+  { tags: [CACHE_TAGS.roleTemplates], revalidate: 3600 }
 )
 
 export const getCachedDepartments = unstable_cache(

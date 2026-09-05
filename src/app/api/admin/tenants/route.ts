@@ -22,6 +22,7 @@ const createTenantSchema = z.object({
   subscription_ends_at: z.string().optional().nullable(),
   price_paid: z.number().nullable().optional(),
   details: z.string().optional().nullable(),
+  support_agent_id: z.string().uuid().nullable().optional(),
 })
 
 /**
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
       subscription_ends_at: input.subscription_ends_at || null,
       price_paid: input.price_paid ?? 0,
       details: input.details || null,
+      support_agent_id: input.support_agent_id || null,
     })
     .select()
     .single()

@@ -2,7 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, DollarSign, MoreHorizontal } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { toast } from 'sonner'
+import { MoreHorizontal, Pencil, Trash2, Search, ShieldCheck } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { invalidateRoleTemplates } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -10,20 +15,34 @@ import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
-import { useRouter } from 'next/navigation'
+import {
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow,
+} from '@/components/ui/table'
+import type { Permissions } from '@/lib/permissions'
 
-interface TransactionsTableProps {
-  transactions: any[]
+interface RoleTemplateRow {
+  id: string
+  name: string
+  permissions: Permissions | null
+}
+
+interface RoleTemplatesTableProps {
+  roles: RoleTemplateRow[]
   lang: string
 }
 
-export function TransactionsTable({ transactions, lang }: TransactionsTableProps) {
-  const t = useTranslations('finance')
+function countEnabledModules(permissions: Permissions | null): number {
+  if (!permissions || typeof permissions !== 'object') return 0
+  return Object.values(permissions).filter((p) => p?.view).length
+}
+
+export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
+  const t = useTranslations('hr')
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [search, setSearch] = useState('')
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -33,14 +52,24 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
     }, 0)
   }, [search])
 
-  const filtered = transactions.filter(
-    (tx) =>
-      (tx.description ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      tx.category.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = roles.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage)
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  const handleDelete = async (id: string) => {
+    setIsDeleting(id)
+    const supabase = createClient()
+    const { error } = await supabase.from('role_templates').delete().eq('id', id)
+    if (error) {
+      toast.error(tCommon('error'))
+    } else {
+      toast.success(tCommon('success'))
+      await invalidateRoleTemplates()
+      router.refresh()
+    }
+    setIsDeleting(null)
+  }
 
   return (
     <Card className="border-0 shadow-sm">
@@ -55,54 +84,47 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
               className="pl-9 h-9"
             />
           </div>
-          <span className="text-xs text-muted-foreground">{filtered.length} {tCommon('rows')}</span>
+          <span className="text-xs text-muted-foreground">
+            {filtered.length} {tCommon('rows')}
+          </span>
         </div>
+
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
-              <TableHead>{tCommon('date')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('category')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{tCommon('description')}</TableHead>
-              <TableHead className="text-right text-emerald-600 dark:text-emerald-400">{t('incomeType')}</TableHead>
-              <TableHead className="text-right text-rose-600 dark:text-rose-400">{t('expenseType')}</TableHead>
-              <TableHead className="w-17.5"></TableHead>
+              <TableHead className="font-semibold">{t('roleName')}</TableHead>
+              <TableHead>{t('roleModulesGranted')}</TableHead>
+              <TableHead className="w-12.5" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
+                <TableCell colSpan={4} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <DollarSign className="h-8 w-8 opacity-40" />
+                    <ShieldCheck className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              paginated.map((tx, index) => (
-                <TableRow 
-                  key={tx.id} 
+              paginated.map((role, index) => (
+                <TableRow
+                  key={role.id}
                   className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
+                  onClick={() => router.push(`/${lang}/hr/roles/${role.id}/edit`)}
                 >
                   <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{formatDateTime(tx.created_at)}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
-                      {tx.category}
+                  <TableCell>
+                    <p className="font-medium text-slate-800 dark:text-slate-200">{role.name}</p>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {t('roleModulesCount', { count: countEnabledModules(role.permissions) })}
                     </span>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground max-w-50 truncate">
-                    {tx.description ?? '—'}
-                  </TableCell>
-                  <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400">
-                    {tx.type === 'income' ? formatCurrency(tx.amount) : '—'}
-                  </TableCell>
-                  <TableCell className="text-right font-bold text-rose-700 dark:text-rose-400">
-                    {tx.type === 'expense' ? formatCurrency(tx.amount) : '—'}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
@@ -110,8 +132,17 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                         <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}>
-                          {tCommon('edit')}
+                        <DropdownMenuItem
+                          render={<Link href={`/${lang}/hr/roles/${role.id}/edit`} prefetch={true} />}
+                        >
+                          <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(role.id)}
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          disabled={isDeleting === role.id}
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -120,22 +151,6 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
               ))
             )}
           </TableBody>
-          {filtered.length > 0 && (
-            <TableFooter>
-              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={3} className="font-bold">
-                  {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}
-                </TableCell>
-                <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400">
-                  {formatCurrency(filtered.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + Number(tx.amount), 0))}
-                </TableCell>
-                <TableCell className="text-right font-bold text-rose-700 dark:text-rose-400">
-                  {formatCurrency(filtered.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + Number(tx.amount), 0))}
-                </TableCell>
-                <TableCell />
-              </TableRow>
-            </TableFooter>
-          )}
         </Table>
         {totalPages > 1 && (
           <div className="flex items-center justify-between p-4 border-t">

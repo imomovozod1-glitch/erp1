@@ -3,11 +3,11 @@
 import { useMemo, useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Building2, Globe, Phone, KeyRound, Layers, CalendarDays, Wallet, FileText, ReceiptText, IdCard, Users, Pencil } from 'lucide-react'
+import { Loader2, Building2, Globe, Phone, KeyRound, Layers, CalendarDays, Wallet, FileText, ReceiptText, IdCard, Users, Pencil, LifeBuoy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,7 +21,7 @@ import { isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { PhoneInput } from '@/components/ui/phone-input'
-import { cn } from '@/lib/utils'
+import { cn, formatDate } from '@/lib/utils'
 
 export interface TenantFormInitialData {
   id: string
@@ -34,11 +34,18 @@ export interface TenantFormInitialData {
   subscription_started_at: string | null
   subscription_ends_at: string | null
   details: string | null
+  support_agent_id: string | null
+}
+
+export interface SupportAgentOption {
+  id: string
+  full_name: string
 }
 
 interface TenantFormProps {
   mode: 'create' | 'edit'
   initialData?: TenantFormInitialData
+  supportAgents: SupportAgentOption[]
 }
 
 const LICENSE_COUNT_PRESETS = [1, 5, 10, 25, 50]
@@ -126,7 +133,7 @@ function PresetPicker({
   )
 }
 
-export function TenantForm({ mode, initialData }: TenantFormProps) {
+export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps) {
   const t = useTranslations('admin.form')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
@@ -159,6 +166,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
             ? z.number({ message: t('pricePaidRequired') }).min(0, t('pricePaidNegative'))
             : z.number().optional(),
         details: z.string().optional(),
+        support_agent_id: z.string().uuid().nullable().optional(),
       }).refine((data) => new Date(data.subscription_ends_at) > new Date(data.subscription_started_at), {
         message: t('subscriptionEndBeforeStart'),
         path: ['subscription_ends_at'],
@@ -186,6 +194,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
           license_months: initialData.license_months,
           subscription_started_at: initialData.subscription_started_at ?? '',
           subscription_ends_at: initialData.subscription_ends_at ?? '',
+          support_agent_id: initialData.support_agent_id ?? null,
         }
       : {
           costing_method: 'fifo',
@@ -194,8 +203,11 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
           subscription_started_at: new Date().toISOString().slice(0, 10),
           subscription_ends_at: addMonths(new Date().toISOString().slice(0, 10), 1),
           price_paid: 0,
+          support_agent_id: null,
         },
   })
+
+  const watchedEndDate = useWatch({ control, name: 'subscription_ends_at' })
 
   // Duration presets are a convenience: clicking one sets license_months AND
   // recomputes subscription_ends_at from the current start date — a one-time
@@ -206,6 +218,18 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
     const start = getValues('subscription_started_at')
     if (start) {
       setValue('subscription_ends_at', addMonths(start, months), { shouldValidate: true })
+    }
+  }
+
+  // The end date is no longer directly editable (see the subscriptionEnd
+  // field below, now static text) — it's purely derived from start date +
+  // duration, so a start-date change has to recompute it too, not just a
+  // duration-preset click.
+  const handleStartDateChange = (newStart: string) => {
+    setValue('subscription_started_at', newStart, { shouldValidate: true })
+    const months = getValues('license_months')
+    if (newStart && months) {
+      setValue('subscription_ends_at', addMonths(newStart, months), { shouldValidate: true })
     }
   }
 
@@ -382,7 +406,7 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
                     <DatePicker
                       id="subscription_started_at"
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={handleStartDateChange}
                       lang={lang}
                       placeholder={t('selectDatePlaceholder')}
                     />
@@ -394,22 +418,18 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="subscription_ends_at" className="flex items-center gap-1.5">
+                <Label className="flex items-center gap-1.5">
                   <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
                 </Label>
-                <Controller
-                  control={control}
-                  name="subscription_ends_at"
-                  render={({ field }) => (
-                    <DatePicker
-                      id="subscription_ends_at"
-                      value={field.value}
-                      onChange={field.onChange}
-                      lang={lang}
-                      placeholder={t('selectDatePlaceholder')}
-                    />
-                  )}
-                />
+                {/* Computed from start date + duration preset above — not
+                    directly editable, so it can never drift out of sync with
+                    the chosen duration (see handleStartDateChange/applyDurationPreset). */}
+                <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 dark:bg-slate-800/50 px-3 text-sm text-slate-700 dark:text-slate-300">
+                  {watchedEndDate ? formatDate(watchedEndDate) : '—'}
+                </div>
+                {errors.subscription_ends_at && (
+                  <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
+                )}
                 {errors.subscription_ends_at && (
                   <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
                 )}
@@ -431,6 +451,32 @@ export function TenantForm({ mode, initialData }: TenantFormProps) {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="space-y-1.5 border-t pt-6 dark:border-slate-800">
+            <SectionHeading icon={LifeBuoy}>{t('sectionSupport')}</SectionHeading>
+            <Controller
+              control={control}
+              name="support_agent_id"
+              render={({ field }) => (
+                <Select value={field.value ?? 'none'} onValueChange={(v) => field.onChange(v === 'none' ? null : v)}>
+                  <SelectTrigger className="w-full sm:w-80">
+                    <SelectValue>
+                      {(val: string) => {
+                        if (val === 'none' || !val) return t('noSupportAgent')
+                        return supportAgents.find((a) => a.id === val)?.full_name ?? t('noSupportAgent')
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('noSupportAgent')}</SelectItem>
+                    {supportAgents.map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>{agent.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           <div className="space-y-4 border-t pt-6 dark:border-slate-800">

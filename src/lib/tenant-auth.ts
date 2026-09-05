@@ -13,7 +13,7 @@
  * claiming it would either break that routing or spoof it. Enforced at
  * provisioning and edit time (src/app/api/admin/tenants/**).
  */
-export const RESERVED_SUBDOMAINS = ['admin', 'www', 'api', 'app']
+export const RESERVED_SUBDOMAINS = ['admin', 'www', 'api', 'app', 'support']
 
 export function isReservedSubdomain(subdomain: string): boolean {
   return RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())

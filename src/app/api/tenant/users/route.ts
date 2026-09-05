@@ -16,6 +16,8 @@ const createUserSchema = z.object({
   phone: phoneSchema('weak'),
   password: newPasswordSchema('weak'),
   permissions: permissionsSchema,
+  role_template_id: z.string().uuid().nullable().optional(),
+  is_paid: z.boolean(),
 })
 
 /**
@@ -45,6 +47,16 @@ export async function POST(request: NextRequest) {
   }
   const input = parsed.data
 
+  // A "free" (non-paid) employee cannot be given a system login at all —
+  // see the is_paid checkbox in employee-form.tsx, which is meant to keep
+  // this route from ever being reachable in that state client-side. This
+  // is the same client-supplied-flag trust level as the rest of the
+  // permissions system (admin-only route already gated above), not a new
+  // security gap.
+  if (!input.is_paid) {
+    return NextResponse.json({ error: 'Only paid employees can be given a system login' }, { status: 403 })
+  }
+
   const supabase = getCacheClient() as any
   const email = phoneToSyntheticEmail(input.phone)
 
@@ -67,7 +79,11 @@ export async function POST(request: NextRequest) {
   // write since the trigger doesn't know about either.
   const { error: profileError } = await supabase
     .from('profiles')
-    .update({ phone: input.phone, permissions: input.permissions ?? {} })
+    .update({
+      phone: input.phone,
+      permissions: input.permissions ?? {},
+      role_template_id: input.role_template_id ?? null,
+    })
     .eq('id', authData.user.id)
 
   if (profileError) {

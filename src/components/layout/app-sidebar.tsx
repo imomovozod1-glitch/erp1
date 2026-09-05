@@ -97,6 +97,7 @@ const NAV_ITEMS: NavItem[] = [
     key: 'hr', icon: Users, href: 'hr',
     subItems: [
       { key: 'employees', href: 'hr/employees' },
+      { key: 'roles', href: 'hr/roles' },
     ]
   },
   { key: 'settings', icon: Settings, href: 'settings' },
@@ -172,6 +173,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       },
       hr: {
         employees: tHr('employees'),
+        roles: tHr('roles'),
       },
     }
     return map[parentKey]?.[subKey] ?? subKey
