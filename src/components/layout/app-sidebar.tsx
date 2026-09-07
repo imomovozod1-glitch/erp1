@@ -195,7 +195,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href={`/${lang}/dashboard`} prefetch={true} onClick={closeOnMobile} />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-600 text-white">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
                 <Building2 className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">

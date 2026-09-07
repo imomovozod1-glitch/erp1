@@ -8,13 +8,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        // The primary action carries the brand: a soft violet gradient plus a
+        // violet-tinted shadow, so it reads as raised rather than as a flat
+        // filled rectangle. Brightness (not a colour swap) on hover keeps the
+        // hue identical across states.
+        default:
+          "bg-brand-gradient text-primary-foreground shadow-brand hover:shadow-brand-lg hover:brightness-110 active:brightness-95",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border bg-background shadow-xs hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:border-violet-700 dark:hover:bg-violet-950/40 dark:hover:text-violet-300",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "hover:bg-violet-50 hover:text-violet-700 aria-expanded:bg-violet-50 aria-expanded:text-violet-700 dark:hover:bg-violet-950/40 dark:hover:text-violet-300 dark:aria-expanded:bg-violet-950/40",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
