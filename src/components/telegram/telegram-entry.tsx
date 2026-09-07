@@ -40,6 +40,44 @@ declare global {
 
 type Stage = 'checking' | 'link' | 'redirecting' | 'unavailable' | 'error'
 
+const SDK_URL = 'https://telegram.org/js/telegram-web-app.js'
+
+/**
+ * Resolves the Telegram WebApp object, waiting for it rather than giving up on
+ * the first tick.
+ *
+ * The blocking <script> in the layout normally has it ready before this runs.
+ * But concluding "not in Telegram" from a single synchronous check is what
+ * produced a false "open me inside Telegram" for users who WERE inside
+ * Telegram — any delay in the SDK (slow network, the previous next/script
+ * queueing behaviour) looked identical to being in a plain browser. So: poll
+ * briefly, and if the tag never loaded, inject it once and keep waiting.
+ *
+ * Resolves null only after the SDK genuinely failed to appear, which really
+ * does mean this is not a Telegram WebView.
+ */
+async function resolveWebApp(timeoutMs = 4000): Promise<TelegramWebApp | null> {
+  const start = Date.now()
+  let injected = false
+
+  while (Date.now() - start < timeoutMs) {
+    const webApp = window.Telegram?.WebApp
+    // `initData` is empty when the page is opened outside a Mini App context
+    // (e.g. a plain `url` inline button), even though the SDK itself loaded.
+    if (webApp?.initData) return webApp
+
+    if (!injected && !document.querySelector(`script[src="${SDK_URL}"]`)) {
+      injected = true
+      const script = document.createElement('script')
+      script.src = SDK_URL
+      script.async = false
+      document.head.appendChild(script)
+    }
+    await new Promise((r) => setTimeout(r, 100))
+  }
+  return window.Telegram?.WebApp?.initData ? window.Telegram.WebApp : null
+}
+
 export function TelegramEntry() {
   const [stage, setStage] = useState<Stage>('checking')
   const [message, setMessage] = useState<string | null>(null)
@@ -62,25 +100,26 @@ export function TelegramEntry() {
   }, [])
 
   useEffect(() => {
-    const webApp = window.Telegram?.WebApp
-
-    if (webApp?.initData) {
-      // Not state, so safe to run synchronously — tells Telegram the sheet is
-      // ready and matches its light/dark setting before first paint.
-      webApp.ready()
-      webApp.expand()
-      if (webApp.colorScheme === 'dark') document.documentElement.classList.add('dark')
-    }
+    let cancelled = false
 
     // Every setState below is deferred: calling one straight from an effect
     // body is a cascading render under the React Compiler rules
     // (react-hooks/set-state-in-effect).
     const timer = setTimeout(async () => {
+      const webApp = await resolveWebApp()
+      if (cancelled) return
+
       if (!webApp?.initData) {
-        // Opened in a normal browser rather than inside Telegram.
+        // Genuinely not a Telegram WebView (or opened via a plain `url`
+        // button, which does not create a Mini App context).
         setStage('unavailable')
         return
       }
+
+      webApp.ready()
+      webApp.expand()
+      if (webApp.colorScheme === 'dark') document.documentElement.classList.add('dark')
+
       setInitData(webApp.initData)
       try {
         const res = await fetch('/api/telegram/session', {
@@ -114,7 +153,10 @@ export function TelegramEntry() {
         setMessage('Serverga ulanib bo‘lmadi.')
       }
     }, 0)
-    return () => clearTimeout(timer)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
   }, [goToApp])
 
   const handleLink = async (e: React.FormEvent) => {
@@ -166,11 +208,31 @@ export function TelegramEntry() {
         <h1 className="text-base font-semibold text-slate-800 dark:text-slate-100">
           {stage === 'unavailable' ? 'Telegram ichida oching' : 'Xatolik'}
         </h1>
-        <p className="max-w-xs text-sm text-muted-foreground">
-          {stage === 'unavailable'
-            ? 'Bu sahifa Telegram Mini App sifatida ishlaydi. Uni botdagi tugma orqali oching.'
-            : message}
-        </p>
+        <div className="max-w-sm space-y-3 text-sm text-muted-foreground">
+          {stage === 'unavailable' ? (
+            <>
+              <p>Bu sahifa Telegram Mini App sifatida ishlaydi.</p>
+              {/* The two things that actually cause this, in the order they
+                  happen in practice — a plain browser tab, or a bot button of
+                  the wrong type. A `url` button opens the system browser and
+                  never creates a Mini App context, so initData stays empty. */}
+              <ul className="space-y-1.5 text-left text-xs">
+                <li>• Brauzerda emas, Telegram ichidan oching.</li>
+                <li>
+                  • Botdagi tugma <b>Web App</b> turida bo‘lishi kerak. Oddiy
+                  havola (<code>url</code>) tugmasi brauzerni ochadi va Mini App
+                  hisoblanmaydi.
+                </li>
+                <li>
+                  • BotFather → <code>/newapp</code> orqali Mini App qo‘shilgan
+                  bo‘lishi kerak.
+                </li>
+              </ul>
+            </>
+          ) : (
+            <p>{message}</p>
+          )}
+        </div>
       </div>
     )
   }
