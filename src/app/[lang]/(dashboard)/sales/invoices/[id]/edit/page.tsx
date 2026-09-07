@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { InvoiceForm } from '@/components/sales/invoice-form'
-import { getCachedInvoiceById, getCachedCustomersForSelect, getCachedOrders } from '@/lib/data/queries'
+import { getCachedInvoiceById, getCachedCustomersForSelect, getCachedOrders, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -22,12 +22,13 @@ export default async function EditInvoicePage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('sales', lang, '/sales/invoices')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tCommon, invoice, customers, orders] = await Promise.all([
+  const [t, tCommon, invoice, customers, orders, assignableUsers] = await Promise.all([
     getTranslations('sales'),
     getTranslations('common'),
     getCachedInvoiceById(id, tenantId),
     getCachedCustomersForSelect(tenantId),
     getCachedOrders(tenantId),
+    getAssignableUsers(tenantId),
   ])
 
   if (!invoice) {
@@ -45,7 +46,7 @@ export default async function EditInvoicePage({
           { label: tCommon('edit') },
         ]}
       />
-      <InvoiceForm initialData={invoice} customers={customers} orders={orders} lang={lang} />
+      <InvoiceForm initialData={invoice} customers={customers} orders={orders} lang={lang} assignableUsers={assignableUsers} />
     </div>
   )
 }

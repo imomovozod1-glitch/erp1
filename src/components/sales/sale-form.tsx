@@ -20,11 +20,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
+import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 
 interface SaleFormProps {
   products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
   customers: { id: string; name: string }[]
+  /** Active tenant members who can be made responsible for the sale. */
+  assignableUsers: AssignableUser[]
   lang: string
 }
 
@@ -55,7 +58,7 @@ function getTodayString(): string {
   return new Date().toISOString().split('T')[0]
 }
 
-export function SaleForm({ products, customers, lang }: SaleFormProps) {
+export function SaleForm({ products, customers, assignableUsers, lang }: SaleFormProps) {
   const t = useTranslations('sales')
   const tCommon = useTranslations('common')
   const tPos = useTranslations('pos')
@@ -65,6 +68,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
   const [customerId, setCustomerId] = useState('')
   const [items, setItems] = useState<SaleItem[]>([])
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
+  const [assignedTo, setAssignedTo] = useState<string | null>(null)
 
   // Temp selection
   const [selectedProductId, setSelectedProductId] = useState('')
@@ -168,6 +172,8 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
           status: 'confirmed' as any,
           total_amount: totalAmount,
           created_by: user.id,
+          // Responsible person, defaulting to whoever made the sale.
+          assigned_to: assignedTo ?? user.id,
         } as any])
         .select()
         .single()
@@ -265,6 +271,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
           ? `Qarzga sotildi - Order #${orderNumber}${appliedCredit > 0 ? ` (${formatCurrency(appliedCredit)} haqdorlikdan to'landi)` : ''}`
           : `Paid via ${paymentMethod}`,
         created_by: user.id,
+        assigned_to: assignedTo ?? user.id,
       })
       if (invoiceError) throw invoiceError
 
@@ -339,6 +346,19 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
               ))}
             </SelectContent>
           </Select>
+        </CardContent>
+      </Card>
+
+      {/* Responsible person — distinct from whoever is entering the sale. */}
+      <Card className="border shadow-sm">
+        <CardContent className="pt-6">
+          <div className="max-w-sm">
+            <AssigneeSelect
+              value={assignedTo}
+              onChange={setAssignedTo}
+              users={assignableUsers}
+            />
+          </div>
         </CardContent>
       </Card>
 

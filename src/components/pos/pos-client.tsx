@@ -391,6 +391,10 @@ export function POSClient({
           tax_amount: calculatedTax,
           notes: `POS Sale - Paid via ${paymentMethod.toUpperCase()}`,
           created_by: user.id,
+          // A POS sale is owned by the cashier who rang it up; there is no
+          // separate picker at the till. Set explicitly so the row is never
+          // left unassigned and invisible to 'own'-scoped users.
+          assigned_to: user.id,
           order_date: orderDateStr
         })
         .select()
@@ -507,7 +511,8 @@ export function POSClient({
           notes: isDebtSale
             ? `Qarzga sotildi - POS Order #${orderData.order_number}${appliedCredit > 0 ? ` (${formatCurrency(appliedCredit)} haqdorlikdan to'landi)` : ''}`
             : `Paid instantly on POS via ${paymentMethod}`,
-          created_by: user.id
+          created_by: user.id,
+          assigned_to: user.id
         }).then(({ error }: any) => { if (error) throw error }),
         isDebtSale ? Promise.resolve() : adjustCashboxBalance(totalPayable, 'income', supabase, paymentMethod as 'cash' | 'card' | 'transfer'),
       ])

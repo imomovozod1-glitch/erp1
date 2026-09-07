@@ -614,7 +614,7 @@ export const getCachedOrderById = unstable_cache(
     const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('sales_orders')
-      .select('*, customers(name)')
+      .select('*, customers(name), creator:profiles!sales_orders_created_by_fkey(full_name), assignee:profiles!sales_orders_assigned_to_fkey(full_name)')
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .single()
@@ -629,7 +629,7 @@ export const getCachedInvoiceById = unstable_cache(
     const supabase = getCacheClient() as any
     const { data } = await supabase
       .from('invoices')
-      .select('*, customers(name), sales_orders(order_number)')
+      .select('*, customers(name), sales_orders(order_number), creator:profiles!invoices_created_by_fkey(full_name), assignee:profiles!invoices_assigned_to_fkey(full_name)')
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .single()
@@ -918,7 +918,7 @@ export function getOrdersPage(
   return queryPage({
     table: 'sales_orders',
     tenantId,
-    select: '*, customers(name)',
+    select: '*, customers(name), creator:profiles!sales_orders_created_by_fkey(full_name), assignee:profiles!sales_orders_assigned_to_fkey(full_name)',
     page: opts.page,
     pageSize: opts.pageSize,
     search: opts.search,
@@ -935,7 +935,7 @@ export function getInvoicesPage(
   return queryPage({
     table: 'invoices',
     tenantId,
-    select: '*, customers(name), sales_orders(order_number)',
+    select: '*, customers(name), sales_orders(order_number), creator:profiles!invoices_created_by_fkey(full_name), assignee:profiles!invoices_assigned_to_fkey(full_name)',
     page: opts.page,
     pageSize: opts.pageSize,
     search: opts.search,
@@ -968,7 +968,7 @@ export function getPurchaseOrdersPage(
   return queryPage({
     table: 'purchase_orders',
     tenantId,
-    select: '*, suppliers(name)',
+    select: '*, suppliers(name), creator:profiles!purchase_orders_created_by_fkey(full_name), assignee:profiles!purchase_orders_assigned_to_fkey(full_name)',
     page: opts.page,
     pageSize: opts.pageSize,
     search: opts.search,
@@ -1162,4 +1162,23 @@ export const getCustomerBalanceTotals = unstable_cache(
   },
   ['customer-balance-totals'],
   { tags: [CACHE_TAGS.customers, CACHE_TAGS.invoices], revalidate: 60 }
+)
+
+/**
+ * Active tenant members, for the "responsible person" picker on documents.
+ * Cached: the staff list changes far less often than documents do.
+ */
+export const getAssignableUsers = unstable_cache(
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, role')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .order('full_name')
+    return (data ?? []) as { id: string; full_name: string | null; role: string }[]
+  },
+  ['assignable-users'],
+  { tags: ['profiles'], revalidate: 120 }
 )

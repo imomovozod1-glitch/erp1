@@ -9,6 +9,7 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
+import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { invalidateOrders } from '@/lib/data/revalidate'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { toast } from 'sonner'
@@ -25,6 +26,8 @@ import {
 interface OrderFormProps {
   initialData?: any
   customers: any[]
+  /** Active tenant members who can be made responsible for the order. */
+  assignableUsers: AssignableUser[]
   lang: string
 }
 
@@ -32,13 +35,14 @@ function getTodayString(): string {
   return new Date().toISOString().split('T')[0]
 }
 
-export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
+export function OrderForm({ initialData, customers, assignableUsers, lang }: OrderFormProps) {
   const t = useTranslations('sales')
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
+  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }: any) => {
@@ -98,6 +102,10 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
         order_date: order_date || getTodayString(),
         delivery_date: delivery_date || null,
         created_by: initialData?.created_by || userId,
+        // Responsible person. Falls back to the creator so a document is never
+        // left unassigned — an unassigned document is invisible to everyone
+        // whose data scope is 'own'.
+        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
       }
 
       if (initialData?.id) {
@@ -168,6 +176,16 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
           </Select>
           {errors.customer_name && <p className="text-sm text-red-500">{errors.customer_name.message}</p>}
         </div>
+
+        <div className="space-y-2">
+          <AssigneeSelect
+            value={assignedTo}
+            onChange={setAssignedTo}
+            users={assignableUsers}
+            currentUserId={userId}
+          />
+        </div>
+
 
         <div className="space-y-2">
           <Label htmlFor="status">{tCommon('status')}</Label>

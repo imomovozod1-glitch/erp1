@@ -63,13 +63,15 @@ export function PurchaseOrdersTable({
                 <TableHead>{t('supplier')}</TableHead>
                 <TableHead className="hidden md:table-cell">{tCommon('date')}</TableHead>
                 <TableHead className="text-right tabular-nums">{tCommon('total')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
+                <TableHead className="hidden xl:table-cell">{tCommon('createdBy')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12">
+                  <TableCell colSpan={8} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <ShoppingCart className="h-8 w-8 opacity-40" />
                       <p className="text-sm">{tCommon('noData')}</p>
@@ -94,6 +96,12 @@ export function PurchaseOrdersTable({
                     <TableCell className="font-medium text-slate-800 dark:text-slate-200">{order.suppliers?.name ?? '—'}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">{formatDateTime(order.created_at)}</TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">{formatCurrency(order.total_amount)}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {order.assignee?.full_name || tCommon('unassigned')}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell text-muted-foreground">
+                        {order.creator?.full_name || '—'}
+                      </TableCell>
                     <TableCell>
                       <StatusBadge tone={STATUS_TONES[order.status] ?? 'slate'} label={t(`status.${order.status}`)} />
                     </TableCell>

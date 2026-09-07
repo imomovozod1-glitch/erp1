@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { SaleForm } from '@/components/sales/sale-form'
-import { getCachedProductsForSelect, getCachedCustomersForSelect } from '@/lib/data/queries'
+import { getCachedProductsForSelect, getCachedCustomersForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireModuleEdit } from '@/lib/permissions-server'
 
@@ -19,10 +19,11 @@ export default async function NewSalePage({ params }: { params: Promise<{ lang: 
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('sales', lang, '/sales/orders')
   const tenantId = await getCurrentTenantId() as string
-  const [t, products, customers] = await Promise.all([
+  const [t, products, customers, assignableUsers] = await Promise.all([
     getTranslations('sales'),
     getCachedProductsForSelect(tenantId),
     getCachedCustomersForSelect(tenantId),
+    getAssignableUsers(tenantId),
   ])
 
   return (
@@ -37,7 +38,7 @@ export default async function NewSalePage({ params }: { params: Promise<{ lang: 
           { label: t('addSale') },
         ]}
       />
-      <SaleForm products={products} customers={customers} lang={lang} />
+      <SaleForm products={products} customers={customers} assignableUsers={assignableUsers} lang={lang} />
     </div>
   )
 }

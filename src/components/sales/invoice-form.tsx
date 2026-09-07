@@ -9,6 +9,7 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
+import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { invalidateInvoices } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { adjustCashboxBalance } from '@/lib/finance-helpers'
@@ -24,19 +25,22 @@ import {
 
 
 interface InvoiceFormProps {
+  /** Active tenant members who can be made responsible for the invoice. */
+  assignableUsers: AssignableUser[]
   initialData?: any
   customers: any[]
   orders?: any[]
   lang: string
 }
 
-export function InvoiceForm({ initialData, customers, orders = [], lang }: InvoiceFormProps) {
+export function InvoiceForm({ initialData, customers, orders = [], assignableUsers, lang }: InvoiceFormProps) {
   const t = useTranslations('sales')
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
+  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }: any) => {
@@ -94,6 +98,8 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
         issued_at: data.issued_at,
         paid_at: data.paid_at || null,
         created_by: initialData?.created_by || userId,
+        // Responsible person; defaults to the creator so nothing is orphaned.
+        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
       }
 
       const oldPaidAmount = initialData ? (Number(initialData.paid_amount) || 0) : 0
@@ -177,6 +183,11 @@ export function InvoiceForm({ initialData, customers, orders = [], lang }: Invoi
           </Select>
           {errors.customer_id && <p className="text-sm text-red-500">{errors.customer_id.message}</p>}
         </div>
+
+        <div className="space-y-2">
+          <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} currentUserId={userId} />
+        </div>
+
 
         <div className="space-y-2">
           <Label htmlFor="order_id">{t('orders')} ({tCommon('optional')})</Label>

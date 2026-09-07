@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { OrderForm } from '@/components/sales/order-form'
-import { getCachedOrderById, getCachedCustomersForSelect } from '@/lib/data/queries'
+import { getCachedOrderById, getCachedCustomersForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -22,11 +22,12 @@ export default async function EditOrderPage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('sales', lang, '/sales/orders')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tCommon, order, customers] = await Promise.all([
+  const [t, tCommon, order, customers, assignableUsers] = await Promise.all([
     getTranslations('sales'),
     getTranslations('common'),
     getCachedOrderById(id, tenantId),
     getCachedCustomersForSelect(tenantId),
+    getAssignableUsers(tenantId),
   ])
 
   if (!order) {
@@ -44,7 +45,7 @@ export default async function EditOrderPage({
           { label: tCommon('edit') },
         ]}
       />
-      <OrderForm initialData={order} customers={customers} lang={lang} />
+      <OrderForm initialData={order} customers={customers} lang={lang} assignableUsers={assignableUsers} />
     </div>
   )
 }

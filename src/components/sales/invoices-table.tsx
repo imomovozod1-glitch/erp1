@@ -72,13 +72,15 @@ export function InvoicesTable({
                 <TableHead className="hidden md:table-cell text-right tabular-nums">{t('status.paid')}</TableHead>
                 <TableHead className="hidden md:table-cell text-right">{tCommon('date')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
+                <TableHead className="hidden xl:table-cell">{tCommon('createdBy')}</TableHead>
                 <TableHead className="w-17.5"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="h-32 text-center text-muted-foreground">
                     {tCommon('noData')}
                   </TableCell>
                 </TableRow>
@@ -136,6 +138,12 @@ export function InvoicesTable({
                         )}
                       </div>
                     </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {invoice.assignee?.full_name || tCommon('unassigned')}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell text-muted-foreground">
+                        {invoice.creator?.full_name || '—'}
+                      </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
