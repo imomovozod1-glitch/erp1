@@ -61,13 +61,14 @@ export function TransactionsTable({
               <TableHead className="hidden lg:table-cell">{tCommon('description')}</TableHead>
               <TableHead className="text-right text-emerald-600 dark:text-emerald-400 tabular-nums">{t('incomeType')}</TableHead>
               <TableHead className="text-right text-rose-600 dark:text-rose-400 tabular-nums">{t('expenseType')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
               <TableHead className="w-17.5"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
+                <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <DollarSign className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -99,6 +100,9 @@ export function TransactionsTable({
                   <TableCell className="text-right font-bold text-rose-700 dark:text-rose-400 tabular-nums">
                     {tx.type === 'expense' ? formatCurrency(tx.amount) : '—'}
                   </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {tx.assignee?.full_name || tCommon('unassigned')}
+                      </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
@@ -118,7 +122,7 @@ export function TransactionsTable({
           {total > 0 && (
             <TableFooter>
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={3} className="font-bold">
+                <TableCell colSpan={4} className="font-bold">
                   {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}
                 </TableCell>
                 <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">

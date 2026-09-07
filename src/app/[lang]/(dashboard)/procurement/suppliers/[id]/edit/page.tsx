@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { PageHeader } from '@/components/shared/page-header'
 import { SupplierForm } from '@/components/procurement/supplier-form'
-import { getCachedSupplierById } from '@/lib/data/queries'
+import { getCachedSupplierById, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireModuleEdit } from '@/lib/permissions-server'
 
@@ -17,7 +17,8 @@ export default async function EditSupplierPage({
   const { lang, id } = await params
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('procurement', lang, '/procurement/suppliers')
-  const tenantId = await getCurrentTenantId() as string
+  const tenantId = (await getCurrentTenantId()) as string
+  const assignableUsers = await getAssignableUsers(tenantId)
   const t = await getTranslations('procurement')
   const supplier = await getCachedSupplierById(id, tenantId)
 
@@ -35,7 +36,7 @@ export default async function EditSupplierPage({
           { label: t('editSupplier') },
         ]}
       />
-      <SupplierForm initialData={supplier} lang={lang} />
+      <SupplierForm initialData={supplier} lang={lang} assignableUsers={assignableUsers} />
     </div>
   )
 }

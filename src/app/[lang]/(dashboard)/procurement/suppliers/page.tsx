@@ -8,7 +8,7 @@ import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { SuppliersTable } from '@/components/procurement/suppliers-table'
 import { SupplierImportExport } from '@/components/procurement/supplier-import-export'
-import { canEditModule , canDo } from '@/lib/permissions-server'
+import { canEditModule , canDo, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Suppliers' }
 
@@ -21,6 +21,10 @@ export default async function SuppliersPage({
 }) {
   const [{ lang }, sp] = await Promise.all([params, searchParams])
   const { page, pageSize, search } = readPageParams(sp)
+  // With the `own` data scope this list is limited to the records this user
+  // is responsible for (plus unassigned ones) — applied in the query.
+  const [scope, permCtx] = await Promise.all([getDataScope('procurement'), getPermissionContext()])
+  const ownerId = scope === 'own' ? permCtx?.userId : undefined
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('procurement')
@@ -34,7 +38,7 @@ export default async function SuppliersPage({
 
   // Suppliers are paginated server-side; the debt aggregates below are only
   // computed for the page being shown.
-  const suppliersPage = await getSuppliersPage(tenantId, { page, pageSize, search })
+  const suppliersPage = await getSuppliersPage(tenantId, { page, pageSize, search, ownerId })
   const supplierIds = suppliersPage.rows.map((row: { id: string }) => row.id)
 
   const [{ data: purchaseOrders }, { data: supplierPayments }] = await Promise.all([

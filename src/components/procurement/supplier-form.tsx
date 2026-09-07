@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import dynamic from 'next/dynamic'
 import { Truck, Mail, Phone, MapPin, CreditCard, FileText, User, Loader2 } from 'lucide-react'
+import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 
 // Load MapPicker dynamically for Next.js SSR compatibility
 const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod => mod.MapPicker), {
@@ -31,17 +32,20 @@ const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod
 })
 
 interface SupplierFormProps {
+  /** Active tenant members who can be made responsible for this record. */
+  assignableUsers: AssignableUser[]
   initialData?: any
   lang: string
 }
 
-export function SupplierForm({ initialData, lang }: SupplierFormProps) {
+export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFormProps) {
   const t = useTranslations('procurement')
   const tSales = useTranslations('sales')
   const tCommon = useTranslations('common')
   const tAuth = useTranslations('auth')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [tempAddress, setTempAddress] = useState('')
   const [tempLat, setTempLat] = useState<number | null>(null)
@@ -110,7 +114,16 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
     try {
       const supabase = createClient() as any
 
+      // These forms had no current-user lookup at all; the creator/assignee
+      // stamps below need one.
+      const { data: userRes } = await supabase.auth.getUser()
+      const userId: string | null = userRes?.user?.id ?? null
+
       const payload = {
+        // Responsible person; falls back to the current user so a record is
+        // never left unassigned by accident.
+        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
+        created_by: initialData?.created_by ?? userId,
         name: data.name,
         phone: data.phone,
         email: data.email || null,
@@ -310,6 +323,14 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
             className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 resize-none"
           />
         </div>
+      </div>
+
+      <div className="max-w-sm">
+        <AssigneeSelect
+          value={assignedTo}
+          onChange={setAssignedTo}
+          users={assignableUsers}
+        />
       </div>
 
       <div className="flex gap-3 pt-5 justify-end border-t border-slate-100 dark:border-slate-800">

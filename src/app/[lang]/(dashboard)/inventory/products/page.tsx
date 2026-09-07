@@ -6,7 +6,7 @@ import { ProductsTable } from '@/components/inventory/products-table'
 import { getProductsPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule } from '@/lib/permissions-server'
+import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -27,6 +27,10 @@ export default async function ProductsPage({
   // Postgres. This page previously fetched every product in the tenant and let
   // the browser slice ten rows out of it.
   const { page, pageSize, search } = readPageParams(sp)
+  // With the `own` data scope this list is limited to the records this user
+  // is responsible for (plus unassigned ones) — applied in the query.
+  const [scope, permCtx] = await Promise.all([getDataScope('inventory'), getPermissionContext()])
+  const ownerId = scope === 'own' ? permCtx?.userId : undefined
   const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status
   const status = statusParam === 'active' || statusParam === 'inactive' ? statusParam : 'all'
 
@@ -36,7 +40,7 @@ export default async function ProductsPage({
   const tenantId = (await getCurrentTenantId()) as string
   const [t, result] = await Promise.all([
     getTranslations('inventory'),
-    getProductsPage(tenantId, { page, pageSize, search, status }),
+    getProductsPage(tenantId, { page, pageSize, search, status, ownerId }),
   ])
 
   return (
