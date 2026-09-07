@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeImageWithOpenAI } from '@/lib/openai'
-import { getSessionUser } from '@/lib/auth'
+import { getVerifiedUser } from '@/lib/auth'
 import { validateImageUpload } from '@/lib/file-validation'
 
 export async function POST(request: NextRequest) {
-  const user = await getSessionUser()
+  const user = await getVerifiedUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {

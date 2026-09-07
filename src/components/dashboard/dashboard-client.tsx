@@ -16,9 +16,7 @@ import {
   Truck,
   AlertTriangle,
   Contact,
-  Tag,
   Building2,
-  FolderPlus,
   UserPlus,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'

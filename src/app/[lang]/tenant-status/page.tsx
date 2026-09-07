@@ -7,12 +7,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('notFoundTitle') }
 }
 
-type Reason = 'not-found' | 'blocked' | 'inactive'
+type Reason = 'not-found' | 'blocked' | 'inactive' | 'wrong-tenant'
 
 const ICONS: Record<Reason, typeof Ban> = {
   'not-found': SearchX,
   blocked: Ban,
   inactive: Clock,
+  // Signed in, but to a different tenant than the subdomain being visited —
+  // see the guard in (dashboard)/layout.tsx.
+  'wrong-tenant': Ban,
 }
 
 export default async function TenantStatusPage({
@@ -24,23 +27,25 @@ export default async function TenantStatusPage({
   const t = await getTranslations('tenantStatus')
 
   const resolvedReason: Reason =
-    reason === 'blocked' || reason === 'inactive' ? reason : 'not-found'
+    reason === 'blocked' || reason === 'inactive' || reason === 'wrong-tenant'
+      ? reason
+      : 'not-found'
 
   const Icon = ICONS[resolvedReason]
-  const title = t(
-    resolvedReason === 'blocked'
-      ? 'blockedTitle'
-      : resolvedReason === 'inactive'
-        ? 'inactiveTitle'
-        : 'notFoundTitle'
-  )
-  const message = t(
-    resolvedReason === 'blocked'
-      ? 'blockedMessage'
-      : resolvedReason === 'inactive'
-        ? 'inactiveMessage'
-        : 'notFoundMessage'
-  )
+  const TITLES: Record<Reason, string> = {
+    blocked: 'blockedTitle',
+    inactive: 'inactiveTitle',
+    'wrong-tenant': 'wrongTenantTitle',
+    'not-found': 'notFoundTitle',
+  }
+  const MESSAGES: Record<Reason, string> = {
+    blocked: 'blockedMessage',
+    inactive: 'inactiveMessage',
+    'wrong-tenant': 'wrongTenantMessage',
+    'not-found': 'notFoundMessage',
+  }
+  const title = t(TITLES[resolvedReason])
+  const message = t(MESSAGES[resolvedReason])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">

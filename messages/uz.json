@@ -1,6 +1,9 @@
 {
   "common": {
     "months": {
+      "10": "Okt",
+      "11": "Noy",
+      "12": "Dek",
       "01": "Yan",
       "02": "Fev",
       "03": "Mar",
@@ -9,10 +12,7 @@
       "06": "Iyun",
       "07": "Iyul",
       "08": "Avg",
-      "09": "Sen",
-      "10": "Okt",
-      "11": "Noy",
-      "12": "Dek"
+      "09": "Sen"
     },
     "type": "Turi",
     "loading": "Yuklanmoqda...",
@@ -143,7 +143,9 @@
     "blockedMessage": "Hisobingiz to'lov amalga oshirilmaganligi sababli bloklangan. Davom etish uchun administrator bilan bog'laning.",
     "inactiveTitle": "Hisobingiz faol emas",
     "inactiveMessage": "Hisobingiz hozircha faol emas. Faollashtirish uchun administrator bilan bog'laning.",
-    "contactSupport": "Administrator bilan bog'lanish"
+    "contactSupport": "Administrator bilan bog'lanish",
+    "wrongTenantTitle": "Boshqa tashkilotga kirgansiz",
+    "wrongTenantMessage": "Sizning hisobingiz boshqa tashkilotga tegishli. Ushbu manzilga kirish uchun avval tizimdan chiqing va shu tashkilot hisobi bilan qayta kiring."
   },
   "dashboard": {
     "title": "Boshqaruv paneli",
@@ -445,7 +447,8 @@
     "systemAccessRequiresPaid": "Tizimga kirish faqat \"Pullik xodim\" belgilanganda mavjud bo'ladi",
     "cashbox": "Kassa",
     "cashboxAuto": "Avtomatik yaratish (xodim nomida)",
-    "cashboxHint": "Tanlamasangiz, xodim nomiga alohida kassa avtomatik yaratiladi"
+    "cashboxHint": "Tanlamasangiz, xodim nomiga alohida kassa avtomatik yaratiladi",
+    "employeeCashboxDescription": "{name} uchun shaxsiy kassa"
   },
   "procurement": {
     "title": "Ta'minot",
@@ -532,7 +535,8 @@
       "startDateTime": "Boshlanish sanasi va vaqti",
       "endDateTime": "Tugash sanasi va vaqti",
       "confirm": "Tasdiqlash"
-    }
+    },
+    "thisMonth": "Shu oy"
   },
   "settings": {
     "title": "Sozlamalar",
@@ -622,6 +626,45 @@
       "labelPaymentMethod": "To'lov turi",
       "paperWidthCustom": "Boshqa",
       "customColumnsHint": "Bir qatordagi belgilar soni ({min}-{max} oralig'ida)"
+    },
+    "integrationsTitle": "Integratsiyalar",
+    "integrationsCardDesc": "Telegram bot va tashqi xizmatlarni ulash",
+    "integrations": {
+      "telegramTitle": "Telegram bot",
+      "telegramDesc": "Sotuvlar, buyurtmalar va zaxira haqidagi xabarnomalarni Telegram guruhingizga yuboring.",
+      "statusActive": "Ulangan",
+      "statusPaused": "To'xtatilgan",
+      "statusNotConnected": "Ulanmagan",
+      "connectedAs": "Bot ulangan:",
+      "stepCreateBot": "Telegramda yangi bot yarating:",
+      "stepCopyToken": "BotFather bergan tokenni nusxalab, quyidagi maydonga joylashtiring.",
+      "stepAddToGroup": "Botni o'z guruhingizga qo'shing va unga xabar yuborish huquqini bering.",
+      "stepGetChatId": "Guruh yoki kanal chat ID sini oling:",
+      "botToken": "Bot token",
+      "botTokenHint": "BotFather'dan olingan token. U faqat serverda saqlanadi va hech qachon qayta ko'rsatilmaydi.",
+      "botTokenKeepPlaceholder": "O'zgartirmaslik uchun bo'sh qoldiring",
+      "botTokenKeepHint": "Bo'sh qoldirsangiz, mavjud token saqlanib qoladi.",
+      "chatId": "Chat ID",
+      "chatIdHint": "Guruh uchun manfiy raqam (masalan -1001234567890) yoki @kanal_nomi.",
+      "notifications": "Xabarnomalar",
+      "enableLabel": "Telegram xabarnomalarini yoqish",
+      "enableHint": "O'chirilganda hech qanday xabar yuborilmaydi.",
+      "event_sale": "Yangi sotuv (POS va sotuvlar)",
+      "event_low_stock": "Zaxira tugayapti",
+      "event_new_order": "Yangi buyurtma",
+      "event_debt_payment": "Qarz to'lovi",
+      "sendTest": "Test xabar yuborish",
+      "testSent": "Test xabar yuborildi",
+      "disconnect": "Uzish",
+      "disconnected": "Telegram uzildi",
+      "disconnectConfirm": "Telegram botni uzmoqchimisiz? Token o'chiriladi.",
+      "errorTokenFormat": "Token formati noto'g'ri (masalan: 123456789:AA...)",
+      "errorTokenRejected": "Telegram tokenni qabul qilmadi",
+      "errorTokenRequired": "Bot token kiritilishi shart",
+      "errorChatIdRequired": "Chat ID kiritilishi shart",
+      "errorChatIdFormat": "Chat ID formati noto'g'ri",
+      "errorNotConfigured": "Avval bot tokenini saqlang",
+      "errorSendFailed": "Xabar yuborilmadi"
     }
   },
   "tools": {

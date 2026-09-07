@@ -12,41 +12,50 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return { title: tCommon('edit') }
 }
 
+/**
+ * Only the *fetch* is wrapped in try/catch — getCachedEmployeeById throws on a
+ * missing row (PostgREST .single()), which should render a 404. The JSX below
+ * must stay outside it: React doesn't render the tree synchronously, so a
+ * render-time error would never be caught here anyway, and swallowing it into
+ * notFound() would turn a real bug into a silent "not found"
+ * (react-hooks/error-boundaries).
+ */
 export default async function EditEmployeePage({
   params,
 }: {
   params: Promise<{ lang: string, id: string }>
 }) {
   const { lang, id } = await params
-  const tenantId = await getCurrentTenantId() as string
+  const tenantId = await getCurrentTenantId()
+  if (!tenantId) return notFound()
 
+  let employee: Awaited<ReturnType<typeof getCachedEmployeeById>> = null
   try {
-    const employee = await getCachedEmployeeById(id, tenantId)
-    if (!employee) return notFound()
-
-    const [t, tCommon] = await Promise.all([
-      getTranslations('hr'),
-      getTranslations('common'),
-    ])
-
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title={tCommon('edit')}
-          breadcrumbs={[
-            { label: 'ERP', href: `/${lang}/dashboard` },
-            { label: t('title'), href: `/${lang}/hr` },
-            { label: t('employees'), href: `/${lang}/hr/employees` },
-            { label: tCommon('edit') },
-          ]}
-        />
-        <div className="px-4 md:px-8">
-          <EmployeeForm lang={lang} initialData={employee} />
-        </div>
-      </div>
-    )
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
-    return notFound()
+    employee = await getCachedEmployeeById(id, tenantId)
+  } catch {
+    employee = null
   }
+  if (!employee) return notFound()
+
+  const [t, tCommon] = await Promise.all([
+    getTranslations('hr'),
+    getTranslations('common'),
+  ])
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={tCommon('edit')}
+        breadcrumbs={[
+          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: t('title'), href: `/${lang}/hr` },
+          { label: t('employees'), href: `/${lang}/hr/employees` },
+          { label: tCommon('edit') },
+        ]}
+      />
+      <div className="px-4 md:px-8">
+        <EmployeeForm lang={lang} initialData={employee} />
+      </div>
+    </div>
+  )
 }

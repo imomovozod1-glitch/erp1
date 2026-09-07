@@ -21,9 +21,9 @@ export default async function EditProductPage({
   const tCommon = await getTranslations('common')
   const supabase = await createClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const productRes = await supabase.from('products').select('*').eq('id', id).single() as any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const categoriesRes = await supabase.from('categories').select('id, name').order('name') as any
 
   if (!productRes.data) {

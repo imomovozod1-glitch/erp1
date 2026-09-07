@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table'
 
 interface MovementsTableProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   movements: any[]
   lang: string
 }

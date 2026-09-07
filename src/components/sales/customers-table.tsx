@@ -196,6 +196,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                         )}
                         <DropdownMenuItem
                           onClick={() => handleDelete(customer.id)}
+                          disabled={isDeleting === customer.id}
                           className="text-red-600 focus:text-red-600 focus:bg-red-50"
                         >
                           <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}

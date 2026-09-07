@@ -48,7 +48,7 @@ export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          { }
           {orders.map((order: any) => (
             <Link
               key={order.id}

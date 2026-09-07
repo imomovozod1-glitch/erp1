@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
@@ -34,7 +34,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
 
   type FormData = z.infer<typeof formSchema>
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || '',
@@ -43,8 +43,12 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
     },
   })
 
-  const typeValue = watch('type')
-  const personTypeValue = watch('person_type')
+  // useWatch, not watch(): watch() returns a fresh function each render, which
+  // makes the React Compiler skip memoizing this whole component
+  // (react-hooks/incompatible-library). Every other form here already uses
+  // useWatch for exactly this reason.
+  const typeValue = useWatch({ control, name: 'type' })
+  const personTypeValue = useWatch({ control, name: 'person_type' })
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true)

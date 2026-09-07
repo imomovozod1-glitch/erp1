@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getSessionUser, getCachedProfile } from '@/lib/auth'
+import { getVerifiedUser, getCachedProfile } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
 
@@ -20,7 +20,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getSessionUser()
+  const user = await getVerifiedUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const callerProfile = await getCachedProfile(user.id) as any

@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateOrders } from '@/lib/data/revalidate'
+import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +26,10 @@ interface OrderFormProps {
   initialData?: any
   customers: any[]
   lang: string
+}
+
+function getTodayString(): string {
+  return new Date().toISOString().split('T')[0]
 }
 
 export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
@@ -80,10 +85,18 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
 
     setIsSubmitting(true)
     try {
+      // `customer_name` is a form-only field (it actually holds the selected
+      // customer's id) — sales_orders has no such column, so spreading `data`
+      // wholesale made every insert/update fail in PostgREST with
+      // "Could not find the 'customer_name' column of 'sales_orders'".
+      // Build the payload from the real columns explicitly instead.
+      // Empty date strings must become NULL too — '' is not a valid DATE.
+      const { customer_name, order_date, delivery_date, ...rest } = data
       const payload = {
-        ...data,
-        customer_id: (data.customer_name && data.customer_name !== 'none') ? data.customer_name : null,
-        delivery_date: data.delivery_date || null,
+        ...rest,
+        customer_id: (customer_name && customer_name !== 'none') ? customer_name : null,
+        order_date: order_date || getTodayString(),
+        delivery_date: delivery_date || null,
         created_by: initialData?.created_by || userId,
       }
 
@@ -100,8 +113,20 @@ export function OrderForm({ initialData, customers, lang }: OrderFormProps) {
           .insert([payload])
         if (error) throw error
         toast.success(tCommon('success'))
+
+        // Telegram notification (Settings → Integrations). Only on create —
+        // an edit isn't a "new order". Fire-and-forget: the order is already
+        // committed, so a Telegram failure must not surface as a failed save.
+        fireTelegramNotification({
+          event: 'new_order',
+          data: {
+            orderNumber: payload.order_number,
+            total: Number(payload.total_amount) || 0,
+            customerName: customers.find((c) => c.id === payload.customer_id)?.name ?? null,
+          },
+        })
       }
-      
+
       await invalidateOrders()
       clearPersistedForm('order-form-v3')
       router.push(`/${lang}/sales/orders`)

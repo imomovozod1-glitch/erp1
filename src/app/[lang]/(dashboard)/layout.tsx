@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
+import { getCurrentTenantId, getCachedTenant } from '@/lib/tenant'
 import { isSuperAdmin, isSupportAgent } from '@/lib/admin-auth'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
@@ -34,6 +36,22 @@ export default async function DashboardLayout({
   // super-admin check above (src/lib/admin-auth.ts).
   if (await isSupportAgent(user.id)) {
     redirect('/support')
+  }
+
+  // The subdomain the browser actually asked for (set by src/proxy.ts) has to
+  // match the tenant this session belongs to. The middleware's tenant gate only
+  // ever validates the *subdomain's* tenant — it never checks who is logged in,
+  // and every read below resolves its tenant from the profile instead. So a
+  // user whose own tenant was blocked or whose subscription lapsed could just
+  // visit any other active tenant's subdomain and get their full dashboard,
+  // with their own data, straight past the gate.
+  const requestedSubdomain = (await headers()).get('x-tenant-subdomain')
+  if (requestedSubdomain) {
+    const tenantId = await getCurrentTenantId()
+    const tenant = tenantId ? await getCachedTenant(tenantId) : null
+    if (!tenant || (tenant as { subdomain?: string }).subdomain !== requestedSubdomain) {
+      redirect(`/${lang}/tenant-status?reason=wrong-tenant`)
+    }
   }
 
   // Profile is cached for 5 min per user id — only DB on first render.

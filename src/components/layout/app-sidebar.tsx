@@ -14,7 +14,6 @@ import {
   Truck,
   Settings,
   ChevronRight,
-  Wrench,
   TrendingUp,
   Store,
   LifeBuoy,
