@@ -70,6 +70,8 @@ export function OrdersTable({
               <TableHead>{t('customer')}</TableHead>
               <TableHead className="hidden md:table-cell">{t('orderDate')}</TableHead>
               <TableHead className="text-right tabular-nums">{tCommon('total')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
+                <TableHead className="hidden xl:table-cell">{tCommon('createdBy')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
@@ -77,7 +79,7 @@ export function OrdersTable({
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
+                <TableCell colSpan={9} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <ShoppingCart className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -105,6 +107,12 @@ export function OrdersTable({
                    <TableCell>
                      <StatusBadge tone={STATUS_TONES[order.status] ?? 'slate'} label={t(`status.${order.status}`)} />
                    </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {order.assignee?.full_name || tCommon('unassigned')}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell text-muted-foreground">
+                        {order.creator?.full_name || '—'}
+                      </TableCell>
                    <TableCell onClick={(e) => e.stopPropagation()}>
                      <DropdownMenu>
                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>

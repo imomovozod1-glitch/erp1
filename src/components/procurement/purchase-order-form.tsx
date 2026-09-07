@@ -18,9 +18,12 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
 import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
+import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { unitAllowsDecimals } from '@/lib/units'
 
 interface PurchaseOrderFormProps {
+  /** Active tenant members who can be made responsible for the purchase order. */
+  assignableUsers: AssignableUser[]
   suppliers: { id: string; name: string }[]
   products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
   lang: string
@@ -38,7 +41,7 @@ function generatePoNumber() {
   return generateDocumentNumber('PO')
 }
 
-export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFormProps) {
+export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }: PurchaseOrderFormProps) {
   const t = useTranslations('procurement')
   const tCommon = useTranslations('common')
   const router = useRouter()
@@ -48,6 +51,7 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
 
   const [supplierId, setSupplierId] = useState('')
   const [notes, setNotes] = useState('')
+  const [assignedTo, setAssignedTo] = useState<string | null>(null)
   const [items, setItems] = useState<LineItem[]>([])
 
   // Temp item state
@@ -193,6 +197,8 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
           total_amount: totalAmount,
           notes,
           created_by: user.id,
+          // Responsible person, defaulting to whoever raised the order.
+          assigned_to: assignedTo ?? user.id,
         } as any])
         .select()
         .single()
@@ -302,6 +308,9 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
             </div>
             <div className="space-y-2">
               <Label>{tCommon('notes')}</Label>

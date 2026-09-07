@@ -82,12 +82,16 @@ interface QueryPageOptions {
   /** Values the column must be one of. */
   inFilters?: Record<string, (string | number)[] | undefined>
   /**
-   * Restricts the query to records created by this user. Set when the caller's
-   * data scope for the module is 'own' — a salesperson who may see their own
-   * orders but not the whole company's.
+   * Restricts the query to records this user is RESPONSIBLE for. Set when the
+   * caller's data scope for the module is 'own'.
+   *
+   * Filters on `assigned_to`, not `created_by`: the point of the scope is
+   * "documents that are mine to deal with", and the person who typed a
+   * document is often not the person who owns it — a cashier rings up a sale
+   * that belongs to a salesperson's book.
    */
   ownerId?: string
-  /** Column holding the creator; defaults to `created_by`. */
+  /** Column holding the responsible person; defaults to `assigned_to`. */
   ownerColumn?: string
 }
 
@@ -115,7 +119,7 @@ export async function queryPage<T = Record<string, unknown>>(
     if (values && values.length > 0) query = query.in(column, values)
   }
   if (options.ownerId) {
-    query = query.eq(options.ownerColumn ?? 'created_by', options.ownerId)
+    query = query.eq(options.ownerColumn ?? 'assigned_to', options.ownerId)
   }
   if (options.search && options.searchColumns?.length) {
     query = query.or(ilikeAny(options.searchColumns, options.search))

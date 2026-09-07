@@ -90,7 +90,11 @@
     "testPrint": "Тест",
     "tooLong": "Слишком длинно",
     "invalidDate": "Некорректная дата",
-    "showingRange": "{first}-{last} из {total}"
+    "showingRange": "{first}-{last} из {total}",
+    "assignedTo": "Ответственный",
+    "createdBy": "Создал",
+    "unassigned": "Не назначен",
+    "assignedToHint": "Документ появится в списке этого сотрудника. Если не выбрать — вы сами."
   },
   "nav": {
     "dashboard": "Панель управления",

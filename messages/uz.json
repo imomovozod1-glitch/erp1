@@ -90,7 +90,11 @@
     "testPrint": "Test",
     "tooLong": "Juda uzun",
     "invalidDate": "Sana noto'g'ri",
-    "showingRange": "{first}-{last} / {total}"
+    "showingRange": "{first}-{last} / {total}",
+    "assignedTo": "Mas’ul shaxs",
+    "createdBy": "Yaratgan",
+    "unassigned": "Biriktirilmagan",
+    "assignedToHint": "Hujjat shu xodimning ro‘yxatida ko‘rinadi. Bo‘sh qoldirilsa — o‘zingiz."
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",

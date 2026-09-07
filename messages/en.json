@@ -90,7 +90,11 @@
     "testPrint": "Test",
     "tooLong": "Too long",
     "invalidDate": "Invalid date",
-    "showingRange": "{first}-{last} of {total}"
+    "showingRange": "{first}-{last} of {total}",
+    "assignedTo": "Responsible",
+    "createdBy": "Created by",
+    "unassigned": "Unassigned",
+    "assignedToHint": "The document appears in this person’s list. Left empty, it stays with you."
   },
   "nav": {
     "dashboard": "Dashboard",
