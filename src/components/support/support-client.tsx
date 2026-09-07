@@ -23,9 +23,10 @@ import { SupportConversation } from '@/components/support/support-conversation'
 
 interface SupportClientProps {
   lang: string
+  tenantId: string | null
 }
 
-export function SupportClient({ lang }: SupportClientProps) {
+export function SupportClient({ lang, tenantId }: SupportClientProps) {
   const t = useTranslations('support')
   const tInfo = useTranslations('pageInfo')
   const tCommon = useTranslations('common')
@@ -277,6 +278,7 @@ export function SupportClient({ lang }: SupportClientProps) {
           endpoint="/api/tenant/support/threads"
           viewer="tenant"
           refreshKey={threadsVersion}
+          inboxTopic={tenantId ? `support-inbox:tenant:${tenantId}` : undefined}
         />
       </section>
 

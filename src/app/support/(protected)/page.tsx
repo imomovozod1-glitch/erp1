@@ -30,7 +30,12 @@ export default async function SupportHomePage() {
           a super-admin, in one list. */}
       <section className="space-y-4">
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('conversationsHeading')}</h1>
-        <SupportConversation endpoint="/api/support/threads" viewer="agent" showTenantName />
+        <SupportConversation
+          endpoint="/api/support/threads"
+          viewer="agent"
+          showTenantName
+          inboxTopic={`support-inbox:agent:${session!.userId}`}
+        />
       </section>
 
       <section className="space-y-4 max-w-3xl">

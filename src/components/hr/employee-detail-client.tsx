@@ -15,7 +15,8 @@ import { useTranslations } from 'next-intl'
 import {
   Download, DollarSign, ShoppingCart, X
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+// `xlsx` is ~7MB and only needed when the user actually exports or imports.
+// Loading it on demand keeps it out of this page's initial bundle.
 
 type Period = 'all' | 'today' | 'week' | 'month' | 'custom'
 
@@ -106,7 +107,8 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   const periodSuffix = period !== 'all' ? ` · ${activePeriodLabel}` : ''
 
   // Export to Excel function
-  const handleExport = () => {
+  const handleExport = async () => {
+    const XLSX = await import('xlsx')
     const workbook = XLSX.utils.book_new()
 
     // 1. Profile Info Sheet

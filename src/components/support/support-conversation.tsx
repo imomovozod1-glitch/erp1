@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { formatDateTime } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 type SenderRole = 'tenant' | 'agent' | 'admin'
 
@@ -52,6 +53,12 @@ interface SupportConversationProps {
   showTenantName?: boolean
   /** Refresh signal from the parent after a new thread is created. */
   refreshKey?: number
+  /**
+   * Realtime inbox topic for this side — `support-inbox:tenant:<tenantId>` or
+   * `support-inbox:agent:<agentId>`. When given, new messages arrive as a push
+   * instead of waiting for the poll interval.
+   */
+  inboxTopic?: string
   className?: string
 }
 
@@ -70,6 +77,7 @@ export function SupportConversation({
   viewer,
   showTenantName = false,
   refreshKey = 0,
+  inboxTopic,
   className,
 }: SupportConversationProps) {
   const t = useTranslations('supportChat')
@@ -131,14 +139,44 @@ export function SupportConversation({
     return () => clearTimeout(timer)
   }, [activeId, loadMessages])
 
-  // Light polling so a reply from the other side shows up without a manual
-  // refresh. 15s is frequent enough for a support conversation and cheap
-  // enough to run while the tab is open.
+  /**
+   * Realtime delivery. The server broadcasts a contentless "something changed"
+   * signal on the thread's topic and on each side's inbox topic after every
+   * write (src/lib/realtime.ts); we refetch through the normal authorised
+   * endpoint when one arrives, so nothing sensitive travels over the channel.
+   *
+   * Broadcast rather than postgres_changes because support agents have no RLS
+   * policies on these tables and so cannot subscribe to row changes at all —
+   * see the note in src/lib/realtime.ts.
+   */
+  useEffect(() => {
+    const supabase = createClient()
+    const channels = [
+      inboxTopic ? supabase.channel(inboxTopic) : null,
+      activeId ? supabase.channel(`support-thread:${activeId}`) : null,
+    ].filter(Boolean) as ReturnType<typeof supabase.channel>[]
+
+    for (const channel of channels) {
+      channel
+        .on('broadcast', { event: 'support_message' }, () => {
+          loadThreads()
+          if (activeId) loadMessages(activeId, false)
+        })
+        .subscribe()
+    }
+    return () => {
+      channels.forEach((channel) => supabase.removeChannel(channel))
+    }
+  }, [activeId, inboxTopic, loadThreads, loadMessages])
+
+  // Polling stays as a fallback, at a slower cadence now that realtime carries
+  // the fast path: it covers a dropped socket or Realtime being unavailable,
+  // where losing a reply entirely would be far worse than a late one.
   useEffect(() => {
     const id = setInterval(() => {
       loadThreads()
       if (activeId) loadMessages(activeId, false)
-    }, 15000)
+    }, 60000)
     return () => clearInterval(id)
   }, [activeId, loadThreads, loadMessages])
 

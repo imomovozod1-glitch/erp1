@@ -25,8 +25,6 @@
     "@radix-ui/react-tooltip": "^1.2.13",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
-    "@tanstack/react-query": "^5.101.3",
-    "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

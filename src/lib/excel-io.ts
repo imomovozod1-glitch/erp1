@@ -1,4 +1,13 @@
-import * as XLSX from 'xlsx'
+/**
+ * `xlsx` is ~7MB unpacked and is only ever needed the moment a user clicks
+ * Export or picks an import file — but a static import pulled it into the
+ * initial bundle of every page that renders a table or a detail view. It is
+ * loaded on demand instead, so that weight never reaches a user who doesn't
+ * export anything.
+ */
+async function loadXlsx() {
+  return import('xlsx')
+}
 
 export interface ExcelColumn {
   /** Column header shown in the exported/template file. */
@@ -10,7 +19,8 @@ export interface ExcelColumn {
 }
 
 /** Exports a list of rows to an .xlsx file, one column per `columns` entry. */
-export function exportRowsToExcel(rows: Record<string, any>[], columns: ExcelColumn[], filename: string, sheetName = 'Data') {
+export async function exportRowsToExcel(rows: Record<string, any>[], columns: ExcelColumn[], filename: string, sheetName = 'Data') {
+  const XLSX = await loadXlsx()
   const data = rows.map((row) => {
     const obj: Record<string, any> = {}
     columns.forEach((col) => {
@@ -25,7 +35,8 @@ export function exportRowsToExcel(rows: Record<string, any>[], columns: ExcelCol
 }
 
 /** Downloads a one-row sample .xlsx matching the headers `columns` import expects. */
-export function downloadExcelTemplate(columns: ExcelColumn[], filename: string, sheetName = 'Shablon') {
+export async function downloadExcelTemplate(columns: ExcelColumn[], filename: string, sheetName = 'Shablon') {
+  const XLSX = await loadXlsx()
   const sample: Record<string, any> = {}
   columns.forEach((col) => {
     sample[col.header] = col.sample ?? ''
@@ -50,16 +61,16 @@ const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024 // 5MB — import files are a few 
  * anything not shaped like a spreadsheet file before it's ever parsed.
  */
 export function readExcelFile(file: File): Promise<Record<string, any>[]> {
-  return new Promise((resolve, reject) => {
-    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
-      reject(new Error('Unsupported file type — expected .xlsx, .xls, or .csv'))
-      return
-    }
-    if (file.size > MAX_IMPORT_FILE_BYTES) {
-      reject(new Error('File is too large (max 5MB)'))
-      return
-    }
+  // Validate before loading the parser at all — a rejected file shouldn't
+  // cost the user a 7MB download.
+  if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+    return Promise.reject(new Error('Unsupported file type — expected .xlsx, .xls, or .csv'))
+  }
+  if (file.size > MAX_IMPORT_FILE_BYTES) {
+    return Promise.reject(new Error('File is too large (max 5MB)'))
+  }
 
+  return loadXlsx().then((XLSX) => new Promise<Record<string, any>[]>((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
@@ -74,7 +85,7 @@ export function readExcelFile(file: File): Promise<Record<string, any>[]> {
     }
     reader.onerror = () => reject(new Error('File read failed'))
     reader.readAsBinaryString(file)
-  })
+  }))
 }
 
 /** Reads a cell value by trying several possible header spellings (uz/ru/en), returns '' if none match. */

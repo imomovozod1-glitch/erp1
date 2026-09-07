@@ -27,7 +27,8 @@ import { useTranslations } from 'next-intl'
 import {
   Download, Truck, Phone, Mail, Globe, MapPin, DollarSign, Landmark
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+// `xlsx` is ~7MB and only needed when the user actually exports or imports.
+// Loading it on demand keeps it out of this page's initial bundle.
 
 const PO_STATUS_TONES: Record<string, StatusTone> = {
   draft: 'blue',
@@ -72,7 +73,8 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
   const outstandingDebt = totalPurchases - totalPayments
 
   // Export to Excel function
-  const handleExport = () => {
+  const handleExport = async () => {
+    const XLSX = await import('xlsx')
     const workbook = XLSX.utils.book_new()
 
     // 1. Supplier Details Sheet

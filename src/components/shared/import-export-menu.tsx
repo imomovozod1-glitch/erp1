@@ -30,12 +30,23 @@ export function ImportExportMenu({ data, exportColumns, templateColumns, filenam
   const inputRef = useRef<HTMLInputElement>(null)
   const [isImporting, setIsImporting] = useState(false)
 
-  const handleExport = () => {
-    exportRowsToExcel(data, exportColumns, `${filenamePrefix}.xlsx`)
+  // Awaited: these load the `xlsx` bundle on demand now, so they are async and
+  // a failure (offline mid-download, for one) has to reach the user rather
+  // than becoming an unhandled rejection.
+  const handleExport = async () => {
+    try {
+      await exportRowsToExcel(data, exportColumns, `${filenamePrefix}.xlsx`)
+    } catch {
+      toast.error(t('error'))
+    }
   }
 
-  const handleDownloadTemplate = () => {
-    downloadExcelTemplate(templateColumns, `${filenamePrefix}_shablon.xlsx`)
+  const handleDownloadTemplate = async () => {
+    try {
+      await downloadExcelTemplate(templateColumns, `${filenamePrefix}_shablon.xlsx`)
+    } catch {
+      toast.error(t('error'))
+    }
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

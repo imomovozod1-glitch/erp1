@@ -40,7 +40,8 @@ import {
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { exportRowsToExcel } from "@/lib/excel-io";
 import { getMeasurementUnits, resolveMeasurementUnit } from "@/lib/units";
-import * as XLSX from "xlsx";
+// `xlsx` is ~7MB and only needed when the user actually exports or imports.
+// Loading it on demand keeps it out of this page's initial bundle.
 import React from "react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
@@ -68,6 +69,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
 
  
   const downloadExcelTemplate = async () => {
+    const XLSX = await import('xlsx')
     const supabase = createClient();
     const systemUnits = await getMeasurementUnits(supabase);
     const templateData = [
@@ -99,7 +101,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     XLSX.writeFile(workbook, "mahsulotlar_shablon.xlsx");
   };
 
-  const handleExportProducts = () => {
+  const handleExportProducts = async () => {
     const rows = products.map((p: any) => ({
       ...p,
       categoryName: p.categories?.name || '',
@@ -107,7 +109,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
         ? (lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active')
         : (lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive'),
     }));
-    exportRowsToExcel(rows, [
+    await exportRowsToExcel(rows, [
       { header: 'Nomi', key: 'name' },
       { header: 'SKU', key: 'sku' },
       { header: 'Kategoriya', key: 'categoryName' },
@@ -180,6 +182,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
   };
 
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const XLSX = await import('xlsx')
     const file = e.target.files?.[0];
     if (!file) return;
 

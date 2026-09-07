@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { SupportClient } from '@/components/support/support-client'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -22,10 +23,15 @@ export default async function SupportPage({
     redirect(`/${lang}/login`)
   }
 
-  const profile = await getCachedProfile(user.id)
+  const [profile, tenantId] = await Promise.all([
+    getCachedProfile(user.id),
+    getCurrentTenantId(),
+  ])
   if (!profile) {
     redirect(`/${lang}/login`)
   }
 
-  return <SupportClient lang={lang} />
+  // The tenant's realtime inbox topic, so a support reply appears immediately
+  // rather than on the next poll.
+  return <SupportClient lang={lang} tenantId={tenantId} />
 }

@@ -1,5 +1,6 @@
 import 'server-only'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { broadcast, inboxTopic, threadTopic } from '@/lib/realtime'
 
 /**
  * Shared helpers for the support conversation model
@@ -75,6 +76,20 @@ export async function postMessage(input: {
     .update({ last_message_at: now, status: fromTenant ? 'open' : 'answered' })
     .eq('id', input.threadId)
   if (threadError) return { ok: false, error: threadError.message }
+
+  // Push the "something changed" signal to both sides so the reply lands
+  // immediately instead of waiting for the next poll. Fire-and-forget: the
+  // message is already committed, and the clients poll as a fallback.
+  const { data: thread } = await supabase
+    .from('support_threads')
+    .select('tenant_id, agent_id')
+    .eq('id', input.threadId)
+    .maybeSingle()
+
+  const topics = [threadTopic(input.threadId)]
+  if (thread?.tenant_id) topics.push(inboxTopic('tenant', thread.tenant_id))
+  if (thread?.agent_id) topics.push(inboxTopic('agent', thread.agent_id))
+  void broadcast(topics, 'support_message')
 
   return { ok: true }
 }

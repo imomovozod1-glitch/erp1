@@ -13,7 +13,8 @@ import { useTranslations } from 'next-intl'
 import {
   TrendingUp, Download, Package, RefreshCw, ShoppingCart, Truck, Layers
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+// `xlsx` is ~7MB and only needed when the user actually exports or imports.
+// Loading it on demand keeps it out of this page's initial bundle.
 
 interface ProductDetailClientProps {
   lang: string
@@ -51,7 +52,8 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
   const totalValuation = product.stock * product.cost_price
 
   // Export to Excel function
-  const handleExport = () => {
+  const handleExport = async () => {
+    const XLSX = await import('xlsx')
     const workbook = XLSX.utils.book_new()
 
     // 1. Product Info Sheet

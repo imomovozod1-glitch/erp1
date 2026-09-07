@@ -28,7 +28,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Download, ShoppingCart, Phone, Mail, MapPin, Landmark, FileText, History, Tags
 } from 'lucide-react'
-import * as XLSX from 'xlsx'
+// `xlsx` is ~7MB and only needed when the user actually exports or imports.
+// Loading it on demand keeps it out of this page's initial bundle.
 
 const ORDER_STATUS_TONES: Record<string, StatusTone> = {
   draft: 'blue',
@@ -83,7 +84,8 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
   const balance = creditBalance - outstandingDebt
 
   // Export to Excel function
-  const handleExport = () => {
+  const handleExport = async () => {
+    const XLSX = await import('xlsx')
     const workbook = XLSX.utils.book_new()
 
     // 1. Customer Details Sheet
