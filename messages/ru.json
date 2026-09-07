@@ -87,7 +87,8 @@
     "invalidAmount": "Неверная сумма",
     "created": "Успешно создано",
     "saved": "Успешно сохранено",
-    "testPrint": "Тест"
+    "testPrint": "Тест",
+    "other": "Прочие"
   },
   "nav": {
     "dashboard": "Панель управления",

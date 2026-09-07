@@ -12,7 +12,12 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        // A real border + soft shadow rather than `ring-1`: AGENTS.md's card
+        // convention is `border-0 shadow-sm hover:shadow-md`, and callers pass
+        // exactly that — but `border-0` cannot cancel a ring, so those cards
+        // were rendering with an outline the convention says they shouldn't
+        // have. With a border it behaves as documented.
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl border border-slate-200/70 bg-card py-(--card-spacing) text-sm text-card-foreground shadow-sm transition-shadow duration-200 dark:border-slate-800 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
         className
       )}
       {...props}
