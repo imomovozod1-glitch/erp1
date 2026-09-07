@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { MoreHorizontal, Pencil, Trash2, Search, ShieldCheck } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { invalidateRoleTemplates } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -59,16 +58,23 @@ export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
 
   const handleDelete = async (id: string) => {
     setIsDeleting(id)
-    const supabase = createClient()
-    const { error } = await supabase.from('role_templates').delete().eq('id', id)
-    if (error) {
-      toast.error(tCommon('error'))
-    } else {
+    try {
+      // Server route: deleting a role also has to clear `role_template_id` on
+      // the profiles that pointed at it, and that column is no longer writable
+      // by `authenticated`.
+      const res = await fetch(`/api/tenant/roles/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.error || tCommon('error'))
+      }
       toast.success(tCommon('success'))
       await invalidateRoleTemplates()
       router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || tCommon('error'))
+    } finally {
+      setIsDeleting(null)
     }
-    setIsDeleting(null)
   }
 
   return (

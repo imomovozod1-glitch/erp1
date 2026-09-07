@@ -87,7 +87,9 @@
     "invalidAmount": "Noto'g'ri summa",
     "created": "Muvaffaqiyatli yaratildi",
     "saved": "Muvaffaqiyatli saqlandi",
-    "testPrint": "Test"
+    "testPrint": "Test",
+    "tooLong": "Juda uzun",
+    "invalidDate": "Sana noto'g'ri"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -408,7 +410,9 @@
       "marketing": "Marketing",
       "supplies": "Ta'minotlar",
       "other_expense": "Boshqa xarajat"
-    }
+    },
+    "totalBalance": "Umumiy balans",
+    "cashboxCount": "{count} ta kassa"
   },
   "hr": {
     "title": "Kadrlar bo'limi",
@@ -448,7 +452,16 @@
     "cashbox": "Kassa",
     "cashboxAuto": "Avtomatik yaratish (xodim nomida)",
     "cashboxHint": "Tanlamasangiz, xodim nomiga alohida kassa avtomatik yaratiladi",
-    "employeeCashboxDescription": "{name} uchun shaxsiy kassa"
+    "employeeCashboxDescription": "{name} uchun shaxsiy kassa",
+    "roleNameTaken": "Bunday nomli rol allaqachon mavjud",
+    "rolePropagated": "Rol saqlandi — {count} ta foydalanuvchi yangilandi",
+    "employeeCodeFormat": "Faqat harf, raqam va . _ - belgilari",
+    "employeeCodeTaken": "Bunday xodim kodi allaqachon mavjud",
+    "hiredAtFuture": "Ishga qabul sanasi kelajakda bo'lishi mumkin emas",
+    "terminatedAtRequired": "Nofaol xodim uchun ishdan bo'shash sanasi kerak",
+    "terminatedBeforeHired": "Bo'shash sanasi qabul sanasidan oldin bo'lishi mumkin emas",
+    "terminatedAtFuture": "Bo'shash sanasi kelajakda bo'lishi mumkin emas",
+    "selectAccountRequired": "Hisobni tanlang"
   },
   "procurement": {
     "title": "Ta'minot",
@@ -665,7 +678,9 @@
       "errorChatIdFormat": "Chat ID formati noto'g'ri",
       "errorNotConfigured": "Avval bot tokenini saqlang",
       "errorSendFailed": "Xabar yuborilmadi"
-    }
+    },
+    "cannotChangeOwnAccess": "O'z rolingiz yoki holatingizni o'zgartira olmaysiz",
+    "lastAdminError": "Oxirgi faol administratorni o'zgartirib bo'lmaydi"
   },
   "tools": {
     "title": "Vositalar",
@@ -1048,6 +1063,18 @@
     "tooManyAttempts": "Juda ko'p urinish, keyinroq qayta urinib ko'ring",
     "assignedTenantsHeading": "Sizga biriktirilgan tashkilotlar",
     "noAssignedTenants": "Sizga hali hech qanday tashkilot biriktirilmagan",
-    "logout": "Chiqish"
+    "logout": "Chiqish",
+    "conversationsHeading": "Suhbatlar"
+  },
+  "supportChat": {
+    "myTickets": "Mening murojaatlarim",
+    "noThreads": "Hozircha suhbat yo‘q",
+    "selectThread": "Suhbatni tanlang",
+    "replyPlaceholder": "Xabar yozing… (Enter — yuborish)",
+    "threadClosed": "Suhbat yopilgan",
+    "fromAdmin": "Admindan",
+    "status_open": "Ochiq",
+    "status_answered": "Javob berildi",
+    "status_closed": "Yopilgan"
   }
 }

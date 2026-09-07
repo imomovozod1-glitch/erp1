@@ -8,11 +8,15 @@ import { CustomerImportExport } from '@/components/sales/customer-import-export'
 import { getCachedCustomers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { formatCurrency } from '@/lib/utils'
+import { canEditModule } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Customers' }
 
 export default async function CustomersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
+  // Don't offer an action the user isn't allowed to complete — the
+  // /new route guard would just bounce them straight back.
+  const canEdit = await canEditModule('customers')
   const tenantId = await getCurrentTenantId() as string
   const [t, tNav, tInfo, customers] = await Promise.all([
     getTranslations('sales'),
@@ -32,7 +36,7 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
       <PageHeader
         title={t('customers')}
         info={tInfo('customers')}
-        action={{ label: t('addCustomer'), href: `/${lang}/customers/new`, icon: Plus }}
+        action={canEdit ? { label: t('addCustomer'), href: `/${lang}/customers/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: tNav('customers'), href: `/${lang}/customers` },

@@ -6,11 +6,15 @@ import { EmployeesTable } from '@/components/hr/employees-table'
 import { EmployeeImportExport } from '@/components/hr/employee-import-export'
 import { getCachedEmployees } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
+import { canEditModule } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Employees' }
 
 export default async function EmployeesPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
+  // Don't offer an action the user isn't allowed to complete — the
+  // /new route guard would just bounce them straight back.
+  const canEdit = await canEditModule('hr')
   const tenantId = await getCurrentTenantId() as string
   const [t, tInfo, employees] = await Promise.all([
     getTranslations('hr'),
@@ -24,7 +28,7 @@ export default async function EmployeesPage({ params }: { params: Promise<{ lang
         title={t('employees')}
         subtitle={t('title')}
         info={tInfo('employees')}
-        action={{ label: t('addEmployee'), href: `/${lang}/hr/employees/new`, icon: Plus }}
+        action={canEdit ? { label: t('addEmployee'), href: `/${lang}/hr/employees/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') },

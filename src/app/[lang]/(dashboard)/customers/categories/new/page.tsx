@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { Metadata } from 'next'
 import { PageHeader } from '@/components/shared/page-header'
 import { CustomerCategoryForm } from '@/components/sales/customer-category-form'
+import { requireModuleEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({
   params,
@@ -19,6 +20,8 @@ export default async function NewCustomerCategoryPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // Creating/editing needs the module's Edit permission, not just View.
+  await requireModuleEdit('customers', lang, '/customers/categories')
   const [t, tCommon, tNav] = await Promise.all([
     getTranslations('sales'),
     getTranslations('common'),

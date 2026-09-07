@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Building2, Users, UserCircle, ShieldCheck, Printer, Plug, ChevronRight } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
+import { canViewModule } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Settings' }
 
@@ -30,6 +31,15 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
     getTranslations('pageInfo'),
   ])
 
+  // Cards for the permissioned part of Settings are hidden from users without
+  // the `settings` module; profile and security always stay listed, since they
+  // are the user's own account and every user needs them.
+  const canSeeSettingsModule = await canViewModule('settings')
+  const ALWAYS_VISIBLE = new Set<string>(['profile', 'security'])
+  const visibleCards = CARDS.filter(
+    (card) => canSeeSettingsModule || ALWAYS_VISIBLE.has(card.key)
+  )
+
   const cardDescriptions: Record<string, string> = {
     company: t('companyCardDesc'),
     users: t('usersCardDesc'),
@@ -47,7 +57,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
         breadcrumbs={[{ label: 'ERP', href: `/${lang}/dashboard` }, { label: t('title') }]}
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {CARDS.map((item) => {
+        {visibleCards.map((item) => {
           const Icon = item.icon
           return (
             <a

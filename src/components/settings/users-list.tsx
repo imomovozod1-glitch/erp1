@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { invalidateProfile } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { Search, UserCheck, Shield, ShieldCheck, Users, KeyRound, Loader2 } from 'lucide-react'
@@ -60,19 +59,37 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
       setCurrentPage(1)
     }, 0)
   }, [search])
-  const supabase = createClient() as any
 
   const isAdmin = currentUserProfile?.role === 'admin'
+
+  /**
+   * Role, active-status and permission changes go through a server route, not
+   * the browser Supabase client: `authenticated` no longer holds UPDATE on
+   * those columns (migration_profile_privilege_lockdown.sql), because the
+   * row-level policy that lets a user edit their own profile also let them set
+   * `role: 'admin'` on it. The route re-checks admin + same-tenant server-side.
+   */
+  const patchAccess = async (userId: string, patch: Record<string, unknown>) => {
+    const res = await fetch(`/api/tenant/users/${userId}/access`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      const messages: Record<string, string> = {
+        cannot_change_own_access: t('cannotChangeOwnAccess'),
+        last_admin: t('lastAdminError'),
+        not_found: tCommon('error'),
+      }
+      throw new Error(messages[json.error] || json.error || tCommon('error'))
+    }
+  }
 
   const handleRoleChange = async (userId: string, newRole: 'admin' | 'manager' | 'staff') => {
     setUpdatingUserId(userId)
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId)
-
-      if (error) throw error
+      await patchAccess(userId, { role: newRole })
 
       setProfiles((prev) =>
         prev.map((p) => (p.id === userId ? { ...p, role: newRole } : p))
@@ -91,12 +108,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
     setUpdatingUserId(userId)
     const newStatus = !currentStatus
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_active: newStatus })
-        .eq('id', userId)
-
-      if (error) throw error
+      await patchAccess(userId, { is_active: newStatus })
 
       setProfiles((prev) =>
         prev.map((p) => (p.id === userId ? { ...p, is_active: newStatus } : p))
@@ -144,11 +156,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
     if (!permsTarget) return
     setIsSavingPerms(true)
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ permissions: permsValue })
-        .eq('id', permsTarget.id)
-      if (error) throw error
+      await patchAccess(permsTarget.id, { permissions: permsValue })
 
       setProfiles((prev) =>
         prev.map((p) => (p.id === permsTarget.id ? { ...p, permissions: permsValue } as any : p))

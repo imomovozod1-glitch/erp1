@@ -5,11 +5,15 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { SuppliersTable } from '@/components/procurement/suppliers-table'
 import { SupplierImportExport } from '@/components/procurement/supplier-import-export'
+import { canEditModule } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Suppliers' }
 
 export default async function SuppliersPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
+  // Don't offer an action the user isn't allowed to complete — the
+  // /new route guard would just bounce them straight back.
+  const canEdit = await canEditModule('procurement')
   const t = await getTranslations('procurement')
   const tInfo = await getTranslations('pageInfo')
   const supabase = await createClient()
@@ -41,7 +45,7 @@ export default async function SuppliersPage({ params }: { params: Promise<{ lang
         title={t('suppliers')}
         subtitle={t('title')}
         info={tInfo('suppliers')}
-        action={{ label: t('addSupplier'), href: `/${lang}/procurement/suppliers/new`, icon: Plus }}
+        action={canEdit ? { label: t('addSupplier'), href: `/${lang}/procurement/suppliers/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') },

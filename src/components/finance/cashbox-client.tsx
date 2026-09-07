@@ -981,6 +981,13 @@ export function CashboxClient({ lang }: { lang: string }) {
     (cb.description ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
+  // Sum of the rows actually on screen, so the figure always agrees with the
+  // list above it when a search filter is narrowing the set.
+  const totalCashboxBalance = filteredCashboxes.reduce(
+    (sum, cb) => sum + (Number(cb.balance) || 0),
+    0
+  )
+
   const filteredTransactions = periodTransactions.filter((tx) => {
     const cbName = cashboxes.find(c => c.id === tx.reference_id)?.name || ''
     return (
@@ -1173,6 +1180,30 @@ export function CashboxClient({ lang }: { lang: string }) {
                   })
                 )}
               </tbody>
+              {filteredCashboxes.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50">
+                    <td className="p-4 pl-6 font-bold text-slate-800 dark:text-slate-200" colSpan={2}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-lg bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
+                          <Wallet className="h-4 w-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span>{t('totalBalance')}</span>
+                          <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                            {t('cashboxCount', { count: filteredCashboxes.length })}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right text-lg font-extrabold text-violet-600 dark:text-violet-400 tabular-nums">
+                      {formatCurrency(totalCashboxBalance)}
+                    </td>
+                    <td className="p-4" />
+                    <td className="p-4 pr-6" />
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </CardContent>

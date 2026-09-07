@@ -73,6 +73,12 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   const [cashboxes, setCashboxes] = useState<CashboxOption[]>([])
   const [selectedCashboxId, setSelectedCashboxId] = useState<string | null>(initialData?.cashbox_id ?? null)
 
+  // The account fields live in component state rather than react-hook-form, so
+  // they need their own error slots. They used to surface only as toasts,
+  // which meant a bad phone number produced a message with no indication of
+  // which box was wrong — and the message vanished on its own.
+  const [accessErrors, setAccessErrors] = useState<{ profile?: string; phone?: string; password?: string }>({})
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -138,16 +144,60 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     setPermsValue(chosen?.permissions && typeof chosen.permissions === 'object' ? (chosen.permissions as Permissions) : EMPTY_PERMISSIONS)
   }
 
-  const innerFormSchema = z.object({
-    full_name: z.string().min(1, tCommon('required')),
-    employee_code: z.string().min(1, tCommon('required')),
-    position: z.string().optional().or(z.literal('')),
-    salary: z.coerce.number().min(0, tCommon('invalidAmount')),
-    hired_at: z.string().min(1, tCommon('required')),
-    is_active: z.boolean().default(true),
-    terminated_at: z.string().optional().nullable(),
-    notes: z.string().optional(),
-  })
+  // Every field is trimmed and bounded, and the two date rules are enforced as
+  // cross-field checks. Previously `min(1)` accepted a string of spaces as a
+  // name, `salary` silently coerced an empty box to 0, an employee could be
+  // hired in the year 3000, and marking someone inactive without a termination
+  // date quietly stored NULL — so the record said "not employed" with no
+  // indication of when that happened.
+  const todayISO = new Date().toISOString().split('T')[0]
+
+  const innerFormSchema = z
+    .object({
+      full_name: z
+        .string()
+        .trim()
+        .min(2, tCommon('required'))
+        .max(120, tCommon('tooLong')),
+      employee_code: z
+        .string()
+        .trim()
+        .min(1, tCommon('required'))
+        .max(32, tCommon('tooLong'))
+        .regex(/^[A-Za-z0-9._-]+$/, t('employeeCodeFormat')),
+      position: z.string().trim().max(100, tCommon('tooLong')).optional().or(z.literal('')),
+      salary: z
+        .coerce.number({ message: tCommon('invalidAmount') })
+        .min(0, tCommon('invalidAmount'))
+        .max(1_000_000_000_000, tCommon('invalidAmount')),
+      hired_at: z
+        .string()
+        .min(1, tCommon('required'))
+        .refine((v) => !Number.isNaN(Date.parse(v)), tCommon('invalidDate'))
+        .refine((v) => v <= todayISO, t('hiredAtFuture')),
+      is_active: z.boolean().default(true),
+      terminated_at: z.string().optional().nullable(),
+      notes: z.string().trim().max(1000, tCommon('tooLong')).optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.is_active) return
+      // An inactive employee must say when they left, and it can be neither
+      // before they were hired nor in the future.
+      if (!data.terminated_at) {
+        ctx.addIssue({ code: 'custom', path: ['terminated_at'], message: t('terminatedAtRequired') })
+        return
+      }
+      if (Number.isNaN(Date.parse(data.terminated_at))) {
+        ctx.addIssue({ code: 'custom', path: ['terminated_at'], message: tCommon('invalidDate') })
+        return
+      }
+      if (data.hired_at && data.terminated_at < data.hired_at) {
+        ctx.addIssue({ code: 'custom', path: ['terminated_at'], message: t('terminatedBeforeHired') })
+      }
+      if (data.terminated_at > todayISO) {
+        ctx.addIssue({ code: 'custom', path: ['terminated_at'], message: t('terminatedAtFuture') })
+      }
+    })
 
   type FormData = z.infer<typeof innerFormSchema>
 
@@ -165,19 +215,25 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
     }
   })
 
+  const validateAccessFields = () => {
+    const next: { profile?: string; phone?: string; password?: string } = {}
+    if (accessMode === 'link' && !selectedProfileId) {
+      next.profile = t('selectAccountRequired')
+    }
+    if (accessMode === 'create') {
+      if (!isValidPhone(newPhone)) next.phone = tAuth('invalidPhone')
+      if (!isStrongPassword(newPassword)) next.password = tAuth('passwordRequirements')
+    }
+    setAccessErrors(next)
+    return Object.keys(next).length === 0
+  }
+
   const onSubmit = async (data: FormData) => {
     if (accessMode !== 'none' && !isPaid) {
       toast.error(t('systemAccessRequiresPaid'))
       return
     }
-    if (accessMode === 'create' && !isValidPhone(newPhone)) {
-      toast.error(tAuth('invalidPhone'))
-      return
-    }
-    if (accessMode === 'create' && !isStrongPassword(newPassword)) {
-      toast.error(tAuth('passwordRequirements'))
-      return
-    }
+    if (!validateAccessFields()) return
     setIsSubmitting(true)
     try {
       let profileId: string | null = accessMode === 'link' ? selectedProfileId : null
@@ -236,18 +292,23 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
         is_paid: isPaid,
         cashbox_id: cashboxId,
       }
+      // UNIQUE (tenant_id, employee_code) — surface it as the field problem it
+      // is rather than a raw Postgres constraint string.
+      const asFriendlyError = (error: { code?: string; message?: string }) =>
+        new Error(error.code === '23505' ? t('employeeCodeTaken') : error.message || tCommon('error'))
+
       if (initialData?.id) {
         const { error } = await supabase
           .from('employees')
           .update(payload as any)
           .eq('id', initialData.id)
-        if (error) throw error
+        if (error) throw asFriendlyError(error)
         toast.success(tCommon('saved'))
       } else {
         const { error } = await supabase
           .from('employees')
           .insert(payload as any)
-        if (error) throw error
+        if (error) throw asFriendlyError(error)
         toast.success(tCommon('created'))
       }
 
@@ -256,11 +317,18 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       // freshly-created account already got its permissions set by the
       // API route above, so this only applies to an existing linked one.)
       if (accessMode === 'link' && profileId) {
-        const { error: permError } = await supabase
-          .from('profiles')
-          .update({ permissions: permsValue, role_template_id: selectedRoleTemplateId })
-          .eq('id', profileId)
-        if (permError) throw permError
+        // Through the server route, not the browser client: `permissions` and
+        // `role_template_id` are privilege-bearing and `authenticated` no
+        // longer holds UPDATE on them (migration_profile_privilege_lockdown.sql).
+        const res = await fetch(`/api/tenant/users/${profileId}/access`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ permissions: permsValue, role_template_id: selectedRoleTemplateId }),
+        })
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({}))
+          throw new Error(json.error || tCommon('error'))
+        }
         await invalidateProfile(profileId)
       }
 
@@ -440,6 +508,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
+                {accessErrors.profile && <p className="text-sm text-red-500">{accessErrors.profile}</p>}
                 {selectedProfileId && (
                   <div className="space-y-3">
                     <div className="space-y-1.5">
@@ -477,6 +546,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
                   <div className="space-y-1.5">
                     <Label htmlFor="new-account-phone">{tAuth('phone')}</Label>
                     <PhoneInput id="new-account-phone" value={newPhone} onChange={setNewPhone} placeholder="90 123 45 67" />
+                    {accessErrors.phone && <p className="text-sm text-red-500">{accessErrors.phone}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="new-account-password">{tAuth('password')}</Label>
@@ -488,7 +558,11 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
                       showLabel={tAuth('showPassword')}
                       hideLabel={tAuth('hidePassword')}
                     />
-                    <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
+                    {accessErrors.password ? (
+                      <p className="text-sm text-red-500">{accessErrors.password}</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1.5">

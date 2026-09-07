@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmployeeForm } from '@/components/hr/employee-form'
 import { Metadata } from 'next'
+import { requireModuleEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -15,6 +16,8 @@ export default async function NewEmployeePage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // Creating/editing needs the module's Edit permission, not just View.
+  await requireModuleEdit('hr', lang, '/hr/employees')
   const [t, tCommon] = await Promise.all([
     getTranslations('hr'),
     getTranslations('common'),

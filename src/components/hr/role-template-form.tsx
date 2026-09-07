@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/supabase/client'
 import { invalidateRoleTemplates } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
@@ -28,7 +27,6 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
   const tSettings = useTranslations('settings')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const supabase = createClient() as any
 
   const [permsValue, setPermsValue] = useState<Permissions>(
     initialData?.permissions && typeof initialData.permissions === 'object'
@@ -49,21 +47,37 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true)
     try {
+      // Through the server routes rather than the browser client: editing a
+      // role has to re-apply the new permission set to everyone already on it
+      // (see /api/tenant/roles/[id]), and `profiles.permissions` is no longer
+      // writable by `authenticated`.
       const payload = { name: data.name, permissions: permsValue }
-      if (initialData?.id) {
-        const { error } = await supabase
-          .from('role_templates')
-          .update(payload)
-          .eq('id', initialData.id)
-        if (error) throw error
-        toast.success(tCommon('saved'))
-      } else {
-        const { error } = await supabase.from('role_templates').insert(payload)
-        if (error) throw error
-        toast.success(tCommon('created'))
+      const res = initialData?.id
+        ? await fetch(`/api/tenant/roles/${initialData.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        : await fetch('/api/tenant/roles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(json.error === 'duplicate_name' ? t('roleNameTaken') : json.error || tCommon('error'))
       }
+
+      if (initialData?.id && json.updatedProfiles > 0) {
+        toast.success(t('rolePropagated', { count: json.updatedProfiles }))
+      } else {
+        toast.success(initialData?.id ? tCommon('saved') : tCommon('created'))
+      }
+
       await invalidateRoleTemplates()
       router.push(`/${lang}/hr/roles`)
+      router.refresh()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {

@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { ProductsTable } from '@/components/inventory/products-table'
 import { getCachedProducts } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
+import { canEditModule } from '@/lib/permissions-server'
 
 // Cache the full page response for 60 seconds
 export const revalidate = 60
@@ -21,6 +22,9 @@ export default async function ProductsPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // Don't offer an action the user isn't allowed to complete — the
+  // /new route guard would just bounce them straight back.
+  const canEdit = await canEditModule('inventory')
   const tenantId = await getCurrentTenantId() as string
   const [t, products] = await Promise.all([
     getTranslations('inventory'),
@@ -32,11 +36,11 @@ export default async function ProductsPage({
       <PageHeader
         title={t('products')}
         subtitle={t('title')}
-        action={{
+        action={canEdit ? {
           label: t('addProduct'),
           href: `/${lang}/inventory/products/new`,
           icon: Plus,
-        }}
+        } : undefined}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') },

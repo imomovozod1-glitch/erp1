@@ -100,6 +100,19 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         .select('id, invoice_number, total_amount, due_at, customers(name)')
         .in('status', ['sent', 'overdue'])
 
+      // 3. Unanswered-by-me support replies. Unlike the two above, "read" here
+      // is a real column (`read_by_tenant_at`) rather than a localStorage id
+      // list, because this notifies a specific person that their question was
+      // answered — it has to survive a different browser and be cleared by
+      // actually opening the thread, not by dismissing a toast.
+      const { data: supportReplies } = await supabase
+        .from('support_messages')
+        .select('id, body, sender_name, sender_role, created_at, support_threads(id, subject)')
+        .in('sender_role', ['agent', 'admin'])
+        .is('read_by_tenant_at', null)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
       // Load read IDs from localStorage
       let readIds: string[] = []
       try {
@@ -143,7 +156,19 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           created_at: new Date(i.due_at),
         }))
 
-      const allNotifications = [...lowStockAlerts, ...overdueAlerts].sort(
+      const supportAlerts = (supportReplies || []).map((m: any) => ({
+        id: `support-reply-${m.id}`,
+        type: 'support_reply',
+        title: lang === 'uz' ? 'Qo\'llab-quvvatlash javobi' : lang === 'ru' ? 'Ответ поддержки' : 'Support reply',
+        description: `${m.sender_name}: ${String(m.body).slice(0, 90)}`,
+        href: `/${lang}/support`,
+        // Always unread: the row itself is the unread marker, and it stops
+        // being returned once the thread is opened.
+        read: false,
+        created_at: new Date(m.created_at),
+      }))
+
+      const allNotifications = [...supportAlerts, ...lowStockAlerts, ...overdueAlerts].sort(
         (a, b) => b.created_at.getTime() - a.created_at.getTime()
       )
 
