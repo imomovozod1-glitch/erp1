@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import Script from 'next/script'
 import { Toaster } from '@/components/ui/sonner'
 import '../globals.css'
 
@@ -24,9 +23,22 @@ export default function TelegramLayout({ children }: { children: React.ReactNode
   return (
     <html lang="uz" suppressHydrationWarning>
       <head>
-        {/* Telegram injects window.Telegram.WebApp; beforeInteractive so it is
-            present before the entry screen reads the theme or initData. */}
-        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
+        {/*
+          A PLAIN, blocking script tag — deliberately not next/script.
+
+          `<Script strategy="beforeInteractive">` does not emit a real script
+          tag: Next queues the URL into `self.__next_s` and its own runtime
+          loads it during hydration. That left `window.Telegram` undefined when
+          the entry screen's effect ran, so the Mini App reported "open me
+          inside Telegram" even when it WAS inside Telegram. (The strategy is
+          also documented as root-layout-only, and this is a segment root.)
+
+          A blocking tag in <head> is what Telegram's own docs specify, and it
+          runs before any of the page's JavaScript. TelegramEntry additionally
+          waits for the object, so a slow or blocked CDN degrades into a short
+          wait rather than a wrong answer.
+        */}
+        <script src="https://telegram.org/js/telegram-web-app.js" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
         {children}
