@@ -1,48 +1,44 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
-import { Search, ArrowDownRight, ArrowUpRight, Settings2, Activity } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Settings2, Activity } from 'lucide-react'
 import { formatNumber, formatDateTime } from '@/lib/utils'
 import { translateMovementReason } from '@/lib/movement-reason'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 
 interface MovementsTableProps {
-   
+  /** Only the current page's rows — the server applied search and paging. */
   movements: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }
 
-export function MovementsTable({ movements, lang }: MovementsTableProps) {
+export function MovementsTable({
+  movements,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+}: MovementsTableProps) {
   const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
   const router = useRouter()
-  const [search, setSearch] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
 
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
 
-  const filtered = movements.filter(
-    (m) =>
-      m.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      m.reason?.toLowerCase().includes(search.toLowerCase())
-  )
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // No client-side filtering or slicing: `movements` IS the current page.
+  const paginated = movements
 
   const getMovementIcon = (type: string) => {
     switch (type) {
@@ -64,17 +60,9 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
     <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
         <div className="flex flex-wrap items-center gap-3 p-4 border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={`${tCommon('search')}...`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
-            />
-          </div>
+            <TableSearch />
           <span className="text-xs text-muted-foreground">
-            {filtered.length} {tCommon('rows')}
+            {total} {tCommon('rows')}
           </span>
         </div>
 
@@ -85,14 +73,14 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
               <TableHead className="w-[180px]">{tCommon('date')}</TableHead>
               <TableHead>{t('productName')}</TableHead>
               <TableHead>{tCommon('type')}</TableHead>
-              <TableHead className="text-right">{t('quantity')}</TableHead>
-              <TableHead className="hidden lg:table-cell text-right">{t('before')}</TableHead>
-              <TableHead className="hidden md:table-cell text-right">{t('after')}</TableHead>
+              <TableHead className="text-right tabular-nums">{t('quantity')}</TableHead>
+              <TableHead className="hidden lg:table-cell text-right tabular-nums">{t('before')}</TableHead>
+              <TableHead className="hidden md:table-cell text-right tabular-nums">{t('after')}</TableHead>
               <TableHead className="hidden lg:table-cell">{tCommon('notes')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {paginated.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -109,7 +97,7 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
                   onClick={() => movement.product_id && router.push(`/${lang}/inventory/products/${movement.product_id}`)}
                 >
                   <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
+                    {(page - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell className="text-sm text-slate-600 dark:text-slate-300">
                     {formatDateTime(movement.created_at)}
@@ -123,15 +111,15 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
                       {getMovementBadge(movement.type)}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-right font-medium tabular-nums">
                     <span className={movement.type === 'in' ? 'text-emerald-600 dark:text-emerald-400' : movement.type === 'out' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}>
                       {movement.type === 'in' ? '+' : movement.type === 'out' ? '-' : ''}{formatNumber(movement.quantity)}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell text-right text-muted-foreground text-sm">
+                  <TableCell className="hidden lg:table-cell text-right text-muted-foreground text-sm tabular-nums">
                     {formatNumber(movement.quantity_before)}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-right font-medium">
+                  <TableCell className="hidden md:table-cell text-right font-medium tabular-nums">
                     {formatNumber(movement.quantity_after)}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
@@ -144,31 +132,7 @@ export function MovementsTable({ movements, lang }: MovementsTableProps) {
             )}
           </TableBody>
         </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs text-muted-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
   )

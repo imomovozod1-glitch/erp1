@@ -36,9 +36,7 @@ export default async function NewTransactionCategoryPage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <TransactionCategoryForm lang={lang} />
-      </div>
+      <TransactionCategoryForm lang={lang} />
     </div>
   )
 }

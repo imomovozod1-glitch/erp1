@@ -89,7 +89,8 @@
     "saved": "Muvaffaqiyatli saqlandi",
     "testPrint": "Test",
     "tooLong": "Juda uzun",
-    "invalidDate": "Sana noto'g'ri"
+    "invalidDate": "Sana noto'g'ri",
+    "showingRange": "{first}-{last} / {total}"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",

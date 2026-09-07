@@ -350,7 +350,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="full_name">{tCommon('name')}</Label>
               <Input id="full_name" {...register('full_name')} placeholder={tCommon('name')} />

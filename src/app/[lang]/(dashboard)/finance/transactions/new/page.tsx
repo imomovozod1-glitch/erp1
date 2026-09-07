@@ -39,9 +39,7 @@ export default async function NewTransactionPage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <TransactionForm lang={lang} defaultType={defaultType} />
-      </div>
+      <TransactionForm lang={lang} defaultType={defaultType} />
     </div>
   )
 }

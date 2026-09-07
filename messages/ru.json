@@ -89,7 +89,8 @@
     "saved": "Успешно сохранено",
     "testPrint": "Тест",
     "tooLong": "Слишком длинно",
-    "invalidDate": "Некорректная дата"
+    "invalidDate": "Некорректная дата",
+    "showingRange": "{first}-{last} из {total}"
   },
   "nav": {
     "dashboard": "Панель управления",

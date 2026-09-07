@@ -39,9 +39,7 @@ export default async function NewInvoicePage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <InvoiceForm customers={customers} orders={orders} lang={lang} />
-      </div>
+      <InvoiceForm customers={customers} orders={orders} lang={lang} />
     </div>
   )
 }

@@ -71,7 +71,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
             <TableHead>{t('colTenant')}</TableHead>
             <TableHead>{t('colAmount')}</TableHead>
             <TableHead>{t('colNote')}</TableHead>
-            <TableHead className="text-right">{t('colDate')}</TableHead>
+            <TableHead className="text-right tabular-nums">{t('colDate')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -109,7 +109,7 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
                   {formatCurrency(p.amount)}
                 </TableCell>
                 <TableCell className="text-slate-500 dark:text-slate-400">{p.note || '—'}</TableCell>
-                <TableCell className="text-right text-slate-500 dark:text-slate-400">{formatDateTime(p.created_at)}</TableCell>
+                <TableCell className="text-right text-slate-500 dark:text-slate-400 tabular-nums">{formatDateTime(p.created_at)}</TableCell>
               </TableRow>
             ))
           )}

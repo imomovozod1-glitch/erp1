@@ -38,9 +38,7 @@ export default async function NewProductPage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <ProductForm categories={categories} lang={lang} />
-      </div>
+      <ProductForm categories={categories} lang={lang} />
     </div>
   )
 }

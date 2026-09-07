@@ -44,9 +44,7 @@ export default async function EditTransactionPage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <TransactionForm initialData={transaction} lang={lang} />
-      </div>
+      <TransactionForm initialData={transaction} lang={lang} />
     </div>
   )
 }

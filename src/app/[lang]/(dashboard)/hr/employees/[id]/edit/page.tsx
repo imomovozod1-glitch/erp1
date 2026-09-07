@@ -56,9 +56,7 @@ export default async function EditEmployeePage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <EmployeeForm lang={lang} initialData={employee} />
-      </div>
+      <EmployeeForm lang={lang} initialData={employee} />
     </div>
   )
 }

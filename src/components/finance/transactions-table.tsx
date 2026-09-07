@@ -1,10 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { Search, DollarSign, MoreHorizontal } from 'lucide-react'
+import { DollarSign, MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -12,50 +10,47 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { useRouter } from 'next/navigation'
 
 interface TransactionsTableProps {
+  /** Only the current page's rows — the server applied search and paging. */
   transactions: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  /** Totals across the whole filtered set, not just this page. */
+  totalIncome: number
+  totalExpense: number
 }
 
-export function TransactionsTable({ transactions, lang }: TransactionsTableProps) {
+export function TransactionsTable({
+  transactions,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+  totalIncome,
+  totalExpense,
+}: TransactionsTableProps) {
   const t = useTranslations('finance')
   const tCommon = useTranslations('common')
   const router = useRouter()
-  const [search, setSearch] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
 
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
 
-  const filtered = transactions.filter(
-    (tx) =>
-      (tx.description ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      tx.category.toLowerCase().includes(search.toLowerCase())
-  )
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // No client-side filtering or slicing: `transactions` IS the current page.
+  const paginated = transactions
 
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
         <div className="flex flex-wrap items-center gap-3 p-4 border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={`${tCommon('search')}...`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
-            />
-          </div>
-          <span className="text-xs text-muted-foreground">{filtered.length} {tCommon('rows')}</span>
+            <TableSearch />
+          <span className="text-xs text-muted-foreground">{total} {tCommon('rows')}</span>
         </div>
         <Table>
           <TableHeader>
@@ -64,13 +59,13 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
               <TableHead>{tCommon('date')}</TableHead>
               <TableHead className="hidden md:table-cell">{t('category')}</TableHead>
               <TableHead className="hidden lg:table-cell">{tCommon('description')}</TableHead>
-              <TableHead className="text-right text-emerald-600 dark:text-emerald-400">{t('incomeType')}</TableHead>
-              <TableHead className="text-right text-rose-600 dark:text-rose-400">{t('expenseType')}</TableHead>
+              <TableHead className="text-right text-emerald-600 dark:text-emerald-400 tabular-nums">{t('incomeType')}</TableHead>
+              <TableHead className="text-right text-rose-600 dark:text-rose-400 tabular-nums">{t('expenseType')}</TableHead>
               <TableHead className="w-17.5"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {paginated.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -87,7 +82,7 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                   onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
                 >
                   <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
+                    {(page - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{formatDateTime(tx.created_at)}</TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -98,10 +93,10 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
                   <TableCell className="hidden lg:table-cell text-muted-foreground max-w-50 truncate">
                     {tx.description ?? '—'}
                   </TableCell>
-                  <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400">
+                  <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
                     {tx.type === 'income' ? formatCurrency(tx.amount) : '—'}
                   </TableCell>
-                  <TableCell className="text-right font-bold text-rose-700 dark:text-rose-400">
+                  <TableCell className="text-right font-bold text-rose-700 dark:text-rose-400 tabular-nums">
                     {tx.type === 'expense' ? formatCurrency(tx.amount) : '—'}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -120,48 +115,24 @@ export function TransactionsTable({ transactions, lang }: TransactionsTableProps
               ))
             )}
           </TableBody>
-          {filtered.length > 0 && (
+          {total > 0 && (
             <TableFooter>
               <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={3} className="font-bold">
                   {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}
                 </TableCell>
-                <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400">
-                  {formatCurrency(filtered.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + Number(tx.amount), 0))}
+                <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
+                  {formatCurrency(totalIncome)}
                 </TableCell>
-                <TableCell className="text-right font-bold text-rose-700 dark:text-rose-400">
-                  {formatCurrency(filtered.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + Number(tx.amount), 0))}
+                <TableCell className="text-right font-bold text-rose-700 dark:text-rose-400 tabular-nums">
+                  {formatCurrency(totalExpense)}
                 </TableCell>
                 <TableCell />
               </TableRow>
             </TableFooter>
           )}
         </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs text-muted-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
   )

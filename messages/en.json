@@ -89,7 +89,8 @@
     "saved": "Saved successfully",
     "testPrint": "Test",
     "tooLong": "Too long",
-    "invalidDate": "Invalid date"
+    "invalidDate": "Invalid date",
+    "showingRange": "{first}-{last} of {total}"
   },
   "nav": {
     "dashboard": "Dashboard",

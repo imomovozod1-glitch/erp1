@@ -5,28 +5,38 @@ import { PageHeader } from '@/components/shared/page-header'
 import { StatsCard } from '@/components/shared/stats-card'
 import { CustomersViewTabs } from '@/components/sales/customers-view-tabs'
 import { CustomerImportExport } from '@/components/sales/customer-import-export'
-import { getCachedCustomers } from '@/lib/data/queries'
+import { getCustomersPage , getCustomersMapPoints, getCustomerBalanceTotals} from '@/lib/data/queries'
+import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { formatCurrency } from '@/lib/utils'
 import { canEditModule } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Customers' }
 
-export default async function CustomersPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
+export default async function CustomersPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lang: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [{ lang }, sp] = await Promise.all([params, searchParams])
+  const { page, pageSize, search } = readPageParams(sp)
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('customers')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tNav, tInfo, customers] = await Promise.all([
+  const [t, tNav, tInfo, result, mapPoints, totals] = await Promise.all([
     getTranslations('sales'),
     getTranslations('nav'),
     getTranslations('pageInfo'),
-    getCachedCustomers(tenantId),
+    getCustomersPage(tenantId, { page, pageSize, search }),
+    // The map plots every customer with coordinates; only the LIST is paged.
+    getCustomersMapPoints(tenantId),
+    getCustomerBalanceTotals(tenantId),
   ])
 
-  const totalDebt = customers.reduce((sum, c: any) => sum + (Number(c.total_debt) || 0), 0)
-  const totalCredit = customers.reduce((sum, c: any) => sum + (Number(c.credit_balance) || 0), 0)
+  const { totalDebt, totalCredit } = totals
   // Net balance across all customers: credit (haqdorlik) minus debt (qarz) — positive
   // means customers collectively hold credit with us, negative means they owe us.
   const totalBalance = totalCredit - totalDebt
@@ -43,7 +53,7 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
           { label: t('customers') },
         ]}
       >
-        <CustomerImportExport customers={customers} lang={lang} />
+        <CustomerImportExport customers={result.rows} lang={lang} />
       </PageHeader>
 
       <div className="grid grid-cols-1 mb-6">
@@ -63,7 +73,15 @@ export default async function CustomersPage({ params }: { params: Promise<{ lang
         />
       </div>
 
-      <CustomersViewTabs customers={customers} lang={lang} />
+      <CustomersViewTabs
+        customers={result.rows}
+        mapCustomers={mapPoints}
+        lang={lang}
+        page={result.page}
+        pageSize={result.pageSize}
+        total={result.total}
+        totalPages={result.totalPages}
+      />
     </div>
   )
 }

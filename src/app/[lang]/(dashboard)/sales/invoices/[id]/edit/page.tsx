@@ -45,9 +45,7 @@ export default async function EditInvoicePage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <InvoiceForm initialData={invoice} customers={customers} orders={orders} lang={lang} />
-      </div>
+      <InvoiceForm initialData={invoice} customers={customers} orders={orders} lang={lang} />
     </div>
   )
 }

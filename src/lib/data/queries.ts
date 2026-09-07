@@ -28,6 +28,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { queryPage, ilikeAny, type PageResult } from '@/lib/data/paginate'
 
 // ─── Cache tags ────────────────────────────────────────────────────────────────
 export const CACHE_TAGS = {
@@ -885,4 +886,277 @@ export const getCachedCustomerDetails = unstable_cache(
   },
   ['customer-details-by-id'],
   { tags: [CACHE_TAGS.customers, CACHE_TAGS.orders, CACHE_TAGS.invoices, CACHE_TAGS.transactions, CACHE_TAGS.customerCategories], revalidate: 30 }
+)
+
+
+// ─── Server-side paginated list queries ───────────────────────────────────────
+// These replace the "fetch the whole table, slice ten rows in the browser"
+// pattern the list pages used. See src/lib/data/paginate.ts for why they are
+// not wrapped in unstable_cache.
+
+export function getProductsPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string; status?: 'all' | 'active' | 'inactive' }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'products',
+    tenantId,
+    select: '*, categories(name)',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['name', 'sku'],
+    filters: { is_active: opts.status === 'all' || !opts.status ? undefined : opts.status === 'active' },
+    orderBy: { column: 'created_at', ascending: false },
+  })
+}
+
+export function getOrdersPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'sales_orders',
+    tenantId,
+    select: '*, customers(name)',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['order_number'],
+    orderBy: { column: 'created_at', ascending: false },
+  })
+}
+
+export function getInvoicesPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'invoices',
+    tenantId,
+    select: '*, customers(name), sales_orders(order_number)',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['invoice_number'],
+    orderBy: { column: 'created_at', ascending: false },
+  })
+}
+
+export function getSuppliersPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'suppliers',
+    tenantId,
+    select: '*',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['name', 'email', 'phone'],
+    orderBy: { column: 'created_at', ascending: false },
+  })
+}
+
+export function getPurchaseOrdersPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'purchase_orders',
+    tenantId,
+    select: '*, suppliers(name)',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['po_number'],
+    orderBy: { column: 'created_at', ascending: false },
+  })
+}
+
+/**
+ * Transactions also need income/expense totals for the table's footer row.
+ * Those must cover the WHOLE filtered set, not the current page — summing only
+ * the visible rows would put a confidently wrong "Jami" under every page.
+ */
+export async function getTransactionsPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string }
+): Promise<PageResult<any> & { totalIncome: number; totalExpense: number }> {
+  const [result, totals] = await Promise.all([
+    getTransactionsPageRows(tenantId, opts),
+    getTransactionTotals(tenantId, opts),
+  ])
+  return { ...result, ...totals }
+}
+
+async function getTransactionTotals(
+  tenantId: string,
+  opts: { search?: string; from?: string; to?: string }
+) {
+  const supabase = getCacheClient() as any
+  let query = supabase.from('transactions').select('type, amount').eq('tenant_id', tenantId)
+  if (opts.search?.trim()) query = query.or(ilikeAny(['category', 'description'], opts.search.trim()))
+  if (opts.from) query = query.gte('created_at', opts.from)
+  if (opts.to) query = query.lte('created_at', opts.to)
+  const { data } = await query
+  let totalIncome = 0
+  let totalExpense = 0
+  for (const row of (data ?? []) as { type: string; amount: number }[]) {
+    if (row.type === 'income') totalIncome += Number(row.amount) || 0
+    else totalExpense += Number(row.amount) || 0
+  }
+  return { totalIncome, totalExpense }
+}
+
+async function getTransactionsPageRows(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string }
+): Promise<PageResult<any>> {
+  const supabase = getCacheClient() as any
+  const from = (opts.page - 1) * opts.pageSize
+  let query = supabase
+    .from('transactions')
+    .select('*', { count: 'exact' })
+    .eq('tenant_id', tenantId)
+  if (opts.search?.trim()) query = query.or(ilikeAny(['category', 'description'], opts.search.trim()))
+  if (opts.from) query = query.gte('created_at', opts.from)
+  if (opts.to) query = query.lte('created_at', opts.to)
+  const { data, count } = await query
+    .order('created_at', { ascending: false })
+    .range(from, from + opts.pageSize - 1)
+  const total = count ?? 0
+  return {
+    rows: data ?? [],
+    total,
+    page: opts.page,
+    pageSize: opts.pageSize,
+    totalPages: Math.max(Math.ceil(total / opts.pageSize), 1),
+  }
+}
+
+export function getMovementsPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'stock_movements',
+    tenantId,
+    select: '*, products(name)',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['reason'],
+    orderBy: { column: 'created_at', ascending: false },
+  })
+}
+
+export function getEmployeesPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string; status?: 'all' | 'hired' | 'not_hired' }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'employees',
+    tenantId,
+    select: '*, profiles(full_name, email, avatar_url, departments!fk_profiles_department(name))',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['full_name', 'employee_code', 'position'],
+    filters: { is_active: opts.status === 'all' || !opts.status ? undefined : opts.status === 'hired' },
+    orderBy: { column: 'created_at', ascending: false },
+  })
+}
+
+/**
+ * Customers need the outstanding-debt figure the list column shows. That is
+ * derived from invoices, so it is computed only for the customers on the
+ * CURRENT page — the previous version summed debt across every invoice in the
+ * tenant on every page load.
+ */
+export async function getCustomersPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  const result = await queryPage<any>({
+    table: 'customers',
+    tenantId,
+    select: '*, customer_categories(name)',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['name', 'email', 'phone'],
+    orderBy: { column: 'created_at', ascending: false },
+  })
+
+  if (result.rows.length === 0) return result
+
+  const supabase = getCacheClient() as any
+  const { data: unpaid } = await supabase
+    .from('invoices')
+    .select('customer_id, total_amount, paid_amount')
+    .eq('tenant_id', tenantId)
+    .in('customer_id', result.rows.map((c) => c.id))
+    .not('status', 'in', '("paid","cancelled")')
+
+  const debtByCustomer = new Map<string, number>()
+  for (const inv of unpaid ?? []) {
+    if (!inv.customer_id) continue
+    const outstanding = (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)
+    debtByCustomer.set(inv.customer_id, (debtByCustomer.get(inv.customer_id) || 0) + outstanding)
+  }
+
+  return {
+    ...result,
+    rows: result.rows.map((c) => ({ ...c, total_debt: debtByCustomer.get(c.id) || 0 })),
+  }
+}
+
+/**
+ * Map markers only: the customers map needs every customer that has
+ * coordinates, but only the four fields it plots — not the full rows the list
+ * shows. Keeping this separate is what lets the list be paginated while the
+ * map still shows everyone.
+ */
+export const getCustomersMapPoints = unstable_cache(
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const { data } = await supabase
+      .from('customers')
+      .select('id, name, address, latitude, longitude')
+      .eq('tenant_id', tenantId)
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null)
+    return data ?? []
+  },
+  ['customers-map-points'],
+  { tags: [CACHE_TAGS.customers], revalidate: 120 }
+)
+
+/**
+ * Tenant-wide debt/credit totals for the customers page KPI. Computed by the
+ * database over every customer — the page used to sum the full customer array
+ * it had already downloaded, which stops being possible once the list is
+ * paginated (and stops being correct if you only sum the visible page).
+ */
+export const getCustomerBalanceTotals = unstable_cache(
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const [{ data: credits }, { data: unpaid }] = await Promise.all([
+      supabase.from('customers').select('credit_balance').eq('tenant_id', tenantId),
+      supabase
+        .from('invoices')
+        .select('total_amount, paid_amount')
+        .eq('tenant_id', tenantId)
+        .not('status', 'in', '("paid","cancelled")'),
+    ])
+    const totalCredit = (credits ?? []).reduce(
+      (sum: number, c: any) => sum + (Number(c.credit_balance) || 0), 0)
+    const totalDebt = (unpaid ?? []).reduce(
+      (sum: number, i: any) => sum + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
+    return { totalCredit, totalDebt }
+  },
+  ['customer-balance-totals'],
+  { tags: [CACHE_TAGS.customers, CACHE_TAGS.invoices], revalidate: 60 }
 )

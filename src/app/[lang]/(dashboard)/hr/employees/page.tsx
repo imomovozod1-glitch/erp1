@@ -4,22 +4,34 @@ import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmployeesTable } from '@/components/hr/employees-table'
 import { EmployeeImportExport } from '@/components/hr/employee-import-export'
-import { getCachedEmployees } from '@/lib/data/queries'
+import { getEmployeesPage } from '@/lib/data/queries'
+import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { canEditModule } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Employees' }
 
-export default async function EmployeesPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
+export default async function EmployeesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lang: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [{ lang }, sp] = await Promise.all([params, searchParams])
+  // Paging, search and the employment filter live in the URL and are applied
+  // by Postgres.
+  const { page, pageSize, search } = readPageParams(sp)
+  const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status
+  const status = statusParam === 'hired' || statusParam === 'not_hired' ? statusParam : 'all'
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('hr')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tInfo, employees] = await Promise.all([
+  const [t, tInfo, result] = await Promise.all([
     getTranslations('hr'),
     getTranslations('pageInfo'),
-    getCachedEmployees(tenantId),
+    getEmployeesPage(tenantId, { page, pageSize, search, status }),
   ])
 
   return (
@@ -35,9 +47,17 @@ export default async function EmployeesPage({ params }: { params: Promise<{ lang
           { label: t('employees') },
         ]}
       >
-        <EmployeeImportExport employees={employees} lang={lang} />
+        <EmployeeImportExport employees={result.rows} lang={lang} />
       </PageHeader>
-      <EmployeesTable employees={employees} lang={lang} />
+      <EmployeesTable
+        employees={result.rows}
+        lang={lang}
+        page={result.page}
+        pageSize={result.pageSize}
+        total={result.total}
+        totalPages={result.totalPages}
+        status={status}
+      />
     </div>
   )
 }

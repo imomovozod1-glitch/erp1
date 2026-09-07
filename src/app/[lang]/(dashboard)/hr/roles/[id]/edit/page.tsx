@@ -50,9 +50,7 @@ export default async function EditRoleTemplatePage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <RoleTemplateForm lang={lang} initialData={role} />
-      </div>
+      <RoleTemplateForm lang={lang} initialData={role} />
     </div>
   )
 }

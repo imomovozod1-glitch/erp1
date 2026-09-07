@@ -48,9 +48,7 @@ export default async function EditCustomerCategoryPage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <CustomerCategoryForm initialData={category} lang={lang} />
-      </div>
+      <CustomerCategoryForm initialData={category} lang={lang} />
     </div>
   )
 }

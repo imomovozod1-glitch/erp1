@@ -39,9 +39,7 @@ export default async function NewCustomerPage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <CustomerForm categories={categories} lang={lang} />
-      </div>
+      <CustomerForm categories={categories} lang={lang} />
     </div>
   )
 }

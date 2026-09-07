@@ -7,8 +7,6 @@ export default async function CashboxPage({ params }: { params: Promise<{ lang: 
   const { lang } = await params
 
   return (
-    <div className="px-4 md:px-8">
-      <CashboxClient lang={lang} />
-    </div>
+    <CashboxClient lang={lang} />
   )
 }

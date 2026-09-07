@@ -1,12 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Search, Users, MoreHorizontal, Pencil } from 'lucide-react'
+import { Users, MoreHorizontal, Pencil } from 'lucide-react'
 import React from 'react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 
@@ -21,81 +18,53 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { TableSearch, TablePagination, TableFilterChips } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 interface EmployeesTableProps {
+  /** Only the current page's rows — the server applied search, filter and paging. */
   employees: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  status: 'all' | 'hired' | 'not_hired'
 }
 
-export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
+export function EmployeesTable({
+  employees,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+  status,
+}: EmployeesTableProps) {
   const t = useTranslations('hr')
   const tCommon = useTranslations('common')
   const router = useRouter()
   
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'hired' | 'not_hired'>('all')
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
-
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search, statusFilter])
-  const filtered = employees.filter((e) => {
-    const matchesSearch = (e.full_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
-                          e.position.toLowerCase().includes(search.toLowerCase()) ||
-                          e.employee_code.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = statusFilter === 'all' ? true : statusFilter === 'hired' ? e.is_active : !e.is_active
-    return matchesSearch && matchesStatus
-  })
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-
-  const startItem = filtered.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
-  const endItem = Math.min(currentPage * itemsPerPage, filtered.length);
+  // No client-side filtering or slicing: `employees` IS the current page.
+  const paginated = employees
 
   return (
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
         <div className="flex flex-wrap items-center gap-3 p-4 border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={`${tCommon('search')}...`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
-            />
-          </div>
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border shadow-inner">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'all' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-            >
-              {tCommon("all", { fallback: "Barchasi" })}
-            </button>
-            <button
-              onClick={() => setStatusFilter('hired')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'hired' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-            >
-              {lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed'}
-            </button>
-            <button
-              onClick={() => setStatusFilter('not_hired')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'not_hired' ? 'bg-white dark:bg-slate-700 text-rose-700 dark:text-rose-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-            >
-              {lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated'}
-            </button>
-          </div>
-          <span className="text-xs text-muted-foreground font-medium">
-            {lang === 'uz' ? `${filtered.length} tadan ${startItem}-${endItem} ko'rsatilmoqda` : lang === 'ru' ? `Показано ${startItem}-${endItem} из ${filtered.length}` : `Showing ${startItem}-${endItem} of ${filtered.length}`}
-          </span>
+          <TableSearch />
+          <TableFilterChips
+            param="status"
+            value={status}
+            options={[
+              { value: 'all', label: tCommon('all') },
+              { value: 'hired', label: lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed' },
+              { value: 'not_hired', label: lang === 'uz' ? 'Ishlamaydi' : lang === 'ru' ? 'Не работает' : 'Not employed' },
+            ]}
+          />
         </div>
         <Table>
           <TableHeader>
@@ -111,7 +80,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {paginated.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -129,7 +98,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
                     onClick={() => router.push(`/${lang}/hr/employees/${emp.id}`)}
                   >
                     <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
+                      {(page - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2.5">
@@ -194,31 +163,7 @@ export function EmployeesTable({ employees, lang }: EmployeesTableProps) {
             )}
           </TableBody>
         </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs text-muted-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+        <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
     </TooltipProvider>

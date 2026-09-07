@@ -265,7 +265,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                   <TableHead className="font-semibold text-slate-600 dark:text-slate-400">{tCommon('email')}</TableHead>
                   <TableHead className="font-semibold text-slate-600 dark:text-slate-400">{lang === 'uz' ? 'Rol' : lang === 'ru' ? 'Роль' : 'Role'}</TableHead>
                   <TableHead className="w-[120px] font-semibold text-slate-600 dark:text-slate-400">{tCommon('status')}</TableHead>
-                  {isAdmin && <TableHead className="w-[140px] font-semibold text-slate-600 dark:text-slate-400 text-right">{tCommon('actions')}</TableHead>}
+                  {isAdmin && <TableHead className="w-[140px] font-semibold text-slate-600 dark:text-slate-400 text-right tabular-nums">{tCommon('actions')}</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -346,7 +346,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
                           </Badge>
                         </TableCell>
                         {isAdmin && (
-                          <TableCell className="text-right">
+                          <TableCell className="text-right tabular-nums">
                             {isSelf ? (
                               <span className="text-xs text-slate-400 dark:text-slate-500 font-normal italic">{lang === 'uz' ? "O'zini boshqarish o'chirilgan" : lang === 'ru' ? 'Самоуправление отключено' : 'Self-management disabled'}</span>
                             ) : (

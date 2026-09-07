@@ -3,25 +3,44 @@ import { getTranslations } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
+import { getSuppliersPage } from '@/lib/data/queries'
+import { readPageParams } from '@/lib/data/paginate'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { SuppliersTable } from '@/components/procurement/suppliers-table'
 import { SupplierImportExport } from '@/components/procurement/supplier-import-export'
 import { canEditModule } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Suppliers' }
 
-export default async function SuppliersPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
+export default async function SuppliersPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lang: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [{ lang }, sp] = await Promise.all([params, searchParams])
+  const { page, pageSize, search } = readPageParams(sp)
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('procurement')
   const t = await getTranslations('procurement')
   const tInfo = await getTranslations('pageInfo')
+  const tenantId = (await getCurrentTenantId()) as string
   const supabase = await createClient()
 
-  const [{ data: suppliers }, { data: purchaseOrders }, { data: supplierPayments }] = await Promise.all([
-    supabase.from('suppliers').select('*').order('created_at', { ascending: false }),
-    supabase.from('purchase_orders').select('supplier_id, total_amount').neq('status', 'cancelled'),
-    supabase.from('transactions').select('supplier_id, amount').eq('type', 'expense').not('supplier_id', 'is', null),
+  // Suppliers are paginated server-side; the debt aggregates below are only
+  // computed for the page being shown.
+  const suppliersPage = await getSuppliersPage(tenantId, { page, pageSize, search })
+  const supplierIds = suppliersPage.rows.map((row: { id: string }) => row.id)
+
+  const [{ data: purchaseOrders }, { data: supplierPayments }] = await Promise.all([
+    supplierIds.length
+      ? supabase.from('purchase_orders').select('supplier_id, total_amount').in('supplier_id', supplierIds).neq('status', 'cancelled')
+      : Promise.resolve({ data: [] as { supplier_id: string; total_amount: number }[] }),
+    supplierIds.length
+      ? supabase.from('transactions').select('supplier_id, amount').eq('type', 'expense').in('supplier_id', supplierIds)
+      : Promise.resolve({ data: [] as { supplier_id: string; amount: number }[] }),
   ])
 
   const purchasesBySupplier = new Map<string, number>()
@@ -34,7 +53,7 @@ export default async function SuppliersPage({ params }: { params: Promise<{ lang
     if (!tx.supplier_id) continue
     paymentsBySupplier.set(tx.supplier_id, (paymentsBySupplier.get(tx.supplier_id) || 0) + (Number(tx.amount) || 0))
   }
-  const suppliersWithDebt = (suppliers ?? []).map((s) => ({
+  const suppliersWithDebt = suppliersPage.rows.map((s: any) => ({
     ...s,
     total_debt: (purchasesBySupplier.get(s.id) || 0) - (paymentsBySupplier.get(s.id) || 0),
   }))
@@ -52,9 +71,16 @@ export default async function SuppliersPage({ params }: { params: Promise<{ lang
           { label: t('suppliers') },
         ]}
       >
-        <SupplierImportExport suppliers={suppliers ?? []} lang={lang} />
+        <SupplierImportExport suppliers={suppliersPage.rows} lang={lang} />
       </PageHeader>
-      <SuppliersTable suppliers={suppliersWithDebt} lang={lang} />
+      <SuppliersTable
+        suppliers={suppliersWithDebt}
+        lang={lang}
+        page={suppliersPage.page}
+        pageSize={suppliersPage.pageSize}
+        total={suppliersPage.total}
+        totalPages={suppliersPage.totalPages}
+      />
     </div>
   )
 }

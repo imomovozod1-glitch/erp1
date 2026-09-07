@@ -44,13 +44,11 @@ export default async function EditProductPage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <ProductForm 
-          initialData={productRes.data} 
-          categories={categoriesRes.data || []} 
-          lang={lang} 
-        />
-      </div>
+      <ProductForm 
+        initialData={productRes.data} 
+        categories={categoriesRes.data || []} 
+        lang={lang} 
+      />
     </div>
   )
 }

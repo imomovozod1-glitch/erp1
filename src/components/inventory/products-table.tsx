@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-  Search,
+  
   Package,
   Sparkles,
   Upload,
@@ -19,7 +19,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { invalidateProducts } from "@/lib/data/revalidate";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AIStockScannerModal } from "@/components/inventory/ai-stock-scanner-modal";
@@ -44,28 +43,33 @@ import { getMeasurementUnits, resolveMeasurementUnit } from "@/lib/units";
 // Loading it on demand keeps it out of this page's initial bundle.
 import React from "react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { TableSearch, TablePagination, TableFilterChips } from "@/components/shared/table-pagination";
 
 interface ProductsTableProps {
+  /** Only the current page's rows — the server already applied search/filter/paging. */
   products: any[];
   lang: string;
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  status: 'all' | 'active' | 'inactive';
 }
 
-export function ProductsTable({ products, lang }: ProductsTableProps) {
+export function ProductsTable({
+  products,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+  status,
+}: ProductsTableProps) {
   const t = useTranslations();
   const router = useRouter();
-  const [search, setSearch] = useState("");
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1);
-    }, 0);
-  }, [search, statusFilter]);
 
  
   const downloadExcelTemplate = async () => {
@@ -139,13 +143,8 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     setIsUpdatingStatus(null);
   };
 
-  const filtered = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'all' ? true : statusFilter === 'active' ? p.is_active : !p.is_active;
-    return matchesSearch && matchesStatus;
-  });
- const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // No client-side filtering or slicing: `products` IS the current page.
+  const paginated = products;
   const handleDelete = async (id: string) => {
     const product = products.find(p => p.id === id);
     if (product && product.stock > 0) {
@@ -350,8 +349,6 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
     e.target.value = "";
   };
 
-  const startItem = filtered.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
-  const endItem = Math.min(currentPage * itemsPerPage, filtered.length);
 
   return (
     <TooltipProvider>
@@ -359,35 +356,16 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
         <CardContent className="p-0">
           {/* Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={`${t("common.search")}...`}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9"
-              />
-            </div>
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border shadow-inner">
-              <button
-                onClick={() => setStatusFilter('all')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'all' ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-              >
-                {t("common.all", { fallback: "Barchasi" })}
-              </button>
-              <button
-                onClick={() => setStatusFilter('active')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'active' ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-              >
-                {t("common.active", { fallback: "Faol" })}
-              </button>
-              <button
-                onClick={() => setStatusFilter('inactive')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${statusFilter === 'inactive' ? 'bg-white dark:bg-slate-700 text-rose-700 dark:text-rose-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-              >
-                {t("common.inactive", { fallback: "Nofaol" })}
-              </button>
-            </div>
+            <TableSearch />
+            <TableFilterChips
+              param="status"
+              value={status}
+              options={[
+                { value: 'all', label: t('common.all') },
+                { value: 'active', label: t('common.active') },
+                { value: 'inactive', label: t('common.inactive') },
+              ]}
+            />
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 type="button"
@@ -456,9 +434,6 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                   <p>{lang === 'uz' ? 'AI orqali chek/fakturani skanerlash' : lang === 'ru' ? 'Сканировать чек/фактуру с помощью ИИ' : 'Scan receipt/invoice using AI'}</p>
                 </TooltipContent>
               </Tooltip>
-              <span className="text-xs text-muted-foreground font-medium">
-                {lang === 'uz' ? `${filtered.length} tadan ${startItem}-${endItem} ko'rsatilmoqda` : lang === 'ru' ? `Показано ${startItem}-${endItem} из ${filtered.length}` : `Showing ${startItem}-${endItem} of ${filtered.length}`}
-              </span>
             </div>
           </div>
 
@@ -471,18 +446,18 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                 </TableHead>
                 <TableHead className="hidden md:table-cell">{t("inventory.sku")}</TableHead>
                 <TableHead className="hidden md:table-cell">{t("inventory.category")}</TableHead>
-                <TableHead className="hidden md:table-cell text-right">{t("inventory.costPrice")}</TableHead>
-                <TableHead className="hidden lg:table-cell text-right">
+                <TableHead className="hidden md:table-cell text-right tabular-nums">{t("inventory.costPrice")}</TableHead>
+                <TableHead className="hidden lg:table-cell text-right tabular-nums">
                   {t("inventory.incomingCost")}
                 </TableHead>
-                <TableHead className="text-right">{t("inventory.price")}</TableHead>
-                <TableHead className="text-right">{t("inventory.stock")}</TableHead>
+                <TableHead className="text-right tabular-nums">{t("inventory.price")}</TableHead>
+                <TableHead className="text-right tabular-nums">{t("inventory.stock")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paginated.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -499,7 +474,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                     onClick={() => router.push(`/${lang}/inventory/products/${product.id}`)}
                   >
                     <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
+                      {(page - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -526,16 +501,16 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                       </code>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">{product.categories?.name ?? "—"}</TableCell>
-                    <TableCell className="hidden md:table-cell text-right font-medium">
+                    <TableCell className="hidden md:table-cell text-right font-medium tabular-nums">
                       {formatCurrency(product.cost_price)}
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell text-right font-medium text-slate-600 dark:text-slate-300">
+                    <TableCell className="hidden lg:table-cell text-right font-medium text-slate-600 dark:text-slate-300 tabular-nums">
                       {formatCurrency(product.incoming_cost || 0)}
                     </TableCell>
-                    <TableCell className="text-right font-bold text-violet-600 dark:text-violet-400">
+                    <TableCell className="text-right font-bold text-violet-600 dark:text-violet-400 tabular-nums">
                       {formatCurrency(product.price)}
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
+                    <TableCell className="text-right font-semibold tabular-nums">
                       <span
                         className={
                           product.stock <= product.min_stock
@@ -602,31 +577,7 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
               )}
             </TableBody>
           </Table>
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="cursor-pointer"
-              >
-                {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-              </Button>
-              <span className="text-xs font-semibold bg-violet-50 text-violet-700 px-2.5 py-1 rounded-md">
-                {currentPage} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="cursor-pointer"
-              >
-                {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-              </Button>
-            </div>
-          )}
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
         </CardContent>
       </Card>
       <AIStockScannerModal

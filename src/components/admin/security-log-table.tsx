@@ -95,7 +95,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
             <TableHead>{t('colIdentifier')}</TableHead>
             <TableHead>{t('colIp')}</TableHead>
             <TableHead>{t('colOutcome')}</TableHead>
-            <TableHead className="text-right">{t('colTime')}</TableHead>
+            <TableHead className="text-right tabular-nums">{t('colTime')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -122,7 +122,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
                     tone={a.success ? 'emerald' : 'rose'}
                   />
                 </TableCell>
-                <TableCell className="text-right text-slate-500 dark:text-slate-400">{formatDateTime(a.created_at)}</TableCell>
+                <TableCell className="text-right text-slate-500 dark:text-slate-400 tabular-nums">{formatDateTime(a.created_at)}</TableCell>
               </TableRow>
             ))
           )}

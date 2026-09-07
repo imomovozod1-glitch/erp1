@@ -44,9 +44,7 @@ export default async function EditOrderPage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <OrderForm initialData={order} customers={customers} lang={lang} />
-      </div>
+      <OrderForm initialData={order} customers={customers} lang={lang} />
     </div>
   )
 }

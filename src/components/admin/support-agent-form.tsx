@@ -80,7 +80,7 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
   }
 
   return (
-    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-xl">
+    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">

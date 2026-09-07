@@ -12,8 +12,18 @@ import {
 import { exportRowsToExcel, downloadExcelTemplate, readExcelFile, type ExcelColumn } from '@/lib/excel-io'
 
 interface ImportExportMenuProps {
-  /** Rows to export as-is (server already fetched these for the page). */
+  /**
+   * Rows to export. Since the lists became server-paginated this is only the
+   * CURRENT page, so pass `fetchAllRows` too — otherwise "Export" would
+   * silently produce a file containing ten rows out of several thousand.
+   */
   data: Record<string, any>[]
+  /**
+   * Fetches the complete set for export, on click. Preferred over `data` when
+   * present; falls back to `data` if it fails so the button still does
+   * something useful.
+   */
+  fetchAllRows?: () => Promise<Record<string, any>[]>
   /** Header + key mapping used for the "Export" button. */
   exportColumns: ExcelColumn[]
   /** Header + sample mapping used for the "Download template" button — usually the import-expected headers. */
@@ -24,7 +34,7 @@ interface ImportExportMenuProps {
   onImport: (rows: Record<string, any>[]) => Promise<{ count: number; error?: string }>
 }
 
-export function ImportExportMenu({ data, exportColumns, templateColumns, filenamePrefix, onImport }: ImportExportMenuProps) {
+export function ImportExportMenu({ data, fetchAllRows, exportColumns, templateColumns, filenamePrefix, onImport }: ImportExportMenuProps) {
   const t = useTranslations('common')
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -33,11 +43,25 @@ export function ImportExportMenu({ data, exportColumns, templateColumns, filenam
   // Awaited: these load the `xlsx` bundle on demand now, so they are async and
   // a failure (offline mid-download, for one) has to reach the user rather
   // than becoming an unhandled rejection.
+  const [isExporting, setIsExporting] = useState(false)
+
   const handleExport = async () => {
+    if (isExporting) return
+    setIsExporting(true)
     try {
-      await exportRowsToExcel(data, exportColumns, `${filenamePrefix}.xlsx`)
+      let rows = data
+      if (fetchAllRows) {
+        try {
+          rows = await fetchAllRows()
+        } catch {
+          // Fall back to the visible page rather than exporting nothing.
+        }
+      }
+      await exportRowsToExcel(rows, exportColumns, `${filenamePrefix}.xlsx`)
     } catch {
       toast.error(t('error'))
+    } finally {
+      setIsExporting(false)
     }
   }
 

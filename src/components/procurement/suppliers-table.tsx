@@ -5,11 +5,10 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/comp
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { MoreHorizontal, Pencil, Search, Truck, MapPin } from 'lucide-react'
+import { MoreHorizontal, Pencil, Truck, MapPin } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import dynamic from 'next/dynamic'
 
 // react-leaflet/leaflet touch `window` at module-evaluation time, not just
@@ -29,53 +28,39 @@ import {
 import { formatCurrency } from '@/lib/utils'
 
 interface SuppliersTableProps {
+  /** Only the current page's rows — the server applied search and paging. */
   suppliers: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }
 
-export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
+export function SuppliersTable({
+  suppliers,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+}: SuppliersTableProps) {
   const t = useTranslations('procurement')
   const tCommon = useTranslations('common')
   const router = useRouter()
-  const [search, setSearch] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
   const [mapSupplier, setMapSupplier] = useState<{ name: string; address: string; latitude?: number | null; longitude?: number | null } | null>(null)
-  const itemsPerPage = 10
 
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
-  const filtered = suppliers.filter(
-    (s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      (s.email ?? '').toLowerCase().includes(search.toLowerCase())
-  )
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // No client-side filtering or slicing: `suppliers` IS the current page.
+  const paginated = suppliers
 
-  const startItem = filtered.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
-  const endItem = Math.min(currentPage * itemsPerPage, filtered.length);
 
   return (
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-wrap items-center justify-between p-4 border-b">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={`${tCommon('search')}...`}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9"
-              />
-            </div>
-            <span className="text-xs text-muted-foreground font-medium">
-              {lang === 'uz' ? `${filtered.length} tadan ${startItem}-${endItem} ko'rsatilmoqda` : lang === 'ru' ? `Показано ${startItem}-${endItem} из ${filtered.length}` : `Showing ${startItem}-${endItem} of ${filtered.length}`}
-            </span>
+            <TableSearch />
           </div>
           <Table>
             <TableHeader>
@@ -86,13 +71,13 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                 <TableHead>{tCommon('phone')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t('contactPerson')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t('tin')}</TableHead>
-                <TableHead className="text-right">{lang === 'uz' ? 'Qarzimiz' : lang === 'ru' ? 'Наш долг' : 'Debt owed'}</TableHead>
+                <TableHead className="text-right tabular-nums">{lang === 'uz' ? 'Qarzimiz' : lang === 'ru' ? 'Наш долг' : 'Debt owed'}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paginated.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -110,7 +95,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
                       onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}`)}
                     >
                       <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                        {(currentPage - 1) * itemsPerPage + index + 1}
+                        {(page - 1) * pageSize + index + 1}
                       </TableCell>
                       <TableCell className="font-medium text-slate-800 dark:text-slate-200">
                         <div className="flex items-center gap-2">
@@ -169,31 +154,7 @@ export function SuppliersTable({ suppliers, lang }: SuppliersTableProps) {
             )}
           </TableBody>
         </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs font-semibold bg-violet-50 text-violet-700 px-2.5 py-1 rounded-md">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
     {mapSupplier && (

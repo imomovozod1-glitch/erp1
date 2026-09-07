@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { PageHeader } from '@/components/shared/page-header'
 import { PeriodFilter, type Period } from '@/components/shared/period-filter'
@@ -8,89 +9,71 @@ import { TransactionsTable } from '@/components/finance/transactions-table'
 import { FinanceSummary } from '@/components/finance/finance-summary'
 
 interface TransactionsPageClientProps {
-   
+  /** Current page of transactions — the server applied period, search and paging. */
   transactions: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  /** Totals across the whole filtered range, not just this page. */
+  totalIncome: number
+  totalExpense: number
+  period: Period
+  customStart: string
+  customEnd: string
 }
 
-function formatDateISO(d: Date): string {
-  return d.toISOString().split('T')[0]
-}
-
-export function TransactionsPageClient({ transactions, lang }: TransactionsPageClientProps) {
+/**
+ * The period filter now writes to the URL instead of component state +
+ * sessionStorage.
+ *
+ * It has to: the rows are paginated in Postgres, so changing the period means
+ * re-running the query on the server. Keeping it in the URL also makes a
+ * filtered view linkable and survive a refresh, which the sessionStorage
+ * version could only approximate.
+ */
+export function TransactionsPageClient({
+  transactions,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+  totalIncome,
+  totalExpense,
+  period,
+  customStart,
+  customEnd,
+}: TransactionsPageClientProps) {
   const t = useTranslations('finance')
   const tInfo = useTranslations('pageInfo')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
-  const [period, setPeriod] = useState<Period>(() => {
-    try {
-      const saved = sessionStorage.getItem('transactions_period')
-      return (saved as Period) || 'all'
-    } catch {
-      return 'all'
-    }
-  })
-  const [customStart, setCustomStart] = useState<string>(() => {
-    try {
-      return sessionStorage.getItem('transactions_custom_start') || ''
-    } catch {
-      return ''
-    }
-  })
-  const [customEnd, setCustomEnd] = useState<string>(() => {
-    try {
-      return sessionStorage.getItem('transactions_custom_end') || ''
-    } catch {
-      return ''
-    }
-  })
+  const setParams = useCallback(
+    (next: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString())
+      for (const [key, value] of Object.entries(next)) {
+        if (value === null || value === '') params.delete(key)
+        else params.set(key, value)
+      }
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams]
+  )
 
   const handlePeriodChange = (next: Period) => {
-    setPeriod(next)
-    try {
-      sessionStorage.setItem('transactions_period', next)
-    } catch {
-      // sessionStorage unavailable — filter still works for this render
-    }
+    // Changing the filter always returns to page 1 — page 4 of the old result
+    // set is meaningless against the new one.
+    setParams({ period: next === 'all' ? null : next, page: null, from: null, to: null })
   }
 
   const handleApplyCustomRange = (start: string, end: string) => {
-    setPeriod('custom')
-    setCustomStart(start)
-    setCustomEnd(end)
-    try {
-      sessionStorage.setItem('transactions_period', 'custom')
-      sessionStorage.setItem('transactions_custom_start', start)
-      sessionStorage.setItem('transactions_custom_end', end)
-    } catch {
-      // sessionStorage unavailable — filter still works for this render
-    }
+    setParams({ period: 'custom', from: start || null, to: end || null, page: null })
   }
-
-  const now = new Date()
-  const todayStr = formatDateISO(now)
-  const yesterdayStr = formatDateISO(new Date(now.getTime() - 24 * 60 * 60 * 1000))
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-  const customStartDate = customStart ? new Date(customStart) : null
-  const customEndDate = customEnd ? new Date(customEnd) : null
-
-   
-  const filtered = transactions.filter((tx: any) => {
-    const d = new Date(tx.created_at)
-    if (period === 'today') return formatDateISO(d) === todayStr
-    if (period === 'yesterday') return formatDateISO(d) === yesterdayStr
-    if (period === 'week') return d >= weekAgo
-    if (period === 'month') return d >= monthAgo
-    if (period === 'custom') {
-      return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
-    }
-    return true
-  })
-
-   
-  const totalIncome = filtered.filter((tx: any) => tx.type === 'income').reduce((s: number, tx: any) => s + Number(tx.amount), 0)
-   
-  const totalExpenses = filtered.filter((tx: any) => tx.type === 'expense').reduce((s: number, tx: any) => s + Number(tx.amount), 0)
 
   return (
     <div className="space-y-6">
@@ -112,8 +95,17 @@ export function TransactionsPageClient({ transactions, lang }: TransactionsPageC
           onApplyCustomRange={handleApplyCustomRange}
         />
       </PageHeader>
-      <FinanceSummary totalIncome={totalIncome} totalExpenses={totalExpenses} />
-      <TransactionsTable transactions={filtered} lang={lang} />
+      <FinanceSummary totalIncome={totalIncome} totalExpenses={totalExpense} />
+      <TransactionsTable
+        transactions={transactions}
+        lang={lang}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        totalPages={totalPages}
+        totalIncome={totalIncome}
+        totalExpense={totalExpense}
+      />
     </div>
   )
 }

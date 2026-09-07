@@ -148,7 +148,7 @@ export function SupplierForm({ initialData, lang }: SupplierFormProps) {
 
   return (
     <>
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-3xl bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
       <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div className="h-10 w-10 rounded-lg bg-violet-50 dark:bg-violet-950/50 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
           <Truck className="h-5 w-5" />

@@ -211,7 +211,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                 <TableRow>
                   <TableHead className="w-10 text-center font-semibold text-slate-600 dark:text-slate-300">#</TableHead>
                   <TableHead className="font-semibold text-slate-600 dark:text-slate-300">{lang === 'uz' ? 'O\'lchov birligi nomi' : lang === 'ru' ? 'Название единицы' : 'Unit Name'}</TableHead>
-                  <TableHead className="w-[100px] font-semibold text-slate-600 dark:text-slate-300 text-right">{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</TableHead>
+                  <TableHead className="w-[100px] font-semibold text-slate-600 dark:text-slate-300 text-right tabular-nums">{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -244,7 +244,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                             u.name
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right tabular-nums">
                           {isEditing ? (
                             <div className="flex justify-end gap-1">
                               <Button

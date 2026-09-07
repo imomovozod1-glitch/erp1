@@ -51,7 +51,7 @@ export function MessageAgentForm({ agentId, agentName }: { agentId: string; agen
   }
 
   return (
-    <Card className="border-0 shadow-sm max-w-xl">
+    <Card className="border-0 shadow-sm max-w-3xl">
       <CardHeader>
         <CardTitle className="text-base">Message {agentName}</CardTitle>
         <CardDescription>Sends a direct message into this agent&apos;s support portal.</CardDescription>

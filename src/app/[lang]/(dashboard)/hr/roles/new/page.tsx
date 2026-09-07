@@ -34,9 +34,7 @@ export default async function NewRoleTemplatePage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <RoleTemplateForm lang={lang} />
-      </div>
+      <RoleTemplateForm lang={lang} />
     </div>
   )
 }

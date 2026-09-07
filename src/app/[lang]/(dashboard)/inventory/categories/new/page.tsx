@@ -36,9 +36,7 @@ export default async function NewCategoryPage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <CategoryForm lang={lang} />
-      </div>
+      <CategoryForm lang={lang} />
     </div>
   )
 }

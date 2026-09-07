@@ -1,17 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { MoreHorizontal, Pencil, Trash2, Search, Users, MapPin } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Users, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateCustomers } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -34,35 +34,33 @@ const LocationMapDialog = dynamic(
 import { formatCurrency } from '@/lib/utils'
 
 interface CustomersTableProps {
+  /** Only the current page's rows — the server applied search and paging. */
   customers: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }
 
-export function CustomersTable({ customers, lang }: CustomersTableProps) {
+export function CustomersTable({
+  customers,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+}: CustomersTableProps) {
   
   const tCommon = useTranslations('common')
   const router = useRouter()
-  const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
   const [mapCustomer, setMapCustomer] = useState<{ name: string; address: string; latitude?: number | null; longitude?: number | null } | null>(null)
-  const itemsPerPage = 10
 
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
 
-  const filtered = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      (c.phone ?? '').includes(search)
-  )
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // No client-side filtering or slicing: `customers` IS the current page.
+  const paginated = customers
 
   const handleDelete = async (id: string) => {
     setIsDeleting(id)
@@ -82,26 +80,13 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
     setIsDeleting(null)
   }
 
-  const startItem = filtered.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
-  const endItem = Math.min(currentPage * itemsPerPage, filtered.length);
 
   return (
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-wrap items-center justify-between p-4 border-b">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={`${tCommon('search')}...`}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9"
-              />
-            </div>
-            <span className="text-xs text-muted-foreground font-medium">
-              {lang === 'uz' ? `${filtered.length} tadan ${startItem}-${endItem} ko'rsatilmoqda` : lang === 'ru' ? `Показано ${startItem}-${endItem} из ${filtered.length}` : `Showing ${startItem}-${endItem} of ${filtered.length}`}
-            </span>
+            <TableSearch />
           </div>
         <Table>
           <TableHeader>
@@ -111,13 +96,13 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
               <TableHead className="hidden md:table-cell">{tCommon('email')}</TableHead>
               <TableHead>{tCommon('phone')}</TableHead>
               <TableHead className="hidden md:table-cell">{lang === 'uz' ? 'Toifa' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
-              <TableHead className="text-right">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</TableHead>
+              <TableHead className="text-right tabular-nums">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {paginated.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -134,7 +119,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                   onClick={() => router.push(`/${lang}/customers/${customer.id}`)}
                 >
                   <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
+                    {(page - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2.5">
@@ -149,7 +134,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
                   <TableCell className="hidden md:table-cell text-muted-foreground">{customer.email ?? '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{customer.phone ?? '—'}</TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">{customer.customer_categories?.name ?? '—'}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right tabular-nums">
                     {(() => {
                       const balance = (Number(customer.credit_balance) || 0) - (Number(customer.total_debt) || 0)
                       if (balance === 0) return <span className="text-muted-foreground">—</span>
@@ -209,31 +194,7 @@ export function CustomersTable({ customers, lang }: CustomersTableProps) {
             )}
           </TableBody>
         </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs font-semibold bg-violet-50 text-violet-700 px-2.5 py-1 rounded-md">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
     {mapCustomer && (

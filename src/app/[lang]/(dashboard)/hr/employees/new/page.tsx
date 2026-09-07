@@ -34,9 +34,7 @@ export default async function NewEmployeePage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <EmployeeForm lang={lang} />
-      </div>
+      <EmployeeForm lang={lang} />
     </div>
   )
 }
