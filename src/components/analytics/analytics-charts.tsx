@@ -8,7 +8,36 @@ import {
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 
-const COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe', '#f5f3ff']
+/**
+ * Categorical series colours, in fixed order, from the validated palette in
+ * globals.css. They are CSS variables so light/dark swap on their own.
+ *
+ * The previous list was a single-hue violet ramp (#6366f1 → #f5f3ff), which
+ * encoded identity by lightness alone: its last three steps were effectively
+ * white on a white card, so those slices were invisible and mutually
+ * indistinguishable. Distinct hues are what make categories separable.
+ */
+const SERIES = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'var(--chart-6)',
+]
+
+/** Slices shown individually before the tail is folded into "Other". */
+const TOP_N = 5
+
+const AXIS_TICK = { fontSize: 12, fill: 'var(--muted-foreground)' }
+const TOOLTIP_STYLE = {
+  borderRadius: '12px',
+  border: '1px solid var(--border)',
+  background: 'var(--popover)',
+  color: 'var(--popover-foreground)',
+  boxShadow: '0 12px 28px -6px oklch(0.38 0.19 295 / 0.18)',
+  fontSize: '12px',
+}
 
 interface AnalyticsChartsProps {
   chartData: { month: string; revenue: number }[]
@@ -17,6 +46,16 @@ interface AnalyticsChartsProps {
 
 export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps) {
   const t = useTranslations('analytics')
+  const tCommon = useTranslations('common')
+
+  // Fold everything past the top N into a single "Other" slice rather than
+  // cycling the palette: reusing slot 1 for a 7th product would make two
+  // different products the same colour in one chart.
+  const head = topProducts.slice(0, TOP_N)
+  const tailTotal = topProducts.slice(TOP_N).reduce((sum, p) => sum + (Number(p.totalSum) || 0), 0)
+  const slices = tailTotal > 0
+    ? [...head, { name: tCommon('other'), totalSum: tailTotal }]
+    : head
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -33,27 +72,34 @@ export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="month" tick={AXIS_TICK} axisLine={false} tickLine={false} />
+                <YAxis
+                  tick={AXIS_TICK}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
+                />
                 <Tooltip
                   formatter={(value: any) => [formatCurrency(Number(value || 0)), t('revenue')]}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                  cursor={{ fill: 'var(--chart-1)', fillOpacity: 0.08 }}
+                  contentStyle={TOOLTIP_STYLE}
                 />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                {/* Single series — the card title names it, so no legend box. */}
+                <Bar dataKey="revenue" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={48} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </CardContent>
       </Card>
 
-      {/* Top products pie chart */}
+      {/* Top products donut */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base font-semibold">{t('topProducts')}</CardTitle>
         </CardHeader>
         <CardContent>
-          {topProducts.length === 0 ? (
+          {slices.length === 0 ? (
             <div className="flex items-center justify-center h-75 text-muted-foreground text-sm">
               {t('noSalesData')}
             </div>
@@ -62,29 +108,49 @@ export function AnalyticsCharts({ chartData, topProducts }: AnalyticsChartsProps
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
                   <Pie
-                    data={topProducts.slice(0, 7)}
+                    data={slices}
                     dataKey="totalSum"
                     nameKey="name"
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    innerRadius={40}
+                    innerRadius={48}
+                    paddingAngle={2}
                   >
-                    {topProducts.slice(0, 7).map((_, idx) => (
-                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    {slices.map((s, idx) => (
+                      // A surface-coloured ring separates touching segments so
+                      // adjacent fills never blend into one shape.
+                      <Cell
+                        key={s.name}
+                        fill={SERIES[idx]}
+                        stroke="var(--card)"
+                        strokeWidth={2}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: any) => formatCurrency(Number(value || 0))} />
+                  <Tooltip
+                    formatter={(value: any) => formatCurrency(Number(value || 0))}
+                    contentStyle={TOOLTIP_STYLE}
+                  />
                 </PieChart>
               </ResponsiveContainer>
+              {/* Legend covers every slice that is drawn. It previously listed
+                  only the first five of seven, leaving two slices identifiable
+                  by colour alone — and by two colours that were invisible. */}
               <div className="mt-3 space-y-1.5">
-                {topProducts.slice(0, 5).map((p, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                {slices.map((p, idx) => (
+                  <div key={p.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        aria-hidden="true"
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: SERIES[idx] }}
+                      />
                       <span className="text-slate-700 dark:text-slate-300 truncate max-w-30">{p.name}</span>
                     </div>
-                    <span className="font-medium text-slate-900 dark:text-slate-100">{formatCurrency(p.totalSum)}</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100 tabular-nums">
+                      {formatCurrency(p.totalSum)}
+                    </span>
                   </div>
                 ))}
               </div>

@@ -20,7 +20,6 @@ import { subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { SoldProductsTable } from './sold-products-table'
 import { RecentOrders } from '@/components/dashboard/recent-orders'
 import { LowStockAlert } from '@/components/dashboard/low-stock-alert'
-import { useTheme } from '@/components/providers/theme-provider'
 
 interface AnalyticsClientProps {
   lang: string
@@ -69,8 +68,6 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
   const t = useTranslations('analytics')
   const tc = useTranslations('common')
   const td = useTranslations('dashboard')
-  const { resolvedTheme } = useTheme()
-  const isDark = resolvedTheme === 'dark'
 
   const [period, setPeriod] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -705,22 +702,22 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                 <AreaChart data={formattedChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#f1f5f9'} vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="monthLabel"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }}
+                    tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                     dy={10}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: isDark ? '#94a3b8' : '#64748b' }}
+                    tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                     tickFormatter={(v) => {
                       if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
                       if (v >= 1000) return `${(v / 1000).toFixed(1)}k`
@@ -729,18 +726,21 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                   />
                   <Tooltip
                     formatter={(value: any) => formatCurrency(value as number)}
-                    contentStyle={
-                      isDark
-                        ? { borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: '#e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)' }
-                        : { borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }
-                    }
-                    labelStyle={isDark ? { color: '#e2e8f0' } : undefined}
+                    cursor={{ stroke: 'var(--chart-1)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                    contentStyle={{
+                      borderRadius: '12px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--popover)',
+                      color: 'var(--popover-foreground)',
+                      boxShadow: '0 12px 28px -6px oklch(0.38 0.19 295 / 0.18)',
+                      fontSize: '12px',
+                    }}
                   />
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#10b981"
-                    strokeWidth={3}
+                    stroke="var(--chart-1)"
+                    strokeWidth={2}
                     fill="url(#colorRev)"
                     name={t('revenue')}
                   />

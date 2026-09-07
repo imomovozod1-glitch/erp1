@@ -87,7 +87,8 @@
     "invalidAmount": "Invalid amount",
     "created": "Created successfully",
     "saved": "Saved successfully",
-    "testPrint": "Test"
+    "testPrint": "Test",
+    "other": "Other"
   },
   "nav": {
     "dashboard": "Dashboard",

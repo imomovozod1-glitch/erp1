@@ -87,7 +87,8 @@
     "invalidAmount": "Noto'g'ri summa",
     "created": "Muvaffaqiyatli yaratildi",
     "saved": "Muvaffaqiyatli saqlandi",
-    "testPrint": "Test"
+    "testPrint": "Test",
+    "other": "Boshqalar"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
