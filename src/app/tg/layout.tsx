@@ -47,7 +47,6 @@ export default function TelegramLayout({ children }: { children: React.ReactNode
           no longer depends on it — TelegramEntry waits for the object either
           way — but the fast path should stay synchronous.
         */}
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="https://telegram.org/js/telegram-web-app.js" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
