@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { TransactionForm } from '@/components/finance/transaction-form'
-import { getCachedTransactionById } from '@/lib/data/queries'
+import { getCachedTransactionById, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -23,10 +23,11 @@ export default async function EditTransactionPage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('finance', lang, '/finance/transactions')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tCommon, transaction] = await Promise.all([
+  const [t, tCommon, transaction, assignableUsers] = await Promise.all([
     getTranslations('finance'),
     getTranslations('common'),
     getCachedTransactionById(id, tenantId),
+    getAssignableUsers(tenantId),
   ])
 
   if (!transaction) {
@@ -44,7 +45,7 @@ export default async function EditTransactionPage({
           { label: tCommon('edit') },
         ]}
       />
-      <TransactionForm initialData={transaction} lang={lang} />
+      <TransactionForm initialData={transaction} lang={lang} assignableUsers={assignableUsers} />
     </div>
   )
 }

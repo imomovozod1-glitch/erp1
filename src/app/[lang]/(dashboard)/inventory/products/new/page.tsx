@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { ProductForm } from '@/components/inventory/product-form'
 import { Metadata } from 'next'
-import { getCachedCategoriesForSelect } from '@/lib/data/queries'
+import { getCachedCategoriesForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireModuleEdit } from '@/lib/permissions-server'
 
@@ -21,10 +21,11 @@ export default async function NewProductPage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('inventory', lang, '/inventory/products')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tCommon, categories] = await Promise.all([
+  const [t, tCommon, categories, assignableUsers] = await Promise.all([
     getTranslations('inventory'),
     getTranslations('common'),
     getCachedCategoriesForSelect(tenantId),
+    getAssignableUsers(tenantId),
   ])
 
   return (
@@ -38,7 +39,7 @@ export default async function NewProductPage({
           { label: tCommon('add') },
         ]}
       />
-      <ProductForm categories={categories} lang={lang} />
+      <ProductForm categories={categories} lang={lang} assignableUsers={assignableUsers} />
     </div>
   )
 }

@@ -5,6 +5,8 @@ import { PageHeader } from '@/components/shared/page-header'
 import { ProductForm } from '@/components/inventory/product-form'
 import { Metadata } from 'next'
 import { requireModuleEdit } from '@/lib/permissions-server'
+import { getAssignableUsers } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -18,6 +20,8 @@ export default async function EditProductPage({
   params: Promise<{ lang: string; id: string }>
 }) {
   const { lang, id } = await params
+  const tenantId = (await getCurrentTenantId()) as string
+  const assignableUsers = await getAssignableUsers(tenantId)
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('inventory', lang, '/inventory/products')
   const t = await getTranslations('inventory')
@@ -48,7 +52,7 @@ export default async function EditProductPage({
         initialData={productRes.data} 
         categories={categoriesRes.data || []} 
         lang={lang} 
-      />
+      assignableUsers={assignableUsers} />
     </div>
   )
 }

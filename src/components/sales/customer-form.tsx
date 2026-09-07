@@ -20,6 +20,7 @@ import dynamic from 'next/dynamic'
 import { User, Mail, Phone, MapPin, FileText, CreditCard, Loader2, Tags } from 'lucide-react'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { optionalPhoneSchema } from '@/lib/phone-validation'
+import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 
 // Load MapPicker dynamically for Next.js SSR compatibility
 const MapPicker = dynamic(() => import('./map-picker').then(mod => mod.MapPicker), {
@@ -32,17 +33,20 @@ const MapPicker = dynamic(() => import('./map-picker').then(mod => mod.MapPicker
 })
 
 interface CustomerFormProps {
+  /** Active tenant members who can be made responsible for this record. */
+  assignableUsers: AssignableUser[]
   initialData?: any
   categories?: { id: string; name: string }[]
   lang: string
 }
 
-export function CustomerForm({ initialData, categories = [], lang }: CustomerFormProps) {
+export function CustomerForm({ initialData, categories = [], lang, assignableUsers }: CustomerFormProps) {
   const tCommon = useTranslations('common')
   const tSales = useTranslations('sales')
   const tAuth = useTranslations('auth')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [tempAddress, setTempAddress] = useState('')
   const [tempLat, setTempLat] = useState<number | null>(null)
@@ -84,7 +88,16 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
   const onSubmit = async (data: any) => {
     setIsSubmitting(true)
     try {
+      // These forms had no current-user lookup at all; the creator/assignee
+      // stamps below need one.
+      const { data: userRes } = await supabase.auth.getUser()
+      const userId: string | null = userRes?.user?.id ?? null
+
       const payload = {
+        // Responsible person; falls back to the current user so a record is
+        // never left unassigned by accident.
+        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
+        created_by: initialData?.created_by ?? userId,
         ...data,
         name: data.name || '',
         category_id: data.category_id || null, // empty string = uncategorized
@@ -297,6 +310,14 @@ export function CustomerForm({ initialData, categories = [], lang }: CustomerFor
         </div>
 
         {/* Action Buttons */}
+      <div className="max-w-sm">
+        <AssigneeSelect
+          value={assignedTo}
+          onChange={setAssignedTo}
+          users={assignableUsers}
+        />
+      </div>
+
         <div className="flex justify-end gap-3 pt-5 border-t border-slate-100 dark:border-slate-800">
           <Button 
             type="button" 

@@ -72,6 +72,7 @@ export function SuppliersTable({
                 <TableHead className="hidden lg:table-cell">{t('contactPerson')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t('tin')}</TableHead>
                 <TableHead className="text-right tabular-nums">{lang === 'uz' ? 'Qarzimiz' : lang === 'ru' ? 'Наш долг' : 'Debt owed'}</TableHead>
+                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
@@ -79,7 +80,7 @@ export function SuppliersTable({
             <TableBody>
               {paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-12">
+                  <TableCell colSpan={10} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Truck className="h-8 w-8 opacity-40" />
                       <p className="text-sm">{tCommon('noData')}</p>
@@ -119,6 +120,9 @@ export function SuppliersTable({
                           tone={supplier.is_active ? 'emerald' : 'slate'}
                           label={supplier.is_active ? tCommon('active') : tCommon('inactive')}
                         />
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {supplier.assignee?.full_name || tCommon('unassigned')}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>

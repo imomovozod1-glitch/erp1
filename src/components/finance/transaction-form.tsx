@@ -20,17 +20,21 @@ import {
   Select, SelectContent,
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
+import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 
 interface TransactionFormProps {
+  /** Active tenant members who can be made responsible for this record. */
+  assignableUsers: AssignableUser[]
   initialData?: any
   defaultType?: 'income' | 'expense'
   lang: string
 }
 
-export function TransactionForm({ initialData, defaultType = 'income', lang }: TransactionFormProps) {
+export function TransactionForm({ initialData, defaultType = 'income', lang, assignableUsers }: TransactionFormProps) {
   const t = useTranslations()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
 
@@ -79,6 +83,8 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
         reference_type: data.reference_type || null,
         reference_id: data.reference_id || null,
         created_by: initialData?.created_by || userId,
+        // Responsible for the payment; defaults to whoever recorded it.
+        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
       }
 
       const oldChange = initialData 
@@ -176,6 +182,14 @@ export function TransactionForm({ initialData, defaultType = 'income', lang }: T
           <Textarea id="description" {...register('description')} rows={3} />
         </div>
       </div>
+      <div className="max-w-sm">
+        <AssigneeSelect
+          value={assignedTo}
+          onChange={setAssignedTo}
+          users={assignableUsers}
+        />
+      </div>
+
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button 

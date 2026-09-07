@@ -3,6 +3,8 @@ import { PageHeader } from '@/components/shared/page-header'
 import { TransactionForm } from '@/components/finance/transaction-form'
 import { Metadata } from 'next'
 import { requireModuleEdit } from '@/lib/permissions-server'
+import { getAssignableUsers } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -21,9 +23,11 @@ export default async function NewTransactionPage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('finance', lang, '/finance/transactions')
   const { type } = await searchParams
-  const [t, tCommon] = await Promise.all([
+  const tenantId = (await getCurrentTenantId()) as string
+  const [t, tCommon, assignableUsers] = await Promise.all([
     getTranslations('finance'),
     getTranslations('common'),
+    getAssignableUsers(tenantId),
   ])
 
   const defaultType = type === 'expense' ? 'expense' : 'income'
@@ -39,7 +43,7 @@ export default async function NewTransactionPage({
           { label: tCommon('add') },
         ]}
       />
-      <TransactionForm lang={lang} defaultType={defaultType} />
+      <TransactionForm lang={lang} defaultType={defaultType} assignableUsers={assignableUsers} />
     </div>
   )
 }

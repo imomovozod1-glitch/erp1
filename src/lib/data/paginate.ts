@@ -119,7 +119,14 @@ export async function queryPage<T = Record<string, unknown>>(
     if (values && values.length > 0) query = query.in(column, values)
   }
   if (options.ownerId) {
-    query = query.eq(options.ownerColumn ?? 'assigned_to', options.ownerId)
+    const column = options.ownerColumn ?? 'assigned_to'
+    // "Mine OR nobody's". An unassigned record is not someone else's private
+    // work, and hiding it from every scoped user would orphan it — nobody
+    // could find it to assign it, and on the master-data tables (customers,
+    // suppliers, products) everything starts unassigned, so a strict
+    // `= me` would show a salesperson an empty customer list on day one.
+    // Admins are never filtered at all, so they always see the full set.
+    query = query.or(`${column}.eq.${options.ownerId},${column}.is.null`)
   }
   if (options.search && options.searchColumns?.length) {
     query = query.or(ilikeAny(options.searchColumns, options.search))

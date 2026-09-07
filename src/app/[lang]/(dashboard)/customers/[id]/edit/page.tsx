@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { CustomerForm } from '@/components/sales/customer-form'
-import { getCachedCustomerById, getCachedCustomerCategories } from '@/lib/data/queries'
+import { getCachedCustomerById, getCachedCustomerCategories, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -22,12 +22,13 @@ export default async function EditCustomerPage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('customers', lang, '/customers')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tCommon, tNav, customer, categories] = await Promise.all([
+  const [t, tCommon, tNav, customer, categories, assignableUsers] = await Promise.all([
     getTranslations('sales'),
     getTranslations('common'),
     getTranslations('nav'),
     getCachedCustomerById(id, tenantId),
     getCachedCustomerCategories(tenantId),
+    getAssignableUsers(tenantId),
   ])
 
   if (!customer) {
@@ -45,7 +46,7 @@ export default async function EditCustomerPage({
           { label: tCommon('edit') },
         ]}
       />
-      <CustomerForm initialData={customer} categories={categories} lang={lang} />
+      <CustomerForm initialData={customer} categories={categories} lang={lang} assignableUsers={assignableUsers} />
     </div>
   )
 }

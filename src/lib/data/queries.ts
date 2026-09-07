@@ -896,18 +896,19 @@ export const getCachedCustomerDetails = unstable_cache(
 
 export function getProductsPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; status?: 'all' | 'active' | 'inactive' }
+  opts: { page: number; pageSize: number; search?: string; status?: 'all' | 'active' | 'inactive'; ownerId?: string }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'products',
     tenantId,
-    select: '*, categories(name)',
+    select: '*, categories(name), creator:profiles!products_created_by_fkey(full_name), assignee:profiles!products_assigned_to_fkey(full_name)',
     page: opts.page,
     pageSize: opts.pageSize,
     search: opts.search,
     searchColumns: ['name', 'sku'],
     filters: { is_active: opts.status === 'all' || !opts.status ? undefined : opts.status === 'active' },
     orderBy: { column: 'created_at', ascending: false },
+    ownerId: opts.ownerId,
   })
 }
 
@@ -947,17 +948,18 @@ export function getInvoicesPage(
 
 export function getSuppliersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'suppliers',
     tenantId,
-    select: '*',
+    select: '*, creator:profiles!suppliers_created_by_fkey(full_name), assignee:profiles!suppliers_assigned_to_fkey(full_name)',
     page: opts.page,
     pageSize: opts.pageSize,
     search: opts.search,
     searchColumns: ['name', 'email', 'phone'],
     orderBy: { column: 'created_at', ascending: false },
+    ownerId: opts.ownerId,
   })
 }
 
@@ -985,7 +987,7 @@ export function getPurchaseOrdersPage(
  */
 export async function getTransactionsPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string }
+  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string; ownerId?: string }
 ): Promise<PageResult<any> & { totalIncome: number; totalExpense: number }> {
   const [result, totals] = await Promise.all([
     getTransactionsPageRows(tenantId, opts),
@@ -1015,17 +1017,18 @@ async function getTransactionTotals(
 
 async function getTransactionsPageRows(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string }
+  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string; ownerId?: string }
 ): Promise<PageResult<any>> {
   const supabase = getCacheClient() as any
   const from = (opts.page - 1) * opts.pageSize
   let query = supabase
     .from('transactions')
-    .select('*', { count: 'exact' })
+    .select('*, creator:profiles!transactions_created_by_fkey(full_name), assignee:profiles!transactions_assigned_to_fkey(full_name)', { count: 'exact' })
     .eq('tenant_id', tenantId)
   if (opts.search?.trim()) query = query.or(ilikeAny(['category', 'description'], opts.search.trim()))
   if (opts.from) query = query.gte('created_at', opts.from)
   if (opts.to) query = query.lte('created_at', opts.to)
+  if (opts.ownerId) query = query.or(`assigned_to.eq.${opts.ownerId},assigned_to.is.null`)
   const { data, count } = await query
     .order('created_at', { ascending: false })
     .range(from, from + opts.pageSize - 1)
@@ -1080,17 +1083,18 @@ export function getEmployeesPage(
  */
 export async function getCustomersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
 ): Promise<PageResult<any>> {
   const result = await queryPage<any>({
     table: 'customers',
     tenantId,
-    select: '*, customer_categories(name)',
+    select: '*, customer_categories(name), creator:profiles!customers_created_by_fkey(full_name), assignee:profiles!customers_assigned_to_fkey(full_name)',
     page: opts.page,
     pageSize: opts.pageSize,
     search: opts.search,
     searchColumns: ['name', 'email', 'phone'],
     orderBy: { column: 'created_at', ascending: false },
+    ownerId: opts.ownerId,
   })
 
   if (result.rows.length === 0) return result

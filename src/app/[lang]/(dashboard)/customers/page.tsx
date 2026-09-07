@@ -9,7 +9,7 @@ import { getCustomersPage , getCustomersMapPoints, getCustomerBalanceTotals} fro
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { formatCurrency } from '@/lib/utils'
-import { canEditModule , canDo } from '@/lib/permissions-server'
+import { canEditModule , canDo, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Customers' }
 
@@ -22,6 +22,10 @@ export default async function CustomersPage({
 }) {
   const [{ lang }, sp] = await Promise.all([params, searchParams])
   const { page, pageSize, search } = readPageParams(sp)
+  // With the `own` data scope this list is limited to the records this user
+  // is responsible for (plus unassigned ones) — applied in the query.
+  const [scope, permCtx] = await Promise.all([getDataScope('customers'), getPermissionContext()])
+  const ownerId = scope === 'own' ? permCtx?.userId : undefined
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('customers')
@@ -33,7 +37,7 @@ export default async function CustomersPage({
     getTranslations('sales'),
     getTranslations('nav'),
     getTranslations('pageInfo'),
-    getCustomersPage(tenantId, { page, pageSize, search }),
+    getCustomersPage(tenantId, { page, pageSize, search, ownerId }),
     // The map plots every customer with coordinates; only the LIST is paged.
     getCustomersMapPoints(tenantId),
     getCustomerBalanceTotals(tenantId),

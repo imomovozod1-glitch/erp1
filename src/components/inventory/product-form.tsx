@@ -19,18 +19,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 
 interface ProductFormProps {
+  /** Active tenant members who can be made responsible for this record. */
+  assignableUsers: AssignableUser[]
   initialData?: any
   categories: any[]
   lang: string
 }
 
-export function ProductForm({ initialData, categories, lang }: ProductFormProps) {
+export function ProductForm({ initialData, categories, lang, assignableUsers }: ProductFormProps) {
   const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const supabase = createClient() as any
 
   const innerFormSchema = z.object({
@@ -181,7 +185,16 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         throw new Error(t('nameExists'))
       }
 
+      // Resolved before the payload so the creator/assignee stamps below can
+      // use it (it used to be fetched further down, only for stock movements).
+      const userRes = await supabase.auth.getUser()
+      const userId: string | null = userRes.data?.user?.id ?? null
+
       const payload: Record<string, any> = {
+        // Responsible person; falls back to the current user so a record is
+        // never left unassigned by accident.
+        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
+        created_by: initialData?.created_by ?? userId,
         ...data,
         category_id: data.category_id || null, // convert empty string to null
       }
@@ -195,9 +208,6 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         if (payload[key] === undefined) delete payload[key]
       }
 
-      let userId: string | null = null
-      const userRes = await supabase.auth.getUser()
-      if (userRes.data?.user) userId = userRes.data.user.id
 
       if (initialData?.id) {
         // Update
@@ -601,6 +611,14 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
         <Label htmlFor="description">{tCommon('description')}</Label>
         <Textarea id="description" {...register('description')} placeholder={tCommon('description')} rows={4} />
         {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
+      </div>
+
+      <div className="max-w-sm">
+        <AssigneeSelect
+          value={assignedTo}
+          onChange={setAssignedTo}
+          users={assignableUsers}
+        />
       </div>
 
       <div className="flex gap-4 pt-4 border-t">

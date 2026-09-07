@@ -452,6 +452,7 @@ export function ProductsTable({
                 </TableHead>
                 <TableHead className="text-right tabular-nums">{t("inventory.price")}</TableHead>
                 <TableHead className="text-right tabular-nums">{t("inventory.stock")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("common.assignedTo")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
@@ -459,7 +460,7 @@ export function ProductsTable({
             <TableBody>
               {paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-12">
+                  <TableCell colSpan={11} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Package className="h-8 w-8 opacity-40" />
                       <p className="text-sm">{t("common.noData")}</p>
@@ -527,6 +528,9 @@ export function ProductsTable({
                         label={product.is_active ? t("common.active") : t("common.inactive")}
                       />
                     </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {product.assignee?.full_name || t("common.unassigned")}
+                      </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <Tooltip>

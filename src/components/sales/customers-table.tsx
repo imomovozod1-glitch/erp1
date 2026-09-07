@@ -97,6 +97,7 @@ export function CustomersTable({
               <TableHead>{tCommon('phone')}</TableHead>
               <TableHead className="hidden md:table-cell">{lang === 'uz' ? 'Toifa' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
               <TableHead className="text-right tabular-nums">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</TableHead>
+                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
@@ -104,7 +105,7 @@ export function CustomersTable({
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-12">
+                <TableCell colSpan={9} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -151,6 +152,9 @@ export function CustomersTable({
                       label={customer.is_active ? tCommon('active') : tCommon('inactive')}
                     />
                   </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {customer.assignee?.full_name || tCommon('unassigned')}
+                      </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <Tooltip>
