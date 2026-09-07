@@ -75,7 +75,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   }
 
   return (
-    <Card className="max-w-2xl border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
       <CardHeader>
         <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200">{t('profile')}</CardTitle>
         <CardDescription>{t('profileDesc')}</CardDescription>

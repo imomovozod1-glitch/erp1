@@ -54,7 +54,7 @@ export function AdminSecurityForm() {
   }
 
   return (
-    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-2xl">
+    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <ShieldCheck className="h-4 w-4 text-violet-600" /> {t('title')}

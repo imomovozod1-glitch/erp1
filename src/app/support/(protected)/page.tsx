@@ -4,6 +4,7 @@ import { Building2 } from 'lucide-react'
 import { getSupportAgentSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { Card, CardContent } from '@/components/ui/card'
+import { SupportConversation } from '@/components/support/support-conversation'
 
 export const metadata: Metadata = { title: 'Assigned tenants' }
 export const dynamic = 'force-dynamic'
@@ -23,7 +24,21 @@ export default async function SupportHomePage() {
     .order('company_name')
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="space-y-8">
+      {/* Conversations first: this is the working surface of the portal —
+          tickets from the agent's assigned tenants, plus direct messages from
+          a super-admin, in one list. */}
+      <section className="space-y-4">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('conversationsHeading')}</h1>
+        <SupportConversation
+          endpoint="/api/support/threads"
+          viewer="agent"
+          showTenantName
+          inboxTopic={`support-inbox:agent:${session!.userId}`}
+        />
+      </section>
+
+      <section className="space-y-4 max-w-3xl">
       <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('assignedTenantsHeading')}</h1>
 
       {!tenants || tenants.length === 0 ? (
@@ -46,6 +61,7 @@ export default async function SupportHomePage() {
           ))}
         </div>
       )}
+      </section>
     </div>
   )
 }

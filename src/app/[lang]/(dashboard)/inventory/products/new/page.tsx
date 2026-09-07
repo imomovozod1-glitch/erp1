@@ -4,6 +4,7 @@ import { ProductForm } from '@/components/inventory/product-form'
 import { Metadata } from 'next'
 import { getCachedCategoriesForSelect } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
+import { requireModuleEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -17,6 +18,8 @@ export default async function NewProductPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // Creating/editing needs the module's Edit permission, not just View.
+  await requireModuleEdit('inventory', lang, '/inventory/products')
   const tenantId = await getCurrentTenantId() as string
   const [t, tCommon, categories] = await Promise.all([
     getTranslations('inventory'),
@@ -35,9 +38,7 @@ export default async function NewProductPage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <ProductForm categories={categories} lang={lang} />
-      </div>
+      <ProductForm categories={categories} lang={lang} />
     </div>
   )
 }

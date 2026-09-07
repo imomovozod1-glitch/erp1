@@ -230,6 +230,18 @@ export async function proxy(request: NextRequest) {
     })
   }
 
+  // The Telegram Mini App entry screen lives outside [lang] and has no tenant
+  // subdomain of its own — Telegram opens it on the bare app host. Running the
+  // locale redirect or the tenant gate against it would bounce it before it
+  // could read initData and work out which tenant to send the user to.
+  if (pathname === '/tg' || pathname.startsWith('/tg/')) {
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      }
+    })
+  }
+
   // Same reasoning for the support-agent portal (support_agents, its own
   // auth model — see src/lib/admin-auth.ts's getSupportAgentSession()).
   if (pathname === '/support' || pathname.startsWith('/support/')) {

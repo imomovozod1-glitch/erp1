@@ -88,17 +88,40 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
     const fetchNotifications = async () => {
       const supabase = createClient() as any
 
-      // 1. Fetch low stock products
-      const { data: products } = await supabase
-        .from('products')
-        .select('id, name, stock, min_stock, updated_at')
-        .eq('is_active', true)
-
-      // 2. Fetch invoices
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('id, invoice_number, total_amount, due_at, customers(name)')
-        .in('status', ['sent', 'overdue'])
+      // These three run concurrently and are BOUNDED. The first two used to
+      // pull every active product and every unpaid invoice in the tenant to
+      // the browser on every page load — and then filter them in JavaScript.
+      // For a catalogue of any size that is the single most expensive thing
+      // the app does per navigation, repeated every 2 minutes thereafter.
+      //
+      // `is_low_stock` is a generated column added by
+      // migration_low_stock_column.sql, so "stock <= min_stock" is now an
+      // indexed predicate the database evaluates instead of a filter over the
+      // whole table in the client. Overdue invoices filter on due_at directly.
+      const todayISO = new Date().toISOString().split('T')[0]
+      const [{ data: products }, { data: invoices }, { data: supportReplies }] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id, name, stock, min_stock, updated_at')
+          .eq('is_active', true)
+          .eq('is_low_stock', true)
+          .order('stock', { ascending: true })
+          .limit(20),
+        supabase
+          .from('invoices')
+          .select('id, invoice_number, total_amount, due_at, customers(name)')
+          .in('status', ['sent', 'overdue'])
+          .lt('due_at', todayISO)
+          .order('due_at', { ascending: true })
+          .limit(20),
+        supabase
+          .from('support_messages')
+          .select('id, body, sender_name, sender_role, created_at')
+          .in('sender_role', ['agent', 'admin'])
+          .is('read_by_tenant_at', null)
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ])
 
       // Load read IDs from localStorage
       let readIds: string[] = []
@@ -111,9 +134,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         console.error(e)
       }
 
-      const lowStockAlerts = (products || [])
-        .filter((p: any) => p.stock <= p.min_stock)
-        .map((p: any) => ({
+      const lowStockAlerts = (products || []).map((p: any) => ({
           id: `low-stock-${p.id}`,
           type: 'low_stock',
           title: lang === 'uz' ? 'Kam qolgan tovar' : lang === 'ru' ? 'Мало на складе' : 'Low stock alert',
@@ -127,9 +148,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           created_at: new Date(p.updated_at || Date.now()),
         }))
 
-      const overdueAlerts = (invoices || [])
-        .filter((i: any) => new Date(i.due_at) < new Date())
-        .map((i: any) => ({
+      const overdueAlerts = (invoices || []).map((i: any) => ({
           id: `overdue-invoice-${i.id}`,
           type: 'overdue_invoice',
           title: lang === 'uz' ? 'Muddati o\'tgan faktura' : lang === 'ru' ? 'Просроченный счет' : 'Overdue invoice',
@@ -143,7 +162,19 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           created_at: new Date(i.due_at),
         }))
 
-      const allNotifications = [...lowStockAlerts, ...overdueAlerts].sort(
+      const supportAlerts = (supportReplies || []).map((m: any) => ({
+        id: `support-reply-${m.id}`,
+        type: 'support_reply',
+        title: lang === 'uz' ? 'Qo\'llab-quvvatlash javobi' : lang === 'ru' ? 'Ответ поддержки' : 'Support reply',
+        description: `${m.sender_name}: ${String(m.body).slice(0, 90)}`,
+        href: `/${lang}/support`,
+        // Always unread: the row itself is the unread marker, and it stops
+        // being returned once the thread is opened.
+        read: false,
+        created_at: new Date(m.created_at),
+      }))
+
+      const allNotifications = [...supportAlerts, ...lowStockAlerts, ...overdueAlerts].sort(
         (a, b) => b.created_at.getTime() - a.created_at.getTime()
       )
 

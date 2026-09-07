@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { SupportAgentForm } from '@/components/admin/support-agent-form'
 import { DeleteSupportAgentButton } from '@/components/admin/delete-support-agent-button'
+import { MessageAgentForm } from '@/components/admin/message-agent-form'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { getCacheClient } from '@/lib/supabase/cache-client'
@@ -55,6 +56,8 @@ export default async function SupportAgentDetailPage({
           )}
         </CardContent>
       </Card>
+
+      <MessageAgentForm agentId={agent.id} agentName={agent.full_name} />
 
       <DeleteSupportAgentButton agentId={agent.id} />
     </div>

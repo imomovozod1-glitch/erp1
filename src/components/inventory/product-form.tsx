@@ -302,8 +302,8 @@ export function ProductForm({ initialData, categories, lang }: ProductFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-4xl bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">{t('productName')} *</Label>
           <Input id="name" {...register('name')} placeholder={t('productName')} />

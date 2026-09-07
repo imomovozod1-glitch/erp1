@@ -1,19 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingCart } from 'lucide-react'
+import { ShoppingCart } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import {
-  } from '@/components/ui/dropdown-menu'
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 const STATUS_TONES: Record<string, StatusTone> = {
@@ -25,48 +21,39 @@ const STATUS_TONES: Record<string, StatusTone> = {
 }
 
 interface PurchaseOrdersTableProps {
+  /** Only the current page's rows — the server applied search and paging. */
   orders: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }
 
-export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) {
+export function PurchaseOrdersTable({
+  orders,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+}: PurchaseOrdersTableProps) {
   const t = useTranslations('procurement')
   const tCommon = useTranslations('common')
   const router = useRouter()
-  const [search, setSearch] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
 
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
 
-  const filtered = orders.filter(
-    (o) =>
-      o.po_number.toLowerCase().includes(search.toLowerCase()) ||
-      (o.suppliers?.name ?? '').toLowerCase().includes(search.toLowerCase())
-  )
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // No client-side filtering or slicing: `orders` IS the current page.
+  const paginated = orders
 
   return (
     <>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={`${tCommon('search')}...`}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9"
-              />
-            </div>
-            <span className="text-xs text-muted-foreground">{filtered.length} {tCommon('rows')}</span>
+            <TableSearch />
+            <span className="text-xs text-muted-foreground">{total} {tCommon('rows')}</span>
           </div>
           <Table>
             <TableHeader>
@@ -75,12 +62,12 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                 <TableHead>{t('poNumber')}</TableHead>
                 <TableHead>{t('supplier')}</TableHead>
                 <TableHead className="hidden md:table-cell">{tCommon('date')}</TableHead>
-                <TableHead className="text-right">{tCommon('total')}</TableHead>
+                <TableHead className="text-right tabular-nums">{tCommon('total')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paginated.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -97,7 +84,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                     onClick={() => router.push(`/${lang}/procurement/purchase-orders/${order.id}`)}
                   >
                     <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
+                      {(page - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell>
                       <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono font-semibold">
@@ -106,7 +93,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
                     </TableCell>
                     <TableCell className="font-medium text-slate-800 dark:text-slate-200">{order.suppliers?.name ?? '—'}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">{formatDateTime(order.created_at)}</TableCell>
-                    <TableCell className="text-right font-semibold">{formatCurrency(order.total_amount)}</TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums">{formatCurrency(order.total_amount)}</TableCell>
                     <TableCell>
                       <StatusBadge tone={STATUS_TONES[order.status] ?? 'slate'} label={t(`status.${order.status}`)} />
                     </TableCell>
@@ -115,31 +102,7 @@ export function PurchaseOrdersTable({ orders, lang }: PurchaseOrdersTableProps) 
               )}
             </TableBody>
           </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs text-muted-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
     </>

@@ -69,7 +69,7 @@ export function CompanyForm() {
 
   if (isLoading) {
     return (
-      <Card className="max-w-2xl border-slate-200/60 dark:border-slate-800 shadow-sm">
+      <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
         <CardHeader>
           <Skeleton className="h-6 w-1/3 mb-2" />
           <Skeleton className="h-4 w-1/2" />
@@ -84,7 +84,7 @@ export function CompanyForm() {
 
   if (!tenant) {
     return (
-      <Card className="max-w-2xl border-slate-200/60 dark:border-slate-800 shadow-sm">
+      <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
         <CardContent className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">
           {t('company')}
         </CardContent>
@@ -96,7 +96,7 @@ export function CompanyForm() {
     tenant.status === 'active' ? tForm('statusActive') : tenant.status === 'blocked' ? tForm('statusBlocked') : tForm('statusInactive')
 
   return (
-    <Card className="max-w-2xl border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200">{t('company')}</CardTitle>

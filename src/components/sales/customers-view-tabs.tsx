@@ -6,11 +6,26 @@ import { CustomersTable } from './customers-table'
 import { AllCustomersMap } from './all-customers-map'
 
 interface CustomersViewTabsProps {
+  /** Current page of customers, for the list tab. */
   customers: any[]
+  /** Every customer that has coordinates, for the map tab. */
+  mapCustomers: any[]
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
   lang: string
 }
 
-export function CustomersViewTabs({ customers, lang }: CustomersViewTabsProps) {
+export function CustomersViewTabs({
+  customers,
+  mapCustomers,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+}: CustomersViewTabsProps) {
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list')
 
   return (
@@ -43,9 +58,16 @@ export function CustomersViewTabs({ customers, lang }: CustomersViewTabsProps) {
       </div>
 
       {activeTab === 'list' ? (
-        <CustomersTable customers={customers} lang={lang} />
+        <CustomersTable
+          customers={customers}
+          lang={lang}
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          totalPages={totalPages}
+        />
       ) : (
-        <AllCustomersMap customers={customers} lang={lang} />
+        <AllCustomersMap customers={mapCustomers} lang={lang} />
       )}
     </div>
   )

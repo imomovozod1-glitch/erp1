@@ -319,7 +319,7 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Customer Selection */}
       <Card className="border shadow-sm">
         <CardHeader className="pb-3">

@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { getSessionUser } from '@/lib/auth'
 import { PageHeader } from '@/components/shared/page-header'
 import { PrinterSettings } from '@/components/settings/printer-settings'
+import { requireModuleView } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -17,6 +18,10 @@ export default async function PrinterSettingsPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // Settings is a permissioned module; profile/ and security/ deliberately
+  // stay open so a user can always read their own details and change their
+  // own password.
+  await requireModuleView('settings', lang)
   const user = await getSessionUser()
 
   if (!user) {

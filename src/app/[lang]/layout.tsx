@@ -4,7 +4,6 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { QueryProvider } from '@/components/providers/query-provider'
 import { NavigationProgress } from '@/components/providers/navigation-progress'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { CapacitorProvider } from '@/components/providers/capacitor-provider'
@@ -62,13 +61,11 @@ export default async function RootLayout({
         <ThemeProvider>
           <CapacitorProvider />
           <NextIntlClientProvider messages={messages}>
-            <QueryProvider>
               <NavigationProgress />
               <TooltipProvider>
                 {children}
                 <Toaster richColors position="top-right" />
               </TooltipProvider>
-            </QueryProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

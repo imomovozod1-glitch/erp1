@@ -179,7 +179,7 @@ export function TelegramIntegrationForm() {
 
   if (isLoading) {
     return (
-      <Card className="max-w-2xl border-slate-200/60 dark:border-slate-800 shadow-sm">
+      <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
         <CardHeader>
           <Skeleton className="h-6 w-1/3 mb-2" />
           <Skeleton className="h-4 w-2/3" />
@@ -194,7 +194,7 @@ export function TelegramIntegrationForm() {
   }
 
   return (
-    <Card className="max-w-2xl border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">

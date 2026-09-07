@@ -5,6 +5,7 @@ import { getCachedCustomerById, getCachedCustomerCategories } from '@/lib/data/q
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { requireModuleEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -18,6 +19,8 @@ export default async function EditCustomerPage({
   params: Promise<{ lang: string; id: string }>
 }) {
   const { lang, id } = await params
+  // Creating/editing needs the module's Edit permission, not just View.
+  await requireModuleEdit('customers', lang, '/customers')
   const tenantId = await getCurrentTenantId() as string
   const [t, tCommon, tNav, customer, categories] = await Promise.all([
     getTranslations('sales'),
@@ -42,9 +45,7 @@ export default async function EditCustomerPage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <CustomerForm initialData={customer} categories={categories} lang={lang} />
-      </div>
+      <CustomerForm initialData={customer} categories={categories} lang={lang} />
     </div>
   )
 }

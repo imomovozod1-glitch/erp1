@@ -3,20 +3,39 @@ import { getTranslations } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { OrdersTable } from '@/components/sales/orders-table'
-import { getCachedOrders } from '@/lib/data/queries'
+import { getOrdersPage } from '@/lib/data/queries'
+import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
+import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 
 export const revalidate = 30
 
 export const metadata: Metadata = { title: 'Orders' }
 
-export default async function OrdersPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
+export default async function OrdersPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lang: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [{ lang }, sp] = await Promise.all([params, searchParams])
+  // Paging and search live in the URL and are applied by Postgres; this page
+  // used to fetch every row in the tenant and slice ten out in the browser.
+  const { page, pageSize, search } = readPageParams(sp)
+  // A user whose data scope for this module is 'own' only ever sees the
+  // records they created — applied in the query, not by hiding rows after the
+  // fact.
+  const [scope, permCtx] = await Promise.all([getDataScope('sales'), getPermissionContext()])
+  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  // Don't offer an action the user isn't allowed to complete — the
+  // /new route guard would just bounce them straight back.
+  const canEdit = await canEditModule('sales')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tInfo, orders] = await Promise.all([
+  const [t, tInfo, result] = await Promise.all([
     getTranslations('sales'),
     getTranslations('pageInfo'),
-    getCachedOrders(tenantId),
+    getOrdersPage(tenantId, { page, pageSize, search, ownerId }),
   ])
 
   return (
@@ -25,14 +44,21 @@ export default async function OrdersPage({ params }: { params: Promise<{ lang: s
         title={t('orders')}
         subtitle={t('title')}
         info={tInfo('salesOrders')}
-        action={{ label: t('addSale'), href: `/${lang}/sales/orders/new`, icon: Plus }}
+        action={canEdit ? { label: t('addSale'), href: `/${lang}/sales/orders/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('orders') },
         ]}
       />
-      <OrdersTable orders={orders} lang={lang} />
+      <OrdersTable
+        orders={result.rows}
+        lang={lang}
+        page={result.page}
+        pageSize={result.pageSize}
+        total={result.total}
+        totalPages={result.totalPages}
+      />
     </div>
   )
 }

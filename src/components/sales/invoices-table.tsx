@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Search, MoreHorizontal, Pencil, FileText, CheckCircle2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, FileText, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -16,6 +14,7 @@ import {
   TableHeader, TableRow,
 } from '@/components/ui/table'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 const STATUS_TONES: Record<string, StatusTone> = {
@@ -27,48 +26,39 @@ const STATUS_TONES: Record<string, StatusTone> = {
 }
 
 interface InvoicesTableProps {
+  /** Only the current page's rows — the server applied search and paging. */
   invoices: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }
 
-export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
+export function InvoicesTable({
+  invoices,
+  lang,
+  page,
+  pageSize,
+  total,
+  totalPages,
+}: InvoicesTableProps) {
   const tCommon = useTranslations('common')
   const t = useTranslations('sales')
   const router = useRouter()
-  const [search, setSearch] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
 
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
 
-  const filtered = invoices.filter(
-    (i) =>
-      i.invoice_number.toLowerCase().includes(search.toLowerCase()) ||
-      (i.customers?.name ?? '').toLowerCase().includes(search.toLowerCase())
-  )
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // No client-side filtering or slicing: `invoices` IS the current page.
+  const paginated = invoices
 
   return (
     <>
       <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
         <div className="flex flex-wrap items-center gap-3 p-4 border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={`${tCommon('search')}...`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
-            />
-          </div>
-          <span className="text-xs text-muted-foreground">{filtered.length} {tCommon('rows')}</span>
+            <TableSearch />
+          <span className="text-xs text-muted-foreground">{total} {tCommon('rows')}</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -78,15 +68,15 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                 <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
                 <TableHead className="w-45">{t('invoiceNumber')}</TableHead>
                 <TableHead>{t('customer')}</TableHead>
-                <TableHead>{tCommon('status')}</TableHead>
-                <TableHead className="text-right">{tCommon('total')}</TableHead>
-                <TableHead className="hidden md:table-cell text-right">{t('status.paid')}</TableHead>
+                <TableHead className="text-right tabular-nums">{tCommon('total')}</TableHead>
+                <TableHead className="hidden md:table-cell text-right tabular-nums">{t('status.paid')}</TableHead>
                 <TableHead className="hidden md:table-cell text-right">{tCommon('date')}</TableHead>
+                <TableHead>{tCommon('status')}</TableHead>
                 <TableHead className="w-17.5"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paginated.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
                     {tCommon('noData')}
@@ -100,7 +90,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}`)}
                   >
                     <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
+                      {(page - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -122,6 +112,15 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                     <TableCell>
                       <div className="font-medium text-slate-900 dark:text-slate-100">{invoice.customers?.name || '-'}</div>
                     </TableCell>
+                    <TableCell className="text-right font-medium tabular-nums">
+                      {formatCurrency(invoice.total_amount)}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-right text-muted-foreground tabular-nums">
+                      {formatCurrency(invoice.paid_amount)}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-right text-muted-foreground">
+                      {formatDateTime(invoice.created_at)}
+                    </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex flex-col items-start gap-1.5">
                         <StatusBadge tone={STATUS_TONES[invoice.status] ?? 'slate'} label={t(`status.${invoice.status}`)} />
@@ -136,15 +135,6 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
                           </Button>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(invoice.total_amount)}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-right text-muted-foreground">
-                      {formatCurrency(invoice.paid_amount)}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-right text-muted-foreground">
-                      {formatDateTime(invoice.created_at)}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
@@ -174,31 +164,7 @@ export function InvoicesTable({ invoices, lang }: InvoicesTableProps) {
           </TableBody>
         </Table>
       </div>
-      {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs text-muted-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
     </>

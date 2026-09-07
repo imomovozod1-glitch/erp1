@@ -88,7 +88,9 @@
     "created": "Успешно создано",
     "saved": "Успешно сохранено",
     "testPrint": "Тест",
-    "other": "Прочие"
+    "tooLong": "Слишком длинно",
+    "invalidDate": "Некорректная дата",
+    "showingRange": "{first}-{last} из {total}"
   },
   "nav": {
     "dashboard": "Панель управления",
@@ -409,7 +411,9 @@
       "marketing": "Маркетинг",
       "supplies": "Расходные материалы",
       "other_expense": "Прочие расходы"
-    }
+    },
+    "totalBalance": "Общий баланс",
+    "cashboxCount": "Касс: {count}"
   },
   "hr": {
     "title": "Управление персоналом",
@@ -449,7 +453,16 @@
     "cashbox": "Касса",
     "cashboxAuto": "Создать автоматически (на имя сотрудника)",
     "cashboxHint": "Если не выбрать, отдельная касса будет создана автоматически на имя сотрудника",
-    "employeeCashboxDescription": "Личная касса для {name}"
+    "employeeCashboxDescription": "Личная касса для {name}",
+    "roleNameTaken": "Роль с таким названием уже существует",
+    "rolePropagated": "Роль сохранена — обновлено пользователей: {count}",
+    "employeeCodeFormat": "Только буквы, цифры и символы . _ -",
+    "employeeCodeTaken": "Такой код сотрудника уже существует",
+    "hiredAtFuture": "Дата приёма не может быть в будущем",
+    "terminatedAtRequired": "Для неактивного сотрудника нужна дата увольнения",
+    "terminatedBeforeHired": "Дата увольнения не может быть раньше даты приёма",
+    "terminatedAtFuture": "Дата увольнения не может быть в будущем",
+    "selectAccountRequired": "Выберите учётную запись"
   },
   "procurement": {
     "title": "Закупки",
@@ -666,7 +679,9 @@
       "errorChatIdFormat": "Неверный формат chat ID",
       "errorNotConfigured": "Сначала сохраните токен бота",
       "errorSendFailed": "Не удалось отправить сообщение"
-    }
+    },
+    "cannotChangeOwnAccess": "Вы не можете изменить свою роль или статус",
+    "lastAdminError": "Нельзя изменить последнего активного администратора"
   },
   "tools": {
     "title": "Инструменты",
@@ -1049,6 +1064,33 @@
     "tooManyAttempts": "Слишком много попыток, попробуйте позже",
     "assignedTenantsHeading": "Закреплённые за вами клиенты",
     "noAssignedTenants": "За вами пока не закреплено ни одного клиента",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "conversationsHeading": "Диалоги"
+  },
+  "supportChat": {
+    "myTickets": "Мои обращения",
+    "noThreads": "Пока нет диалогов",
+    "selectThread": "Выберите диалог",
+    "replyPlaceholder": "Напишите сообщение… (Enter — отправить)",
+    "threadClosed": "Диалог закрыт",
+    "fromAdmin": "От админа",
+    "status_open": "Открыт",
+    "status_answered": "Есть ответ",
+    "status_closed": "Закрыт"
+  },
+  "permissions": {
+    "module": "Модуль",
+    "scope": "Область данных",
+    "scope_all": "Все",
+    "scope_own": "Только свои",
+    "grantAll": "Все",
+    "clearAll": "Очистить",
+    "action_view": "Просмотр",
+    "action_create": "Создание",
+    "action_edit": "Изменение",
+    "action_delete": "Удаление",
+    "action_export": "Экспорт",
+    "action_approve": "Утверждение",
+    "scopeHint": "При «Только свои» пользователь видит в модуле лишь записи, созданные им самим."
   }
 }

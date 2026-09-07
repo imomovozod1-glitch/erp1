@@ -88,7 +88,9 @@
     "created": "Created successfully",
     "saved": "Saved successfully",
     "testPrint": "Test",
-    "other": "Other"
+    "tooLong": "Too long",
+    "invalidDate": "Invalid date",
+    "showingRange": "{first}-{last} of {total}"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -409,7 +411,9 @@
       "marketing": "Marketing",
       "supplies": "Supplies",
       "other_expense": "Other Expense"
-    }
+    },
+    "totalBalance": "Total balance",
+    "cashboxCount": "{count} cashbox(es)"
   },
   "hr": {
     "title": "Human Resources",
@@ -449,7 +453,16 @@
     "cashbox": "Cashbox",
     "cashboxAuto": "Create automatically (named after employee)",
     "cashboxHint": "If left unselected, a dedicated cashbox will be created automatically for this employee",
-    "employeeCashboxDescription": "Personal cashbox for {name}"
+    "employeeCashboxDescription": "Personal cashbox for {name}",
+    "roleNameTaken": "A role with this name already exists",
+    "rolePropagated": "Role saved — {count} user(s) updated",
+    "employeeCodeFormat": "Letters, digits and . _ - only",
+    "employeeCodeTaken": "This employee code is already in use",
+    "hiredAtFuture": "Hire date cannot be in the future",
+    "terminatedAtRequired": "An inactive employee needs a termination date",
+    "terminatedBeforeHired": "Termination date cannot precede the hire date",
+    "terminatedAtFuture": "Termination date cannot be in the future",
+    "selectAccountRequired": "Select an account"
   },
   "procurement": {
     "title": "Procurement",
@@ -666,7 +679,9 @@
       "errorChatIdFormat": "Invalid chat ID format",
       "errorNotConfigured": "Save the bot token first",
       "errorSendFailed": "Could not send the message"
-    }
+    },
+    "cannotChangeOwnAccess": "You cannot change your own role or status",
+    "lastAdminError": "Cannot change the last active administrator"
   },
   "tools": {
     "title": "Tools",
@@ -1049,6 +1064,33 @@
     "tooManyAttempts": "Too many attempts, try again later",
     "assignedTenantsHeading": "Tenants assigned to you",
     "noAssignedTenants": "No tenants have been assigned to you yet",
-    "logout": "Log out"
+    "logout": "Log out",
+    "conversationsHeading": "Conversations"
+  },
+  "supportChat": {
+    "myTickets": "My tickets",
+    "noThreads": "No conversations yet",
+    "selectThread": "Select a conversation",
+    "replyPlaceholder": "Write a message… (Enter to send)",
+    "threadClosed": "This conversation is closed",
+    "fromAdmin": "From admin",
+    "status_open": "Open",
+    "status_answered": "Answered",
+    "status_closed": "Closed"
+  },
+  "permissions": {
+    "module": "Module",
+    "scope": "Data scope",
+    "scope_all": "All records",
+    "scope_own": "Own only",
+    "grantAll": "Grant all",
+    "clearAll": "Clear",
+    "action_view": "View",
+    "action_create": "Create",
+    "action_edit": "Edit",
+    "action_delete": "Delete",
+    "action_export": "Export",
+    "action_approve": "Approve",
+    "scopeHint": "With “Own only”, the user sees just the records they created in that module."
   }
 }

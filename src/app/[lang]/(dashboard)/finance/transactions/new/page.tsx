@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { TransactionForm } from '@/components/finance/transaction-form'
 import { Metadata } from 'next'
+import { requireModuleEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -17,6 +18,8 @@ export default async function NewTransactionPage({
   searchParams: Promise<{ type?: string }>
 }) {
   const { lang } = await params
+  // Creating/editing needs the module's Edit permission, not just View.
+  await requireModuleEdit('finance', lang, '/finance/transactions')
   const { type } = await searchParams
   const [t, tCommon] = await Promise.all([
     getTranslations('finance'),
@@ -36,9 +39,7 @@ export default async function NewTransactionPage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <TransactionForm lang={lang} defaultType={defaultType} />
-      </div>
+      <TransactionForm lang={lang} defaultType={defaultType} />
     </div>
   )
 }

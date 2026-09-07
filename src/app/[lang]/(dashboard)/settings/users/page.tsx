@@ -5,6 +5,7 @@ import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { UsersList } from '@/components/settings/users-list'
+import { requireModuleView } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -18,6 +19,10 @@ export default async function UsersSettingsPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // Settings is a permissioned module; profile/ and security/ deliberately
+  // stay open so a user can always read their own details and change their
+  // own password.
+  await requireModuleView('settings', lang)
   const user = await getSessionUser()
 
   if (!user) {

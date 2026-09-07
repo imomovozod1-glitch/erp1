@@ -4,6 +4,7 @@ import { InvoiceForm } from '@/components/sales/invoice-form'
 import { getCachedCustomersForSelect, getCachedOrders } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
+import { requireModuleEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -17,6 +18,8 @@ export default async function NewInvoicePage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // Creating/editing needs the module's Edit permission, not just View.
+  await requireModuleEdit('sales', lang, '/sales/invoices')
   const tenantId = await getCurrentTenantId() as string
   const [t, tCommon, customers, orders] = await Promise.all([
     getTranslations('sales'),
@@ -36,9 +39,7 @@ export default async function NewInvoicePage({
           { label: tCommon('add') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <InvoiceForm customers={customers} orders={orders} lang={lang} />
-      </div>
+      <InvoiceForm customers={customers} orders={orders} lang={lang} />
     </div>
   )
 }

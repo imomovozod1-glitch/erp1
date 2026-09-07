@@ -74,6 +74,12 @@ export function SupplierImportExport({ suppliers, lang }: SupplierImportExportPr
 
   return (
     <ImportExportMenu
+      // The list is server-paginated, so `suppliers` is one page; export must
+      // still cover every supplier.
+      fetchAllRows={async () => {
+        const { data } = await createClient().from('suppliers').select('*').order('created_at', { ascending: false })
+        return data ?? []
+      }}
       data={exportRows}
       exportColumns={EXPORT_COLUMNS}
       templateColumns={TEMPLATE_COLUMNS}

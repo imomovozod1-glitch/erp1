@@ -19,34 +19,57 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { SupportChatbot } from '@/components/support/support-chatbot'
+import { SupportConversation } from '@/components/support/support-conversation'
 
 interface SupportClientProps {
   lang: string
+  tenantId: string | null
 }
 
-export function SupportClient({ lang }: SupportClientProps) {
+export function SupportClient({ lang, tenantId }: SupportClientProps) {
   const t = useTranslations('support')
   const tInfo = useTranslations('pageInfo')
+  const tCommon = useTranslations('common')
+  const tChat = useTranslations('supportChat')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [threadsVersion, setThreadsVersion] = useState(0)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // This used to be a prop: a setTimeout, a success toast, and the text thrown
+  // away — nothing was stored, so nothing could ever be answered. It now opens
+  // a real thread that the assigned support agent sees in their portal.
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!subject.trim() || !message.trim()) {
+    if (isSubmitting) return
+    if (subject.trim().length < 3 || !message.trim()) {
       toast.error(lang === 'uz' ? "Mavzu va xabar to'ldirilishi shart" : lang === 'ru' ? 'Тема и сообщение обязательны для заполнения' : 'Subject and message are required')
       return
     }
 
     setIsSubmitting(true)
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      const res = await fetch('/api/tenant/support/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: subject.trim(), body: message.trim() }),
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.error || tCommon('error'))
+      }
       setIsSubmitted(true)
       toast.success(t('ticketSuccess'))
       setSubject('')
       setMessage('')
-    }, 1500)
+      // Tell the conversation panel below to pull in the new thread.
+      setThreadsVersion((v) => v + 1)
+    } catch (error: any) {
+      toast.error(error.message || tCommon('error'))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleCopy = (text: string, label: string) => {
@@ -246,6 +269,18 @@ export function SupportClient({ lang }: SupportClientProps) {
           </div>
         </div>
       </div>
+
+      {/* The tenant's own tickets and the replies to them. This is where an
+          answer from the assigned support agent actually lands. */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{tChat('myTickets')}</h2>
+        <SupportConversation
+          endpoint="/api/tenant/support/threads"
+          viewer="tenant"
+          refreshKey={threadsVersion}
+          inboxTopic={tenantId ? `support-inbox:tenant:${tenantId}` : undefined}
+        />
+      </section>
 
       <SupportChatbot lang={lang} />
     </div>

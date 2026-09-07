@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { TransactionCategoriesTable } from '@/components/finance/transaction-categories-table'
 import { getCachedTransactionCategories } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
+import { canEditModule } from '@/lib/permissions-server'
 
 export const revalidate = 120
 
@@ -20,6 +21,9 @@ export default async function TransactionCategoriesPage({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // Don't offer an action the user isn't allowed to complete — the
+  // /new route guard would just bounce them straight back.
+  const canEdit = await canEditModule('finance')
   const tenantId = await getCurrentTenantId() as string
   const [t, tInfo, categories] = await Promise.all([
     getTranslations('finance'),
@@ -33,11 +37,11 @@ export default async function TransactionCategoriesPage({
         title={t('txCategories')}
         subtitle={t('txCategoriesSubtitle')}
         info={tInfo('txCategories')}
-        action={{
+        action={canEdit ? {
           label: t('addTxCategory'),
           href: `/${lang}/finance/categories/new`,
           icon: Plus,
-        }}
+        } : undefined}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/finance/cashbox` },

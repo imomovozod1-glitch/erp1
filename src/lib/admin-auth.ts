@@ -7,6 +7,8 @@
  * the `/api/admin/**` route handlers (return 401/403 JSON on failure).
  */
 
+import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 
@@ -50,10 +52,45 @@ export async function getSuperAdminSession(): Promise<SuperAdminSession | null> 
  * super admins included). The tenant dashboard layout calls this to redirect
  * such sessions away instead of rendering as if they were a tenant user.
  */
+export type StaffIdentity = 'super_admin' | 'support_agent' | null
+
+/**
+ * Which staff identity (if any) an auth user has.
+ *
+ * The dashboard layout has to answer this on every navigation, and it used to
+ * do so with two separate, UNCACHED, strictly sequential Supabase round trips
+ * (`isSuperAdmin` then `isSupportAgent`) before it could render anything —
+ * on a connection where each round trip is 200-400ms, that alone put most of a
+ * second in front of every page, for two lookups whose answer changes roughly
+ * never.
+ *
+ * Now: both queries run concurrently, and the result is cached for 5 minutes
+ * per user id and tagged so the admin routes that create or delete these
+ * accounts can invalidate it immediately.
+ */
+const _getStaffIdentity = (userId: string) =>
+  unstable_cache(
+    async (): Promise<StaffIdentity> => {
+      const serviceClient = getCacheClient() as any
+      const [{ data: admin }, { data: agent }] = await Promise.all([
+        serviceClient.from('super_admins').select('id').eq('id', userId).maybeSingle(),
+        serviceClient.from('support_agents').select('id').eq('id', userId).maybeSingle(),
+      ])
+      if (admin) return 'super_admin'
+      if (agent) return 'support_agent'
+      return null
+    },
+    ['staff-identity', userId],
+    { revalidate: 300, tags: [`staff-identity:${userId}`, 'staff-identity'] }
+  )()
+
+/** Memoised per request on top of the cross-request data cache. */
+export const getStaffIdentity = cache(async (userId: string): Promise<StaffIdentity> =>
+  _getStaffIdentity(userId)
+)
+
 export async function isSuperAdmin(userId: string): Promise<boolean> {
-  const serviceClient = getCacheClient() as any
-  const { data } = await serviceClient.from('super_admins').select('id').eq('id', userId).maybeSingle()
-  return !!data
+  return (await getStaffIdentity(userId)) === 'super_admin'
 }
 
 export interface SupportAgentSession {
@@ -91,7 +128,5 @@ export async function getSupportAgentSession(): Promise<SupportAgentSession | nu
  * the tenant dashboard using that stray profile.
  */
 export async function isSupportAgent(userId: string): Promise<boolean> {
-  const serviceClient = getCacheClient() as any
-  const { data } = await serviceClient.from('support_agents').select('id').eq('id', userId).maybeSingle()
-  return !!data
+  return (await getStaffIdentity(userId)) === 'support_agent'
 }

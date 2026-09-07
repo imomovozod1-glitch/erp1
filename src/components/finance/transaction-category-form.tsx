@@ -76,7 +76,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
       <div className="space-y-2">
         <Label htmlFor="name">{tCommon('name')} *</Label>
         <Input

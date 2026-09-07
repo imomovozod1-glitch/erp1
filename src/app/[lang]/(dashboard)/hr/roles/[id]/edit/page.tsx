@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { getCachedRoleTemplateById } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { notFound } from 'next/navigation'
+import { requireModuleEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -26,6 +27,8 @@ export default async function EditRoleTemplatePage({
   params: Promise<{ lang: string; id: string }>
 }) {
   const { lang, id } = await params
+  // Creating/editing needs the module's Edit permission, not just View.
+  await requireModuleEdit('hr', lang, '/hr/roles')
   const tenantId = await getCurrentTenantId() as string
 
   const role = await fetchRole(id, tenantId)
@@ -47,9 +50,7 @@ export default async function EditRoleTemplatePage({
           { label: tCommon('edit') },
         ]}
       />
-      <div className="px-4 md:px-8">
-        <RoleTemplateForm lang={lang} initialData={role} />
-      </div>
+      <RoleTemplateForm lang={lang} initialData={role} />
     </div>
   )
 }

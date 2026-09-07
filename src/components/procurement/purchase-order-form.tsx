@@ -280,9 +280,9 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Supplier + AI Scan */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <Card className="border shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">{t('supplier')}</CardTitle>
