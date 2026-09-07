@@ -38,6 +38,16 @@ export default function TelegramLayout({ children }: { children: React.ReactNode
           waits for the object, so a slow or blocked CDN degrades into a short
           wait rather than a wrong answer.
         */}
+        {/*
+          eslint-disable-next-line @next/next/no-sync-scripts -- the rule is a
+          general performance heuristic; here the script is synchronous ON
+          PURPOSE. Deferring it is precisely what caused the Mini App to report
+          "open me inside Telegram" while inside Telegram, and this page is a
+          thin entry screen with nothing else to render meanwhile. Correctness
+          no longer depends on it — TelegramEntry waits for the object either
+          way — but the fast path should stay synchronous.
+        */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="https://telegram.org/js/telegram-web-app.js" />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
