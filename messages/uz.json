@@ -1077,5 +1077,20 @@
     "status_open": "Ochiq",
     "status_answered": "Javob berildi",
     "status_closed": "Yopilgan"
+  },
+  "permissions": {
+    "module": "Modul",
+    "scope": "Ma’lumot doirasi",
+    "scope_all": "Hammasi",
+    "scope_own": "Faqat o‘zi",
+    "grantAll": "Hammasi",
+    "clearAll": "Tozalash",
+    "action_view": "Ko‘rish",
+    "action_create": "Yaratish",
+    "action_edit": "Tahrirlash",
+    "action_delete": "O‘chirish",
+    "action_export": "Eksport",
+    "action_approve": "Tasdiqlash",
+    "scopeHint": "“Faqat o‘zi” tanlansa, foydalanuvchi shu modulda faqat o‘zi yaratgan yozuvlarni ko‘radi."
   }
 }

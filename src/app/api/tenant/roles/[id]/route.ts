@@ -3,45 +3,30 @@ import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { invalidateProfile, invalidateRoleTemplates } from '@/lib/data/revalidate'
-import { PERMISSION_MODULES } from '@/lib/permissions'
+import { PERMISSION_MODULES, normaliseModulePermission } from '@/lib/permissions'
 
 /**
  * Create/update/delete a role template, and keep the people already on that
- * role in sync.
- *
- * Two things this fixes over writing `role_templates` straight from the form:
- *
- *  1. Propagation. `profiles.permissions` is a COPY taken when the role was
- *     applied, and `profiles.role_template_id` only records where that copy
- *     came from. Editing a role therefore changed nothing for anyone already
- *     assigned to it — the admin saw "Sotuvchi" gain a module and reasonably
- *     assumed every Sotuvchi now had it, while every existing one kept the old
- *     copy indefinitely. The PATCH below re-applies the new permission set to
- *     every profile carrying this template.
- *
- *  2. Privilege. Role templates decide what users may see and do, so editing
- *     them is an admin operation — and since `profiles.permissions` is no
- *     longer writable by `authenticated`
- *     (migration_profile_privilege_lockdown.sql), the propagation step needs
- *     the service-role key regardless.
+ * role in sync — editing a role re-applies its new permission set to every
+ * profile carrying it, since `profiles.permissions` is a copy taken when the
+ * role was applied. Admin-only: role templates decide what their holders may
+ * see and do.
  */
 
-const permissionsSchema = z.record(
-  z.string(),
-  z.object({ view: z.boolean(), edit: z.boolean() })
-)
+// Loose per-module object; `normalise` below pins the actual action set.
+const permissionsSchema = z.record(z.string(), z.record(z.string(), z.unknown()))
 
 const bodySchema = z.object({
   name: z.string().trim().min(1).max(80),
   permissions: permissionsSchema,
 })
 
-/** Keep only known modules, and normalise "edit implies view". */
-function normalise(permissions: Record<string, { view: boolean; edit: boolean }>) {
-  const out: Record<string, { view: boolean; edit: boolean }> = {}
+/** Keeps only known modules and normalises each module's action set. */
+function normalise(permissions: Record<string, unknown>) {
+  const out: Record<string, unknown> = {}
   for (const moduleKey of PERMISSION_MODULES) {
     const entry = permissions[moduleKey]
-    if (entry) out[moduleKey] = { view: entry.view || entry.edit, edit: entry.edit }
+    if (entry) out[moduleKey] = normaliseModulePermission(entry)
   }
   return out
 }

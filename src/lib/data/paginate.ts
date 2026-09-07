@@ -81,6 +81,14 @@ interface QueryPageOptions {
   filters?: Record<string, string | number | boolean | undefined>
   /** Values the column must be one of. */
   inFilters?: Record<string, (string | number)[] | undefined>
+  /**
+   * Restricts the query to records created by this user. Set when the caller's
+   * data scope for the module is 'own' — a salesperson who may see their own
+   * orders but not the whole company's.
+   */
+  ownerId?: string
+  /** Column holding the creator; defaults to `created_by`. */
+  ownerColumn?: string
 }
 
 /**
@@ -105,6 +113,9 @@ export async function queryPage<T = Record<string, unknown>>(
   }
   for (const [column, values] of Object.entries(options.inFilters ?? {})) {
     if (values && values.length > 0) query = query.in(column, values)
+  }
+  if (options.ownerId) {
+    query = query.eq(options.ownerColumn ?? 'created_by', options.ownerId)
   }
   if (options.search && options.searchColumns?.length) {
     query = query.or(ilikeAny(options.searchColumns, options.search))

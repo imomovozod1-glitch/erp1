@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { invalidateRoleTemplates } from '@/lib/data/revalidate'
-import { PERMISSION_MODULES } from '@/lib/permissions'
+import { PERMISSION_MODULES, normaliseModulePermission } from '@/lib/permissions'
 
 /**
  * Create a role template. Admin-only for the same reason as the PATCH in
@@ -12,17 +12,15 @@ import { PERMISSION_MODULES } from '@/lib/permissions'
 
 const bodySchema = z.object({
   name: z.string().trim().min(1).max(80),
-  permissions: z.record(z.string(), z.object({ view: z.boolean(), edit: z.boolean() })),
+  permissions: z.record(z.string(), z.record(z.string(), z.unknown())),
 })
 
-function normalise(permissions: Record<string, { view: boolean; edit: boolean }>) {
-  const out: Record<string, { view: boolean; edit: boolean }> = {}
+/** Keeps only known modules and normalises each module's action set. */
+function normalise(permissions: Record<string, unknown>) {
+  const out: Record<string, unknown> = {}
   for (const moduleKey of PERMISSION_MODULES) {
     const entry = permissions[moduleKey]
-    // Edit implies view — the same normalisation PermissionsMatrix applies in
-    // the UI, enforced here so a hand-built payload can't store "can edit a
-    // module it cannot open".
-    if (entry) out[moduleKey] = { view: entry.view || entry.edit, edit: entry.edit }
+    if (entry) out[moduleKey] = normaliseModulePermission(entry)
   }
   return out
 }

@@ -9,7 +9,7 @@ import { getCustomersPage , getCustomersMapPoints, getCustomerBalanceTotals} fro
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { formatCurrency } from '@/lib/utils'
-import { canEditModule } from '@/lib/permissions-server'
+import { canEditModule , canDo } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Customers' }
 
@@ -25,6 +25,9 @@ export default async function CustomersPage({
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('customers')
+  // Reading a list on screen and downloading the whole list are different
+  // risks, so export is its own permission.
+  const canExport = await canDo('customers', 'export')
   const tenantId = await getCurrentTenantId() as string
   const [t, tNav, tInfo, result, mapPoints, totals] = await Promise.all([
     getTranslations('sales'),
@@ -53,7 +56,7 @@ export default async function CustomersPage({
           { label: t('customers') },
         ]}
       >
-        <CustomerImportExport customers={result.rows} lang={lang} />
+        {canExport && <CustomerImportExport customers={result.rows} lang={lang} />}
       </PageHeader>
 
       <div className="grid grid-cols-1 mb-6">

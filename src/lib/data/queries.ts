@@ -913,7 +913,7 @@ export function getProductsPage(
 
 export function getOrdersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'sales_orders',
@@ -924,12 +924,13 @@ export function getOrdersPage(
     search: opts.search,
     searchColumns: ['order_number'],
     orderBy: { column: 'created_at', ascending: false },
+    ownerId: opts.ownerId,
   })
 }
 
 export function getInvoicesPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'invoices',
@@ -940,6 +941,7 @@ export function getInvoicesPage(
     search: opts.search,
     searchColumns: ['invoice_number'],
     orderBy: { column: 'created_at', ascending: false },
+    ownerId: opts.ownerId,
   })
 }
 
@@ -961,7 +963,7 @@ export function getSuppliersPage(
 
 export function getPurchaseOrdersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'purchase_orders',
@@ -972,6 +974,7 @@ export function getPurchaseOrdersPage(
     search: opts.search,
     searchColumns: ['po_number'],
     orderBy: { column: 'created_at', ascending: false },
+    ownerId: opts.ownerId,
   })
 }
 

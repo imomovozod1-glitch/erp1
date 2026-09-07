@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { invalidateProfile } from '@/lib/data/revalidate'
-import { PERMISSION_MODULES } from '@/lib/permissions'
+import { PERMISSION_MODULES, normaliseModulePermission } from '@/lib/permissions'
 
 /**
  * The only path by which a tenant user's role, module permissions or active
@@ -26,9 +26,9 @@ import { PERMISSION_MODULES } from '@/lib/permissions'
 // String-keyed rather than `z.record(z.enum(...))`: in Zod v4 an enum-keyed
 // record demands every member be present, and the matrix only sends the
 // modules that were actually touched. Unknown keys are dropped below.
-const permissionsSchema = z
-  .record(z.string(), z.object({ view: z.boolean(), edit: z.boolean() }))
-  .optional()
+// Loose object per module: the exact action set is normalised below, so adding
+// an action later doesn't require a schema change in lockstep.
+const permissionsSchema = z.record(z.string(), z.record(z.string(), z.unknown())).optional()
 
 const bodySchema = z
   .object({
@@ -39,16 +39,14 @@ const bodySchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' })
 
-function pickKnownModules(permissions: Record<string, { view: boolean; edit: boolean }> | undefined) {
+function pickKnownModules(permissions: Record<string, unknown> | undefined) {
   if (!permissions) return undefined
-  const known: Record<string, { view: boolean; edit: boolean }> = {}
+  const known: Record<string, unknown> = {}
   for (const moduleKey of PERMISSION_MODULES) {
     const entry = permissions[moduleKey]
-    if (entry) {
-      // Edit implies view — mirrors PermissionsMatrix, so a payload assembled
-      // by hand can't produce the nonsensical "edit but cannot see" state.
-      known[moduleKey] = { view: entry.view || entry.edit, edit: entry.edit }
-    }
+    // Normalised server-side too, so a hand-built payload can't store an
+    // incoherent combination (e.g. "can delete but cannot view").
+    if (entry) known[moduleKey] = normaliseModulePermission(entry)
   }
   return known
 }

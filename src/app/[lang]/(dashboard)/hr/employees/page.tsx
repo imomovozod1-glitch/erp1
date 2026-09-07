@@ -7,7 +7,7 @@ import { EmployeeImportExport } from '@/components/hr/employee-import-export'
 import { getEmployeesPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule } from '@/lib/permissions-server'
+import { canEditModule , canDo } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Employees' }
 
@@ -27,6 +27,9 @@ export default async function EmployeesPage({
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('hr')
+  // Reading a list on screen and downloading the whole list are different
+  // risks, so export is its own permission.
+  const canExport = await canDo('hr', 'export')
   const tenantId = await getCurrentTenantId() as string
   const [t, tInfo, result] = await Promise.all([
     getTranslations('hr'),
@@ -47,7 +50,7 @@ export default async function EmployeesPage({
           { label: t('employees') },
         ]}
       >
-        <EmployeeImportExport employees={result.rows} lang={lang} />
+        {canExport && <EmployeeImportExport employees={result.rows} lang={lang} />}
       </PageHeader>
       <EmployeesTable
         employees={result.rows}

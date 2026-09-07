@@ -6,7 +6,7 @@ import { InvoicesTable } from '@/components/sales/invoices-table'
 import { getInvoicesPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule } from '@/lib/permissions-server'
+import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 
 export const revalidate = 30
 
@@ -23,6 +23,11 @@ export default async function InvoicesPage({
   // Paging and search live in the URL and are applied by Postgres; this page
   // used to fetch every row in the tenant and slice ten out in the browser.
   const { page, pageSize, search } = readPageParams(sp)
+  // A user whose data scope for this module is 'own' only ever sees the
+  // records they created — applied in the query, not by hiding rows after the
+  // fact.
+  const [scope, permCtx] = await Promise.all([getDataScope('sales'), getPermissionContext()])
+  const ownerId = scope === 'own' ? permCtx?.userId : undefined
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('sales')
@@ -30,7 +35,7 @@ export default async function InvoicesPage({
   const [t, tInfo, result] = await Promise.all([
     getTranslations('sales'),
     getTranslations('pageInfo'),
-    getInvoicesPage(tenantId, { page, pageSize, search }),
+    getInvoicesPage(tenantId, { page, pageSize, search, ownerId }),
   ])
 
   return (

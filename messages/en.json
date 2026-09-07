@@ -1077,5 +1077,20 @@
     "status_open": "Open",
     "status_answered": "Answered",
     "status_closed": "Closed"
+  },
+  "permissions": {
+    "module": "Module",
+    "scope": "Data scope",
+    "scope_all": "All records",
+    "scope_own": "Own only",
+    "grantAll": "Grant all",
+    "clearAll": "Clear",
+    "action_view": "View",
+    "action_create": "Create",
+    "action_edit": "Edit",
+    "action_delete": "Delete",
+    "action_export": "Export",
+    "action_approve": "Approve",
+    "scopeHint": "With “Own only”, the user sees just the records they created in that module."
   }
 }

@@ -2,7 +2,7 @@ import 'server-only'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
-import { hasEditAccess, hasViewAccess, type PermissionModule } from '@/lib/permissions'
+import { can, dataScope, type DataScope, type PermissionAction, type PermissionModule } from '@/lib/permissions'
 
 /**
  * Server-side enforcement of `profiles.permissions`.
@@ -30,25 +30,37 @@ export const getPermissionContext = cache(async () => {
     | { role?: string; permissions?: unknown }
     | null
   if (!profile) return null
-  return { role: profile.role ?? 'staff', permissions: profile.permissions }
+  // userId is here so callers applying the 'own' data scope can filter on it
+  // without a second session lookup.
+  return { userId: user.id, role: profile.role ?? 'staff', permissions: profile.permissions }
 })
+
+/** The one question pages ask: may the caller do `action` in `module`? */
+export async function canDo(module: PermissionModule, action: PermissionAction): Promise<boolean> {
+  const ctx = await getPermissionContext()
+  if (!ctx) return false
+  return can(ctx.role, ctx.permissions, module, action)
+}
+
+/** Which records the caller may act on in `module` — 'all' or only their own. */
+export async function getDataScope(module: PermissionModule): Promise<DataScope> {
+  const ctx = await getPermissionContext()
+  if (!ctx) return 'all'
+  return dataScope(ctx.role, ctx.permissions, module)
+}
 
 /** True when the caller may see `module` at all. Admins always may. */
 export async function canViewModule(module: PermissionModule): Promise<boolean> {
-  const ctx = await getPermissionContext()
-  if (!ctx) return false
-  return hasViewAccess(ctx.role, ctx.permissions, module)
+  return canDo(module, 'view')
 }
 
 /**
  * True when the caller may create/modify inside `module`. Pages use this to
- * drop "Add new" actions and row actions rather than rendering controls whose
- * writes the user shouldn't be making.
+ * drop "Add new" actions rather than rendering controls whose writes the user
+ * shouldn't be making.
  */
 export async function canEditModule(module: PermissionModule): Promise<boolean> {
-  const ctx = await getPermissionContext()
-  if (!ctx) return false
-  return hasEditAccess(ctx.role, ctx.permissions, module)
+  return canDo(module, 'edit')
 }
 
 /**
@@ -73,8 +85,23 @@ export async function requireModuleEdit(
   lang: string,
   listPath: string
 ): Promise<void> {
-  if (!(await canEditModule(module))) {
+  // A "new" page needs `create`; an edit page needs `edit`. Both land here, so
+  // accept either — the specific action is re-checked by the API route that
+  // performs the write.
+  if (!(await canDo(module, 'create')) && !(await canDo(module, 'edit'))) {
     redirect(`/${lang}${listPath}?denied=edit`)
+  }
+}
+
+/** Guard for a route that needs one specific action (e.g. an approval screen). */
+export async function requireAction(
+  module: PermissionModule,
+  action: PermissionAction,
+  lang: string,
+  fallbackPath: string
+): Promise<void> {
+  if (!(await canDo(module, action))) {
+    redirect(`/${lang}${fallbackPath}?denied=${action}`)
   }
 }
 

@@ -8,7 +8,7 @@ import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { SuppliersTable } from '@/components/procurement/suppliers-table'
 import { SupplierImportExport } from '@/components/procurement/supplier-import-export'
-import { canEditModule } from '@/lib/permissions-server'
+import { canEditModule , canDo } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Suppliers' }
 
@@ -24,6 +24,9 @@ export default async function SuppliersPage({
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('procurement')
+  // Reading a list on screen and downloading the whole list are different
+  // risks, so export is its own permission.
+  const canExport = await canDo('procurement', 'export')
   const t = await getTranslations('procurement')
   const tInfo = await getTranslations('pageInfo')
   const tenantId = (await getCurrentTenantId()) as string
@@ -71,7 +74,7 @@ export default async function SuppliersPage({
           { label: t('suppliers') },
         ]}
       >
-        <SupplierImportExport suppliers={suppliersPage.rows} lang={lang} />
+        {canExport && <SupplierImportExport suppliers={suppliersPage.rows} lang={lang} />}
       </PageHeader>
       <SuppliersTable
         suppliers={suppliersWithDebt}

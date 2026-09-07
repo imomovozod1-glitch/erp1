@@ -1077,5 +1077,20 @@
     "status_open": "Открыт",
     "status_answered": "Есть ответ",
     "status_closed": "Закрыт"
+  },
+  "permissions": {
+    "module": "Модуль",
+    "scope": "Область данных",
+    "scope_all": "Все",
+    "scope_own": "Только свои",
+    "grantAll": "Все",
+    "clearAll": "Очистить",
+    "action_view": "Просмотр",
+    "action_create": "Создание",
+    "action_edit": "Изменение",
+    "action_delete": "Удаление",
+    "action_export": "Экспорт",
+    "action_approve": "Утверждение",
+    "scopeHint": "При «Только свои» пользователь видит в модуле лишь записи, созданные им самим."
   }
 }
