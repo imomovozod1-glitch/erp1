@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getSessionUser } from '@/lib/auth'
+import { getVerifiedUser } from '@/lib/auth'
 import { getGeminiModel } from '@/lib/gemini'
 
 const chatSchema = z.object({
@@ -23,7 +23,7 @@ const SYSTEM_INSTRUCTIONS: Record<string, string> = {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getSessionUser()
+  const user = await getVerifiedUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!process.env.GEMINI_API_KEY) {

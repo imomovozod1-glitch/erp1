@@ -123,14 +123,14 @@ export default function PurchaseOrderDetailPage() {
                 <Truck className="h-3.5 w-3.5" />
                 {t('supplier')}
               </span>
-              <p className="font-semibold text-slate-805 dark:text-slate-200">{order.suppliers?.name ?? '—'}</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{order.suppliers?.name ?? '—'}</p>
             </div>
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
                 {tCommon('date')}
               </span>
-              <p className="font-semibold text-slate-805 dark:text-slate-200">{formatDateTime(order.created_at)}</p>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{formatDateTime(order.created_at)}</p>
             </div>
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -138,7 +138,7 @@ export default function PurchaseOrderDetailPage() {
                 {tCommon('status')}
               </span>
               <div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 dark:bg-slate-800 text-slate-650 dark:text-slate-300'}`}>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
                   {t(`status.${order.status}`)}
                 </span>
               </div>

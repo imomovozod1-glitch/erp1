@@ -214,7 +214,7 @@ export function MapPicker({ onLocationSelect, initialAddress, initialLat, initia
       </div>
 
       {/* Geolocation info display */}
-      <div className="p-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700 rounded-xl space-y-2">
+      <div className="p-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl space-y-2">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           <MapPin className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400" />
           {t('selectedLocation')}

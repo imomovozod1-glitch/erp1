@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingCart, MoreHorizontal, Pencil, Eye, Loader2, Calendar, FileText, ShoppingBag, User } from 'lucide-react'
+import { Search, ShoppingCart, MoreHorizontal, Pencil } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
@@ -18,8 +17,6 @@ import {
 } from '@/components/ui/table'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
 
 const STATUS_TONES: Record<string, StatusTone> = {
   draft: 'blue',
@@ -31,7 +28,7 @@ const STATUS_TONES: Record<string, StatusTone> = {
 }
 
 interface OrdersTableProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   orders: any[]
   lang: string
 }

@@ -59,19 +59,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSidebar } from '@/components/ui/sidebar'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from 'sonner'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { isValidPhone } from '@/lib/phone-validation'
 import { printReceiptDirect } from '@/lib/printer/print'
+import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 
 // Module-level pure helper functions to satisfy strict React compiler rules
 function generatePOSOrderNumber(): string {
-  return `SO-POS-${Date.now().toString().slice(-6)}`
+  return generateDocumentNumber('SO-POS')
 }
 
 function generatePOSInvoiceNumber(): string {
-  return `INV-POS-${Date.now().toString().slice(-6)}`
+  return generateDocumentNumber('INV-POS')
 }
 
 function getPOSDateString(): string {
@@ -218,9 +219,11 @@ export function POSClient({
         toast.error(t('insufficientStock'))
         return
       }
-      const updated = [...cart]
-      updated[existingIndex].quantity += 1
-      setCart(updated)
+      // `[...cart]` is a shallow copy — mutating `updated[i].quantity` would
+      // also mutate the object still held in state, so React (and the React
+      // Compiler's memoization) can't see that anything changed. Replace the
+      // item instead of mutating it.
+      setCart(cart.map((item, i) => (i === existingIndex ? { ...item, quantity: item.quantity + 1 } : item)))
     } else {
       setCart([...cart, { product, quantity: 1, discountPercent: 0 }])
     }
@@ -425,7 +428,13 @@ export function POSClient({
       }))
 
       const stockAndMovementUpdates = cart.flatMap((item) => {
-        const newStock = item.product.stock - item.quantity
+        // Deduct from the stock value just re-read from the database above, not
+        // from `item.product.stock` — that snapshot is as old as the last page
+        // load, so on a second POS terminal (or after any stock edit in another
+        // tab) writing `staleStock - qty` silently reverted every change made in
+        // between, and logged a wrong quantity_before/after on the movement.
+        const stockBefore = stockById.get(item.product.id) as number
+        const newStock = stockBefore - item.quantity
         const cost = costByProductId.get(item.product.id)
         return [
           supabase
@@ -437,7 +446,7 @@ export function POSClient({
             product_id: item.product.id,
             type: 'out',
             quantity: item.quantity,
-            quantity_before: item.product.stock,
+            quantity_before: stockBefore,
             quantity_after: newStock,
             reference_type: 'sales_orders',
             reference_id: orderData.id,
@@ -506,6 +515,37 @@ export function POSClient({
       // Success
       toast.success(t('orderSuccess'))
 
+      // Telegram notification (Settings → Integrations). Deliberately not
+      // awaited and never throws: the sale is already committed above, so a
+      // Telegram outage must not turn a completed sale into an error toast.
+      fireTelegramNotification({
+        event: 'sale',
+        data: {
+          orderNumber: generatedOrderNumber,
+          total: totalPayable,
+          paymentMethod,
+          itemCount: cart.length,
+          customerName: selectedCustomer?.name ?? null,
+        },
+      })
+
+      // Warn about anything this sale pushed to/below its minimum stock level.
+      for (const item of cart) {
+        const remaining = (stockById.get(item.product.id) ?? item.product.stock) - item.quantity
+        const minStock = Number(item.product.min_stock) || 0
+        if (minStock > 0 && remaining <= minStock) {
+          fireTelegramNotification({
+            event: 'low_stock',
+            data: {
+              productName: item.product.name,
+              sku: item.product.sku,
+              stock: remaining,
+              minStock,
+            },
+          })
+        }
+      }
+
       // Set state to trigger printing modal
       setCheckoutSuccessOrder({
         orderNumber: generatedOrderNumber,
@@ -530,7 +570,9 @@ export function POSClient({
       const updatedProducts = products.map((p) => {
         const cartItem = cart.find((ci) => ci.product.id === p.id)
         if (cartItem) {
-          return { ...p, stock: p.stock - cartItem.quantity }
+          // Same reasoning as the stock write above: base this on the value
+          // just read from the DB so the on-screen list matches what was saved.
+          return { ...p, stock: (stockById.get(p.id) ?? p.stock) - cartItem.quantity }
         }
         return p
       })
@@ -801,7 +843,7 @@ export function POSClient({
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('emptyCart')}</p>
-                    <p className="text-[11px] text-slate-350 dark:text-slate-500">
+                    <p className="text-[11px] text-slate-300 dark:text-slate-500">
                       {lang === 'uz' ? "Mahsulotni bosing yoki SKU'ni skanerlang" : lang === 'ru' ? 'Нажмите на товар или отсканируйте SKU' : 'Click a product or scan its SKU'}
                     </p>
                   </div>

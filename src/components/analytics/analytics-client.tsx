@@ -14,7 +14,7 @@ import {
 import { formatCurrency } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { BanknotesIcon, ChartBarIcon, ShoppingCartIcon, TagIcon } from '@heroicons/react/24/outline'
-import { TrendingUp, Calendar, ChevronDown, Check, ArrowRight } from 'lucide-react'
+import { TrendingUp, Calendar, ChevronDown } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { SoldProductsTable } from './sold-products-table'
@@ -484,7 +484,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border shadow-sm">
         <div>
           <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-violet-650 dark:text-violet-400" />
+            <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
             {tc('filter')}
           </h2>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
@@ -503,7 +503,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                   onClick={() => handlePresetClick(p.value)}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
                     active
-                      ? 'bg-white dark:bg-slate-700 text-violet-650 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600'
+                      ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/40 dark:hover:bg-slate-700/40'
                   }`}
                 >
@@ -532,7 +532,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                 </button>
               }
             />
-            <PopoverContent align="end" className="w-[360px] p-4 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-4">
+            <PopoverContent align="end" className="w-[360px] p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-4">
               <div className="space-y-3">
                 <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                   {t('customFilter.title')}
@@ -544,7 +544,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                     type="button"
                     onClick={() => setTempMode('single')}
                     className={`py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                      tempMode === 'single' ? 'bg-white dark:bg-slate-700 text-violet-650 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
+                      tempMode === 'single' ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
                     }`}
                   >
                     {t('customFilter.singleDay')}
@@ -553,7 +553,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                     type="button"
                     onClick={() => setTempMode('range')}
                     className={`py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                      tempMode === 'range' ? 'bg-white dark:bg-slate-700 text-violet-650 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
+                      tempMode === 'range' ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
                     }`}
                   >
                     {t('customFilter.dateRange')}
@@ -571,7 +571,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                         type="date"
                         value={tempSingleDate}
                         onChange={(e) => setTempSingleDate(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -583,7 +583,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                           type="time"
                           value={tempSingleStartHour}
                           onChange={(e) => setTempSingleStartHour(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -594,7 +594,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                           type="time"
                           value={tempSingleEndHour}
                           onChange={(e) => setTempSingleEndHour(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                       </div>
                     </div>
@@ -610,13 +610,13 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                           type="date"
                           value={tempStartDateVal}
                           onChange={(e) => setTempStartDateVal(e.target.value)}
-                          className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
+                          className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                         <input
                           type="time"
                           value={tempStartTimeVal}
                           onChange={(e) => setTempStartTimeVal(e.target.value)}
-                          className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
+                          className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                       </div>
                     </div>
@@ -629,13 +629,13 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                           type="date"
                           value={tempEndDateVal}
                           onChange={(e) => setTempEndDateVal(e.target.value)}
-                          className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
+                          className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                         <input
                           type="time"
                           value={tempEndTimeVal}
                           onChange={(e) => setTempEndTimeVal(e.target.value)}
-                          className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-850 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
+                          className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
                         />
                       </div>
                     </div>
@@ -647,7 +647,7 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
                 <button
                   type="button"
                   onClick={handleApply}
-                  className="px-3.5 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-750 text-white rounded-lg transition-all shadow-sm cursor-pointer"
+                  className="px-3.5 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-all shadow-sm cursor-pointer"
                 >
                   {t('customFilter.confirm')}
                 </button>

@@ -210,11 +210,19 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       // Every employee needs a cashbox — if the admin didn't pick an
       // existing one, create a personal one named after them rather than
       // leaving cashbox_id unset.
-      let cashboxId = selectedCashboxId
+      // Only auto-create on the *first* save. Re-running this on every edit of an
+      // employee who still has no cashbox spawned a duplicate cashbox each time
+      // the form was saved (e.g. just toggling is_active). `description` is set
+      // explicitly because several list/search screens read it.
+      let cashboxId = selectedCashboxId ?? initialData?.cashbox_id ?? null
       if (!cashboxId) {
         const { data: newCashbox, error: cashboxError } = await supabase
           .from('cashboxes')
-          .insert({ name: data.full_name, type: 'cash' })
+          .insert({
+            name: data.full_name,
+            type: 'cash',
+            description: t('employeeCashboxDescription', { name: data.full_name }),
+          })
           .select('id')
           .single()
         if (cashboxError) throw cashboxError

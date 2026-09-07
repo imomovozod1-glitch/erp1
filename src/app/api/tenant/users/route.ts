@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getSessionUser, getCachedProfile } from '@/lib/auth'
+import { getVerifiedUser, getCachedProfile } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { phoneSchema } from '@/lib/phone-validation'
@@ -32,7 +32,7 @@ const createUserSchema = z.object({
  * inside another tenant.
  */
 export async function POST(request: NextRequest) {
-  const user = await getSessionUser()
+  const user = await getVerifiedUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const callerProfile = await getCachedProfile(user.id) as any
@@ -58,6 +58,22 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getCacheClient() as any
+
+  // `role_templates.id` is a plain FK with no tenant constraint, so an id from
+  // another tenant would be accepted and stored here. Nothing else re-checks it,
+  // so verify ownership before it can be attached to a profile.
+  if (input.role_template_id) {
+    const { data: template } = await supabase
+      .from('role_templates')
+      .select('id')
+      .eq('id', input.role_template_id)
+      .eq('tenant_id', callerProfile.tenant_id)
+      .maybeSingle()
+    if (!template) {
+      return NextResponse.json({ error: 'Invalid role template' }, { status: 400 })
+    }
+  }
+
   const email = phoneToSyntheticEmail(input.phone)
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { SupplierForm } from '@/components/procurement/supplier-form'
 

@@ -584,6 +584,13 @@ export function ProductsTable({ products, lang }: ProductsTableProps) {
                             <Power className="mr-2 h-3.5 w-3.5" />{" "}
                             {product.is_active ? t("common.inactive") : t("common.active")}
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(product.id)}
+                            disabled={isDeleting === product.id}
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          >
+                            <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("common.delete")}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

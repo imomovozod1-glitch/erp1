@@ -1,6 +1,9 @@
 {
   "common": {
     "months": {
+      "10": "Oct",
+      "11": "Nov",
+      "12": "Dec",
       "01": "Jan",
       "02": "Feb",
       "03": "Mar",
@@ -9,10 +12,7 @@
       "06": "Jun",
       "07": "Jul",
       "08": "Aug",
-      "09": "Sep",
-      "10": "Oct",
-      "11": "Nov",
-      "12": "Dec"
+      "09": "Sep"
     },
     "type": "Type",
     "loading": "Loading...",
@@ -143,7 +143,9 @@
     "blockedMessage": "This account has been blocked due to non-payment. Contact your administrator to continue.",
     "inactiveTitle": "Account inactive",
     "inactiveMessage": "Your account is not currently active. Contact your administrator to activate it.",
-    "contactSupport": "Contact administrator"
+    "contactSupport": "Contact administrator",
+    "wrongTenantTitle": "Signed in to a different organization",
+    "wrongTenantMessage": "Your account belongs to another organization. Sign out and sign back in with an account for this one."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -445,7 +447,8 @@
     "systemAccessRequiresPaid": "System access is only available when \"Paid employee\" is checked",
     "cashbox": "Cashbox",
     "cashboxAuto": "Create automatically (named after employee)",
-    "cashboxHint": "If left unselected, a dedicated cashbox will be created automatically for this employee"
+    "cashboxHint": "If left unselected, a dedicated cashbox will be created automatically for this employee",
+    "employeeCashboxDescription": "Personal cashbox for {name}"
   },
   "procurement": {
     "title": "Procurement",
@@ -623,6 +626,45 @@
       "labelPaymentMethod": "Payment method",
       "paperWidthCustom": "Custom",
       "customColumnsHint": "Characters per line ({min}-{max})"
+    },
+    "integrationsTitle": "Integrations",
+    "integrationsCardDesc": "Connect a Telegram bot and external services",
+    "integrations": {
+      "telegramTitle": "Telegram bot",
+      "telegramDesc": "Send sales, order and stock notifications to your Telegram group.",
+      "statusActive": "Connected",
+      "statusPaused": "Paused",
+      "statusNotConnected": "Not connected",
+      "connectedAs": "Connected as",
+      "stepCreateBot": "Create a new bot in Telegram with",
+      "stepCopyToken": "Copy the token BotFather gives you and paste it below.",
+      "stepAddToGroup": "Add the bot to your group and allow it to send messages.",
+      "stepGetChatId": "Get the chat ID of the group or channel with",
+      "botToken": "Bot token",
+      "botTokenHint": "The token from BotFather. Stored server-side only and never shown again.",
+      "botTokenKeepPlaceholder": "Leave blank to keep the current token",
+      "botTokenKeepHint": "Leave this blank to keep the token already stored.",
+      "chatId": "Chat ID",
+      "chatIdHint": "A negative number for a group (e.g. -1001234567890) or @channelname.",
+      "notifications": "Notifications",
+      "enableLabel": "Enable Telegram notifications",
+      "enableHint": "When off, no messages are sent at all.",
+      "event_sale": "New sale (POS and sales)",
+      "event_low_stock": "Low stock",
+      "event_new_order": "New order",
+      "event_debt_payment": "Debt payment",
+      "sendTest": "Send test message",
+      "testSent": "Test message sent",
+      "disconnect": "Disconnect",
+      "disconnected": "Telegram disconnected",
+      "disconnectConfirm": "Disconnect the Telegram bot? The token will be deleted.",
+      "errorTokenFormat": "Invalid token format (e.g. 123456789:AA...)",
+      "errorTokenRejected": "Telegram rejected the token",
+      "errorTokenRequired": "A bot token is required",
+      "errorChatIdRequired": "A chat ID is required",
+      "errorChatIdFormat": "Invalid chat ID format",
+      "errorNotConfigured": "Save the bot token first",
+      "errorSendFailed": "Could not send the message"
     }
   },
   "tools": {

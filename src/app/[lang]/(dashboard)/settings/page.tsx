@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { Building2, Users, UserCircle, ShieldCheck, Printer, ChevronRight } from 'lucide-react'
+import { Building2, Users, UserCircle, ShieldCheck, Printer, Plug, ChevronRight } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 
 export const metadata: Metadata = { title: 'Settings' }
@@ -11,6 +11,7 @@ const CARDS = [
   { key: 'profile', href: 'profile', icon: UserCircle, tone: 'emerald' },
   { key: 'security', href: 'security', icon: ShieldCheck, tone: 'rose' },
   { key: 'printerTitle', href: 'printer', icon: Printer, tone: 'amber' },
+  { key: 'integrationsTitle', href: 'integrations', icon: Plug, tone: 'sky' },
 ] as const
 
 const TONE_STYLES: Record<string, string> = {
@@ -19,6 +20,7 @@ const TONE_STYLES: Record<string, string> = {
   emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
   rose: 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400',
   amber: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
+  sky: 'bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400',
 }
 
 export default async function SettingsPage({ params }: { params: Promise<{ lang: string }> }) {
@@ -34,6 +36,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
     profile: t('profileCardDesc'),
     security: t('securityCardDesc'),
     printerTitle: t('printerCardDesc'),
+    integrationsTitle: t('integrationsCardDesc'),
   }
 
   return (

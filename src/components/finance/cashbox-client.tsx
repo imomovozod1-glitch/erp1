@@ -11,7 +11,6 @@ import {
   Trash2, 
   Edit2, 
   AlertCircle, 
-  Info, 
   Search, 
   TrendingUp, 
   ArrowUpRight,
@@ -37,6 +36,7 @@ import { CustomDateRangePicker } from '@/components/shared/custom-date-range-pic
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateTransactions, invalidateSuppliers, invalidateEmployees, invalidateCustomers, invalidateInvoices } from '@/lib/data/revalidate'
+import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { toast } from 'sonner'
 
 type CashboxType = 'cash' | 'card' | 'transfer' | 'other'
@@ -648,6 +648,20 @@ export function CashboxClient({ lang }: { lang: string }) {
       const balanceChange = txType === 'income' ? numAmount : -numAmount
       const updatedBalance = Number(selectedCashboxForTx.balance) + balanceChange
 
+      // Resolve the session up front. This used to happen only in the Supabase
+      // branch *after* the invoice paydown below had already marked invoices as
+      // paid — so a missing session left invoices settled with no cashbox
+      // update and no transaction ever recorded against them.
+      let userId: string | undefined
+      if (!isLocalStorageFallback) {
+        const { data: userData } = await supabase.auth.getUser()
+        userId = userData?.user?.id
+        if (!userId) {
+          toast.error(lang === 'uz' ? 'Foydalanuvchi seansi topilmadi' : lang === 'ru' ? 'Сессия пользователя не найдена' : 'User session not found')
+          return
+        }
+      }
+
       // Any income received from a customer pays down their oldest unpaid invoices first
       // (this is what makes the "collect debt" button on the invoices page work).
       if (txType === 'income' && personType === 'customer' && selectedCustomerId) {
@@ -791,14 +805,6 @@ export function CashboxClient({ lang }: { lang: string }) {
         toast.success(tCommon('success'))
         setIsTransactionModalOpen(false)
       } else {
-        const { data: userData } = await supabase.auth.getUser()
-        const userId = userData?.user?.id
-
-        if (!userId) {
-          toast.error(lang === 'uz' ? 'Foydalanuvchi seansi topilmadi' : lang === 'ru' ? 'Сессия пользователя не найдена' : 'User session not found')
-          return
-        }
-
         // Update cashbox
         const { error: cbErr } = await supabase
           .from('cashboxes')
@@ -837,6 +843,20 @@ export function CashboxClient({ lang }: { lang: string }) {
         toast.success(tCommon('success'))
         setIsTransactionModalOpen(false)
         fetchCashboxes()
+
+        // Telegram notification (Settings → Integrations). Only for money
+        // actually collected from a customer — that's the "debt payment" the
+        // invoice paydown above just applied. Fire-and-forget: the
+        // transaction is already committed at this point.
+        if (txType === 'income' && personType === 'customer' && selectedCustomerId) {
+          fireTelegramNotification({
+            event: 'debt_payment',
+            data: {
+              customerName: customers.find((c) => c.id === selectedCustomerId)?.name ?? '—',
+              amount: numAmount,
+            },
+          })
+        }
       }
     } catch (err: any) {
       toast.error(err.message || tCommon('error'))
@@ -953,9 +973,12 @@ export function CashboxClient({ lang }: { lang: string }) {
     { key: 'other', label: t('cashboxTypeOther'), icon: Wallet },
   ]
 
+  // `description` is nullable (and is always null on cashboxes auto-created
+  // for an employee in hr/employee-form.tsx), so it must be coalesced before
+  // .toLowerCase() — otherwise typing anything into the search box throws.
   const filteredCashboxes = cashboxes.filter((cb) =>
-    cb.name.toLowerCase().includes(search.toLowerCase()) ||
-    cb.description.toLowerCase().includes(search.toLowerCase())
+    (cb.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    (cb.description ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
   const filteredTransactions = periodTransactions.filter((tx) => {
@@ -1090,7 +1113,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                       <tr key={cb.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                         <td className="p-4 pl-6 font-semibold text-slate-800 dark:text-slate-200">
                           <div className="flex items-center gap-2.5">
-                            <div className={`p-1.5 rounded-lg ${isMain ? 'bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400' : 'bg-slate-105 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
+                            <div className={`p-1.5 rounded-lg ${isMain ? 'bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
                               <Landmark className="h-4 w-4" />
                             </div>
                             <div className="flex flex-col">
@@ -1193,16 +1216,19 @@ export function CashboxClient({ lang }: { lang: string }) {
                   <th className="p-4 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-right">
                     {lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income'}
                   </th>
-                  <th className="p-4 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider text-right">
+                  <th className="p-4 pr-6 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider text-right">
                     {lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense'}
                   </th>
-                  <th className="p-4 pr-6 w-20"></th>
+                  {/* No trailing actions column: the per-row delete button below is
+                      commented out, and an extra header cell here left every body row one
+                      cell short of the header, skewing the whole table. Restore both
+                      together if row actions come back. */}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                 {isLoading && transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+                    <td colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
                       <div className="flex flex-col items-center gap-2">
                         <div className="h-6 w-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
                         <span>{tCommon('loading')}...</span>
@@ -1211,7 +1237,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                   </tr>
                 ) : filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500">
+                    <td colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">
                       <div className="flex flex-col items-center gap-2 py-4">
                         <TrendingUp className="h-10 w-10 opacity-30 text-slate-400" />
                         <p className="text-sm font-semibold">{tCommon('noData')}</p>
@@ -1236,7 +1262,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                         </td>
                         <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">{cbName}</td>
                         <td className="p-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-slate-105 dark:bg-slate-800 text-slate-750 dark:text-slate-300 font-semibold border border-slate-200/30 dark:border-slate-700">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border border-slate-200/30 dark:border-slate-700">
                             {tx.category}
                           </span>
                         </td>
@@ -1244,7 +1270,7 @@ export function CashboxClient({ lang }: { lang: string }) {
                         <td className="p-4 font-extrabold text-right text-base text-emerald-600 dark:text-emerald-400">
                           {isIncome ? formatCurrency(tx.amount) : '—'}
                         </td>
-                        <td className="p-4 font-extrabold text-right text-base text-rose-600 dark:text-rose-400">
+                        <td className="p-4 pr-6 font-extrabold text-right text-base text-rose-600 dark:text-rose-400">
                           {!isIncome ? formatCurrency(tx.amount) : '—'}
                         </td>
                         {/* <td className="p-4 pr-6 flex justify-end">

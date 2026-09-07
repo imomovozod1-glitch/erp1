@@ -235,7 +235,7 @@ export default function InvoiceDetailPage() {
                 <User className="h-3.5 w-3.5" />
                 {t("customer")}
               </span>
-              <p className="font-semibold text-slate-850 dark:text-slate-200">
+              <p className="font-semibold text-slate-800 dark:text-slate-200">
                 {invoice.customers?.name ?? "—"}
               </p>
             </div>
@@ -245,7 +245,7 @@ export default function InvoiceDetailPage() {
                   {lang === "uz" ? "Bog'langan buyurtma" : "Связанный заказ"}
                 </span>
                 <p
-                  className="font-semibold text-violet-650 dark:text-violet-400 hover:underline cursor-pointer"
+                  className="font-semibold text-violet-600 dark:text-violet-400 hover:underline cursor-pointer"
                   onClick={() =>
                     router.push(`/${lang}/sales/orders/${invoice.order_id}`)
                   }
@@ -258,7 +258,7 @@ export default function InvoiceDetailPage() {
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 {lang === "uz" ? "Yaratilgan sana" : "Дата выставления"}
               </span>
-              <p className="font-semibold text-slate-850 dark:text-slate-200">
+              <p className="font-semibold text-slate-800 dark:text-slate-200">
                 {formatDateTime(invoice.created_at)}
               </p>
             </div>
@@ -266,7 +266,7 @@ export default function InvoiceDetailPage() {
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 {lang === "uz" ? "To'lov muddati" : "Срок оплаты"}
               </span>
-              <p className="font-semibold text-slate-850 dark:text-slate-200">
+              <p className="font-semibold text-slate-800 dark:text-slate-200">
                 {formatDate(invoice.due_at)}
               </p>
             </div>
@@ -275,7 +275,7 @@ export default function InvoiceDetailPage() {
                 <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {lang === "uz" ? "To'langan sana" : "Дата оплаты"}
                 </span>
-                <p className="font-semibold text-emerald-705 dark:text-emerald-400">
+                <p className="font-semibold text-emerald-700 dark:text-emerald-400">
                   {formatDate(invoice.paid_at)}
                 </p>
               </div>
@@ -293,13 +293,13 @@ export default function InvoiceDetailPage() {
               </div>
             </div>
             <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
-              <div className="flex justify-between text-xs text-slate-655 dark:text-slate-400">
+              <div className="flex justify-between text-xs text-slate-700 dark:text-slate-400">
                 <span>{lang === "uz" ? "Jami summa:" : "Итоговая сумма:"}</span>
-                <span className="font-bold text-slate-850 dark:text-slate-200">
+                <span className="font-bold text-slate-800 dark:text-slate-200">
                   {formatCurrency(invoice.total_amount)}
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-slate-655 dark:text-slate-400">
+              <div className="flex justify-between text-xs text-slate-700 dark:text-slate-400">
                 <span>
                   {lang === "uz" ? "To'langan summa:" : "Оплаченная сумма:"}
                 </span>
@@ -307,10 +307,10 @@ export default function InvoiceDetailPage() {
                   {formatCurrency(invoice.paid_amount)}
                 </span>
               </div>
-              <div className="flex justify-between text-xs text-slate-655 dark:text-slate-400 border-t dark:border-slate-800 pt-1">
+              <div className="flex justify-between text-xs text-slate-700 dark:text-slate-400 border-t dark:border-slate-800 pt-1">
                 <span>{lang === "uz" ? "Qoldiq:" : "Остаток:"}</span>
                 <span
-                  className={`font-black ${isUnpaid ? "text-rose-600 dark:text-rose-400" : "text-slate-850 dark:text-slate-200"}`}
+                  className={`font-black ${isUnpaid ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"}`}
                 >
                   {formatCurrency(
                     Number(invoice.total_amount) - Number(invoice.paid_amount),

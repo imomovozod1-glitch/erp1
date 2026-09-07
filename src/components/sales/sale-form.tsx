@@ -18,8 +18,9 @@ import {
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
+import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 
 interface SaleFormProps {
   products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
@@ -39,11 +40,11 @@ interface SaleItem {
 type PaymentMethod = 'cash' | 'card' | 'transfer' | 'debt'
 
 function generateOrderNumber() {
-  return `SO-${Date.now().toString().slice(-8)}`
+  return generateDocumentNumber('SO')
 }
 
 function generateInvoiceNumber() {
-  return `INV-${Date.now().toString().slice(-8)}`
+  return generateDocumentNumber('INV')
 }
 
 function getDueDateString(daysFromNow: number): string {
@@ -140,6 +141,24 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
       const orderNumber = generateOrderNumber()
       const orderDateStr = getTodayString()
 
+      // Re-read stock immediately before writing. `products` is a server-rendered
+      // snapshot from page load, so deducting from it wrote back a stale figure
+      // and silently reverted anything sold/received in between (the POS flow
+      // already does this check — this form was missing it entirely).
+      const { data: freshProducts, error: freshErr } = await supabase
+        .from('products')
+        .select('id, stock, name')
+        .in('id', items.map((i) => i.productId))
+      if (freshErr) throw freshErr
+
+      const stockById = new Map<string, number>((freshProducts || []).map((p: any) => [p.id, Number(p.stock)]))
+      for (const item of items) {
+        const currentStock = stockById.get(item.productId)
+        if (currentStock === undefined || currentStock < item.quantity) {
+          throw new Error(`${t('availableStock')}: ${currentStock ?? 0} — ${item.productName}`)
+        }
+      }
+
       // Create sales order
       const { data: order, error: orderError } = await supabase
         .from('sales_orders')
@@ -189,11 +208,13 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
 
       // Deduct stock and create stock movements
       for (const item of items) {
-        const product = products.find(p => p.id === item.productId)
-        if (!product) continue
+        const quantityBefore = stockById.get(item.productId)
+        if (quantityBefore === undefined) continue
 
-        const quantityBefore = product.stock
         const quantityAfter = quantityBefore - item.quantity
+        // Keep the map in step so a product listed twice in one order deducts
+        // cumulatively instead of each line overwriting the previous one.
+        stockById.set(item.productId, quantityAfter)
         const cost = costByProductId.get(item.productId)
 
         await supabase
@@ -275,6 +296,19 @@ export function SaleForm({ products, customers, lang }: SaleFormProps) {
         invalidateInvoices(),
         invalidateCustomers(),
       ])
+      // Telegram notification (Settings → Integrations). Fire-and-forget: the
+      // sale is already committed, so a Telegram failure must not surface here.
+      fireTelegramNotification({
+        event: 'sale',
+        data: {
+          orderNumber,
+          total: totalAmount,
+          paymentMethod,
+          itemCount: items.length,
+          customerName: customers.find((c) => c.id === customerId)?.name ?? null,
+        },
+      })
+
       toast.success(t('saleCreated'))
       router.push(`/${lang}/sales/orders`)
     } catch (error: any) {

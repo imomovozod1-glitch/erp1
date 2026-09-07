@@ -24,14 +24,33 @@ export const CASHBOX_TYPE_NAMES: Record<string, string> = {
  * "card" cashbox configured, every payment method funneled into whichever
  * cashbox happened to be first).
  */
+function isPrimaryName(cashbox: any): boolean {
+  const name = String(cashbox?.name ?? '').toLowerCase();
+  return name.includes('asosiy') || name.includes('main') || name.includes('основн');
+}
+
+/**
+ * Within a set of candidate cashboxes, prefer one explicitly named as the
+ * primary/main one, then the oldest — the oldest is the drawer the tenant set
+ * up first, whereas the newest is most likely a cashbox auto-created for an
+ * employee (hr/employee-form.tsx creates those with type 'cash'). Callers pass
+ * the list ordered newest-first, so "first match" alone would hand a cash sale
+ * to whichever employee was added most recently.
+ */
+function preferPrimary(candidates: any[]) {
+  if (candidates.length === 0) return null;
+  const named = candidates.find(isPrimaryName);
+  if (named) return named;
+  return [...candidates].sort((a: any, b: any) =>
+    new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime()
+  )[0];
+}
+
 function pickTargetCashbox(cashboxes: any[], cashboxType?: string) {
   if (cashboxType) {
-    return cashboxes.find((c: any) => c.type === cashboxType) || null;
+    return preferPrimary(cashboxes.filter((c: any) => c.type === cashboxType));
   }
-  return cashboxes.find((c: any) =>
-    c.name.toLowerCase().includes('asosiy') ||
-    c.name.toLowerCase().includes('main')
-  ) || cashboxes[0] || null;
+  return preferPrimary(cashboxes);
 }
 
 function updateLocalCashboxes(change: number, amount: number, type: 'income' | 'expense', cashboxType?: string) {

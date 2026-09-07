@@ -24,7 +24,7 @@ const baseSchema = z.object({
 type FormData = z.infer<typeof baseSchema>
 
 interface CategoryFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   initialData?: any
   lang: string
 }
@@ -34,7 +34,7 @@ export function CategoryForm({ initialData, lang }: CategoryFormProps) {
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const supabase = createClient() as any
 
   const formSchema = z.object({
@@ -59,7 +59,7 @@ export function CategoryForm({ initialData, lang }: CategoryFormProps) {
         // Update
         const { error } = await supabase
           .from('categories')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           .update(data as any)
           .eq('id', initialData.id)
         if (error) throw error
@@ -68,14 +68,14 @@ export function CategoryForm({ initialData, lang }: CategoryFormProps) {
         // Create
         const { error } = await supabase
           .from('categories')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           .insert([data as any])
         if (error) throw error
         toast.success(tCommon('success'))
       }
       await invalidateCategories()
       router.push(`/${lang}/inventory/categories`)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {

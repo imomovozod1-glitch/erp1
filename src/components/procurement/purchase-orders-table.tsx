@@ -3,23 +3,18 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingCart, MoreHorizontal, Eye, Loader2, Calendar, FileText, Truck, Receipt } from 'lucide-react'
+import { Search, ShoppingCart } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  } from '@/components/ui/dropdown-menu'
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
 
 const STATUS_TONES: Record<string, StatusTone> = {
   draft: 'blue',

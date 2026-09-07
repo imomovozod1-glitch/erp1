@@ -8,7 +8,6 @@ import { invalidatePurchaseOrders, invalidateProducts, invalidateMovements } fro
 import { recordCostLayer } from '@/lib/inventory-costing'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 
 interface PurchaseOrderFormProps {
@@ -36,7 +35,7 @@ interface LineItem {
 }
 
 function generatePoNumber() {
-  return `PO-${Date.now().toString().slice(-8)}`
+  return generateDocumentNumber('PO')
 }
 
 export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFormProps) {
@@ -160,6 +159,19 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
       return
     }
 
+    // The AI invoice scan adds lines with an empty productId when it can't match
+    // the scanned name to an existing product. `purchase_order_items.product_id`
+    // is NOT NULL and a uuid, so those lines used to blow up the items insert —
+    // *after* the purchase_orders row had already been created, leaving an
+    // orphaned PO behind. Reject them up front with a message naming the line.
+    const unmatched = items.filter((item) => !item.productId)
+    if (unmatched.length > 0) {
+      toast.error(
+        `${tCommon('required')}: ${unmatched.map((i) => i.productName).join(', ')}`
+      )
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const supabase = createClient() as any
@@ -203,15 +215,25 @@ export function PurchaseOrderForm({ suppliers, products, lang }: PurchaseOrderFo
 
       if (itemsError) throw itemsError
 
+      // Re-read stock right before writing: `products` is the page-load snapshot,
+      // so adding to it wrote back a stale figure and reverted any sale or
+      // adjustment made in between.
+      const { data: freshProducts, error: freshErr } = await supabase
+        .from('products')
+        .select('id, stock')
+        .in('id', items.map((i) => i.productId))
+      if (freshErr) throw freshErr
+      const stockById = new Map<string, number>((freshProducts || []).map((p: any) => [p.id, Number(p.stock)]))
+
       // Update product stock (add incoming stock) and create stock movements
       for (const item of items) {
-        if (!item.productId) continue
+        const quantityBefore = stockById.get(item.productId)
+        if (quantityBefore === undefined) continue
 
-        const product = products.find(p => p.id === item.productId)
-        if (!product) continue
-
-        const quantityBefore = product.stock
         const quantityAfter = quantityBefore + item.quantity
+        // Keep the map current so the same product appearing on two lines of one
+        // PO accumulates instead of the second line overwriting the first.
+        stockById.set(item.productId, quantityAfter)
 
         // Update stock
         await supabase
