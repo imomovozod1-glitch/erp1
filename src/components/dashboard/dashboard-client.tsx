@@ -48,7 +48,7 @@ interface DashboardClientProps {
     warehouseValue?: number
     totalReceivables?: number
     totalPayables?: number
-    soldItems?: { order_date: string; revenue: number; cost: number }[]
+    soldItems?: { order_id: string; order_date: string; revenue: number; cost: number }[]
   }
 }
 
@@ -112,13 +112,11 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
   const tHr = useTranslations('hr')
 
   const {
-    totalOrders,
     totalProducts,
     totalCustomers,
     totalEmployees,
     totalSuppliers,
     chartTxData,
-    incomeRows,
     expenseRows,
     lowStockRows,
     pendingInvoices,
@@ -241,22 +239,13 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
       })
     }
 
-    let rev = 0
     let exp = 0
-    let saleCount = 0
 
     if (period === 'all') {
-      rev = incomeRows.reduce((sum, r) => sum + (r.amount || 0), 0)
       exp = expenseRows.reduce((sum, r) => sum + (r.amount || 0), 0)
-      saleCount = totalOrders || 0
     } else {
       filteredTx.forEach((tx) => {
-        if (tx.type === 'income') {
-          rev += tx.amount
-          saleCount++
-        } else {
-          exp += tx.amount
-        }
+        if (tx.type === 'expense') exp += tx.amount
       })
     }
 
@@ -277,13 +266,18 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
         return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
       })
     }
+    // "Total sales" is the sum of what was actually sold (sales_order_items), NOT the
+    // sum of `income` transactions — the latter also contains manual cashbox top-ups,
+    // customer debt repayments and other non-sale income.
     const salesRevenue = filteredSoldItems.reduce((sum, si) => sum + si.revenue, 0)
     const costOfGoods = filteredSoldItems.reduce((sum, si) => sum + si.cost, 0)
     const profit = salesRevenue - costOfGoods
-    const avgCheck = saleCount > 0 ? rev / saleCount : 0
+    // Line items belong to orders, so the order count is the number of distinct orders.
+    const saleCount = new Set(filteredSoldItems.map((si) => si.order_id).filter(Boolean)).size
+    const avgCheck = saleCount > 0 ? salesRevenue / saleCount : 0
 
     return {
-      revenue: rev,
+      revenue: salesRevenue,
       expenses: exp,
       profit,
       avgCheck,

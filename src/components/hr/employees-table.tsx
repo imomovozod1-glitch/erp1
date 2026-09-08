@@ -32,6 +32,7 @@ interface EmployeesTableProps {
   total: number
   totalPages: number
   status: 'all' | 'hired' | 'not_hired'
+  paid: 'all' | 'paid' | 'free'
 }
 
 export function EmployeesTable({
@@ -42,6 +43,7 @@ export function EmployeesTable({
   total,
   totalPages,
   status,
+  paid,
 }: EmployeesTableProps) {
   const t = useTranslations('hr')
   const tCommon = useTranslations('common')
@@ -65,6 +67,22 @@ export function EmployeesTable({
               { value: 'not_hired', label: lang === 'uz' ? 'Ishlamaydi' : lang === 'ru' ? 'Не работает' : 'Not employed' },
             ]}
           />
+          {/* Labelled, because two chip groups side by side each carry their own
+              "All" button and would otherwise be indistinguishable. */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {t('subscription')}
+            </span>
+            <TableFilterChips
+              param="paid"
+              value={paid}
+              options={[
+                { value: 'all', label: tCommon('all') },
+                { value: 'paid', label: t('subscribed') },
+                { value: 'free', label: t('notSubscribed') },
+              ]}
+            />
+          </div>
         </div>
         <Table>
           <TableHeader>
@@ -76,13 +94,14 @@ export function EmployeesTable({
               <TableHead className="hidden md:table-cell text-right">{t('salary')}</TableHead>
               <TableHead className="hidden md:table-cell">{t('hiredAt')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
+              <TableHead>{t('subscription')}</TableHead>
               <TableHead className="w-12.5"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-12">
+                <TableCell colSpan={9} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -133,6 +152,15 @@ export function EmployeesTable({
                         label={emp.is_active
                           ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
                           : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated')}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {/* `is_paid` is what gates a system login (see employee-form.tsx),
+                          so whether a seat is subscribed has to be visible from the list,
+                          not only inside the edit form. */}
+                      <StatusBadge
+                        tone={emp.is_paid ? 'indigo' : 'slate'}
+                        label={emp.is_paid ? t('subscribed') : t('notSubscribed')}
                       />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>

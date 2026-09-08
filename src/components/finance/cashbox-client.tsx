@@ -1322,16 +1322,18 @@ export function CashboxClient({ lang }: { lang: string }) {
               {filteredTransactions.length > 0 && (
                 <tfoot>
                   <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/70 font-bold">
-                    <td className="p-4 pl-6" colSpan={3}>
-                      {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}
+                    {/* The label spans the first four columns (date, cashbox, category,
+                        description) so each total sits under its own header — a shorter
+                        span plus a trailing filler cell shifted both one column left. */}
+                    <td className="p-4 pl-6" colSpan={4}>
+                      {tCommon('total')}
                     </td>
                     <td className="p-4 text-right text-emerald-600 dark:text-emerald-400">
                       {formatCurrency(filteredTransactions.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + Number(tx.amount), 0))}
                     </td>
-                    <td className="p-4 text-right text-rose-600 dark:text-rose-400">
+                    <td className="p-4 pr-6 text-right text-rose-600 dark:text-rose-400">
                       {formatCurrency(filteredTransactions.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + Number(tx.amount), 0))}
                     </td>
-                    <td className="p-4 pr-6" />
                   </tr>
                 </tfoot>
               )}

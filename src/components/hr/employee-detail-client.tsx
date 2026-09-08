@@ -120,6 +120,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       { Parameter: t('department'), Value: employee.profiles?.departments?.name ?? '—' },
       { Parameter: t('salary'), Value: formatCurrency(employee.salary) },
       { Parameter: t('hiredAt'), Value: formatDate(employee.hired_at) },
+      { Parameter: t('subscription'), Value: employee.is_paid ? t('subscribed') : t('notSubscribed') },
       { Parameter: tc('status'), Value: employee.is_active
         ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
         : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated') }
@@ -200,6 +201,13 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             label={employee.is_active
               ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
               : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated')}
+          />
+          {/* Paid seat = the employee may hold a system login (employee-form.tsx
+              gates system access on `is_paid`), so it belongs next to the
+              employment badge rather than only inside the edit form. */}
+          <StatusBadge
+            tone={employee.is_paid ? 'indigo' : 'slate'}
+            label={employee.is_paid ? t('subscribed') : t('notSubscribed')}
           />
           <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
