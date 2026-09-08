@@ -522,15 +522,18 @@ export function ProductsTable({
                         {formatNumber(product.stock)} {product.unit}
                       </span>
                     </TableCell>
+                    {/* Order must mirror the header: assignee (lg-only) then status.
+                        Swapped, the status pill rendered under "Mas'ul shaxs" and the
+                        assignee name under "Holat" on wide screens. */}
+                    <TableCell className="hidden lg:table-cell text-muted-foreground">
+                      {product.assignee?.full_name || t("common.unassigned")}
+                    </TableCell>
                     <TableCell>
                       <StatusBadge
                         tone={product.is_active ? "emerald" : "slate"}
                         label={product.is_active ? t("common.active") : t("common.inactive")}
                       />
                     </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        {product.assignee?.full_name || t("common.unassigned")}
-                      </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <Tooltip>

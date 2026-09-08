@@ -198,7 +198,10 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
         }
       }
       productMap[productName].quantity += item.quantity
-      productMap[productName].totalSum += item.total_price
+      // `net_total_price` is `total_price` minus this order's share of its
+      // general discount (see orderDiscountFactors in queries.ts); the raw
+      // column would overstate revenue on every discounted sale.
+      productMap[productName].totalSum += item.net_total_price ?? item.total_price
       productMap[productName].totalCost += costPrice * item.quantity
     })
 

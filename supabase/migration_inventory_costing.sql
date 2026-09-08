@@ -16,8 +16,8 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 CREATE TABLE IF NOT EXISTS inventory_cost_layers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  quantity INTEGER NOT NULL,
-  remaining_qty INTEGER NOT NULL,
+  quantity DECIMAL(12, 3) NOT NULL,
+  remaining_qty DECIMAL(12, 3) NOT NULL,
   unit_cost DECIMAL(12, 2) NOT NULL,
   source_type TEXT NOT NULL,
   source_id UUID,
