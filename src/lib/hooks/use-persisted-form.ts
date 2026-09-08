@@ -14,9 +14,16 @@ export function usePersistedForm<TFieldValues extends FieldValues = FieldValues,
 ): UseFormReturn<TFieldValues, TContext> {
   const pathname = usePathname()
 
+  // A "new X" route always opens blank. Restoring an abandoned draft there
+  // reads as a bug rather than a convenience — the user starts creating a
+  // product and finds the previous, never-saved one already typed into the
+  // form. Drafts stay on for edit routes, where the form belongs to one
+  // specific record and restoring it is unambiguous.
+  const isCreateRoute = /\/new\/?$/.test(pathname)
+
   // 1. Get initial default values, checking sessionStorage
   const getInitialValues = () => {
-    if (typeof window === 'undefined') return props?.defaultValues
+    if (typeof window === 'undefined' || isCreateRoute) return props?.defaultValues
     try {
       const savedStr = sessionStorage.getItem(`form_persist_${formId}`)
       if (savedStr) {
@@ -51,7 +58,7 @@ export function usePersistedForm<TFieldValues extends FieldValues = FieldValues,
   const valuesStr = JSON.stringify(values)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || isCreateRoute) return
     try {
       const currentPath = pathname.replace(/^\/[a-z]{2}/, '')
       sessionStorage.setItem(`form_persist_${formId}`, JSON.stringify({
@@ -63,7 +70,7 @@ export function usePersistedForm<TFieldValues extends FieldValues = FieldValues,
       console.error('Error writing persisted form data', e)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [valuesStr, pathname, formId])
+  }, [valuesStr, pathname, formId, isCreateRoute])
 
   return form
 }

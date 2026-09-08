@@ -146,7 +146,7 @@ export default function OrderDetailPage() {
               <ShoppingBag className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Buyurtma ma\'lumotlari' : 'Информация о заказе'}</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">{t('orderInfo')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-5 space-y-4">
@@ -177,7 +177,7 @@ export default function OrderDetailPage() {
             </div>
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                {lang === 'uz' ? 'Jami summa' : 'Итоговая сумма'}
+                {tCommon('totalAmount')}
               </span>
               <p className="text-lg font-black text-violet-600 dark:text-violet-400">{formatCurrency(order.total_amount)}</p>
             </div>

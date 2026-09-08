@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller } from 'react-hook-form'
@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { ImageUpload } from '@/components/shared/image-upload'
 
 interface ProductFormProps {
   /** Active tenant members who can be made responsible for this record. */
@@ -35,6 +36,10 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
+  // Kept outside the zod form (like `assignedTo`): the value is produced by an
+  // upload, not typed, so there is nothing to validate and nothing to persist
+  // into the sessionStorage draft.
+  const [imageUrl, setImageUrl] = useState<string | null>(initialData?.image_url ?? null)
   const supabase = createClient() as any
 
   const innerFormSchema = z.object({
@@ -98,14 +103,17 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
   const [defaultSku] = useState(() => initialData?.sku || '')
 
   // "Kirim narxi" seeds "Tannarx", but only while the cost-price box still holds
-  // what that sync itself put there. Previously the sync fired on every keystroke
-  // in the incoming-cost box and silently overwrote a tannarx the user had already
-  // typed (or that an existing product was saved with). Remembering the last
-  // auto-filled value keeps the convenience — correcting the incoming price still
-  // follows through — without ever discarding a hand-entered cost.
-  const [autoFilledCost, setAutoFilledCost] = useState<string | null>(null)
+  // exactly what that sync itself put there. Previously the sync fired on every
+  // keystroke in the incoming-cost box and silently overwrote a tannarx the user
+  // had already typed (or that an existing product was saved with). Remembering
+  // the last auto-filled value keeps the convenience — correcting the incoming
+  // price still follows through — without ever discarding a hand-entered cost.
+  //
+  // A ref, not state: it is only ever read and written inside input handlers, and
+  // a ref can't be read stale from a memoized render closure the way state can.
+  const autoFilledCostRef = useRef<string | null>(null)
 
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = usePersistedForm<FormData>('product-form-v3', {
+  const { register, handleSubmit, setValue, watch, getValues, control, formState: { errors } } = usePersistedForm<FormData>('product-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
@@ -203,6 +211,7 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
         // never left unassigned by accident.
         assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
         created_by: initialData?.created_by ?? userId,
+        image_url: imageUrl,
         ...data,
         category_id: data.category_id || null, // convert empty string to null
       }
@@ -394,13 +403,14 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
 
                   // Seed the cost price from the incoming price, but never clobber
                   // one the user entered themselves.
-                  const currentCost = watch('cost_price') as unknown as string | number | undefined | null
+                  const currentCost = getValues('cost_price') as unknown as string | number | undefined | null
+                  const costIsEmpty =
+                    currentCost === '' || currentCost === undefined || currentCost === null
                   const costIsAuto =
-                    currentCost === '' || currentCost === undefined || currentCost === null ||
-                    String(currentCost) === autoFilledCost
+                    costIsEmpty || String(currentCost) === autoFilledCostRef.current
                   if (costIsAuto) {
                     setValue('cost_price', val as any)
-                    setAutoFilledCost(String(val))
+                    autoFilledCostRef.current = String(val)
                   }
                   
                   // Recalculate price if markupState exists
@@ -441,8 +451,9 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
                 value={value} 
                 onChange={(val) => {
                   onChange(val)
-                  // Typed by hand — the incoming-price sync must leave it alone.
-                  setAutoFilledCost(null)
+                  // Typed by hand — the incoming-price sync must leave it alone
+                  // from here on.
+                  autoFilledCostRef.current = null
                   const cost = Number(val) || 0
                   
                   // Recalculate price if markupState exists
@@ -623,6 +634,15 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
           />
           {errors.min_stock && <p className="text-sm text-red-500">{errors.min_stock.message}</p>}
         </div>
+      </div>
+
+      <div className="max-w-md">
+        <ImageUpload
+          value={imageUrl}
+          onChange={setImageUrl}
+          label={t('productImage')}
+          disabled={isSubmitting}
+        />
       </div>
 
       <div className="space-y-2">

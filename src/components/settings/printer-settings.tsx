@@ -52,6 +52,9 @@ const CONNECTION_TYPES: { value: PrinterConnectionType; icon: typeof Usb }[] = [
 export function PrinterSettings() {
   const t = useTranslations('settings.printer')
   const tCommon = useTranslations('common')
+  // Receipt labels come from the same namespace the POS receipt uses, so the
+  // test print is worded exactly like a real one.
+  const tPos = useTranslations('pos')
 
   const [config, setConfig] = useState<PrinterConfig>(getPrinterConfig())
   const [usbSupported, setUsbSupported] = useState(false)
@@ -127,9 +130,9 @@ export function PrinterSettings() {
           receipt: t('labelReceipt'),
           date: tCommon('date'),
           cashier: t('labelCashier'),
-          customer: tCommon('customer'),
+          customer: tPos('customer'),
           subtotal: t('labelSubtotal'),
-          discount: tCommon('discount'),
+          discount: tPos('discount'),
           tax: t('labelTax'),
           total: tCommon('total'),
           paymentMethod: t('labelPaymentMethod'),

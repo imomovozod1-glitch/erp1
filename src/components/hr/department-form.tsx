@@ -26,7 +26,6 @@ interface DepartmentFormProps {
 }
 
 export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
-  const t = useTranslations('hr')
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -80,7 +79,7 @@ export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">{t('name')}</Label>
+            <Label htmlFor="name">{tCommon('name')}</Label>
             <Input id="name" {...register('name')} />
             {errors.name && (
               <p className="text-sm text-red-500">{errors.name.message}</p>
@@ -88,7 +87,7 @@ export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="description">{t('description')}</Label>
+            <Label htmlFor="description">{tCommon('description')}</Label>
             <Textarea id="description" {...register('description')} />
             {errors.description && (
               <p className="text-sm text-red-500">{errors.description.message}</p>

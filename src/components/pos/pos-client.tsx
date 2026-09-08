@@ -18,9 +18,11 @@ import {
   ShoppingBag,
   Scale,
   MapPin,
-  Loader2
+  Loader2,
+  Package
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 
 // Load MapPicker dynamically for Next.js SSR compatibility
 const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod => mod.MapPicker), {
@@ -279,7 +281,7 @@ export function POSClient({
         setSearchQuery('')
         toast.success(`${matched.name} ${tCommon('success')}`)
       } else {
-        toast.error(lang === 'uz' ? 'Mahsulot topilmadi' : 'Product not found')
+        toast.error(t('productNotFound'))
       }
     }
   }
@@ -348,7 +350,7 @@ export function POSClient({
 
     // Debt requires a customer
     if (paymentMethod === 'debt' && !selectedCustomer) {
-      toast.error(lang === 'uz' ? 'Qarzga sotish uchun mijozni tanlang!' : 'Select customer for debt sale!')
+      toast.error(t('selectCustomerForDebt'))
       return
     }
 
@@ -777,6 +779,23 @@ export function POSClient({
                         isOutOfStock ? 'opacity-50 pointer-events-none' : ''
                       }`}
                     >
+                      {/* Photo band — same height for every tile whether or not the
+                          product has an image, so the grid rows stay aligned. */}
+                      <div className="relative h-24 w-full shrink-0 bg-slate-100 dark:bg-slate-800">
+                        {p.image_url ? (
+                          <Image
+                            src={p.image_url}
+                            alt={p.name}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                            className="object-cover transition-transform duration-200 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
+                            <Package className="h-8 w-8" />
+                          </div>
+                        )}
+                      </div>
                       <CardContent className="p-3.5 flex flex-col justify-between h-34 gap-2">
                         <div className="space-y-1">
                           <p className="font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">

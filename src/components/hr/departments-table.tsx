@@ -27,7 +27,6 @@ interface DepartmentsTableProps {
 }
 
 export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
-  const t = useTranslations('hr')
   const tCommon = useTranslations('common')
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
@@ -43,8 +42,8 @@ export function DepartmentsTable({ departments, lang }: DepartmentsTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
-              <TableHead>{t('name')}</TableHead>
-              <TableHead>{t('description')}</TableHead>
+              <TableHead>{tCommon('name')}</TableHead>
+              <TableHead>{tCommon('description')}</TableHead>
               <TableHead className="w-12.5"></TableHead>
             </TableRow>
           </TableHeader>
