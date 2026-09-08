@@ -97,6 +97,14 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
 
   const [defaultSku] = useState(() => initialData?.sku || '')
 
+  // "Kirim narxi" seeds "Tannarx", but only while the cost-price box still holds
+  // what that sync itself put there. Previously the sync fired on every keystroke
+  // in the incoming-cost box and silently overwrote a tannarx the user had already
+  // typed (or that an existing product was saved with). Remembering the last
+  // auto-filled value keeps the convenience — correcting the incoming price still
+  // follows through — without ever discarding a hand-entered cost.
+  const [autoFilledCost, setAutoFilledCost] = useState<string | null>(null)
+
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = usePersistedForm<FormData>('product-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
@@ -383,9 +391,17 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
                 onChange={(val) => {
                   onChange(val)
                   const incoming = Number(val) || 0
-                  
-                  // Auto sync cost_price to incoming_cost
-                  setValue('cost_price', val as any)
+
+                  // Seed the cost price from the incoming price, but never clobber
+                  // one the user entered themselves.
+                  const currentCost = watch('cost_price') as unknown as string | number | undefined | null
+                  const costIsAuto =
+                    currentCost === '' || currentCost === undefined || currentCost === null ||
+                    String(currentCost) === autoFilledCost
+                  if (costIsAuto) {
+                    setValue('cost_price', val as any)
+                    setAutoFilledCost(String(val))
+                  }
                   
                   // Recalculate price if markupState exists
                   if (markupState && !isNaN(Number(markupState))) {
@@ -425,6 +441,8 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
                 value={value} 
                 onChange={(val) => {
                   onChange(val)
+                  // Typed by hand — the incoming-price sync must leave it alone.
+                  setAutoFilledCost(null)
                   const cost = Number(val) || 0
                   
                   // Recalculate price if markupState exists

@@ -297,7 +297,7 @@ export const getCachedAnalyticsStats = unstable_cache(
     ] = await Promise.all([
       supabase
         .from('sales_order_items')
-        .select('quantity, unit_price, unit_cost, total_price, products(name, cost_price, price), sales_orders(order_date, status)')
+        .select('order_id, quantity, unit_price, unit_cost, total_price, products(name, cost_price, price), sales_orders(order_date, status, discount_amount)')
         .eq('tenant_id', tenantId),
       supabase
         .from('sales_orders')
@@ -315,7 +315,22 @@ export const getCachedAnalyticsStats = unstable_cache(
     // never a single costPrice from whichever line happened to be seen first
     // multiplied by the product's total quantity.
     const productMap: Record<string, { name: string; totalCost: number; sellingPrice: number; quantity: number; totalSum: number }> = {}
-    ;(orderItems ?? []).forEach((item: any) => {
+    // Line revenue has to be taken net of each order's general discount, or the
+    // analytics revenue/profit exceed what was actually collected. Computed once
+    // here and carried on the row as `net_total_price`, because the client
+    // re-aggregates these same rows per period (analytics-client.tsx).
+    const itemDiscountFactors = orderDiscountFactors(
+      (orderItems ?? []).map((item: any) => ({
+        order_id: item.order_id,
+        total_price: item.total_price,
+        discount_amount: item.sales_orders?.discount_amount,
+      }))
+    )
+    const itemsWithNetRevenue = (orderItems ?? []).map((item: any) => ({
+      ...item,
+      net_total_price: (Number(item.total_price) || 0) * (itemDiscountFactors.get(item.order_id) ?? 1),
+    }))
+    itemsWithNetRevenue.forEach((item: any) => {
       const productName = item.products?.name ?? 'Unknown'
       // Realized cost at time of sale (FIFO/LIFO/AVECO) when available; falls back to
       // the product's current cost_price for sales made before this column existed.
@@ -332,7 +347,7 @@ export const getCachedAnalyticsStats = unstable_cache(
         }
       }
       productMap[productName].quantity += item.quantity
-      productMap[productName].totalSum += item.total_price
+      productMap[productName].totalSum += item.net_total_price
       productMap[productName].totalCost += costPrice * item.quantity
     })
 
@@ -371,7 +386,7 @@ export const getCachedAnalyticsStats = unstable_cache(
       totalOrders,
       avgOrderValue,
       chartData,
-      rawItems: orderItems ?? [],
+      rawItems: itemsWithNetRevenue,
       rawOrders: salesOrders ?? [],
     }
   },
@@ -381,6 +396,39 @@ export const getCachedAnalyticsStats = unstable_cache(
     revalidate: 60,
   }
 )
+
+/**
+ * A sale can carry a general, order-level discount that is stored ONLY on
+ * `sales_orders.discount_amount`; every `sales_order_items.total_price` still holds
+ * the pre-discount amount (the per-line `discount_percent` is already baked into it,
+ * the general one is not). Summing line items therefore reports more revenue — and
+ * more profit — than the customer actually paid: two units at 1500 with a 200 general
+ * discount add up to 3000 in the items while the order total is 2800.
+ *
+ * Returns, per order id, the factor to scale that order's line revenue by, so the
+ * lines add back up to `subtotal - discount`. Splitting it proportionally (rather
+ * than subtracting it from the order as a whole) keeps per-product revenue and
+ * profit correct too.
+ */
+function orderDiscountFactors(
+  rows: { order_id?: string | null; total_price?: number | null; discount_amount?: number | null }[]
+): Map<string, number> {
+  const subtotals = new Map<string, number>()
+  const discounts = new Map<string, number>()
+  for (const row of rows) {
+    if (!row.order_id) continue
+    subtotals.set(row.order_id, (subtotals.get(row.order_id) ?? 0) + (Number(row.total_price) || 0))
+    discounts.set(row.order_id, Number(row.discount_amount) || 0)
+  }
+  const factors = new Map<string, number>()
+  for (const [orderId, subtotal] of subtotals) {
+    // A discount can never exceed the order it belongs to, and a zero-subtotal
+    // order has nothing to scale.
+    const discount = Math.min(Math.max(discounts.get(orderId) ?? 0, 0), subtotal)
+    factors.set(orderId, subtotal > 0 ? (subtotal - discount) / subtotal : 1)
+  }
+  return factors
+}
 
 // ─── Dashboard stats (heavier query, shorter cache) ───────────────────────────
 
@@ -437,7 +485,7 @@ export const getCachedDashboardStats = unstable_cache(
       supabase.from('transactions').select('amount').eq('tenant_id', tenantId).eq('type', 'expense').not('supplier_id', 'is', null),
       supabase
         .from('sales_order_items')
-        .select('order_id, quantity, total_price, unit_cost, products(cost_price), sales_orders(order_date, status)')
+        .select('order_id, quantity, total_price, unit_cost, products(cost_price), sales_orders(order_date, status, discount_amount)')
         .eq('tenant_id', tenantId),
       supabase.from('inventory_cost_layers').select('remaining_qty, unit_cost').eq('tenant_id', tenantId).gt('remaining_qty', 0),
     ])
@@ -466,12 +514,21 @@ export const getCachedDashboardStats = unstable_cache(
     // to the product's current cost_price for sales made before that column existed.
     // Cancelled orders are excluded: they never became revenue, so counting them
     // would inflate both the sales total and the order count on the dashboard.
-    const soldItems = (soldItemsRes.data ?? [])
+    const soldRows = (soldItemsRes.data ?? [])
       .filter((item: any) => item.sales_orders?.status !== 'cancelled')
+    const soldDiscountFactors = orderDiscountFactors(
+      soldRows.map((item: any) => ({
+        order_id: item.order_id,
+        total_price: item.total_price,
+        discount_amount: item.sales_orders?.discount_amount,
+      }))
+    )
+    const soldItems = soldRows
       .map((item: any) => ({
         order_id: item.order_id as string,
         order_date: item.sales_orders?.order_date ?? null,
-        revenue: Number(item.total_price) || 0,
+        // Net of the order's general discount — see orderDiscountFactors.
+        revenue: (Number(item.total_price) || 0) * (soldDiscountFactors.get(item.order_id) ?? 1),
         cost: (Number(item.unit_cost ?? item.products?.cost_price) || 0) * (Number(item.quantity) || 0),
       }))
       .filter((item: any) => item.order_date)
