@@ -121,16 +121,22 @@ export function TransactionsTable({
           </TableBody>
           {total > 0 && (
             <TableFooter>
+              {/* Every cell mirrors the responsive visibility of its header column —
+                  a plain colSpan would slide the income/expense totals out from under
+                  their own columns as soon as a `hidden md:/lg:` column drops out. */}
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={4} className="font-bold">
-                  {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}
+                <TableCell colSpan={2} className="font-bold">
+                  {tCommon('total')}
                 </TableCell>
+                <TableCell className="hidden md:table-cell" />
+                <TableCell className="hidden lg:table-cell" />
                 <TableCell className="text-right font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
                   {formatCurrency(totalIncome)}
                 </TableCell>
                 <TableCell className="text-right font-bold text-rose-700 dark:text-rose-400 tabular-nums">
                   {formatCurrency(totalExpense)}
                 </TableCell>
+                <TableCell className="hidden lg:table-cell" />
                 <TableCell />
               </TableRow>
             </TableFooter>

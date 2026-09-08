@@ -24,6 +24,8 @@ export default async function EmployeesPage({
   const { page, pageSize, search } = readPageParams(sp)
   const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status
   const status = statusParam === 'hired' || statusParam === 'not_hired' ? statusParam : 'all'
+  const paidParam = Array.isArray(sp.paid) ? sp.paid[0] : sp.paid
+  const paid = paidParam === 'paid' || paidParam === 'free' ? paidParam : 'all'
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
   const canEdit = await canEditModule('hr')
@@ -34,7 +36,7 @@ export default async function EmployeesPage({
   const [t, tInfo, result] = await Promise.all([
     getTranslations('hr'),
     getTranslations('pageInfo'),
-    getEmployeesPage(tenantId, { page, pageSize, search, status }),
+    getEmployeesPage(tenantId, { page, pageSize, search, status, paid }),
   ])
 
   return (
@@ -60,6 +62,7 @@ export default async function EmployeesPage({
         total={result.total}
         totalPages={result.totalPages}
         status={status}
+        paid={paid}
       />
     </div>
   )

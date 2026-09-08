@@ -437,7 +437,7 @@ export const getCachedDashboardStats = unstable_cache(
       supabase.from('transactions').select('amount').eq('tenant_id', tenantId).eq('type', 'expense').not('supplier_id', 'is', null),
       supabase
         .from('sales_order_items')
-        .select('quantity, total_price, unit_cost, products(cost_price), sales_orders(order_date)')
+        .select('order_id, quantity, total_price, unit_cost, products(cost_price), sales_orders(order_date, status)')
         .eq('tenant_id', tenantId),
       supabase.from('inventory_cost_layers').select('remaining_qty, unit_cost').eq('tenant_id', tenantId).gt('remaining_qty', 0),
     ])
@@ -464,11 +464,17 @@ export const getCachedDashboardStats = unstable_cache(
     // Sold items with cost data, used to compute real profit (sales - cost price) per period.
     // Prefers the realized unit_cost charged at sale time (FIFO/LIFO/AVECO); falls back
     // to the product's current cost_price for sales made before that column existed.
-    const soldItems = (soldItemsRes.data ?? []).map((item: any) => ({
-      order_date: item.sales_orders?.order_date ?? null,
-      revenue: Number(item.total_price) || 0,
-      cost: (Number(item.unit_cost ?? item.products?.cost_price) || 0) * (Number(item.quantity) || 0),
-    })).filter((item: any) => item.order_date)
+    // Cancelled orders are excluded: they never became revenue, so counting them
+    // would inflate both the sales total and the order count on the dashboard.
+    const soldItems = (soldItemsRes.data ?? [])
+      .filter((item: any) => item.sales_orders?.status !== 'cancelled')
+      .map((item: any) => ({
+        order_id: item.order_id as string,
+        order_date: item.sales_orders?.order_date ?? null,
+        revenue: Number(item.total_price) || 0,
+        cost: (Number(item.unit_cost ?? item.products?.cost_price) || 0) * (Number(item.quantity) || 0),
+      }))
+      .filter((item: any) => item.order_date)
 
     return {
       totalOrders,
@@ -1060,7 +1066,14 @@ export function getMovementsPage(
 
 export function getEmployeesPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; status?: 'all' | 'hired' | 'not_hired' }
+  opts: {
+    page: number
+    pageSize: number
+    search?: string
+    status?: 'all' | 'hired' | 'not_hired'
+    /** Paid-seat (subscribed) filter — `is_paid` is what gates a system login. */
+    paid?: 'all' | 'paid' | 'free'
+  }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'employees',
@@ -1070,7 +1083,10 @@ export function getEmployeesPage(
     pageSize: opts.pageSize,
     search: opts.search,
     searchColumns: ['full_name', 'employee_code', 'position'],
-    filters: { is_active: opts.status === 'all' || !opts.status ? undefined : opts.status === 'hired' },
+    filters: {
+      is_active: opts.status === 'all' || !opts.status ? undefined : opts.status === 'hired',
+      is_paid: opts.paid === 'all' || !opts.paid ? undefined : opts.paid === 'paid',
+    },
     orderBy: { column: 'created_at', ascending: false },
   })
 }
