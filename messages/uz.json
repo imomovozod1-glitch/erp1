@@ -64,6 +64,7 @@
     "count": "ta",
     "noData": "Ma'lumot topilmadi",
     "noResults": "Natija topilmadi",
+    "other": "Boshqalar",
     "required": "Majburiy maydon",
     "optional": "Ixtiyoriy",
     "success": "Muvaffaqiyatli",
@@ -102,7 +103,9 @@
     "assignedTo": "Mas’ul shaxs",
     "createdBy": "Yaratgan",
     "unassigned": "Biriktirilmagan",
-    "assignedToHint": "Hujjat shu xodimning ro‘yxatida ko‘rinadi. Bo‘sh qoldirilsa — o‘zingiz."
+    "assignedToHint": "Hujjat shu xodimning ro‘yxatida ko‘rinadi. Bo‘sh qoldirilsa — o‘zingiz.",
+    "category": "Kategoriya",
+    "totalAmount": "Jami summa"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -281,7 +284,19 @@
     "receivedAt": "Kirim sanasi",
     "nextSaleCost": "Keyingi sotuv tannarxi",
     "uploadExcelFile": "Excel faylini yuklash",
-    "downloadTemplateAction": "Shablonni yuklab olish"
+    "downloadTemplateAction": "Shablonni yuklab olish",
+    "profitMargin": "Foyda marjasi",
+    "stockValue": "Zaxira qiymati",
+    "movementHistory": "Harakatlar tarixi",
+    "salesHistory": "Sotuvlar tarixi",
+    "purchaseHistory": "Xaridlar tarixi",
+    "movementType": "Harakat turi",
+    "source": "Manba",
+    "reason": "Sabab",
+    "initialStock": "Boshlang'ich zaxira",
+    "manualAdjustment": "Qo'lda tuzatish",
+    "value": "Qiymati",
+    "cannotDeleteWithStock": "Zaxirasi mavjud mahsulotlarni o'chirib bo'lmaydi"
   },
   "sales": {
     "title": "Sotuv",
@@ -373,7 +388,9 @@
     "customersMapCount": "{total} mijozdan {shown} tasi xaritada ko'rsatilmoqda",
     "customersMapMissing": "{count, plural, other {# tasida manzil yo'q}}",
     "customersMapEmpty": "Hech qaysi mijozda xarita uchun manzil yoki lokatsiya kiritilmagan",
-    "debt": "Qarz"
+    "debt": "Qarz",
+    "orderInfo": "Buyurtma ma'lumotlari",
+    "cannotDeleteCustomer": "Mijozning qarzi yoki tranzaksiyalari borligi sababli o'chirib bo'lmaydi"
   },
   "finance": {
     "title": "Moliya",
@@ -514,7 +531,14 @@
       "received": "Yakunlangan",
       "partially_received": "Yangi",
       "cancelled": "Bekor qilingan"
-    }
+    },
+    "totalPurchases": "Jami xaridlar",
+    "totalPaid": "Jami to'lovlar",
+    "paymentsCount": "{count} ta to'lov",
+    "balanceOwed": "Balans (Qarzimiz)",
+    "supplierProfile": "Hamkor ma'lumotlari",
+    "paymentHistory": "To'lovlar tarixi",
+    "purchaseInfo": "Xarid buyurtmasi ma'lumotlari"
   },
   "analytics": {
     "title": "Analitika",
@@ -738,7 +762,9 @@
     "generalDiscount": "Umumiy chegirma",
     "itemDiscount": "Mahsulot chegirmasi",
     "thankYou": "Rahmat! Xaridingiz bilan tabriklaymiz.",
-    "printedDirectly": "Chek printerga yuborildi"
+    "printedDirectly": "Chek printerga yuborildi",
+    "productNotFound": "Mahsulot topilmadi",
+    "selectCustomerForDebt": "Qarzga sotish uchun mijozni tanlang!"
   },
   "support": {
     "title": "Qo'llab-quvvatlash xizmati",

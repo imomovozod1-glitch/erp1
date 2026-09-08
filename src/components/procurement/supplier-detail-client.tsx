@@ -143,7 +143,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : 'Всего закупок'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('totalPurchases')}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalPurchases)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{purchaseOrders.length} {t('purchaseOrders')}</span>
           </CardContent>
@@ -151,15 +151,15 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami to\'lovlar' : 'Всего выплачено'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('totalPaid')}</span>
             <h3 className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight mt-1">{formatCurrency(totalPayments)}</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{transactions.length} {lang === 'uz' ? 'ta to\'lov' : 'выплат'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('paymentsCount', { count: transactions.length })}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Balans (Qarzimiz)' : 'Баланс (Долг)'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('balanceOwed')}</span>
             <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${outstandingDebt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
               {formatCurrency(outstandingDebt)}
             </h3>
@@ -182,7 +182,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border-0 shadow-sm self-start">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Hamkor ma\'lumotlari' : 'Профиль партнёра'}</CardTitle>
+            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{t('supplierProfile')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             {supplier.phone && (
@@ -261,7 +261,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                 }`}
               >
                 <Truck className="h-4 w-4" />
-                {lang === 'uz' ? 'Xarid buyurtmalari' : 'Заказы на закупку'}
+                {t('purchaseOrders')}
               </button>
               <button
                 onClick={() => setActiveTab('payments')}
@@ -270,7 +270,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                 }`}
               >
                 <DollarSign className="h-4 w-4" />
-                {lang === 'uz' ? 'To\'lovlar tarixi' : 'История платежей'}
+                {t('paymentHistory')}
               </button>
             </div>
 
@@ -315,9 +315,9 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Kategoriya' : 'Категория'}</TableHead>
+                      <TableHead>{tc('category')}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Izoh' : 'Комментарий'}</TableHead>
+                      <TableHead>{tc('notes')}</TableHead>
                       <TableHead>{tc('date')}</TableHead>
                     </TableRow>
                   </TableHeader>

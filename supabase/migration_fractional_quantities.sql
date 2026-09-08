@@ -13,10 +13,30 @@
 -- float), matching how money is already stored as DECIMAL(12, 2).
 -- =============================================================================
 
+-- `products.is_low_stock` is a STORED generated column over (stock, min_stock)
+-- (migration_low_stock_column.sql), and Postgres refuses to retype a column a
+-- generated column reads:
+--   ERROR: cannot alter type of a column used by a generated column
+-- So it is dropped and rebuilt around the change. Dropping it also drops
+-- idx_products_low_stock, which is recreated below. The column is derived, so
+-- nothing is lost — it is recomputed for every row on re-creation.
+ALTER TABLE products DROP COLUMN IF EXISTS is_low_stock;
+
 ALTER TABLE products
   ALTER COLUMN stock TYPE DECIMAL(12, 3),
   ALTER COLUMN min_stock TYPE DECIMAL(12, 3),
   ALTER COLUMN max_stock TYPE DECIMAL(12, 3);
+
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS is_low_stock BOOLEAN
+  GENERATED ALWAYS AS (stock <= min_stock) STORED;
+
+CREATE INDEX IF NOT EXISTS idx_products_low_stock
+  ON products(tenant_id)
+  WHERE is_low_stock AND is_active;
+
+COMMENT ON COLUMN products.is_low_stock IS
+  'Generated: stock <= min_stock. Exists so the notification bell can filter server-side instead of downloading every product and filtering in the browser.';
 
 ALTER TABLE sales_order_items
   ALTER COLUMN quantity TYPE DECIMAL(12, 3);

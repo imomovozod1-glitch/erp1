@@ -281,7 +281,7 @@ export function POSClient({
         setSearchQuery('')
         toast.success(`${matched.name} ${tCommon('success')}`)
       } else {
-        toast.error(lang === 'uz' ? 'Mahsulot topilmadi' : 'Product not found')
+        toast.error(t('productNotFound'))
       }
     }
   }
@@ -350,7 +350,7 @@ export function POSClient({
 
     // Debt requires a customer
     if (paymentMethod === 'debt' && !selectedCustomer) {
-      toast.error(lang === 'uz' ? 'Qarzga sotish uchun mijozni tanlang!' : 'Select customer for debt sale!')
+      toast.error(t('selectCustomerForDebt'))
       return
     }
 

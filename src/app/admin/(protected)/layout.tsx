@@ -4,8 +4,12 @@ import { AdminShell } from '@/components/admin/admin-shell'
 
 export default async function AdminProtectedLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode
+  /** Parallel-route slot holding the intercepted "create" dialogs — see
+   *  (protected)/@modal and src/components/shared/route-modal.tsx. */
+  modal: React.ReactNode
 }) {
   const session = await getSuperAdminSession()
   if (!session) redirect('/admin/login')
@@ -13,6 +17,7 @@ export default async function AdminProtectedLayout({
   return (
     <AdminShell adminName={session.fullName} adminEmail={session.email}>
       {children}
+      {modal}
     </AdminShell>
   )
 }

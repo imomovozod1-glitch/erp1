@@ -64,6 +64,7 @@
     "rows": "rows",
     "noData": "No data found",
     "noResults": "No results found",
+    "other": "Other",
     "required": "Required field",
     "optional": "Optional",
     "success": "Success",
@@ -102,7 +103,9 @@
     "assignedTo": "Responsible",
     "createdBy": "Created by",
     "unassigned": "Unassigned",
-    "assignedToHint": "The document appears in this person’s list. Left empty, it stays with you."
+    "assignedToHint": "The document appears in this person’s list. Left empty, it stays with you.",
+    "category": "Category",
+    "totalAmount": "Total amount"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -281,7 +284,19 @@
     "receivedAt": "Received at",
     "nextSaleCost": "Next sale cost",
     "uploadExcelFile": "Upload Excel file",
-    "downloadTemplateAction": "Download template"
+    "downloadTemplateAction": "Download template",
+    "profitMargin": "Profit margin",
+    "stockValue": "Stock value",
+    "movementHistory": "Movement history",
+    "salesHistory": "Sales history",
+    "purchaseHistory": "Purchase history",
+    "movementType": "Movement type",
+    "source": "Source",
+    "reason": "Reason",
+    "initialStock": "Opening stock",
+    "manualAdjustment": "Manual adjustment",
+    "value": "Value",
+    "cannotDeleteWithStock": "Products with stock on hand cannot be deleted"
   },
   "sales": {
     "title": "Sales",
@@ -373,7 +388,9 @@
     "customersMapCount": "Showing {shown} of {total} customers on the map",
     "customersMapMissing": "{count, plural, other {# missing an address}}",
     "customersMapEmpty": "No customers have an address or location set for the map",
-    "debt": "Debt"
+    "debt": "Debt",
+    "orderInfo": "Order details",
+    "cannotDeleteCustomer": "Cannot delete a customer that has debt or transactions"
   },
   "finance": {
     "title": "Finance",
@@ -514,7 +531,14 @@
       "received": "Completed",
       "partially_received": "New",
       "cancelled": "Cancelled"
-    }
+    },
+    "totalPurchases": "Total purchases",
+    "totalPaid": "Total paid",
+    "paymentsCount": "{count} payments",
+    "balanceOwed": "Balance (payable)",
+    "supplierProfile": "Partner profile",
+    "paymentHistory": "Payment history",
+    "purchaseInfo": "Purchase order details"
   },
   "analytics": {
     "title": "Analytics",
@@ -738,7 +762,9 @@
     "generalDiscount": "General Discount",
     "itemDiscount": "Item Discount",
     "thankYou": "Thank you for your purchase!",
-    "printedDirectly": "Receipt sent to printer"
+    "printedDirectly": "Receipt sent to printer",
+    "productNotFound": "Product not found",
+    "selectCustomerForDebt": "Select a customer for a debt sale!"
   },
   "support": {
     "title": "Support Service",

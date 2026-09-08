@@ -45,6 +45,8 @@ function translateSourceType(sourceType: string, lang: string): string {
 export function ProductDetailClient({ lang, product, movements, sales, purchases, costLayers = [], effectiveCostingMethod, nextSaleCost }: ProductDetailClientProps) {
   const t = useTranslations('inventory')
   const tc = useTranslations('common')
+  const tSales = useTranslations('sales')
+  const tProc = useTranslations('procurement')
   const [activeTab, setActiveTab] = useState<'movements' | 'sales' | 'purchases' | 'costLayers'>('movements')
 
   const profitMarginPercent = product.price > 0 
@@ -161,7 +163,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(product.price)}</h3>
             <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-2 flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
-              {lang === 'uz' ? 'Foyda marjasi' : 'Маржа'}: {profitMarginPercent}%
+              {t('profitMargin')}: {profitMarginPercent}%
             </span>
           </CardContent>
         </Card>
@@ -173,14 +175,14 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               {formatNumber(product.stock)} {product.unit}
             </h3>
             <span className={`text-xs font-semibold mt-2 ${product.stock <= product.min_stock ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`}>
-              {lang === 'uz' ? 'Minimal limit' : 'Мин. запас'}: {formatNumber(product.min_stock)} {product.unit}
+              {t('minStock')}: {formatNumber(product.min_stock)} {product.unit}
             </span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Zaxira qiymati' : 'Стоимость запасов'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('stockValue')}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalValuation)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('category')}: {product.categories?.name ?? '—'}</span>
           </CardContent>
@@ -197,7 +199,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
             }`}
           >
             <RefreshCw className="h-4 w-4" />
-            {lang === 'uz' ? 'Harakatlar tarixi' : 'История движений'}
+            {t('movementHistory')}
           </button>
           <button
             onClick={() => setActiveTab('sales')}
@@ -206,7 +208,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
             }`}
           >
             <ShoppingCart className="h-4 w-4" />
-            {lang === 'uz' ? 'Sotuvlar tarixi' : 'История продаж'}
+            {t('salesHistory')}
           </button>
           <button
             onClick={() => setActiveTab('purchases')}
@@ -215,7 +217,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
             }`}
           >
             <Truck className="h-4 w-4" />
-            {lang === 'uz' ? 'Xaridlar tarixi' : 'История закупок'}
+            {t('purchaseHistory')}
           </button>
           <button
             onClick={() => setActiveTab('costLayers')}
@@ -234,12 +236,12 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
-                  <TableHead>{lang === 'uz' ? 'Harakat turi' : 'Тип движения'}</TableHead>
-                  <TableHead className="text-right">{lang === 'uz' ? 'Miqdor' : 'Количество'}</TableHead>
-                  <TableHead className="text-right">{lang === 'uz' ? 'Avval' : 'До'}</TableHead>
-                  <TableHead className="text-right">{lang === 'uz' ? 'Keyin' : 'После'}</TableHead>
-                  <TableHead>{lang === 'uz' ? 'Qayerdan (Manba)' : 'Источник'}</TableHead>
-                  <TableHead>{lang === 'uz' ? 'Sabab' : 'Причина'}</TableHead>
+                  <TableHead>{t('movementType')}</TableHead>
+                  <TableHead className="text-right">{t('quantity')}</TableHead>
+                  <TableHead className="text-right">{t('before')}</TableHead>
+                  <TableHead className="text-right">{t('after')}</TableHead>
+                  <TableHead>{t('source')}</TableHead>
+                  <TableHead>{t('reason')}</TableHead>
                   <TableHead>{tc('date')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -282,9 +284,9 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                             {m.source.supplierOrCustomer && <span className="text-slate-400 dark:text-slate-500">· {m.source.supplierOrCustomer}</span>}
                           </span>
                         ) : m.source?.type === 'initial_stock' ? (
-                          <span className="text-slate-500 dark:text-slate-400">{lang === 'uz' ? "Boshlang'ich zaxira" : 'Начальный запас'}</span>
+                          <span className="text-slate-500 dark:text-slate-400">{t('initialStock')}</span>
                         ) : m.source?.type === 'product_adjustment' ? (
-                          <span className="text-slate-500 dark:text-slate-400">{lang === 'uz' ? "Qo'lda tuzatish" : 'Ручная корректировка'}</span>
+                          <span className="text-slate-500 dark:text-slate-400">{t('manualAdjustment')}</span>
                         ) : (
                           <span className="text-slate-400 dark:text-slate-500">—</span>
                         )}
@@ -303,9 +305,9 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
-                  <TableHead>{lang === 'uz' ? 'Buyurtma raqami' : 'Номер заказа'}</TableHead>
-                  <TableHead>{lang === 'uz' ? 'Mijoz' : 'Клиент'}</TableHead>
-                  <TableHead className="text-right">{lang === 'uz' ? 'Soni' : 'Кол-во'}</TableHead>
+                  <TableHead>{tSales('orderNumber')}</TableHead>
+                  <TableHead>{tSales('customer')}</TableHead>
+                  <TableHead className="text-right">{t('quantity')}</TableHead>
                   <TableHead className="text-right">{tc('amount')}</TableHead>
                   <TableHead>{tc('date')}</TableHead>
                 </TableRow>
@@ -340,9 +342,9 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
-                  <TableHead>{lang === 'uz' ? 'Xarid kodi' : 'Код закупки'}</TableHead>
-                  <TableHead>{lang === 'uz' ? 'Yetkazib beruvchi' : 'Поставщик'}</TableHead>
-                  <TableHead className="text-right">{lang === 'uz' ? 'Soni' : 'Кол-во'}</TableHead>
+                  <TableHead>{tProc('poNumber')}</TableHead>
+                  <TableHead>{tProc('supplier')}</TableHead>
+                  <TableHead className="text-right">{t('quantity')}</TableHead>
                   <TableHead className="text-right">{tc('amount')}</TableHead>
                   <TableHead>{tc('date')}</TableHead>
                 </TableRow>
@@ -378,10 +380,10 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
                   <TableHead>{t('receivedAt')}</TableHead>
-                  <TableHead>{lang === 'uz' ? 'Manba' : 'Источник'}</TableHead>
+                  <TableHead>{t('source')}</TableHead>
                   <TableHead className="text-right">{t('remainingQty')}</TableHead>
                   <TableHead className="text-right">{t('unitCost')}</TableHead>
-                  <TableHead className="text-right">{lang === 'uz' ? 'Qiymati' : 'Стоимость'}</TableHead>
+                  <TableHead className="text-right">{t('value')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

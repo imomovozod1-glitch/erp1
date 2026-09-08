@@ -64,6 +64,7 @@
     "rows": "строк",
     "noData": "Данные не найдены",
     "noResults": "Результаты не найдены",
+    "other": "Другие",
     "required": "Обязательное поле",
     "optional": "Необязательно",
     "success": "Успешно",
@@ -102,7 +103,9 @@
     "assignedTo": "Ответственный",
     "createdBy": "Создал",
     "unassigned": "Не назначен",
-    "assignedToHint": "Документ появится в списке этого сотрудника. Если не выбрать — вы сами."
+    "assignedToHint": "Документ появится в списке этого сотрудника. Если не выбрать — вы сами.",
+    "category": "Категория",
+    "totalAmount": "Итоговая сумма"
   },
   "nav": {
     "dashboard": "Панель управления",
@@ -281,7 +284,19 @@
     "receivedAt": "Дата поступления",
     "nextSaleCost": "Себестоимость след. продажи",
     "uploadExcelFile": "Загрузить файл Excel",
-    "downloadTemplateAction": "Скачать шаблон"
+    "downloadTemplateAction": "Скачать шаблон",
+    "profitMargin": "Маржа",
+    "stockValue": "Стоимость запасов",
+    "movementHistory": "История движений",
+    "salesHistory": "История продаж",
+    "purchaseHistory": "История закупок",
+    "movementType": "Тип движения",
+    "source": "Источник",
+    "reason": "Причина",
+    "initialStock": "Начальный запас",
+    "manualAdjustment": "Ручная корректировка",
+    "value": "Стоимость",
+    "cannotDeleteWithStock": "Нельзя удалить товар, у которого есть остаток"
   },
   "sales": {
     "title": "Продажи",
@@ -373,7 +388,9 @@
     "customersMapCount": "Показано {shown} из {total} клиентов на карте",
     "customersMapMissing": "{count, plural, other {у # нет адреса}}",
     "customersMapEmpty": "Ни у одного клиента не указан адрес или местоположение для карты",
-    "debt": "Долг"
+    "debt": "Долг",
+    "orderInfo": "Информация о заказе",
+    "cannotDeleteCustomer": "Нельзя удалить клиента: есть долг или транзакции"
   },
   "finance": {
     "title": "Финансы",
@@ -514,7 +531,14 @@
       "received": "Завершен",
       "partially_received": "Новый",
       "cancelled": "Отменен"
-    }
+    },
+    "totalPurchases": "Всего закупок",
+    "totalPaid": "Всего выплачено",
+    "paymentsCount": "{count} выплат",
+    "balanceOwed": "Баланс (Долг)",
+    "supplierProfile": "Профиль партнёра",
+    "paymentHistory": "История платежей",
+    "purchaseInfo": "Информация о заказе закупки"
   },
   "analytics": {
     "title": "Аналитика",
@@ -738,7 +762,9 @@
     "generalDiscount": "Общая скидка",
     "itemDiscount": "Скидка на товар",
     "thankYou": "Спасибо! Поздравляем с покупкой.",
-    "printedDirectly": "Чек отправлен на принтер"
+    "printedDirectly": "Чек отправлен на принтер",
+    "productNotFound": "Товар не найден",
+    "selectCustomerForDebt": "Выберите клиента для продажи в долг!"
   },
   "support": {
     "title": "Служба поддержки",

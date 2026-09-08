@@ -53,6 +53,7 @@ export function CustomersTable({
 }: CustomersTableProps) {
   
   const tCommon = useTranslations('common')
+  const tSales = useTranslations('sales')
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [mapCustomer, setMapCustomer] = useState<{ name: string; address: string; latitude?: number | null; longitude?: number | null } | null>(null)
@@ -68,7 +69,7 @@ export function CustomersTable({
     const { error } = await supabase.from('customers').delete().eq('id', id)
     if (error) {
       if (error.code === '23503') {
-        toast.error(lang === 'uz' ? 'Mijozning qarzi yoki tranzaksiyalari borligi sababli o\'chirib bo\'lmaydi' : 'Cannot delete customer with existing records (debt/transactions)')
+        toast.error(tSales('cannotDeleteCustomer'))
       } else {
         toast.error(tCommon('error'))
       }

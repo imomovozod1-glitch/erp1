@@ -9,9 +9,13 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 export default async function DashboardLayout({
   children,
+  modal,
   params,
 }: {
   children: React.ReactNode
+  /** Parallel-route slot holding the intercepted "create" dialogs — see
+   *  (dashboard)/@modal and src/components/shared/route-modal.tsx. */
+  modal: React.ReactNode
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
@@ -69,6 +73,7 @@ export default async function DashboardLayout({
         <AppHeader profile={profile} lang={lang} />
         <main className="flex-1 p-6 pt-[calc(5.5rem+env(safe-area-inset-top))] bg-slate-50/50 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
           {children}
+          {modal}
         </main>
       </SidebarInset>
     </SidebarProvider>

@@ -149,7 +149,7 @@ export function ProductsTable({
   const handleDelete = async (id: string) => {
     const product = products.find(p => p.id === id);
     if (product && product.stock > 0) {
-      toast.error(lang === 'uz' ? 'Zahirasi mavjud mahsulotlarni o\'chirib bo\'lmaydi' : 'Cannot delete products with stock');
+      toast.error(t('inventory.cannotDeleteWithStock'));
       return;
     }
     
