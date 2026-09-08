@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { ImageUpload } from '@/components/shared/image-upload'
 
 interface ProductFormProps {
   /** Active tenant members who can be made responsible for this record. */
@@ -35,6 +36,10 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
+  // Kept outside the zod form (like `assignedTo`): the value is produced by an
+  // upload, not typed, so there is nothing to validate and nothing to persist
+  // into the sessionStorage draft.
+  const [imageUrl, setImageUrl] = useState<string | null>(initialData?.image_url ?? null)
   const supabase = createClient() as any
 
   const innerFormSchema = z.object({
@@ -203,6 +208,7 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
         // never left unassigned by accident.
         assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
         created_by: initialData?.created_by ?? userId,
+        image_url: imageUrl,
         ...data,
         category_id: data.category_id || null, // convert empty string to null
       }
@@ -623,6 +629,15 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
           />
           {errors.min_stock && <p className="text-sm text-red-500">{errors.min_stock.message}</p>}
         </div>
+      </div>
+
+      <div className="max-w-md">
+        <ImageUpload
+          value={imageUrl}
+          onChange={setImageUrl}
+          label={t('productImage')}
+          disabled={isSubmitting}
+        />
       </div>
 
       <div className="space-y-2">

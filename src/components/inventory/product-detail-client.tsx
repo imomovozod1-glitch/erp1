@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -111,9 +112,16 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
       {/* Top Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
-            <Package className="h-7 w-7" />
-          </div>
+          {/* The product photo takes the icon's place when there is one. */}
+          {product.image_url ? (
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border dark:border-slate-800">
+              <Image src={product.image_url} alt={product.name} fill sizes="56px" className="object-cover" />
+            </div>
+          ) : (
+            <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
+              <Package className="h-7 w-7" />
+            </div>
+          )}
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{product.name}</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">SKU: {product.sku}</p>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import {
   MoreHorizontal,
@@ -478,7 +479,22 @@ export function ProductsTable({
                       {(page - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
+                        {product.image_url ? (
+                          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border dark:border-slate-800">
+                            <Image
+                              src={product.image_url}
+                              alt={product.name}
+                              fill
+                              sizes="36px"
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500">
+                            <Package className="h-4 w-4" />
+                          </div>
+                        )}
                         <div>
                           <p className="font-semibold text-slate-800 dark:text-slate-200">
                             <Link
