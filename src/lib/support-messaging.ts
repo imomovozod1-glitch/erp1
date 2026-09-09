@@ -54,61 +54,84 @@ export async function postMessage(input: {
   senderId: string | null
   senderName: string
   body: string
-}): Promise<{ ok: true } | { ok: false; error: string }> {
+  /** Already-known routing for the broadcast, so this doesn't re-read the thread. */
+  agentId?: string | null
+}): Promise<{ ok: true; message: SupportMessage } | { ok: false; error: string }> {
   const supabase = getCacheClient() as any
   const now = new Date().toISOString()
   const fromTenant = input.senderRole === 'tenant'
 
-  const { error: messageError } = await supabase.from('support_messages').insert({
-    thread_id: input.threadId,
-    tenant_id: input.tenantId,
-    sender_role: input.senderRole,
-    sender_id: input.senderId,
-    sender_name: input.senderName,
-    body: input.body,
-    read_by_tenant_at: fromTenant ? now : null,
-    read_by_staff_at: fromTenant ? null : now,
-  })
+  // `.select().single()` so the caller can hand the row straight back to the
+  // browser: the sender used to get only `{ ok: true }` and had to refetch the
+  // whole conversation before its own message appeared, which is most of what
+  // made sending feel slow.
+  const { data: message, error: messageError } = await supabase
+    .from('support_messages')
+    .insert({
+      thread_id: input.threadId,
+      tenant_id: input.tenantId,
+      sender_role: input.senderRole,
+      sender_id: input.senderId,
+      sender_name: input.senderName,
+      body: input.body,
+      read_by_tenant_at: fromTenant ? now : null,
+      read_by_staff_at: fromTenant ? null : now,
+    })
+    .select('*')
+    .single()
   if (messageError) return { ok: false, error: messageError.message }
 
-  const { error: threadError } = await supabase
+  // The thread bump and the realtime signal do not gate the response: the
+  // message is committed, and neither the sender nor the reader needs them to
+  // have finished before the reply is drawn.
+  const bump = supabase
     .from('support_threads')
     .update({ last_message_at: now, status: fromTenant ? 'open' : 'answered' })
     .eq('id', input.threadId)
-  if (threadError) return { ok: false, error: threadError.message }
-
-  // Push the "something changed" signal to both sides so the reply lands
-  // immediately instead of waiting for the next poll. Fire-and-forget: the
-  // message is already committed, and the clients poll as a fallback.
-  const { data: thread } = await supabase
-    .from('support_threads')
-    .select('tenant_id, agent_id')
-    .eq('id', input.threadId)
-    .maybeSingle()
 
   const topics = [threadTopic(input.threadId)]
-  if (thread?.tenant_id) topics.push(inboxTopic('tenant', thread.tenant_id))
-  if (thread?.agent_id) topics.push(inboxTopic('agent', thread.agent_id))
-  void broadcast(topics, 'support_message')
+  if (input.tenantId) topics.push(inboxTopic('tenant', input.tenantId))
+  if (input.agentId) topics.push(inboxTopic('agent', input.agentId))
 
-  return { ok: true }
+  await Promise.all([bump, broadcast(topics, 'support_message')])
+
+  return { ok: true, message: message as SupportMessage }
 }
 
-/** Loads a thread plus its messages in chronological order. */
-export async function getThreadWithMessages(threadId: string) {
+/**
+ * Just the thread row. Used by the write paths, which only need to know who
+ * owns the thread and whether it is closed — loading the entire message
+ * history to answer that (as the POST routes used to) is pure latency.
+ */
+export async function getThread(threadId: string): Promise<SupportThread | null> {
   const supabase = getCacheClient() as any
-  const [{ data: thread }, { data: messages }] = await Promise.all([
-    supabase.from('support_threads').select('*').eq('id', threadId).maybeSingle(),
-    supabase
-      .from('support_messages')
-      .select('*')
-      .eq('thread_id', threadId)
-      .order('created_at', { ascending: true }),
-  ])
-  return {
-    thread: (thread as SupportThread) ?? null,
-    messages: (messages ?? []) as SupportMessage[],
-  }
+  const { data } = await supabase
+    .from('support_threads')
+    .select('id, kind, tenant_id, created_by, agent_id, subject, status, last_message_at, created_at')
+    .eq('id', threadId)
+    .maybeSingle()
+  return (data as SupportThread) ?? null
+}
+
+/** A thread's messages, oldest first. */
+export async function getMessages(threadId: string): Promise<SupportMessage[]> {
+  const supabase = getCacheClient() as any
+  const { data } = await supabase
+    .from('support_messages')
+    .select('*')
+    .eq('thread_id', threadId)
+    .order('created_at', { ascending: true })
+  return (data ?? []) as SupportMessage[]
+}
+
+/** Marks every message in a thread as seen by the tenant. */
+export async function markThreadReadByTenant(threadId: string): Promise<void> {
+  const supabase = getCacheClient() as any
+  await supabase
+    .from('support_messages')
+    .update({ read_by_tenant_at: new Date().toISOString() })
+    .eq('thread_id', threadId)
+    .is('read_by_tenant_at', null)
 }
 
 /**

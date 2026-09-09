@@ -21,9 +21,18 @@ interface MappableCustomer {
   address: string | null
   latitude: number | null
   longitude: number | null
+  assigned_to?: string | null
   total_debt?: number
 }
 
-export function AllCustomersMap({ customers, lang }: { customers: MappableCustomer[]; lang: string }) {
-  return <AllCustomersMapInner customers={customers} lang={lang} />
+export function AllCustomersMap({
+  customers,
+  currentUserId,
+  lang,
+}: {
+  customers: MappableCustomer[]
+  currentUserId: string | null
+  lang: string
+}) {
+  return <AllCustomersMapInner customers={customers} currentUserId={currentUserId} lang={lang} />
 }

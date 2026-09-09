@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -43,7 +43,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
   const tSales = useTranslations('sales')
   const tCommon = useTranslations('common')
   const tAuth = useTranslations('auth')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/procurement/suppliers`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const [isMapOpen, setIsMapOpen] = useState(false)
@@ -151,7 +151,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
         toast.success(t('supplierCreated'))
       }
       await invalidateSuppliers()
-      router.push(`/${lang}/procurement/suppliers`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -337,7 +337,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/${lang}/procurement/suppliers`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
           className="rounded-lg"
         >

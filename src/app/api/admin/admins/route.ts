@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { newPasswordSchema } from '@/lib/password-validation'
 
 const createAdminSchema = z.object({
   full_name: z.string().min(1),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: newPasswordSchema('Password does not meet strength requirements'),
 })
 
 /**

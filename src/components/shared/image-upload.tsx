@@ -127,12 +127,15 @@ export function ImageUpload({
           className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 transition-colors hover:border-violet-400 hover:text-violet-500 disabled:opacity-60"
         >
           {value ? (
+            /* `object-contain` so the preview shows the picture that was
+               actually uploaded — cropping it to the square made portrait
+               photos look cut off before they were even saved. */
             <Image
               src={value}
               alt={label ?? t('image')}
               fill
               sizes="96px"
-              className="object-cover"
+              className="object-contain p-1"
             />
           ) : (
             <span className="flex h-full w-full flex-col items-center justify-center gap-1">

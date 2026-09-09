@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { MoreHorizontal, Pencil, FileText, CheckCircle2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { MoreHorizontal, Pencil, FileText, CheckCircle2, Loader2, ArrowRight, Ban } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,17 +15,13 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
-import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
-
-const STATUS_TONES: Record<string, StatusTone> = {
-  draft: 'slate',
-  sent: 'blue',
-  paid: 'emerald',
-  overdue: 'rose',
-  cancelled: 'slate',
-}
+import { createClient } from '@/lib/supabase/client'
+import { invalidateInvoices } from '@/lib/data/revalidate'
+import { effectiveInvoiceStatus, invoiceStatusTone, nextInvoiceStatuses } from '@/lib/statuses'
+import { setInvoiceStatus } from '@/lib/status-actions'
 
 interface InvoicesTableProps {
   /** Only the current page's rows — the server applied search and paging. */
@@ -46,6 +44,28 @@ export function InvoicesTable({
   const tCommon = useTranslations('common')
   const t = useTranslations('sales')
   const router = useRouter()
+  const [pendingId, setPendingId] = useState<string | null>(null)
+
+  /**
+   * `paid` is not offered here — money has to be received somewhere, so it is
+   * set by the invoice detail page's "accept payment" or by Finance → Cashbox,
+   * both of which also write the matching transaction.
+   */
+  const changeStatus = async (invoiceId: string, next: string) => {
+    if (pendingId) return
+    setPendingId(invoiceId)
+    try {
+      const supabase = createClient() as any
+      await setInvoiceStatus(supabase, invoiceId, next as any)
+      await invalidateInvoices()
+      toast.success(tCommon('statusUpdated'))
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error?.message || tCommon('error'))
+    } finally {
+      setPendingId(null)
+    }
+  }
 
 
 
@@ -69,7 +89,7 @@ export function InvoicesTable({
                 <TableHead className="w-45">{t('invoiceNumber')}</TableHead>
                 <TableHead>{t('customer')}</TableHead>
                 <TableHead className="text-right tabular-nums">{tCommon('total')}</TableHead>
-                <TableHead className="hidden md:table-cell text-right tabular-nums">{t('status.paid')}</TableHead>
+                <TableHead className="hidden md:table-cell text-right tabular-nums">{t('paidAmount')}</TableHead>
                 <TableHead className="hidden md:table-cell text-right">{tCommon('date')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
@@ -125,7 +145,12 @@ export function InvoicesTable({
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex flex-col items-start gap-1.5">
-                        <StatusBadge tone={STATUS_TONES[invoice.status] ?? 'slate'} label={t(`status.${invoice.status}`)} />
+                        {/* The stored status never becomes `overdue` on its own —
+                            nothing runs on a schedule — so it is derived here. */}
+                        <StatusBadge
+                          tone={invoiceStatusTone(effectiveInvoiceStatus(invoice))}
+                          label={t(`status.${effectiveInvoiceStatus(invoice)}`)}
+                        />
                         {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.customer_id && (
                           <Button
                             variant="outline"
@@ -160,9 +185,28 @@ export function InvoicesTable({
                               className="text-violet-600 focus:text-violet-700 font-medium"
                             >
                               <CheckCircle2 className="h-4 w-4 mr-2" />
-                              To&apos;lov qilish (Kassa orqali)
+                              {t('acceptPayment')}
                             </DropdownMenuItem>
                           )}
+                          {nextInvoiceStatuses(effectiveInvoiceStatus(invoice))
+                            .filter((next) => next !== 'paid')
+                            .map((next) => (
+                              <DropdownMenuItem
+                                key={next}
+                                disabled={pendingId === invoice.id}
+                                onClick={() => changeStatus(invoice.id, next)}
+                                className={next === 'cancelled' ? 'text-rose-600 focus:text-rose-600' : ''}
+                              >
+                                {pendingId === invoice.id ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : next === 'cancelled' ? (
+                                  <Ban className="h-4 w-4 mr-2" />
+                                ) : (
+                                  <ArrowRight className="h-4 w-4 mr-2 text-slate-500" />
+                                )}
+                                {tCommon('markAs', { status: t(`status.${next}`) })}
+                              </DropdownMenuItem>
+                            ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,7 +32,7 @@ interface CategoryFormProps {
 export function CategoryForm({ initialData, lang }: CategoryFormProps) {
   const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/inventory/categories`)
   const [isSubmitting, setIsSubmitting] = useState(false)
    
   const supabase = createClient() as any
@@ -74,7 +74,7 @@ export function CategoryForm({ initialData, lang }: CategoryFormProps) {
         toast.success(tCommon('success'))
       }
       await invalidateCategories()
-      router.push(`/${lang}/inventory/categories`)
+      exitForm()
      
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
@@ -107,7 +107,7 @@ export function CategoryForm({ initialData, lang }: CategoryFormProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/${lang}/inventory/categories`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { newPasswordSchema } from '@/lib/password-validation'
 
-const schema = z.object({ password: z.string().min(6) })
+// Same strength policy as every other place a password is SET
+// (src/lib/password-validation.ts) — a 6-digit numeric password used to slip
+// through here even though the UI refuses to submit one.
+const schema = z.object({ password: newPasswordSchema('weak') })
 
 export async function POST(
   request: NextRequest,
@@ -16,7 +20,7 @@ export async function POST(
   const body = await request.json().catch(() => null)
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+    return NextResponse.json({ error: 'Password does not meet strength requirements' }, { status: 400 })
   }
 
   const supabase = getCacheClient() as any

@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader } from '@/components/shared/page-header'
+import { StatusBadge } from '@/components/shared/status-badge'
+import { orderStatusTone } from '@/lib/statuses'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -40,15 +42,6 @@ function translateOrderNotes(notes: string | null | undefined, lang: string): st
       : `Продажа через POS - способ оплаты: ${method.ru}`
   }
   return notes
-}
-
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-  pending: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200/60 dark:border-amber-900/50',
-  confirmed: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/60 dark:border-blue-900/50',
-  shipped: 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 border-violet-200/60 dark:border-violet-900/50',
-  delivered: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-900/50',
-  cancelled: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200/60 dark:border-rose-900/50',
 }
 
 export default function OrderDetailPage() {
@@ -170,9 +163,7 @@ export default function OrderDetailPage() {
                 {tCommon('status')}
               </span>
               <div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
-                  {t(`status.${order.status}`)}
-                </span>
+                <StatusBadge tone={orderStatusTone(order.status)} label={t(`status.${order.status}`)} />
               </div>
             </div>
             <div className="space-y-1">

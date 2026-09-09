@@ -32,6 +32,8 @@ const formatDateISO = (d: Date) => {
 
 interface DashboardClientProps {
   lang: string
+  /** Server-rendered "your support manager" strip; null when none is assigned. */
+  agentCard?: React.ReactNode
   stats: {
     totalOrders: number | null
     totalProducts: number | null
@@ -52,7 +54,7 @@ interface DashboardClientProps {
   }
 }
 
-export function DashboardClient({ lang, stats }: DashboardClientProps) {
+export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps) {
   const [period, setPeriod] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('dashboard_period')
@@ -359,6 +361,9 @@ export function DashboardClient({ lang, stats }: DashboardClientProps) {
           />
         </div>
       </div>
+
+      {/* Who to call when something goes wrong, before the numbers. */}
+      {agentCard}
 
       {/* Quick Action Launchpad — every "create new" page in the sidebar, one tap away */}
       <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm space-y-3">

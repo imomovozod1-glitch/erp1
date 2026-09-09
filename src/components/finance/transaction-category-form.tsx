@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -22,7 +22,7 @@ interface TransactionCategoryFormProps {
 export function TransactionCategoryForm({ initialData, lang }: TransactionCategoryFormProps) {
   const t = useTranslations('finance')
   const tCommon = useTranslations('common')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/finance/categories`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
 
@@ -67,7 +67,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
       }
       toast.success(tCommon('success'))
       await invalidateTransactionCategories()
-      router.push(`/${lang}/finance/categories`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -128,7 +128,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/${lang}/finance/categories`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

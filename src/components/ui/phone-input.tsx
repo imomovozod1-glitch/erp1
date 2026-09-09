@@ -4,61 +4,16 @@ import { useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import {
+  DEFAULT_PHONE_COUNTRY,
+  PHONE_COUNTRIES,
+  findPhoneCountry,
+  groupNationalDigits,
+  splitPhone,
+  type PhoneCountry,
+} from '@/lib/phone-countries'
 
-export interface PhoneCountry {
-  iso: string
-  name: string
-  dialCode: string
-  flag: string
-}
-
-/**
- * Countries relevant to this app's Central Asia + neighbors user base
- * (see AGENTS.md — uz/ru/en locales, Uzbekistan-focused tenant base per
- * `formatPhoneInput`'s doc comment), plus a handful of common international
- * ones. Sorted by dial-code length (longest first) is done at lookup time,
- * not here, so a listed order stays natural for the dropdown.
- */
-export const PHONE_COUNTRIES: PhoneCountry[] = [
-  { iso: 'UZ', name: "O'zbekiston", dialCode: '998', flag: '🇺🇿' },
-  { iso: 'RU', name: 'Rossiya', dialCode: '7', flag: '🇷🇺' },
-  { iso: 'KZ', name: "Qozog'iston", dialCode: '7', flag: '🇰🇿' },
-  { iso: 'KG', name: "Qirg'iziston", dialCode: '996', flag: '🇰🇬' },
-  { iso: 'TJ', name: 'Tojikiston', dialCode: '992', flag: '🇹🇯' },
-  { iso: 'TM', name: 'Turkmaniston', dialCode: '993', flag: '🇹🇲' },
-  { iso: 'AZ', name: 'Ozarbayjon', dialCode: '994', flag: '🇦🇿' },
-  { iso: 'TR', name: 'Turkiya', dialCode: '90', flag: '🇹🇷' },
-  { iso: 'AE', name: 'BAA', dialCode: '971', flag: '🇦🇪' },
-  { iso: 'US', name: 'AQSH', dialCode: '1', flag: '🇺🇸' },
-  { iso: 'GB', name: 'Buyuk Britaniya', dialCode: '44', flag: '🇬🇧' },
-  { iso: 'DE', name: 'Germaniya', dialCode: '49', flag: '🇩🇪' },
-  { iso: 'CN', name: 'Xitoy', dialCode: '86', flag: '🇨🇳' },
-  { iso: 'IN', name: 'Hindiston', dialCode: '91', flag: '🇮🇳' },
-]
-
-const DEFAULT_COUNTRY = PHONE_COUNTRIES[0]
-
-/** 2-3-2-2 grouping, e.g. "90 123 45 67" — matches the app-wide +998 display convention. */
-function groupDigits(digits: string): string {
-  let out = ''
-  if (digits.length > 0) out += digits.slice(0, 2)
-  if (digits.length > 2) out += ' ' + digits.slice(2, 5)
-  if (digits.length > 5) out += ' ' + digits.slice(5, 7)
-  if (digits.length > 7) out += ' ' + digits.slice(7, 9)
-  if (digits.length > 9) out += ' ' + digits.slice(9, 12)
-  return out
-}
-
-function detectCountry(fullValue: string): { country: PhoneCountry; national: string } {
-  const digits = (fullValue || '').replace(/\D/g, '')
-  const byLongestCode = [...PHONE_COUNTRIES].sort((a, b) => b.dialCode.length - a.dialCode.length)
-  for (const c of byLongestCode) {
-    if (digits.startsWith(c.dialCode)) {
-      return { country: c, national: digits.slice(c.dialCode.length) }
-    }
-  }
-  return { country: DEFAULT_COUNTRY, national: digits }
-}
+export { PHONE_COUNTRIES, type PhoneCountry }
 
 interface PhoneInputProps {
   id?: string
@@ -80,6 +35,10 @@ interface PhoneInputProps {
  * consumer (login, tenant provisioning) only ever cares about the final
  * digit sequence (see `phoneToSyntheticEmail` in `src/lib/tenant-auth.ts`,
  * which strips non-digits regardless of country).
+ *
+ * Typing is hard-capped at the selected country's national length, so a +998
+ * number cannot grow past its 9 digits; `isValidPhone` enforces the same rule
+ * for pasted and server-side values.
  */
 export function PhoneInput({
   id,
@@ -92,13 +51,15 @@ export function PhoneInput({
   contentClassName,
   hasError,
 }: PhoneInputProps) {
-  const initial = detectCountry(value)
+  const initial = splitPhone(value)
   const [countryIso, setCountryIso] = useState(initial.country.iso)
   const [national, setNational] = useState(initial.national)
 
-  const emit = (iso: string, nationalDigits: string) => {
-    const c = PHONE_COUNTRIES.find((x) => x.iso === iso) ?? DEFAULT_COUNTRY
-    onChange(nationalDigits ? `+${c.dialCode} ${groupDigits(nationalDigits)}`.trimEnd() : '')
+  const country = findPhoneCountry(countryIso)
+  const maxDigits = country.nationalLength[1]
+
+  const emit = (c: PhoneCountry, nationalDigits: string) => {
+    onChange(nationalDigits ? `+${c.dialCode} ${groupNationalDigits(c, nationalDigits)}`.trimEnd() : '')
   }
 
   return (
@@ -107,14 +68,19 @@ export function PhoneInput({
         value={countryIso}
         onValueChange={(iso) => {
           if (!iso) return
+          const next = findPhoneCountry(iso)
+          // Trim to the new country's length so switching from a 10-digit
+          // country to a 9-digit one can't leave an over-long number behind.
+          const trimmed = national.slice(0, next.nationalLength[1])
           setCountryIso(iso)
-          emit(iso, national)
+          setNational(trimmed)
+          emit(next, trimmed)
         }}
       >
         <SelectTrigger className={cn('w-[100px] shrink-0', triggerClassName)}>
           <SelectValue>
             {(iso: string) => {
-              const c = PHONE_COUNTRIES.find((x) => x.iso === iso) ?? DEFAULT_COUNTRY
+              const c = findPhoneCountry(iso)
               return `${c.flag} +${c.dialCode}`
             }}
           </SelectValue>
@@ -131,15 +97,19 @@ export function PhoneInput({
         id={id}
         type="tel"
         inputMode="numeric"
-        placeholder={placeholder}
-        value={groupDigits(national)}
+        autoComplete="tel"
+        maxLength={groupNationalDigits(country, '9'.repeat(maxDigits)).length}
+        placeholder={placeholder ?? country.example}
+        value={groupNationalDigits(country, national)}
         onChange={(e) => {
-          const digits = e.target.value.replace(/\D/g, '').slice(0, 12)
+          const digits = e.target.value.replace(/\D/g, '').slice(0, maxDigits)
           setNational(digits)
-          emit(countryIso, digits)
+          emit(country, digits)
         }}
         className={cn('flex-1', hasError && 'border-red-500/50', inputClassName)}
       />
     </div>
   )
 }
+
+export { DEFAULT_PHONE_COUNTRY }

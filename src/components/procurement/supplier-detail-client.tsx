@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { StatusBadge } from '@/components/shared/status-badge'
+import { purchaseStatusTone } from '@/lib/statuses'
 import dynamic from 'next/dynamic'
 
 // react-leaflet/leaflet touch `window` at module-evaluation time, not just
@@ -29,14 +30,6 @@ import {
 } from 'lucide-react'
 // `xlsx` is ~7MB and only needed when the user actually exports or imports.
 // Loading it on demand keeps it out of this page's initial bundle.
-
-const PO_STATUS_TONES: Record<string, StatusTone> = {
-  draft: 'blue',
-  sent: 'blue',
-  received: 'emerald',
-  partially_received: 'blue',
-  cancelled: 'rose',
-}
 
 interface SupplierDetailClientProps {
   lang: string
@@ -300,7 +293,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                           <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{po.po_number}</TableCell>
                           <TableCell className="text-right font-bold text-rose-600 dark:text-rose-400">{formatCurrency(po.total_amount)}</TableCell>
                           <TableCell>
-                            <StatusBadge tone={PO_STATUS_TONES[po.status] ?? 'slate'} label={t(`status.${po.status}`)} />
+                            <StatusBadge tone={purchaseStatusTone(po.status)} label={t(`status.${po.status}`)} />
                           </TableCell>
                           <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(po.created_at)}</TableCell>
                         </TableRow>

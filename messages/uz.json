@@ -105,7 +105,15 @@
     "unassigned": "Biriktirilmagan",
     "assignedToHint": "Hujjat shu xodimning ro‘yxatida ko‘rinadi. Bo‘sh qoldirilsa — o‘zingiz.",
     "category": "Kategoriya",
-    "totalAmount": "Jami summa"
+    "totalAmount": "Jami summa",
+    "searchPlaceholder": "Mahsulot, mijoz, buyurtma qidirish...",
+    "pages": "Sahifalar",
+    "searchHint": "Qidirish uchun kamida 2 ta belgi yozing",
+    "changeStatus": "Holatni o'zgartirish",
+    "markAs": "\"{status}\" deb belgilash",
+    "statusUpdated": "Holat yangilandi",
+    "cancelOrderConfirm": "Buyurtma bekor qilinsinmi? Tovarlar omborga qaytariladi.",
+    "orderCancelled": "Buyurtma bekor qilindi, tovarlar omborga qaytarildi"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -120,7 +128,9 @@
     "tools": "Vositalar",
     "pos": "POS",
     "customers": "Mijozlar",
-    "guide": "Qo'llanma"
+    "guide": "Qo'llanma",
+    "faq": "Savol-javob",
+    "help": "Yordam"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -369,14 +379,14 @@
       "geoUnsupported": "Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi."
     },
     "status": {
-      "draft": "Yangi",
-      "pending": "Yangi",
-      "confirmed": "Yangi",
-      "shipped": "Yangi",
-      "delivered": "Yakunlangan",
+      "draft": "Qoralama",
+      "pending": "Kutilmoqda",
+      "confirmed": "Tasdiqlangan",
+      "shipped": "Jo'natilgan",
+      "delivered": "Yetkazilgan",
       "cancelled": "Bekor qilingan",
-      "sent": "Yangi",
-      "paid": "Yakunlangan",
+      "sent": "Yuborilgan",
+      "paid": "To'langan",
       "overdue": "Muddati o'tgan"
     },
     "category": "Toifa",
@@ -388,9 +398,13 @@
     "customersMapCount": "{total} mijozdan {shown} tasi xaritada ko'rsatilmoqda",
     "customersMapMissing": "{count, plural, other {# tasida manzil yo'q}}",
     "customersMapEmpty": "Hech qaysi mijozda xarita uchun manzil yoki lokatsiya kiritilmagan",
+    "customersMapMine": "Mening mijozlarim",
+    "customersMapAll": "Hammasi",
+    "customersMapYouAreHere": "Siz shu yerdasiz",
     "debt": "Qarz",
     "orderInfo": "Buyurtma ma'lumotlari",
-    "cannotDeleteCustomer": "Mijozning qarzi yoki tranzaksiyalari borligi sababli o'chirib bo'lmaydi"
+    "cannotDeleteCustomer": "Mijozning qarzi yoki tranzaksiyalari borligi sababli o'chirib bo'lmaydi",
+    "acceptPayment": "To'lovni qabul qilish"
   },
   "finance": {
     "title": "Moliya",
@@ -526,10 +540,10 @@
     "supplierCreated": "Yetkazib beruvchi muvaffaqiyatli qo'shildi",
     "supplierUpdated": "Yetkazib beruvchi muvaffaqiyatli yangilandi",
     "status": {
-      "draft": "Yangi",
-      "sent": "Yangi",
-      "received": "Yakunlangan",
-      "partially_received": "Yangi",
+      "draft": "Qoralama",
+      "sent": "Yuborilgan",
+      "received": "Qabul qilingan",
+      "partially_received": "Qisman qabul qilingan",
       "cancelled": "Bekor qilingan"
     },
     "totalPurchases": "Jami xaridlar",
@@ -691,15 +705,11 @@
       "statusNotConnected": "Ulanmagan",
       "connectedAs": "Bot ulangan:",
       "stepCreateBot": "Telegramda yangi bot yarating:",
-      "stepCopyToken": "BotFather bergan tokenni nusxalab, quyidagi maydonga joylashtiring.",
-      "stepAddToGroup": "Botni o'z guruhingizga qo'shing va unga xabar yuborish huquqini bering.",
-      "stepGetChatId": "Guruh yoki kanal chat ID sini oling:",
       "botToken": "Bot token",
       "botTokenHint": "BotFather'dan olingan token. U faqat serverda saqlanadi va hech qachon qayta ko'rsatilmaydi.",
       "botTokenKeepPlaceholder": "O'zgartirmaslik uchun bo'sh qoldiring",
       "botTokenKeepHint": "Bo'sh qoldirsangiz, mavjud token saqlanib qoladi.",
       "chatId": "Chat ID",
-      "chatIdHint": "Guruh uchun manfiy raqam (masalan -1001234567890) yoki @kanal_nomi.",
       "notifications": "Xabarnomalar",
       "enableLabel": "Telegram xabarnomalarini yoqish",
       "enableHint": "O'chirilganda hech qanday xabar yuborilmaydi.",
@@ -715,10 +725,22 @@
       "errorTokenFormat": "Token formati noto'g'ri (masalan: 123456789:AA...)",
       "errorTokenRejected": "Telegram tokenni qabul qilmadi",
       "errorTokenRequired": "Bot token kiritilishi shart",
-      "errorChatIdRequired": "Chat ID kiritilishi shart",
       "errorChatIdFormat": "Chat ID formati noto'g'ri",
       "errorNotConfigured": "Avval bot tokenini saqlang",
-      "errorSendFailed": "Xabar yuborilmadi"
+      "errorSendFailed": "Xabar yuborilmadi",
+      "stepPasteToken": "BotFather bergan tokenni nusxalab, quyidagi maydonga joylashtiring va saqlang.",
+      "stepPressStart": "Botni oching va \"Start\" tugmasini bosing (yoki botni ish guruhingizga qo'shing) — tizim qayerga yozishni o'zi aniqlaydi.",
+      "savedAwaitingChat": "Bot ulandi. Endi botga \"Start\" bosing — manzil avtomatik aniqlanadi.",
+      "awaitingChatHint": "Bot ulandi, lekin qayerga xabar yuborishni hali bilmaydi. Botni ochib \"Start\" bosing yoki uni guruhingizga qo'shing, so'ng \"Aniqlash\" tugmasini bosing.",
+      "openBot": "Botni ochish",
+      "detectChat": "Aniqlash",
+      "redetectChat": "Qayta aniqlash",
+      "chatDetected": "Manzil aniqlandi: {chat}",
+      "sendingTo": "Xabarlar yuboriladi:",
+      "advanced": "Qo'shimcha sozlamalar",
+      "chatIdOptionalHint": "Ixtiyoriy. Bo'sh qoldiring — tizim botga yozilgan oxirgi chatni o'zi tanlaydi. Qo'lda kiritish uchun: guruh raqami (masalan -1001234567890) yoki @kanal_nomi.",
+      "errorNoChatYet": "Hali hech kim botga yozmagan. Botni ochib \"Start\" bosing yoki uni guruhga qo'shing.",
+      "errorDetectFailed": "Manzilni aniqlab bo'lmadi"
     },
     "cannotChangeOwnAccess": "O'z rolingiz yoki holatingizni o'zgartira olmaysiz",
     "lastAdminError": "Oxirgi faol administratorni o'zgartirib bo'lmaydi"
@@ -781,11 +803,9 @@
     "ticketSuccess": "Murojaatingiz muvaffaqiyatli yuborildi. Tez orada siz bilan bog'lanamiz!",
     "liveStatus": "Operatorlarimiz tarmoqda",
     "liveStatusDesc": "O'rtacha javob berish vaqti: 5 daqiqa",
-    "chatbotTitle": "Yordamchi bot",
-    "chatbotWelcome": "Assalomu alaykum! Men ERP tizimi bo'yicha yordamchi botman. Sizga qanday yordam bera olaman?",
-    "chatbotPlaceholder": "Savolingizni yozing...",
-    "chatbotError": "Javob olishda xatolik yuz berdi. Qayta urinib ko'ring.",
-    "chatbotThinking": "Yozmoqda..."
+    "yourAgent": "Sizning menejeringiz",
+    "yourAgentHint": "Savollaringiz bo'yicha to'g'ridan-to'g'ri bog'lanishingiz mumkin",
+    "noAgent": "Sizga hali menejer biriktirilmagan"
   },
   "admin": {
     "login": {
@@ -1088,10 +1108,7 @@
     "employees": "Xodimlar — barcha xodimlar ro'yxati, lavozimi va maoshi shu yerda. Yangi xodim qabul qiling yoki mavjudlarini tahrirlang.",
     "settings": "Sozlamalar — tashkilot ma'lumotlari, foydalanuvchilar va xavfsizlik sozlamalarini shu yerdan boshqaring.",
     "support": "Qo'llab-quvvatlash — savol yoki muammolaringiz bo'yicha yordam so'rang.",
-    "guide": "Qo'llanma — tizimdan qanday foydalanishni bosqichma-bosqich tushuntiradi.",
-    "guideIntro": "Chap tomondagi menyu orqali bo'limlar orasida harakatlaning. Har bir sahifa sarlavhasi yonidagi (i) belgisini bosib, o'sha sahifa nima uchun kerakligini bilib olishingiz mumkin. Yuqori panelda til, yorug'/qorong'i rejim va bildirishnomalarni sozlashingiz mumkin.",
-    "guideTitle": "Qo'llanma",
-    "guideSubtitle": "Tizimdan qanday foydalanish bo'yicha qisqacha ko'rsatma"
+    "guide": "Qo'llanma — tizimdan qanday foydalanishni bosqichma-bosqich tushuntiradi."
   },
   "supportPortal": {
     "brandTitle": "Support",
@@ -1134,5 +1151,518 @@
     "action_export": "Eksport",
     "action_approve": "Tasdiqlash",
     "scopeHint": "“Faqat o‘zi” tanlansa, foydalanuvchi shu modulda faqat o‘zi yaratgan yozuvlarni ko‘radi."
+  },
+  "guide": {
+    "title": "Qo'llanma",
+    "subtitle": "Tizimning har bir bo'limi nima uchun kerak va undan qanday foydalaniladi",
+    "intro": "Bu sahifa — ERP tizimining to'liq qo'llanmasi. Quyida avval ishni boshlash tartibi, so'ng barcha sahifalarda amal qiladigan umumiy qoidalar, keyin esa har bir bo'lim bo'yicha bosqichma-bosqich ko'rsatma va maslahatlar keltirilgan. Kerakli bo'limga o'tish uchun mundarijadan foydalaning.",
+    "tocTitle": "Mundarija",
+    "stepsTitle": "Qanday ishlatiladi",
+    "tipsTitle": "Maslahatlar",
+    "openLink": "Bo'limni ochish",
+    "quickStart": {
+      "title": "Ishni boshlash: 8 qadam",
+      "description": "Tizimni birinchi marta sozlayotgan bo'lsangiz, quyidagi tartibda harakat qiling. Har bir qadam keyingisi uchun zamin tayyorlaydi — masalan, mahsulot qo'shishdan oldin kategoriya va o'lchov birligi tayyor bo'lishi kerak.",
+      "steps": [
+        {
+          "title": "Kompaniya ma'lumotlarini to'ldiring",
+          "text": "Sozlamalar → Kompaniya bo'limiga kiring va tashkilot nomi, manzili, telefon raqami va rekvizitlarini kiriting. Bu ma'lumotlar cheklarda va hisob-fakturalarda chiqadi."
+        },
+        {
+          "title": "O'lchov birliklarini sozlang",
+          "text": "Ombor → O'lchov birliklari bo'limida siz sotadigan birliklarni qo'shing: dona, kg, litr, metr, quti va hokazo. Bir marta sozlansa, barcha mahsulot shakllarida shu ro'yxat chiqadi."
+        },
+        {
+          "title": "Kategoriyalarni yarating",
+          "text": "Ombor → Kategoriyalar bo'limida mahsulot guruhlarini tuzing. Kategoriyalar ichma-ich bo'lishi mumkin (masalan, \"Ichimliklar → Gazli suvlar\")."
+        },
+        {
+          "title": "Mahsulotlarni kiriting",
+          "text": "Ombor → Mahsulotlar bo'limida bittalab qo'shing yoki Excel shablonini yuklab olib, to'ldirib, import qiling. Har bir mahsulotga SKU, narx, tannarx va minimal qoldiq belgilang."
+        },
+        {
+          "title": "Mijoz va yetkazib beruvchilarni qo'shing",
+          "text": "Mijozlar va Xarid → Yetkazib beruvchilar bo'limlarida asosiy kontragentlaringizni kiriting. Ularni ham Excel orqali ommaviy yuklash mumkin."
+        },
+        {
+          "title": "Kassalarni oching",
+          "text": "Moliya → Kassa bo'limida naqd, karta va o'tkazma hisoblarini yarating va boshlang'ich qoldiqni kiriting. Har bir sotuv shu kassalarga tushadi."
+        },
+        {
+          "title": "Xodimlar va ruxsatlar",
+          "text": "Xodimlar bo'limida xodimlarni ro'yxatga oling, kerak bo'lsa ularga tizimga kirish akkaunti yarating. Sozlamalar → Foydalanuvchilar bo'limida esa kim qaysi bo'limni ko'rishi va o'zgartirishini belgilang."
+        },
+        {
+          "title": "Sotuvni boshlang",
+          "text": "Peshtaxta savdosi uchun Kassa (POS) bo'limidan, hujjatli sotuv uchun Sotuv → Buyurtmalar bo'limidan foydalaning. Ombor qoldig'i va kassa balansi avtomatik yangilanadi."
+        }
+      ]
+    },
+    "basics": {
+      "title": "Barcha bo'limlar uchun umumiy qoidalar",
+      "description": "Tizimning barcha sahifalari bir xil mantiq asosida ishlaydi. Quyidagilarni bir marta o'zlashtirsangiz, istalgan bo'limda erkin ishlay olasiz.",
+      "items": [
+        {
+          "title": "Navigatsiya",
+          "text": "Chap tomondagi menyu — asosiy bo'limlar ro'yxati. Menyu bandini bosganda ichki sahifalar ochiladi. Sahifa tepasidagi \"non ushoqlari\" (ERP → Ombor → Mahsulotlar) orqali ortga qaytish mumkin. Telefonda menyu yuqori chap burchakdagi tugma bilan ochiladi."
+        },
+        {
+          "title": "Qidiruv va filtrlar",
+          "text": "Har bir jadval tepasida qidiruv maydoni bor — nom, SKU yoki telefon raqami bo'yicha yozganingizda ro'yxat darhol filtrlanadi. Yonidagi tugmalar holat bo'yicha filtrlaydi. Ro'yxat 10 tadan sahifalanadi; qidiruvni o'zgartirsangiz, birinchi sahifaga qaytadi."
+        },
+        {
+          "title": "Yangi yozuv qo'shish",
+          "text": "\"Yangi\" tugmasi shaklni modal oynada ochadi. Saqlash yoki Bekor qilish tugmasini bosganingizda oyna yopiladi va ro'yxatga qaytasiz; o'ng yuqoridagi X tugmasi ham oynani yopadi. Tasodifan boshqa sahifaga o'tib ketsangiz, to'ldirilgan ma'lumotlar vaqtincha saqlanadi va qaytganingizda joyida turadi."
+        },
+        {
+          "title": "Qatordagi amallar",
+          "text": "Jadval qatorining o'ng chetidagi uch nuqta tugmasi — tahrirlash, o'chirish, holatni o'zgartirish kabi amallarni ochadi. Qatorning o'ziga bosilsa, o'sha yozuvning to'liq sahifasi ochiladi."
+        },
+        {
+          "title": "Excel bilan ishlash",
+          "text": "Mahsulot, mijoz, yetkazib beruvchi va xodimlar bo'limida Import/Eksport tugmasi bor. Avval shablonni yuklab oling, ustun sarlavhalarini o'zgartirmasdan to'ldiring va faylni yuklang. Eksport joriy filtrlangan ro'yxatni yuklab beradi."
+        },
+        {
+          "title": "Holat belgilari",
+          "text": "Rangli yorliqlar holatni bildiradi: yashil — yakunlangan yoki to'langan, sariq — kutilmoqda, ko'k — jarayonda, qizil — bekor qilingan yoki muddati o'tgan, kulrang — qoralama."
+        },
+        {
+          "title": "Telefon raqami kiritish",
+          "text": "Avval mamlakat kodini tanlang, so'ng raqamni kiriting. Maydon tanlangan davlat formatidan ortiq raqam yozishga yo'l qo'ymaydi — O'zbekiston uchun +998 dan keyin roppa-rosa 9 ta raqam."
+        },
+        {
+          "title": "Parol talablari",
+          "text": "Yangi parol kamida 8 ta belgidan iborat bo'lishi, katta harf, kichik harf va raqamni o'z ichiga olishi shart. Faqat raqamdan iborat parol qabul qilinmaydi."
+        },
+        {
+          "title": "Til va ma'lumotlarning yangilanishi",
+          "text": "Yuqori paneldan o'zbek, rus va ingliz tillari orasida almashish mumkin. Har qanday o'zgartirish saqlangach, ro'yxatlar avtomatik yangilanadi — sahifani qayta yuklash shart emas."
+        }
+      ]
+    },
+    "modules": {
+      "dashboard": {
+        "purpose": "Bosh sahifa — biznesning bugungi holati bir ekranda: savdo summasi, tushum, foyda, buyurtmalar soni va omborda kam qolgan mahsulotlar. Kun boshida shu sahifadan boshlash tavsiya etiladi.",
+        "steps": [
+          "Yuqoridagi ko'rsatkich kartalaridan bugungi savdo, tushum va foydani ko'ring.",
+          "\"Bugun\" va \"Kecha\" tugmalari bilan ko'rsatkichlarni solishtiring.",
+          "Tezkor amallar tugmalari orqali sahifadan chiqmasdan yangi mahsulot, mijoz yoki xarid qo'shing.",
+          "Kam qolgan mahsulotlar ro'yxatini ko'rib chiqing va kerak bo'lsa xarid buyurtmasi yarating.",
+          "So'nggi buyurtmalar ro'yxatidan kerakli buyurtmaga bosib, tafsilotini oching."
+        ],
+        "tips": [
+          "Ko'rsatkichlar sotuv, xarid va kassa amallaridan keyin avtomatik yangilanadi.",
+          "Foyda mahsulotning tannarxi asosida hisoblanadi — tannarxni to'g'ri kiritsangiz, foyda ham to'g'ri chiqadi."
+        ]
+      },
+      "analytics": {
+        "purpose": "Analitika — tanlangan davr bo'yicha savdo dinamikasi, foyda, eng ko'p sotilgan mahsulotlar va mijozlar bo'yicha chuqurroq tahlil. Bosh sahifa \"bugun nima bo'ldi\" degan savolga javob bersa, bu bo'lim \"tendensiya qanday\" degan savolga javob beradi.",
+        "steps": [
+          "Yuqoridan davrni tanlang: bugun, kecha, hafta, oy, shu oy, o'tgan oy yoki butun davr.",
+          "Aniq sanalar kerak bo'lsa \"Ixtiyoriy\" davrini tanlab, boshlanish va tugash sanasini kiriting.",
+          "Savdo grafigidan kunlar/oylar kesimidagi o'zgarishni kuzating.",
+          "Eng ko'p sotilgan mahsulotlar jadvalidan qaysi tovar daromad keltirayotganini aniqlang.",
+          "Kam qolgan mahsulotlar ro'yxatidan xaridni rejalashtiring."
+        ],
+        "tips": [
+          "Tanlagan davringiz eslab qolinadi — boshqa sahifaga o'tib qaytsangiz ham o'sha davr ochiladi.",
+          "Foyda ko'rsatkichi mahsulot tannarxidan kelib chiqadi; tannarxsiz mahsulotlar foyda hisobini buzadi."
+        ]
+      },
+      "pos": {
+        "purpose": "Kassa (POS) — peshtaxtada mijozga tez xizmat ko'rsatish uchun mo'ljallangan sotuv ekrani. Bir necha bosishda savat to'ldiriladi, to'lov qabul qilinadi, chek chiqariladi; ombor va kassa avtomatik yangilanadi.",
+        "steps": [
+          "Mahsulotni nomi yoki SKU si bo'yicha qidiring, yoki kategoriya bo'yicha filtrlab, kartasini bosing — u savatga tushadi.",
+          "Savatda miqdorni o'zgartiring; kerak bo'lsa qator bo'yicha chegirma foizini kiriting.",
+          "Mijozni tanlang. Ro'yxatda bo'lmasa, \"Yangi mijoz\" tugmasi bilan darhol qo'shing (ism, telefon, manzil).",
+          "To'lov turini tanlang: naqd, karta, o'tkazma yoki qarz. Qarzga sotishda mijozni tanlash majburiy.",
+          "\"Sotish\" tugmasini bosing — chek oynasi ochiladi, uni chop etish yoki yopish mumkin."
+        ],
+        "tips": [
+          "Qoldig'i tugagan mahsulot kartasi bosilmaydi — avval omborni to'ldiring.",
+          "Har bir sotuvdan keyin ombor qoldig'i kamayadi, kassa balansi ortadi va avtomatik hisob-faktura yaratiladi.",
+          "Qarzga sotilganda pul kassaga tushmaydi: qarz yig'ilganda Moliya → Kassa bo'limidan kirim sifatida kiritiladi.",
+          "Mijozning oldindan to'lovi (kredit balansi) bo'lsa, u yangi xariddan avtomatik yechiladi."
+        ]
+      },
+      "products": {
+        "purpose": "Mahsulotlar — ombordagi barcha tovarlar ro'yxati: nomi, SKU si, kategoriyasi, sotuv narxi, tannarxi va joriy qoldig'i. Butun tizimning asosi shu yerda: sotuv, xarid va hisobotlar shu ma'lumotlardan foydalanadi.",
+        "steps": [
+          "\"Yangi mahsulot\" tugmasini bosib, nomi, SKU si, kategoriyasi va o'lchov birligini kiriting.",
+          "Sotuv narxi va tannarxni kiriting — foyda hisoboti aynan shu ikki raqamga tayanadi.",
+          "Minimal va maksimal qoldiqni belgilang: qoldiq minimaldan pastga tushganda tizim ogohlantiradi.",
+          "Rasm yuklang — u mahsulot kartasida va POS ekranida ko'rinadi.",
+          "Ko'p mahsulotni birdan kiritish uchun Import/Eksport → shablonni yuklab oling, to'ldiring va yuklang.",
+          "Qatorga bosib, mahsulot sahifasida uning harakatlari va tarixini ko'ring."
+        ],
+        "tips": [
+          "SKU takrorlanmasligi kerak — Excel importida bir xil SKU li qator mavjud mahsulotni yangilaydi, yangisini yaratmaydi.",
+          "Vaqtincha sotilmaydigan tovarni o'chirib tashlamang: holatini nofaol qiling, shunda tarix saqlanadi.",
+          "O'lchov birligi ro'yxatda bo'lmasa, avval Ombor → O'lchov birliklari bo'limida qo'shing."
+        ]
+      },
+      "categories": {
+        "purpose": "Kategoriyalar — mahsulotlarni guruhlarga ajratish uchun. To'g'ri tuzilgan kategoriya daraxti qidiruvni tezlashtiradi va hisobotlarni tushunarli qiladi.",
+        "steps": [
+          "\"Yangi kategoriya\" tugmasini bosing va nom kiriting.",
+          "Kerak bo'lsa ota kategoriyani tanlang — shunda ichma-ich tuzilma hosil bo'ladi.",
+          "Tavsif maydoniga kategoriya nimani o'z ichiga olishini yozib qo'ying.",
+          "Mavjud kategoriyani tahrirlash yoki o'chirish uchun qator oxiridagi menyudan foydalaning."
+        ],
+        "tips": [
+          "Ichida mahsuloti bor kategoriyani o'chirmang — avval mahsulotlarni boshqa kategoriyaga o'tkazing.",
+          "Kategoriyalarni juda chuqur bo'lmagan holda tuzing: 2-3 daraja aksariyat biznes uchun yetarli."
+        ]
+      },
+      "movements": {
+        "purpose": "Ombor harakatlari — har bir mahsulot qoldig'i qachon, qancha va nima sababdan o'zgarganini ko'rsatuvchi jurnal. Qoldiq bo'yicha nizo chiqqanda javob shu yerdan topiladi.",
+        "steps": [
+          "Ro'yxatdan kirim (+), chiqim (−) va tuzatish yozuvlarini ko'ring.",
+          "Mahsulot nomi bo'yicha qidirib, aynan bitta tovar tarixini ajratib oling.",
+          "Har bir yozuvda o'zgarishdan oldingi va keyingi qoldiq ko'rsatilgan — shu orqali farqni tekshiring.",
+          "Yozuvning sababi va manbasi (sotuv, xarid, POS, qo'lda tuzatish) ustunidan o'zgarish qayerdan kelganini aniqlang."
+        ],
+        "tips": [
+          "Bu jurnal avtomatik to'ladi: sotuv, POS savdosi va xarid buyurtmasi har biri o'z yozuvini qoldiradi.",
+          "Haqiqiy qoldiq tizimdagidan farq qilsa, inventarizatsiya qilib, tuzatish yozuvini kiriting — eski yozuvlarni o'chirmang."
+        ]
+      },
+      "units": {
+        "purpose": "O'lchov birliklari — mahsulotlar qanday birlikda sotilishini belgilaydigan ro'yxat (dona, kg, litr, metr, quti). Bu ro'yxat mahsulot shakllaridagi \"birlik\" maydonini to'ldiradi.",
+        "steps": [
+          "Yangi birlik nomini kiriting va qo'shish tugmasini bosing.",
+          "Keraksiz birlikni ro'yxatdan o'chiring.",
+          "Ro'yxat har bir til uchun alohida saqlanadi — tilni almashtirsangiz, o'sha tildagi nomlarni ham to'ldiring."
+        ],
+        "tips": [
+          "Birliklarni qisqa va bir xil yozing (\"kg\", \"dona\") — Excel importida mos birlik avtomatik topiladi.",
+          "Vaznli tovar sotsangiz, kasrli miqdor kiritish uchun kg yoki litr birligini ishlating."
+        ]
+      },
+      "salesOrders": {
+        "purpose": "Sotuv buyurtmalari — hujjat bilan rasmiylashtiriladigan sotuvlar uchun. POS tezkor peshtaxta savdosi bo'lsa, bu bo'lim bir nechta pozitsiyali, chegirmali va to'lov turi belgilangan buyurtmalar uchun.",
+        "steps": [
+          "\"Yangi buyurtma\" tugmasini bosing va mijozni tanlang.",
+          "Mahsulot qatorlarini qo'shing: tovar, miqdor va narxni kiriting; kerak bo'lsa chegirma bering.",
+          "To'lov turini tanlang (naqd, karta, o'tkazma yoki qarz) va mas'ul xodimni belgilang.",
+          "Saqlang — buyurtma tasdiqlangan holatda yaratiladi, ombordan tovar yechiladi va hisob-faktura chiqariladi.",
+          "Ro'yxatdan buyurtmaga bosib, uning tarkibi va holatini ko'ring."
+        ],
+        "tips": [
+          "Miqdor omborda mavjud qoldiqdan oshmaydi — tizim ortiqcha miqdorni qabul qilmaydi.",
+          "Qarzga rasmiylashtirilgan buyurtmada pul kassaga tushmaydi, mijozning qarzi sifatida qoladi.",
+          "Buyurtma saqlangach, ombor harakatlarida unga tegishli chiqim yozuvi paydo bo'ladi."
+        ]
+      },
+      "invoices": {
+        "purpose": "Hisob-fakturalar — mijozga chiqarilgan to'lov hujjatlari va ularning to'lov holati. Kim qancha qarzdor va qaysi hujjatning muddati o'tganini shu yerdan kuzatasiz.",
+        "steps": [
+          "Sotuv yoki POS savdosi qilinganda faktura avtomatik yaratiladi; qo'lda yaratish uchun \"Yangi\" tugmasidan foydalaning.",
+          "Mijoz, buyurtma, summa va to'lov muddatini kiriting.",
+          "Holatni belgilang: qoralama, yuborilgan, to'langan, muddati o'tgan yoki bekor qilingan.",
+          "To'lov kelganda holatni \"to'langan\"ga o'tkazing — tegishli tushum yozuvi hosil bo'ladi.",
+          "Muddati o'tgan fakturalarni filtr orqali ajratib, mijozlar bilan ishlang."
+        ],
+        "tips": [
+          "Qarzga sotilgan tovar uchun faktura muddati sotuvdan 14 kun keyin belgilanadi.",
+          "Faktura raqami avtomatik generatsiya qilinadi — uni qo'lda o'zgartirish tavsiya etilmaydi."
+        ]
+      },
+      "customers": {
+        "purpose": "Mijozlar — barcha xaridorlaringiz bazasi: aloqa ma'lumotlari, joylashuvi, qarzi va oldindan to'lovi. Har bir mijozning butun tarixi bitta sahifada to'planadi.",
+        "steps": [
+          "\"Yangi mijoz\" tugmasini bosib, ism, telefon va manzilni kiriting.",
+          "Xaritada joylashuvni belgilang — keyinchalik yetkazib berishda qulay bo'ladi.",
+          "Mijoz toifasini tanlang (masalan, ulgurji yoki chakana).",
+          "Ro'yxatdan mijozga bosib, uning buyurtmalari, fakturalari va to'lovlarini ko'ring.",
+          "Ko'p mijozni birdan kiritish uchun Import/Eksport tugmasidan foydalaning."
+        ],
+        "tips": [
+          "Telefon raqamini to'liq kiriting — u mijozni qidirishda asosiy kalit bo'lib xizmat qiladi.",
+          "Mijozning ortiqcha to'lovi kredit balansi sifatida saqlanadi va keyingi xaridda avtomatik ishlatiladi.",
+          "\"Xarita\" ko'rinishi barcha mijozlarning joylashuvini bitta xaritada ko'rsatadi."
+        ]
+      },
+      "customerCategories": {
+        "purpose": "Mijoz toifalari — mijozlarni guruhlarga ajratish (ulgurji, chakana, doimiy va h.k.). Bu segmentlar bo'yicha ishlashni va tahlilni osonlashtiradi.",
+        "steps": [
+          "\"Yangi toifa\" tugmasini bosing va nomini kiriting.",
+          "Tavsifda toifa kimlarga tegishli ekanini yozing.",
+          "Mijoz shaklida shu toifani tanlang."
+        ],
+        "tips": [
+          "Toifalarni oz sonli va aniq qilib tuzing — juda ko'p toifa tahlilni chalkashtiradi."
+        ]
+      },
+      "purchaseOrders": {
+        "purpose": "Xarid buyurtmalari — yetkazib beruvchidan tovar qabul qilishni rasmiylashtirish. Buyurtma saqlangan zahoti ombor qoldig'i ortadi va tovar tannarxi qayd etiladi.",
+        "steps": [
+          "\"Yangi xarid\" tugmasini bosing va yetkazib beruvchini tanlang.",
+          "Mahsulot qatorlarini qo'shing: tovar, miqdor va bir birlik uchun tannarxni kiriting.",
+          "Qog'oz chek yoki nakladnoy bo'lsa, AI skaner tugmasi orqali suratga oling — pozitsiyalar avtomatik to'ldiriladi.",
+          "Mas'ul xodimni belgilang va izoh qoldiring.",
+          "Saqlang — ombor to'ladi, ombor harakatlariga kirim yoziladi va tannarx qatlami saqlanadi."
+        ],
+        "tips": [
+          "Tannarxni har xaridda aniq kiriting: foyda hisobi aynan shu qiymatlardan hisoblanadi.",
+          "Yetkazib beruvchiga to'lov avtomatik yozilmaydi — uni Moliya → Kassa bo'limida chiqim sifatida kiriting.",
+          "AI skaner natijasini saqlashdan oldin ko'zdan kechiring: nomlar va raqamlar to'g'ri o'qilganiga ishonch hosil qiling."
+        ]
+      },
+      "suppliers": {
+        "purpose": "Yetkazib beruvchilar — tovar olib keladigan kontragentlar bazasi: aloqa ma'lumotlari, STIR, manzil va ular bilan bo'lgan xaridlar tarixi.",
+        "steps": [
+          "\"Yangi yetkazib beruvchi\" tugmasini bosib, nom, telefon va manzilni kiriting.",
+          "STIR va bank rekvizitlarini kiriting — hujjatlarda kerak bo'ladi.",
+          "Xaritadan joylashuvni belgilang.",
+          "Ro'yxatdan yetkazib beruvchiga bosib, undan qilingan xaridlar va to'lovlarni ko'ring.",
+          "Ommaviy kiritish uchun Import/Eksport tugmasidan foydalaning."
+        ],
+        "tips": [
+          "Bir yetkazib beruvchini ikki marta kiritmang — xaridlar tarixi ikkiga bo'linib ketadi.",
+          "Faol ishlamaydigan ta'minotchini o'chirish o'rniga nofaol qiling."
+        ]
+      },
+      "cashbox": {
+        "purpose": "Kassa — pul turgan barcha hisoblar (naqd, karta, o'tkazma) va ular bo'yicha kirim-chiqim. Kunlik pul aylanmasi shu bo'limda boshqariladi.",
+        "steps": [
+          "Avval kassalarni yarating: nomi, turi (naqd, karta, o'tkazma, boshqa) va boshlang'ich qoldig'ini kiriting.",
+          "Kirim qo'shish uchun \"Kirim\" tugmasini bosing: summa, kassa, kategoriya va sanani kiriting.",
+          "Chiqim uchun \"Chiqim\" tugmasini bosing va xarajat kategoriyasini tanlang.",
+          "Mijoz qarzini yig'ayotganda mijozni tanlab, qarz yig'ish kategoriyasidan foydalaning — mijozning qarzi kamayadi.",
+          "Kassalar balansini kuzatib boring; har bir amal tranzaksiyalar ro'yxatiga tushadi."
+        ],
+        "tips": [
+          "Naqd puldagi kamomad chiqimdan oshib ketsa, tizim ogohlantiradi va amalni bajarmaydi.",
+          "POS orqali qilingan sotuvlar to'lov turiga mos kassaga avtomatik tushadi.",
+          "Har kuni ish oxirida kassadagi haqiqiy pulni tizimdagi balans bilan solishtiring."
+        ]
+      },
+      "transactions": {
+        "purpose": "Tranzaksiyalar — barcha kirim va chiqimlarning yagona jurnali. Pul qayerdan kelib, qayerga ketganini shu ro'yxatdan ko'rasiz.",
+        "steps": [
+          "\"Yangi tranzaksiya\" tugmasini bosib, turini tanlang: kirim yoki chiqim.",
+          "Summa, kategoriya, kassa va sanani kiriting.",
+          "Kerak bo'lsa, tranzaksiyani mijoz, yetkazib beruvchi yoki xodimga bog'lang.",
+          "Izoh maydoniga tushuntirish yozing — keyinchalik hisobotni o'qish osonlashadi.",
+          "Ro'yxatdan qatorga bosib, yozuvni tahrirlang yoki o'chiring."
+        ],
+        "tips": [
+          "Tranzaksiyani o'chirsangiz, kassa balansi ham teskari yo'nalishda tuzatiladi.",
+          "Kategoriyani doim to'g'ri tanlang — moliyaviy hisobot aynan kategoriyalar kesimida quriladi."
+        ]
+      },
+      "txCategories": {
+        "purpose": "Tranzaksiya turlari — kirim va chiqimlarni turkumlash uchun kategoriyalar (savdodan tushum, ijara, maosh, transport va h.k.). Tizim 11 ta standart kategoriya bilan keladi.",
+        "steps": [
+          "\"Yangi kategoriya\" tugmasini bosing va nomini kiriting.",
+          "Turini tanlang: kirim yoki chiqim.",
+          "Kerak bo'lsa, kategoriyani shaxs turiga bog'lang (mijoz, yetkazib beruvchi, xodim) — shunda tranzaksiya kiritishda tegishli ro'yxat chiqadi.",
+          "Keraksiz kategoriyani tahrirlang yoki o'chiring."
+        ],
+        "tips": [
+          "Ishlatilayotgan kategoriyani o'chirmang — eski tranzaksiyalar kategoriyasiz qoladi.",
+          "Kategoriyalarni kam sonli va aniq nomlar bilan tuzing."
+        ]
+      },
+      "employees": {
+        "purpose": "Xodimlar — kadrlar bo'limi: xodimlar ro'yxati, lavozimi, bo'limi, maoshi va ishga qabul sanasi. Bu yerdan xodimga tizimga kirish akkaunti ham yaratiladi.",
+        "steps": [
+          "\"Yangi xodim\" tugmasini bosib, F.I.Sh., telefon va lavozimni kiriting.",
+          "Bo'lim va ishga qabul sanasini belgilang, maoshni kiriting.",
+          "Xodim tizimga kirishi kerak bo'lsa, akkaunt bo'limida telefon raqami va parol yarating.",
+          "Xodimga rol yoki ruxsatlar to'plamini biriktiring.",
+          "Ro'yxatdan xodimga bosib, uning ma'lumotlari va to'lovlar tarixini ko'ring."
+        ],
+        "tips": [
+          "Parol kamida 8 belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak.",
+          "Ishdan bo'shagan xodimni o'chirmang — nofaol qiling, shunda uning tarixi saqlanadi.",
+          "Maosh to'lovlari Moliya → Kassa bo'limida chiqim sifatida kiritiladi."
+        ]
+      },
+      "roles": {
+        "purpose": "Rollar — ruxsatlar to'plamining tayyor shablonlari (masalan, \"Sotuvchi\", \"Omborchi\"). Har bir xodimga alohida ruxsat berish o'rniga, tayyor rolni biriktirasiz.",
+        "steps": [
+          "\"Yangi rol\" tugmasini bosing va rol nomini kiriting.",
+          "Ruxsatlar jadvalidan har bir bo'lim uchun ko'rish, qo'shish, tahrirlash va o'chirish huquqlarini belgilang.",
+          "Saqlang va Sozlamalar → Foydalanuvchilar bo'limida xodimga shu rolni bering.",
+          "Rol o'zgarganda unga bog'langan foydalanuvchilarning ruxsatlari ham yangilanadi."
+        ],
+        "tips": [
+          "Eng kam kerakli ruxsat tamoyiliga amal qiling: xodimga faqat ishi uchun zarur bo'limlarni oching.",
+          "Moliya va Sozlamalar bo'limlarini faqat ishonchli xodimlarga oching."
+        ]
+      },
+      "settings": {
+        "purpose": "Sozlamalar — tizimni o'z biznesingizga moslash markazi: kompaniya ma'lumotlari, foydalanuvchilar va ruxsatlar, shaxsiy profil, xavfsizlik, chek printeri va integratsiyalar.",
+        "steps": [
+          "Kompaniya — tashkilot nomi, manzili va rekvizitlari; ular hujjatlarda chiqadi.",
+          "Foydalanuvchilar — yangi foydalanuvchi yaratish, ruxsatlarni belgilash, parolni tiklash va akkauntni faol/nofaol qilish.",
+          "Profil — o'z ismingiz, telefoningiz va rasmingiz.",
+          "Xavfsizlik — o'z parolingizni o'zgartirish.",
+          "Printer — chek printeri va chek ko'rinishi sozlamalari.",
+          "Integratsiyalar — Telegram orqali ulanish va bildirishnomalar."
+        ],
+        "tips": [
+          "Foydalanuvchi parolini faqat administrator tiklay oladi.",
+          "Xodim ishdan ketsa, akkauntini o'chirish o'rniga nofaol qiling."
+        ]
+      },
+      "support": {
+        "purpose": "Qo'llab-quvvatlash — savol yoki muammo yuzaga kelganda yordam olish joyi. Tezkor javob uchun AI yordamchi, murakkab holatlar uchun jonli mutaxassis bilan yozishma mavjud.",
+        "steps": [
+          "Oddiy savolni AI yordamchiga yozing — u tizim bo'yicha darhol javob beradi.",
+          "Muammo hal bo'lmasa, yangi murojaat (ticket) oching va holatni batafsil yozing.",
+          "Yozishmada mutaxassis javobini kuzatib boring va qo'shimcha ma'lumot yuboring.",
+          "Muammo hal bo'lgach, murojaatni yopilgan deb belgilang."
+        ],
+        "tips": [
+          "Murojaatda qaysi sahifada, qanday amal bajarganingizni va qanday xato chiqqanini yozing — javob tezlashadi.",
+          "Ekran surati muammoni tushuntirishning eng tez usuli."
+        ]
+      }
+    }
+  },
+  "faq": {
+    "title": "Savol-javob",
+    "subtitle": "Eng ko'p beriladigan savollarga qisqa va aniq javoblar",
+    "intro": "Savolingizni qidiruv orqali toping yoki bo'limlar bo'yicha ko'rib chiqing. Bu yerda javob topmasangiz, Qo'llab-quvvatlash bo'limiga murojaat qiling — mutaxassis javob beradi.",
+    "searchPlaceholder": "Savolni qidiring...",
+    "guideLink": "To'liq qo'llanma",
+    "supportLink": "Qo'llab-quvvatlashga yozish",
+    "categories": [
+      {
+        "key": "general",
+        "title": "Umumiy",
+        "items": [
+          {
+            "q": "Tizimga qanday kiraman?",
+            "a": "Kirish sahifasida mamlakat kodini tanlab telefon raqamingizni kiriting va parolni yozing. Raqam va parolni kompaniyangiz administratori Sozlamalar → Foydalanuvchilar bo'limida yaratadi."
+          },
+          {
+            "q": "Parolimni unutdim, nima qilay?",
+            "a": "Kompaniyangiz administratoriga murojaat qiling: u Sozlamalar → Foydalanuvchilar bo'limidan sizga yangi parol o'rnatib beradi. Yangi parol kamida 8 belgi, katta-kichik harf va raqamdan iborat bo'lishi shart — faqat raqamdan iborat parol qabul qilinmaydi."
+          },
+          {
+            "q": "Tezkor qidiruvdan qanday foydalanaman?",
+            "a": "Yuqori paneldagi qidiruv maydonini bosing yoki klaviaturada Ctrl+K (Mac'da ⌘K) tugmalarini bosing. Mahsulot nomi, SKU, mijoz ismi, telefon raqami, buyurtma yoki faktura raqamini yozing — natijalar guruhlangan holda chiqadi va bosishingiz bilan o'sha sahifa ochiladi."
+          },
+          {
+            "q": "Tilni qanday o'zgartiraman?",
+            "a": "Yuqori paneldagi til tugmasidan o'zbek, rus va ingliz tillari orasida almashing. Tanlov brauzeringizda saqlanadi va keyingi kirishda ham o'sha tilda ochiladi."
+          }
+        ]
+      },
+      {
+        "key": "inventory",
+        "title": "Ombor va mahsulotlar",
+        "items": [
+          {
+            "q": "Ombordagi qoldiq haqiqatdan farq qilyapti.",
+            "a": "Ombor → Ombor harakatlari bo'limida o'sha mahsulot tarixini ko'ring: har bir yozuvda o'zgarishdan oldingi va keyingi qoldiq ko'rsatilgan. Farq qayerdan chiqqanini aniqlagach, inventarizatsiya natijasini tuzatish yozuvi bilan kiriting — eski yozuvlarni o'chirmang, aks holda tarix buziladi."
+          },
+          {
+            "q": "Mahsulotni o'chira olmayapman.",
+            "a": "Mahsulot sotuv yoki xarid hujjatlarida ishtirok etgan bo'lsa, uni o'chirish tarixni buzadi. Bunday hollarda mahsulotni nofaol holatga o'tkazing — u ro'yxatlarda va POSda ko'rinmaydi, lekin o'tgan hujjatlar joyida qoladi."
+          },
+          {
+            "q": "Excel import ishlamadi.",
+            "a": "Avval shu bo'limdagi shablonni yuklab oling va ustun sarlavhalarini o'zgartirmang. Majburiy maydonlar (nom, SKU, narx) to'ldirilganiga ishonch hosil qiling. O'lchov birligi Ombor → O'lchov birliklari ro'yxatidagi birliklarga mos kelishi kerak."
+          },
+          {
+            "q": "Kam qolgan mahsulotlarni qanday kuzataman?",
+            "a": "Har bir mahsulotga minimal qoldiq belgilang. Qoldiq shu chegaradan pastga tushganda mahsulot Bosh sahifadagi \"kam qolgan\" ro'yxatiga tushadi va yuqori paneldagi qo'ng'iroq belgisida bildirishnoma paydo bo'ladi."
+          }
+        ]
+      },
+      {
+        "key": "sales",
+        "title": "Sotuv va kassa",
+        "items": [
+          {
+            "q": "POSda mahsulot ko'rinmayapti.",
+            "a": "Uchta sabab bo'lishi mumkin: mahsulot nofaol holatda, qoldig'i nolga teng yoki qidiruv/kategoriya filtri yoqilgan. Ombor → Mahsulotlar bo'limidan holatini va qoldig'ini tekshiring."
+          },
+          {
+            "q": "Qarzga sotdim, lekin kassa balansi o'zgarmadi.",
+            "a": "Bu to'g'ri ishlash tartibi: qarzga sotilganda pul hali kelmagan bo'ladi, summa mijozning qarzi sifatida qayd etiladi. Mijoz to'lov qilganda Moliya → Kassa bo'limida qarz yig'ish kirimini kiriting — o'shanda balans ortadi va qarz kamayadi."
+          },
+          {
+            "q": "Chegirmani qanday beraman?",
+            "a": "POSda savatdagi har bir qator uchun chegirma foizini kiritish mumkin. Sotuv buyurtmasida esa qator darajasida narx va chegirmani o'zgartirasiz — jami summa avtomatik qayta hisoblanadi."
+          },
+          {
+            "q": "Hisob-faktura avtomatik yaratiladimi?",
+            "a": "Ha. POS orqali yoki Sotuv → Buyurtmalar orqali sotuv qilinganda faktura avtomatik chiqariladi: naqd, karta va o'tkazmada darhol \"to'langan\", qarzga sotilganda esa \"yuborilgan\" holatida va 14 kunlik muddat bilan."
+          }
+        ]
+      },
+      {
+        "key": "finance",
+        "title": "Moliya",
+        "items": [
+          {
+            "q": "Kassadagi pul tizimdagi balansga mos kelmayapti.",
+            "a": "Moliya → Tranzaksiyalar bo'limidan o'sha kun bo'yicha barcha kirim-chiqimni ko'rib chiqing. Kiritilmay qolgan xarajat yoki ikki marta kiritilgan kirim bo'lishi mumkin. Har kuni ish oxirida sverka qilib borish eng yaxshi usul."
+          },
+          {
+            "q": "Foyda noto'g'ri hisoblanyapti.",
+            "a": "Foyda sotuv narxi va tannarx farqidan chiqadi. Tannarxi kiritilmagan yoki noto'g'ri kiritilgan mahsulotlarni tekshiring va har bir xarid buyurtmasida haqiqiy tannarxni kiriting."
+          },
+          {
+            "q": "Xarid qilganimda pul avtomatik chiqim bo'ladimi?",
+            "a": "Yo'q. Xarid buyurtmasi omborni to'ldiradi va tannarxni qayd etadi, lekin to'lovni siz Moliya → Kassa bo'limida chiqim sifatida kiritasiz. Bu naqd to'lov, o'tkazma yoki keyinroq to'lash holatlarini ajratib yuritish uchun."
+          },
+          {
+            "q": "Tranzaksiyani o'chirsam nima bo'ladi?",
+            "a": "Tranzaksiya o'chirilganda uning kassa balansiga ta'siri ham teskari yo'nalishda tuzatiladi, ya'ni balans avvalgi holatiga qaytadi. Shuning uchun noto'g'ri yozuvni tuzatish uchun uni tahrirlash yoki o'chirish xavfsiz."
+          }
+        ]
+      },
+      {
+        "key": "staff",
+        "title": "Xodimlar va ruxsatlar",
+        "items": [
+          {
+            "q": "Xodimga tizimga kirish huquqini qanday beraman?",
+            "a": "Xodimlar bo'limida xodimni yarating va \"tizimga kirish\" qismida telefon raqami hamda parol belgilang. So'ng Sozlamalar → Foydalanuvchilar bo'limida unga rol yoki alohida ruxsatlarni bering."
+          },
+          {
+            "q": "Xodim faqat o'zi mas'ul bo'lgan mijozlarni ko'rsin desam?",
+            "a": "Ruxsatlar jadvalida o'sha modul uchun ma'lumot doirasini \"Faqat o'zi\" qilib belgilang. Shunda xodim ro'yxatda ham, xaritada ham faqat o'ziga biriktirilgan (va hali hech kimga biriktirilmagan) yozuvlarni ko'radi."
+          },
+          {
+            "q": "Rol nima va u nima uchun kerak?",
+            "a": "Rol — bu tayyor ruxsatlar to'plami (masalan, \"Sotuvchi\", \"Omborchi\"). Har bir xodimga ruxsatlarni alohida belgilash o'rniga rolni biriktirasiz; rol o'zgarganda unga bog'langan barcha xodimlarning huquqlari birdan yangilanadi."
+          },
+          {
+            "q": "Ishdan bo'shagan xodimni nima qilay?",
+            "a": "Uni o'chirmang — akkauntini nofaol qiling. Shunda u tizimga kira olmaydi, lekin uning nomi bilan bog'liq buyurtmalar, to'lovlar va tarix saqlanib qoladi."
+          }
+        ]
+      },
+      {
+        "key": "technical",
+        "title": "Texnik savollar",
+        "items": [
+          {
+            "q": "Xarita mening joylashuvimni ko'rsatmayapti.",
+            "a": "Brauzer geolokatsiya so'roviga ruxsat berilganini tekshiring (manzil satrining chap tomonidagi qulf belgisi). Ruxsat berilgach, xaritadagi \"Mening joylashuvim\" tugmasini bosing. Geolokatsiya faqat himoyalangan (https) ulanishda ishlaydi."
+          },
+          {
+            "q": "Telefon raqamini to'liq kirita olmayapman.",
+            "a": "Maydon tanlangan mamlakat formatidan ortiq raqam yozishga yo'l qo'ymaydi: O'zbekiston uchun +998 dan keyin roppa-rosa 9 ta raqam. Boshqa davlat raqami bo'lsa, avval ro'yxatdan o'sha davlat kodini tanlang."
+          },
+          {
+            "q": "Ma'lumot eski ko'rinayapti, yangilanmayapti.",
+            "a": "Odatda har qanday o'zgartirish saqlangach ro'yxatlar avtomatik yangilanadi. Agar bir necha daqiqa oldingi ma'lumot ko'rinsa, sahifani yangilang (F5); muammo takrorlansa, Qo'llab-quvvatlashga qaysi sahifada va qachon bo'lganini yozib yuboring."
+          },
+          {
+            "q": "Modal oyna yopilmayapti yoki forma yo'qolib qoldi.",
+            "a": "Saqlash va Bekor qilish tugmalari, shuningdek o'ng yuqoridagi X — oynani yopadi. Oynani tasodifan yopib qo'ysangiz, to'ldirgan ma'lumotlaringiz vaqtincha saqlanadi va formaga qaytganingizda joyida turadi."
+          }
+        ]
+      }
+    ]
   }
 }

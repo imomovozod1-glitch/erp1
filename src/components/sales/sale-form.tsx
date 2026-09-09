@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers'
@@ -62,7 +62,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
   const t = useTranslations('sales')
   const tCommon = useTranslations('common')
   const tPos = useTranslations('pos')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/sales/orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [customerId, setCustomerId] = useState('')
@@ -317,7 +317,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
       })
 
       toast.success(t('saleCreated'))
-      router.push(`/${lang}/sales/orders`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -518,7 +518,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/${lang}/sales/orders`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}
