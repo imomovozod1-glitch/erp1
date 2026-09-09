@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { invalidatePurchaseOrders, invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
@@ -44,7 +44,7 @@ function generatePoNumber() {
 export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }: PurchaseOrderFormProps) {
   const t = useTranslations('procurement')
   const tCommon = useTranslations('common')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/procurement/purchase-orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -277,7 +277,7 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
 
       await Promise.all([invalidatePurchaseOrders(), invalidateProducts(), invalidateMovements()])
       toast.success(t('purchaseCreated'))
-      router.push(`/${lang}/procurement/purchase-orders`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -498,7 +498,7 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/${lang}/procurement/purchase-orders`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

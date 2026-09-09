@@ -72,8 +72,8 @@ export function SuppliersTable({
                 <TableHead className="hidden lg:table-cell">{t('contactPerson')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t('tin')}</TableHead>
                 <TableHead className="text-right tabular-nums">{lang === 'uz' ? 'Qarzimiz' : lang === 'ru' ? 'Наш долг' : 'Debt owed'}</TableHead>
-                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>

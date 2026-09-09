@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller, useWatch } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
@@ -11,6 +11,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { invalidateOrders } from '@/lib/data/revalidate'
+import { nextOrderStatuses } from '@/lib/statuses'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -38,7 +39,7 @@ function getTodayString(): string {
 export function OrderForm({ initialData, customers, assignableUsers, lang }: OrderFormProps) {
   const t = useTranslations('sales')
   const tCommon = useTranslations('common')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/sales/orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
@@ -137,7 +138,7 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
 
       await invalidateOrders()
       clearPersistedForm('order-form-v3')
-      router.push(`/${lang}/sales/orders`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -146,6 +147,15 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
   }
 
   const statusValue = useWatch({ control, name: 'status' })
+  // Only the transitions this order may actually make, plus its current value.
+  // `cancelled` is deliberately absent: cancelling has to put the goods back
+  // into stock, which the list's row action does via `cancelSalesOrder` — a
+  // plain column write from here would silently lose the inventory.
+  const currentStatus: string = initialData?.status ?? 'draft'
+  const statusOptions = [
+    currentStatus,
+    ...nextOrderStatuses(currentStatus).filter((next) => next !== 'cancelled'),
+  ]
   const customerIdValue = useWatch({ control, name: 'customer_name' })
 
   return (
@@ -196,9 +206,11 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">{t('status.draft')}</SelectItem>
-              <SelectItem value="delivered">{t('status.delivered')}</SelectItem>
-              <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
+              {statusOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {t(`status.${option}`)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -258,7 +270,7 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => router.push(`/${lang}/sales/orders`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Bell, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages } from 'lucide-react'
+import { Bell, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, LifeBuoy, CircleQuestionMark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
+import { GlobalSearch } from '@/components/layout/global-search'
 import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database.types'
 
@@ -36,6 +37,8 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   const router = useRouter()
   const t = useTranslations('auth')
   const tSettings = useTranslations('settings')
+  const tNav = useTranslations('nav')
+  const tSupport = useTranslations('support')
   const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
 
   const [notifications, setNotifications] = useState<any[]>([])
@@ -268,6 +271,14 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
     >
       <SidebarTrigger className="-ml-1" />
 
+      {/* Quick search — ⌘K from anywhere, click here on touch devices. */}
+      <GlobalSearch
+        lang={lang}
+        role={profile?.role}
+        permissions={(profile as any)?.permissions}
+        userId={profile?.id ?? null}
+      />
+
       <div className="flex-1" />
 
       {/* Overdue Invoices Alert Notification */}
@@ -284,6 +295,46 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         </Button>
       )}
 
+      {/* Help: the guide used to sit in the sidebar, which pushed it out of
+          sight on the pages people actually get stuck on. */}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <button
+              type="button"
+              aria-label={tNav('help')}
+              title={tNav('help')}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer shadow-2xs"
+            />
+          }
+        >
+          <CircleQuestionMark className="h-4 w-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
+          <DropdownMenuItem
+            onClick={() => router.push(`/${lang}/guide`)}
+            className="rounded-lg gap-2 py-1.5 cursor-pointer"
+          >
+            <BookOpen className="h-3.5 w-3.5 text-violet-600" />
+            <span className="text-sm">{tNav('guide')}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => router.push(`/${lang}/faq`)}
+            className="rounded-lg gap-2 py-1.5 cursor-pointer"
+          >
+            <HelpCircle className="h-3.5 w-3.5 text-violet-600" />
+            <span className="text-sm">{tNav('faq')}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => router.push(`/${lang}/support`)}
+            className="rounded-lg gap-2 py-1.5 cursor-pointer"
+          >
+            <LifeBuoy className="h-3.5 w-3.5 text-violet-600" />
+            <span className="text-sm">{tSupport('title')}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       {/* Language Switcher */}
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -298,20 +349,17 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           <span className="hidden sm:inline text-xs font-semibold text-slate-700 dark:text-slate-300">{currentLocale?.code.toUpperCase()}</span>
           <ChevronDown className="hidden sm:block h-3 w-3 text-slate-400 dark:text-slate-500" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44 rounded-xl p-1.5">
-          <DropdownMenuLabel className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 pt-1 pb-1.5">
-            {tSettings('language')}
-          </DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="w-32 rounded-lg p-1">
           {LOCALES.map((locale) => {
             const isActive = lang === locale.code
             return (
               <DropdownMenuItem
                 key={locale.code}
                 onClick={() => handleLocaleChange(locale.code)}
-                className={`rounded-lg gap-2 py-2 cursor-pointer ${isActive ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 font-semibold' : ''}`}
+                className={`rounded-md gap-1.5 px-2 py-1 cursor-pointer ${isActive ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 font-semibold' : ''}`}
               >
-                <span className="flex-1 text-sm">{locale.label}</span>
-                {isActive && <Check className="h-3.5 w-3.5 text-violet-600" />}
+                <span className="flex-1 text-xs">{locale.label}</span>
+                {isActive && <Check className="h-3 w-3 text-violet-600" />}
               </DropdownMenuItem>
             )
           })}

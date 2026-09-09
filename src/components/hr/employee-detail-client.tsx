@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { StatusBadge } from '@/components/shared/status-badge'
+import { orderStatusTone } from '@/lib/statuses'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -19,15 +20,6 @@ import {
 // Loading it on demand keeps it out of this page's initial bundle.
 
 type Period = 'all' | 'today' | 'week' | 'month' | 'custom'
-
-const ORDER_STATUS_TONES: Record<string, StatusTone> = {
-  draft: 'blue',
-  pending: 'blue',
-  confirmed: 'blue',
-  shipped: 'blue',
-  delivered: 'emerald',
-  cancelled: 'rose',
-}
 
 interface EmployeeDetailClientProps {
   lang: string
@@ -403,7 +395,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                           <TableCell>{o.customers?.name ?? '—'}</TableCell>
                           <TableCell className="text-right font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(o.total_amount)}</TableCell>
                           <TableCell>
-                            <StatusBadge tone={ORDER_STATUS_TONES[o.status] ?? 'slate'} label={tSales(`status.${o.status}`)} />
+                            <StatusBadge tone={orderStatusTone(o.status)} label={tSales(`status.${o.status}`)} />
                           </TableCell>
                           <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(o.created_at)}</TableCell>
                         </TableRow>

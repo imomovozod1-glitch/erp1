@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -27,7 +27,7 @@ interface DepartmentFormProps {
 
 export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
   const tCommon = useTranslations('common')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/hr/departments`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
 
@@ -63,7 +63,7 @@ export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
       }
       
       await invalidateDepartments()
-      router.push(`/${lang}/hr/departments`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -98,7 +98,7 @@ export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => router.push(`/${lang}/hr/departments`)}
+              onClick={() => exitForm()}
               disabled={isSubmitting}
             >
               {tCommon('cancel')}

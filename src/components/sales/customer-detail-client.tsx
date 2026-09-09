@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { StatusBadge } from '@/components/shared/status-badge'
+import { effectiveInvoiceStatus, invoiceStatusTone, orderStatusTone } from '@/lib/statuses'
 import dynamic from 'next/dynamic'
 
 // react-leaflet/leaflet touch `window` at module-evaluation time, not just
@@ -30,23 +31,6 @@ import {
 } from 'lucide-react'
 // `xlsx` is ~7MB and only needed when the user actually exports or imports.
 // Loading it on demand keeps it out of this page's initial bundle.
-
-const ORDER_STATUS_TONES: Record<string, StatusTone> = {
-  draft: 'blue',
-  pending: 'blue',
-  confirmed: 'blue',
-  shipped: 'blue',
-  delivered: 'emerald',
-  cancelled: 'rose',
-}
-
-const INVOICE_STATUS_TONES: Record<string, StatusTone> = {
-  draft: 'slate',
-  sent: 'blue',
-  paid: 'emerald',
-  overdue: 'rose',
-  cancelled: 'slate',
-}
 
 interface CustomerDetailClientProps {
   lang: string
@@ -344,7 +328,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                           <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{o.order_number}</TableCell>
                           <TableCell className="text-right font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(o.total_amount)}</TableCell>
                           <TableCell>
-                            <StatusBadge tone={ORDER_STATUS_TONES[o.status] ?? 'slate'} label={tSales(`status.${o.status}`)} />
+                            <StatusBadge tone={orderStatusTone(o.status)} label={tSales(`status.${o.status}`)} />
                           </TableCell>
                           <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(o.created_at)}</TableCell>
                         </TableRow>
@@ -385,7 +369,10 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                           <TableCell className="text-right font-bold text-slate-800 dark:text-slate-200">{formatCurrency(inv.total_amount)}</TableCell>
                           <TableCell className="text-right font-medium text-emerald-600 dark:text-emerald-400">{formatCurrency(inv.paid_amount)}</TableCell>
                           <TableCell>
-                            <StatusBadge tone={INVOICE_STATUS_TONES[inv.status] ?? 'slate'} label={tSales(`status.${inv.status}`)} />
+                            <StatusBadge
+                              tone={invoiceStatusTone(effectiveInvoiceStatus(inv))}
+                              label={tSales(`status.${effectiveInvoiceStatus(inv)}`)}
+                            />
                           </TableCell>
                           <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDate(inv.due_at)}</TableCell>
                         </TableRow>

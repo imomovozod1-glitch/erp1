@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller, useWatch } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
@@ -11,6 +11,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { invalidateInvoices } from '@/lib/data/revalidate'
+import { reconcileInvoiceStatus } from '@/lib/statuses'
 import { toast } from 'sonner'
 import { adjustCashboxBalance } from '@/lib/finance-helpers'
 import { Button } from '@/components/ui/button'
@@ -36,7 +37,7 @@ interface InvoiceFormProps {
 export function InvoiceForm({ initialData, customers, orders = [], assignableUsers, lang }: InvoiceFormProps) {
   const t = useTranslations('sales')
   const tCommon = useTranslations('common')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/sales/invoices`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
@@ -105,6 +106,9 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
       const oldPaidAmount = initialData ? (Number(initialData.paid_amount) || 0) : 0
       const newPaidAmount = Number(data.paid_amount) || 0
       const difference = newPaidAmount - oldPaidAmount
+      // The paid amount is the single source of truth for "is this settled" —
+      // see reconcileInvoiceStatus.
+      payload.status = reconcileInvoiceStatus(data.status, data.total_amount, newPaidAmount)
 
       let invoiceId = initialData?.id
 
@@ -143,7 +147,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
 
       await invalidateInvoices()
       clearPersistedForm('invoice-form-v3')
-      router.push(`/${lang}/sales/invoices`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -217,10 +221,10 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
+              {/* `paid` and `overdue` are not picked by hand: paid follows the
+                  paid amount below, overdue follows the due date. */}
               <SelectItem value="draft">{t('status.draft')}</SelectItem>
               <SelectItem value="sent">{t('status.sent')}</SelectItem>
-              <SelectItem value="paid">{t('status.paid')}</SelectItem>
-              <SelectItem value="overdue">{t('status.overdue')}</SelectItem>
               <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
             </SelectContent>
           </Select>
@@ -311,7 +315,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => router.push(`/${lang}/sales/invoices`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

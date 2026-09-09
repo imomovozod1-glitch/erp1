@@ -10,6 +10,8 @@ interface CustomersViewTabsProps {
   customers: any[]
   /** Every customer that has coordinates, for the map tab. */
   mapCustomers: any[]
+  /** Who is looking — the map defaults to the customers assigned to them. */
+  currentUserId: string | null
   page: number
   pageSize: number
   total: number
@@ -20,6 +22,7 @@ interface CustomersViewTabsProps {
 export function CustomersViewTabs({
   customers,
   mapCustomers,
+  currentUserId,
   lang,
   page,
   pageSize,
@@ -67,7 +70,7 @@ export function CustomersViewTabs({
           totalPages={totalPages}
         />
       ) : (
-        <AllCustomersMap customers={mapCustomers} lang={lang} />
+        <AllCustomersMap customers={mapCustomers} currentUserId={currentUserId} lang={lang} />
       )}
     </div>
   )

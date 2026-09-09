@@ -38,8 +38,10 @@ export default async function CustomersPage({
     getTranslations('nav'),
     getTranslations('pageInfo'),
     getCustomersPage(tenantId, { page, pageSize, search, ownerId }),
-    // The map plots every customer with coordinates; only the LIST is paged.
-    getCustomersMapPoints(tenantId),
+    // The map plots every customer with coordinates that this user is allowed
+    // to see; only the LIST is paged. Same `ownerId` as the list — otherwise
+    // the map tab would leak rows the list deliberately hides.
+    getCustomersMapPoints(tenantId, ownerId),
     getCustomerBalanceTotals(tenantId),
   ])
 
@@ -83,6 +85,7 @@ export default async function CustomersPage({
       <CustomersViewTabs
         customers={result.rows}
         mapCustomers={mapPoints}
+        currentUserId={permCtx?.userId ?? null}
         lang={lang}
         page={result.page}
         pageSize={result.pageSize}

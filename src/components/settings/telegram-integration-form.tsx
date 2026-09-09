@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { Send, CheckCircle2, Loader2, Unplug, ExternalLink } from 'lucide-react'
+import { Send, CheckCircle2, Loader2, Unplug, ExternalLink, RefreshCw, AlertTriangle, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +16,8 @@ import { TELEGRAM_EVENTS, type TelegramEvent } from '@/lib/integrations/telegram
 
 interface TelegramStatus {
   connected: boolean
+  /** Token stored, but no destination chat known yet. */
+  awaitingChat: boolean
   enabled: boolean
   chatId: string
   botUsername: string | null
@@ -43,6 +45,8 @@ export function TelegramIntegrationForm() {
   const [isSaving, setIsSaving] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
+  const [isDetecting, setIsDetecting] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const [botToken, setBotToken] = useState('')
   const [chatId, setChatId] = useState('')
@@ -91,6 +95,12 @@ export function TelegramIntegrationForm() {
         return t('errorTokenRequired')
       case 'not_configured':
         return t('errorNotConfigured')
+      case 'no_chat_yet':
+        return t('errorNoChatYet')
+      case 'detect_failed':
+        return detail ? `${t('errorDetectFailed')}: ${detail}` : t('errorDetectFailed')
+      case 'awaiting_chat':
+        return t('errorNoChatYet')
       case 'send_failed':
         return detail ? `${t('errorSendFailed')}: ${detail}` : t('errorSendFailed')
       default:
@@ -100,10 +110,8 @@ export function TelegramIntegrationForm() {
 
   const handleSave = async () => {
     if (isSaving) return
-    if (!chatId.trim()) {
-      toast.error(t('errorChatIdRequired'))
-      return
-    }
+    // The token is the only thing a connection needs; the destination chat is
+    // discovered from the bot itself (see /api/integrations/telegram).
     if (!status?.connected && !botToken.trim()) {
       toast.error(t('errorTokenRequired'))
       return
@@ -117,7 +125,8 @@ export function TelegramIntegrationForm() {
         body: JSON.stringify({
           // Omitted when blank → the server keeps the stored token.
           ...(botToken.trim() ? { bot_token: botToken.trim() } : {}),
-          chat_id: chatId.trim(),
+          // Blank means "work it out yourself".
+          ...(chatId.trim() ? { chat_id: chatId.trim() } : {}),
           enabled,
           events,
         }),
@@ -127,7 +136,7 @@ export function TelegramIntegrationForm() {
         toast.error(errorMessage(json.error, json.detail))
         return
       }
-      toast.success(tCommon('saved'))
+      toast.success(json.awaitingChat ? t('savedAwaitingChat') : tCommon('saved'))
 
       const refreshed = await fetch('/api/integrations/telegram')
       if (refreshed.ok) applyStatus(await refreshed.json())
@@ -135,6 +144,26 @@ export function TelegramIntegrationForm() {
       toast.error(tCommon('error'))
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleDetectChat = async () => {
+    if (isDetecting) return
+    setIsDetecting(true)
+    try {
+      const res = await fetch('/api/integrations/telegram/detect-chat', { method: 'POST' })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast.error(errorMessage(json.error, json.detail))
+        return
+      }
+      toast.success(t('chatDetected', { chat: json.chatTitle ?? json.chatId }))
+      const refreshed = await fetch('/api/integrations/telegram')
+      if (refreshed.ok) applyStatus(await refreshed.json())
+    } catch {
+      toast.error(tCommon('error'))
+    } finally {
+      setIsDetecting(false)
     }
   }
 
@@ -220,7 +249,7 @@ export function TelegramIntegrationForm() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Setup guide */}
+        {/* Setup guide — two steps, because the chat id resolves itself. */}
         <ol className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5 list-decimal list-inside bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
           <li>
             {t('stepCreateBot')}{' '}
@@ -233,28 +262,73 @@ export function TelegramIntegrationForm() {
               @BotFather <ExternalLink className="h-3 w-3" />
             </a>
           </li>
-          <li>{t('stepCopyToken')}</li>
-          <li>{t('stepAddToGroup')}</li>
-          <li>
-            {t('stepGetChatId')}{' '}
-            <a
-              href="https://t.me/userinfobot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-violet-600 dark:text-violet-400 hover:underline inline-flex items-center gap-0.5"
-            >
-              @userinfobot <ExternalLink className="h-3 w-3" />
-            </a>
-          </li>
+          <li>{t('stepPasteToken')}</li>
+          <li>{t('stepPressStart')}</li>
         </ol>
 
         {status?.connected && status.botUsername && (
-          <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>
-              {t('connectedAs')} <b>@{status.botUsername}</b>
-              {status.tokenHint ? ` (${status.tokenHint})` : ''}
-            </span>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>
+                {t('connectedAs')}{' '}
+                <a
+                  href={`https://t.me/${status.botUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold hover:underline"
+                >
+                  @{status.botUsername}
+                </a>
+                {status.tokenHint ? ` (${status.tokenHint})` : ''}
+              </span>
+            </div>
+
+            {status.awaitingChat ? (
+              /* The bot is live but nobody has written to it yet, so Telegram
+                 has not told us where to post. */
+              <div className="rounded-lg border border-amber-200/70 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/20 p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                  <div className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                    {t('awaitingChatHint')}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={`https://t.me/${status.botUsername}?start=erp`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-500"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    {t('openBot')}
+                  </a>
+                  <Button size="sm" variant="outline" onClick={handleDetectChat} disabled={isDetecting}>
+                    {isDetecting ? (
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                    )}
+                    {t('detectChat')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span>
+                  {t('sendingTo')} <b className="tabular-nums">{status.chatId}</b>
+                </span>
+                <Button size="sm" variant="ghost" onClick={handleDetectChat} disabled={isDetecting} className="h-7 px-2">
+                  {isDetecting ? (
+                    <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-1.5 h-3 w-3" />
+                  )}
+                  {t('redetectChat')}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -274,16 +348,29 @@ export function TelegramIntegrationForm() {
           </p>
         </div>
 
+        {/* Manual override, folded away: the normal path never needs it. */}
         <div className="space-y-2">
-          <Label htmlFor="telegram_chat_id">{t('chatId')} *</Label>
-          <Input
-            id="telegram_chat_id"
-            value={chatId}
-            onChange={(e) => setChatId(e.target.value)}
-            placeholder="-1001234567890"
-            autoComplete="off"
-          />
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t('chatIdHint')}</p>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((prev) => !prev)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          >
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+            {t('advanced')}
+          </button>
+          {showAdvanced && (
+            <div className="space-y-2 pl-5">
+              <Label htmlFor="telegram_chat_id">{t('chatId')}</Label>
+              <Input
+                id="telegram_chat_id"
+                value={chatId}
+                onChange={(e) => setChatId(e.target.value)}
+                placeholder="-1001234567890"
+                autoComplete="off"
+              />
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t('chatIdOptionalHint')}</p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">

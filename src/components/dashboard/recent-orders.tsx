@@ -4,15 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
-
-const STATUS_COLORS = {
-  draft: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/60 dark:border-blue-900/50',
-  pending: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/60 dark:border-blue-900/50',
-  confirmed: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/60 dark:border-blue-900/50',
-  shipped: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/60 dark:border-blue-900/50',
-  delivered: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-900/50',
-  cancelled: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200/60 dark:border-rose-900/50',
-}
+import { StatusBadge } from '@/components/shared/status-badge'
+import { orderStatusTone } from '@/lib/statuses'
 
 interface RecentOrdersProps {
   orders: any[]
@@ -67,13 +60,7 @@ export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                    STATUS_COLORS[order.status as keyof typeof STATUS_COLORS] ?? 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-slate-700'
-                  }`}
-                >
-                  {t(`status.${order.status}`)}
-                </span>
+                <StatusBadge tone={orderStatusTone(order.status)} label={t(`status.${order.status}`)} />
                 <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                   {formatCurrency(order.total_amount)}
                 </span>

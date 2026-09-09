@@ -105,7 +105,15 @@
     "unassigned": "Unassigned",
     "assignedToHint": "The document appears in this person’s list. Left empty, it stays with you.",
     "category": "Category",
-    "totalAmount": "Total amount"
+    "totalAmount": "Total amount",
+    "searchPlaceholder": "Search products, customers, orders...",
+    "pages": "Pages",
+    "searchHint": "Type at least 2 characters to search",
+    "changeStatus": "Change status",
+    "markAs": "Mark as \"{status}\"",
+    "statusUpdated": "Status updated",
+    "cancelOrderConfirm": "Cancel this order? The goods go back into stock.",
+    "orderCancelled": "Order cancelled, goods returned to stock"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -118,9 +126,11 @@
     "reports": "Reports",
     "settings": "Settings",
     "tools": "Tools",
-    "pos": "POS (Kassa)",
+    "pos": "POS",
     "customers": "Customers",
-    "guide": "Guide"
+    "guide": "Guide",
+    "faq": "FAQ",
+    "help": "Help"
   },
   "auth": {
     "loading": "Signing in...",
@@ -369,14 +379,14 @@
       "geoUnsupported": "Your browser does not support geolocation."
     },
     "status": {
-      "draft": "New",
-      "pending": "New",
-      "confirmed": "New",
-      "shipped": "New",
-      "delivered": "Completed",
+      "draft": "Draft",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
       "cancelled": "Cancelled",
-      "sent": "New",
-      "paid": "Completed",
+      "sent": "Sent",
+      "paid": "Paid",
       "overdue": "Overdue"
     },
     "category": "Category",
@@ -388,9 +398,13 @@
     "customersMapCount": "Showing {shown} of {total} customers on the map",
     "customersMapMissing": "{count, plural, other {# missing an address}}",
     "customersMapEmpty": "No customers have an address or location set for the map",
+    "customersMapMine": "My customers",
+    "customersMapAll": "All",
+    "customersMapYouAreHere": "You are here",
     "debt": "Debt",
     "orderInfo": "Order details",
-    "cannotDeleteCustomer": "Cannot delete a customer that has debt or transactions"
+    "cannotDeleteCustomer": "Cannot delete a customer that has debt or transactions",
+    "acceptPayment": "Accept payment"
   },
   "finance": {
     "title": "Finance",
@@ -526,10 +540,10 @@
     "supplierCreated": "Supplier added successfully",
     "supplierUpdated": "Supplier updated successfully",
     "status": {
-      "draft": "New",
-      "sent": "New",
-      "received": "Completed",
-      "partially_received": "New",
+      "draft": "Draft",
+      "sent": "Sent",
+      "received": "Received",
+      "partially_received": "Partially received",
       "cancelled": "Cancelled"
     },
     "totalPurchases": "Total purchases",
@@ -691,15 +705,11 @@
       "statusNotConnected": "Not connected",
       "connectedAs": "Connected as",
       "stepCreateBot": "Create a new bot in Telegram with",
-      "stepCopyToken": "Copy the token BotFather gives you and paste it below.",
-      "stepAddToGroup": "Add the bot to your group and allow it to send messages.",
-      "stepGetChatId": "Get the chat ID of the group or channel with",
       "botToken": "Bot token",
       "botTokenHint": "The token from BotFather. Stored server-side only and never shown again.",
       "botTokenKeepPlaceholder": "Leave blank to keep the current token",
       "botTokenKeepHint": "Leave this blank to keep the token already stored.",
       "chatId": "Chat ID",
-      "chatIdHint": "A negative number for a group (e.g. -1001234567890) or @channelname.",
       "notifications": "Notifications",
       "enableLabel": "Enable Telegram notifications",
       "enableHint": "When off, no messages are sent at all.",
@@ -715,10 +725,22 @@
       "errorTokenFormat": "Invalid token format (e.g. 123456789:AA...)",
       "errorTokenRejected": "Telegram rejected the token",
       "errorTokenRequired": "A bot token is required",
-      "errorChatIdRequired": "A chat ID is required",
       "errorChatIdFormat": "Invalid chat ID format",
       "errorNotConfigured": "Save the bot token first",
-      "errorSendFailed": "Could not send the message"
+      "errorSendFailed": "Could not send the message",
+      "stepPasteToken": "Copy the token BotFather gave you, paste it in the field below and save.",
+      "stepPressStart": "Open the bot and press Start (or add the bot to your work group) — the system works out where to post by itself.",
+      "savedAwaitingChat": "Bot connected. Now press Start in the bot and the destination is picked up automatically.",
+      "awaitingChatHint": "The bot is connected but does not know where to send messages yet. Open it and press Start, or add it to your group, then press Detect.",
+      "openBot": "Open the bot",
+      "detectChat": "Detect",
+      "redetectChat": "Detect again",
+      "chatDetected": "Destination detected: {chat}",
+      "sendingTo": "Messages go to:",
+      "advanced": "Advanced settings",
+      "chatIdOptionalHint": "Optional. Leave it empty and the last chat that wrote to the bot is used. To set it by hand: a group id (e.g. -1001234567890) or @channelname.",
+      "errorNoChatYet": "Nobody has written to the bot yet. Open it and press Start, or add it to a group.",
+      "errorDetectFailed": "Could not work out the destination"
     },
     "cannotChangeOwnAccess": "You cannot change your own role or status",
     "lastAdminError": "Cannot change the last active administrator"
@@ -781,11 +803,9 @@
     "ticketSuccess": "Your ticket has been submitted successfully. We will contact you soon!",
     "liveStatus": "Our operators are online",
     "liveStatusDesc": "Average response time: 5 minutes",
-    "chatbotTitle": "Support chatbot",
-    "chatbotWelcome": "Hi! I'm the ERP assistant bot. How can I help?",
-    "chatbotPlaceholder": "Type your question...",
-    "chatbotError": "Failed to get a response. Please try again.",
-    "chatbotThinking": "Typing..."
+    "yourAgent": "Your account manager",
+    "yourAgentHint": "Reach them directly with any question",
+    "noAgent": "No manager has been assigned to you yet"
   },
   "admin": {
     "login": {
@@ -1088,10 +1108,7 @@
     "employees": "Employees — a list of all staff, their positions, and salaries. Hire new employees or edit existing records.",
     "settings": "Settings — manage company info, users, and security settings from here.",
     "support": "Support — ask a question or report an issue.",
-    "guide": "Guide — a step-by-step explanation of how to use the system.",
-    "guideIntro": "Move between sections using the menu on the left. Click the (i) icon next to any page title to learn what that page is for. Use the top bar to change language, switch light/dark mode, and check notifications.",
-    "guideTitle": "Guide",
-    "guideSubtitle": "A quick guide to using the system"
+    "guide": "Guide — a step-by-step explanation of how to use the system."
   },
   "supportPortal": {
     "brandTitle": "Support",
@@ -1134,5 +1151,518 @@
     "action_export": "Export",
     "action_approve": "Approve",
     "scopeHint": "With “Own only”, the user sees just the records they created in that module."
+  },
+  "guide": {
+    "title": "User guide",
+    "subtitle": "What every section of the system is for and how to use it",
+    "intro": "This page is the complete guide to the ERP. It starts with the setup order for a new company, then the rules that apply on every page, and finally step-by-step instructions and tips for each section. Use the table of contents to jump to what you need.",
+    "tocTitle": "Contents",
+    "stepsTitle": "How to use it",
+    "tipsTitle": "Tips",
+    "openLink": "Open section",
+    "quickStart": {
+      "title": "Getting started: 8 steps",
+      "description": "If you are setting the system up for the first time, follow these steps in order. Each one prepares the ground for the next — for example, categories and units must exist before you add products.",
+      "steps": [
+        {
+          "title": "Fill in your company details",
+          "text": "Settings → Company: organisation name, address, phone and legal details. These appear on receipts and invoices."
+        },
+        {
+          "title": "Set up units of measurement",
+          "text": "Inventory → Units: add the units you sell in — pcs, kg, litre, metre, box. The list then feeds every product form."
+        },
+        {
+          "title": "Create categories",
+          "text": "Inventory → Categories: group your products. Categories can be nested, e.g. \"Drinks → Sparkling\"."
+        },
+        {
+          "title": "Add your products",
+          "text": "Inventory → Products: add them one by one, or download the Excel template, fill it in and import. Give each product an SKU, price, cost price and minimum stock level."
+        },
+        {
+          "title": "Add customers and suppliers",
+          "text": "The Customers and Procurement → Suppliers sections. Both support bulk upload from Excel."
+        },
+        {
+          "title": "Open your cashboxes",
+          "text": "Finance → Cashbox: create your cash, card and transfer accounts and enter the opening balance. Every sale lands in one of them."
+        },
+        {
+          "title": "Staff and permissions",
+          "text": "Register your staff under Employees and create login accounts where needed. In Settings → Users decide who can see and change which section."
+        },
+        {
+          "title": "Start selling",
+          "text": "Use the POS for over-the-counter sales and Sales → Orders for documented sales. Stock levels and cashbox balances update automatically."
+        }
+      ]
+    },
+    "basics": {
+      "title": "Rules that apply everywhere",
+      "description": "Every page in the system follows the same logic. Learn these once and you can work in any section.",
+      "items": [
+        {
+          "title": "Navigation",
+          "text": "The left menu lists the main sections; selecting one reveals its pages. The breadcrumbs at the top (ERP → Inventory → Products) take you back. On a phone the menu opens from the button in the top-left corner."
+        },
+        {
+          "title": "Search and filters",
+          "text": "Every table has a search box above it — type a name, SKU or phone number and the list filters as you type. The buttons next to it filter by status. Lists are paged 10 rows at a time and jump back to page one when the search changes."
+        },
+        {
+          "title": "Adding a record",
+          "text": "The \"New\" button opens the form in a modal window. Save and Cancel both close the window and return you to the list; the X in the top-right corner closes it too. If you navigate away by accident, what you typed is kept temporarily and is still there when you come back."
+        },
+        {
+          "title": "Row actions",
+          "text": "The three-dot button at the right end of a row opens its actions: edit, delete, change status. Clicking the row itself opens the record's detail page."
+        },
+        {
+          "title": "Working with Excel",
+          "text": "Products, customers, suppliers and employees all have an Import/Export button. Download the template first, fill it in without changing the column headers, then upload it. Export downloads the currently filtered list."
+        },
+        {
+          "title": "Status colours",
+          "text": "Coloured pills show state: green — completed or paid, amber — pending, blue — in progress, red — cancelled or overdue, grey — draft."
+        },
+        {
+          "title": "Entering a phone number",
+          "text": "Pick the country code first, then type the number. The field will not accept more digits than the selected country's format allows — for Uzbekistan that is exactly 9 digits after +998."
+        },
+        {
+          "title": "Password rules",
+          "text": "A new password must be at least 8 characters long and contain an uppercase letter, a lowercase letter and a digit. A digits-only password is rejected."
+        },
+        {
+          "title": "Language and data refresh",
+          "text": "Switch between Uzbek, Russian and English from the top bar. Lists refresh by themselves after any change is saved — there is no need to reload the page."
+        }
+      ]
+    },
+    "modules": {
+      "dashboard": {
+        "purpose": "The dashboard shows today's state of the business on one screen: sales, revenue, profit, order count and products running low. It is the natural place to start the working day.",
+        "steps": [
+          "Read today's sales, revenue and profit from the KPI cards at the top.",
+          "Compare figures using the \"Today\" and \"Yesterday\" buttons.",
+          "Use the quick action buttons to add a product, customer or purchase without leaving the page.",
+          "Review the low-stock list and raise a purchase order where needed.",
+          "Click a recent order to open its details."
+        ],
+        "tips": [
+          "The figures refresh automatically after sales, purchases and cashbox operations.",
+          "Profit is calculated from each product's cost price — accurate cost prices give accurate profit."
+        ]
+      },
+      "analytics": {
+        "purpose": "Analytics covers sales trends, profit, best-selling products and top customers over a chosen period. Where the dashboard answers \"what happened today\", this section answers \"where is it heading\".",
+        "steps": [
+          "Choose a period at the top: today, yesterday, week, month, this month, last month or all time.",
+          "For exact dates pick the \"Custom\" period and set a start and end date.",
+          "Follow the sales chart to see how figures move day by day or month by month.",
+          "Use the best-sellers table to see which goods actually bring in revenue.",
+          "Use the low-stock list to plan your next purchase."
+        ],
+        "tips": [
+          "The period you pick is remembered, so leaving and returning to the page keeps your selection.",
+          "Profit depends on cost price; products without one distort the calculation."
+        ]
+      },
+      "pos": {
+        "purpose": "The POS is the counter sales screen. A few taps fill the basket, take payment and print a receipt; stock and cashbox balances update on their own.",
+        "steps": [
+          "Find a product by name or SKU, or filter by category, and tap its card to add it to the basket.",
+          "Adjust the quantity in the basket and add a per-line discount percentage if needed.",
+          "Pick the customer. If they are not on the list, add them on the spot with \"New customer\" (name, phone, address).",
+          "Choose the payment method: cash, card, transfer or credit. Credit sales require a customer.",
+          "Press \"Sell\" — the receipt opens and can be printed or closed."
+        ],
+        "tips": [
+          "Cards for out-of-stock products cannot be tapped — restock first.",
+          "Every sale lowers stock, raises the cashbox balance and creates an invoice automatically.",
+          "A credit sale puts no money in the cashbox: record it as income under Finance → Cashbox when the debt is collected.",
+          "If the customer has prepaid (a credit balance), it is applied to the new purchase automatically."
+        ]
+      },
+      "products": {
+        "purpose": "Products is the full list of what you stock: name, SKU, category, selling price, cost price and current quantity. It is the backbone of the system — sales, purchases and reports all read from it.",
+        "steps": [
+          "Press \"New product\" and enter the name, SKU, category and unit of measurement.",
+          "Enter the selling price and the cost price — profit reporting is based on these two figures.",
+          "Set minimum and maximum stock levels: the system warns you when stock falls below the minimum.",
+          "Upload a picture — it appears on the product card and on the POS screen.",
+          "To load many products at once use Import/Export: download the template, fill it in and upload.",
+          "Click a row to open the product page with its movement history."
+        ],
+        "tips": [
+          "SKUs must be unique — on import, a row with an existing SKU updates that product instead of creating a new one.",
+          "Do not delete a product you have merely stopped selling: mark it inactive and its history stays intact.",
+          "If a unit of measurement is missing, add it first under Inventory → Units."
+        ]
+      },
+      "categories": {
+        "purpose": "Categories group your products. A well-built category tree speeds up searching and makes reports easier to read.",
+        "steps": [
+          "Press \"New category\" and enter a name.",
+          "Pick a parent category if you want a nested structure.",
+          "Use the description to note what belongs in the category.",
+          "Edit or delete an existing category from the menu at the end of its row."
+        ],
+        "tips": [
+          "Do not delete a category that still holds products — move them elsewhere first.",
+          "Keep the tree shallow: two or three levels is enough for most businesses."
+        ]
+      },
+      "movements": {
+        "purpose": "Stock movements is the journal of when, by how much and why each product's quantity changed. Whenever a stock figure is disputed, the answer is here.",
+        "steps": [
+          "Browse the incoming (+), outgoing (−) and adjustment entries.",
+          "Search by product name to isolate the history of a single item.",
+          "Each entry shows the quantity before and after the change — use them to verify the difference.",
+          "Use the reason and source column (sale, purchase, POS, manual adjustment) to see where a change came from."
+        ],
+        "tips": [
+          "The journal fills itself: sales, POS transactions and purchase orders each leave their own entry.",
+          "If the physical count differs from the system, do a stock count and post an adjustment — never delete old entries."
+        ]
+      },
+      "units": {
+        "purpose": "Units of measurement is the list of units your products are sold in (pcs, kg, litre, metre, box). It populates the \"unit\" field on every product form.",
+        "steps": [
+          "Type the name of a new unit and press the add button.",
+          "Remove units you do not use.",
+          "The list is stored per language — fill in the names again after switching language."
+        ],
+        "tips": [
+          "Keep unit names short and consistent (\"kg\", \"pcs\") — Excel import then matches them automatically.",
+          "Use kg or litre for goods sold by weight so fractional quantities can be entered."
+        ]
+      },
+      "salesOrders": {
+        "purpose": "Sales orders are for sales that need a document. The POS is for the fast counter; this section is for orders with several lines, discounts and a chosen payment method.",
+        "steps": [
+          "Press \"New order\" and select the customer.",
+          "Add product lines: item, quantity and price, plus a discount if agreed.",
+          "Choose the payment method (cash, card, transfer or credit) and the responsible employee.",
+          "Save — the order is created as confirmed, stock is deducted and an invoice is issued.",
+          "Click an order in the list to see its lines and status."
+        ],
+        "tips": [
+          "Quantities cannot exceed what is in stock — the system refuses the excess.",
+          "A credit order puts no money in the cashbox; the amount stays as the customer's debt.",
+          "After saving, a matching outgoing entry appears in stock movements."
+        ]
+      },
+      "invoices": {
+        "purpose": "Invoices are the payment documents issued to customers along with their payment status. This is where you see who owes what and which documents are overdue.",
+        "steps": [
+          "An invoice is created automatically by a sale or a POS transaction; use \"New\" to raise one by hand.",
+          "Enter the customer, order, amount and due date.",
+          "Set the status: draft, sent, paid, overdue or cancelled.",
+          "When payment arrives, switch the status to paid — the matching income entry is recorded.",
+          "Filter for overdue invoices and follow them up with the customers."
+        ],
+        "tips": [
+          "For a credit sale the invoice is due 14 days after the sale.",
+          "Invoice numbers are generated automatically; changing them by hand is not recommended."
+        ]
+      },
+      "customers": {
+        "purpose": "Customers is the database of everyone who buys from you: contacts, location, debt and prepayment. A customer's whole history sits on one page.",
+        "steps": [
+          "Press \"New customer\" and enter the name, phone and address.",
+          "Mark the location on the map — useful later for deliveries.",
+          "Pick a customer category (wholesale, retail and so on).",
+          "Click a customer in the list to see their orders, invoices and payments.",
+          "Use Import/Export to load many customers at once."
+        ],
+        "tips": [
+          "Enter the full phone number — it is the main key when searching for a customer.",
+          "An overpayment is kept as a credit balance and applied automatically to the next purchase.",
+          "The \"Map\" view plots every customer's location on a single map."
+        ]
+      },
+      "customerCategories": {
+        "purpose": "Customer categories split your buyers into groups (wholesale, retail, regular). This makes segment-based work and analysis easier.",
+        "steps": [
+          "Press \"New category\" and enter its name.",
+          "Use the description to note who belongs in it.",
+          "Select the category on the customer form."
+        ],
+        "tips": [
+          "Keep the number of categories small and meaningful — too many make analysis harder."
+        ]
+      },
+      "purchaseOrders": {
+        "purpose": "Purchase orders record goods received from a supplier. As soon as one is saved, stock goes up and the cost of that batch is recorded.",
+        "steps": [
+          "Press \"New purchase\" and select the supplier.",
+          "Add the lines: product, quantity and cost per unit.",
+          "If you have a paper receipt or delivery note, photograph it with the AI scanner button — the lines are filled in for you.",
+          "Set the responsible employee and add a note.",
+          "Save — stock increases, an incoming entry appears in stock movements and the cost layer is stored."
+        ],
+        "tips": [
+          "Enter the true cost on every purchase: profit reporting is built on these figures.",
+          "Payment to the supplier is not recorded automatically — enter it as an expense under Finance → Cashbox.",
+          "Review what the AI scanner produced before saving: check that names and numbers were read correctly."
+        ]
+      },
+      "suppliers": {
+        "purpose": "Suppliers is the database of the businesses you buy from: contacts, tax number, address and the history of purchases made from them.",
+        "steps": [
+          "Press \"New supplier\" and enter the name, phone and address.",
+          "Add the tax number and bank details — documents need them.",
+          "Mark the location on the map.",
+          "Click a supplier in the list to see purchases and payments for them.",
+          "Use Import/Export for bulk entry."
+        ],
+        "tips": [
+          "Do not enter the same supplier twice — the purchase history would be split in two.",
+          "Mark a supplier you no longer work with as inactive instead of deleting them."
+        ]
+      },
+      "cashbox": {
+        "purpose": "Cashbox covers every account that holds money (cash, card, transfer) and the movements through them. Day-to-day cash flow is managed here.",
+        "steps": [
+          "Create your cashboxes first: name, type (cash, card, transfer, other) and opening balance.",
+          "Press \"Income\" to add money in: amount, cashbox, category and date.",
+          "Press \"Expense\" for money out and pick the expense category.",
+          "When collecting a debt, select the customer and use the debt collection category — the customer's balance goes down.",
+          "Watch the cashbox balances; every operation is listed under Transactions."
+        ],
+        "tips": [
+          "If an expense exceeds the cash on hand, the system warns you and refuses the operation.",
+          "POS sales land in the cashbox that matches the payment method.",
+          "At the end of each day, compare the money physically in the till with the balance in the system."
+        ]
+      },
+      "transactions": {
+        "purpose": "Transactions is the single journal of all money in and out. It shows where money came from and where it went.",
+        "steps": [
+          "Press \"New transaction\" and choose the type: income or expense.",
+          "Enter the amount, category, cashbox and date.",
+          "Link the transaction to a customer, supplier or employee if relevant.",
+          "Write an explanation in the notes — it makes the report far easier to read later.",
+          "Click a row to edit or delete an entry."
+        ],
+        "tips": [
+          "Deleting a transaction also reverses its effect on the cashbox balance.",
+          "Always pick the right category — financial reporting is built around them."
+        ]
+      },
+      "txCategories": {
+        "purpose": "Transaction categories classify income and expense (sales revenue, rent, salary, transport and so on). The system ships with 11 standard categories.",
+        "steps": [
+          "Press \"New category\" and enter a name.",
+          "Choose the type: income or expense.",
+          "Link the category to a person type (customer, supplier, employee) if relevant — the matching list then appears when entering a transaction.",
+          "Edit or remove categories you do not need."
+        ],
+        "tips": [
+          "Do not delete a category already in use — its old transactions would be left without one.",
+          "Keep the list short with clear names."
+        ]
+      },
+      "employees": {
+        "purpose": "Employees is the HR section: staff list, job title, department, salary and hire date. Login accounts for the system are created from here too.",
+        "steps": [
+          "Press \"New employee\" and enter the full name, phone and job title.",
+          "Set the department, hire date and salary.",
+          "If the person needs to log in, create an account with their phone number and a password.",
+          "Assign them a role or a set of permissions.",
+          "Click an employee in the list to see their details and payment history."
+        ],
+        "tips": [
+          "Passwords need at least 8 characters with an uppercase letter, a lowercase letter and a digit.",
+          "Do not delete someone who has left — mark them inactive so their history is kept.",
+          "Salary payments are entered as an expense under Finance → Cashbox."
+        ]
+      },
+      "roles": {
+        "purpose": "Roles are ready-made permission templates (\"Salesperson\", \"Storekeeper\"). Instead of setting permissions per person, you assign a role.",
+        "steps": [
+          "Press \"New role\" and give it a name.",
+          "In the permission grid, set view, create, edit and delete rights for each section.",
+          "Save it, then assign the role to a person under Settings → Users.",
+          "Changing a role updates the permissions of everyone who has it."
+        ],
+        "tips": [
+          "Follow the least-privilege principle: open only the sections someone actually needs.",
+          "Keep Finance and Settings limited to people you trust."
+        ]
+      },
+      "settings": {
+        "purpose": "Settings is where the system is adapted to your business: company details, users and permissions, your own profile, security, receipt printer and integrations.",
+        "steps": [
+          "Company — organisation name, address and legal details; these appear on documents.",
+          "Users — create users, set permissions, reset passwords and enable or disable accounts.",
+          "Profile — your own name, phone and photo.",
+          "Security — change your own password.",
+          "Printer — receipt printer and receipt layout settings.",
+          "Integrations — Telegram connection and notifications."
+        ],
+        "tips": [
+          "Only an administrator can reset another user's password.",
+          "When someone leaves, disable their account rather than deleting it."
+        ]
+      },
+      "support": {
+        "purpose": "Support is where you get help. The AI assistant answers quick questions; anything more complicated goes to a human specialist as a conversation.",
+        "steps": [
+          "Ask the AI assistant a simple question — it answers straight away.",
+          "If that does not solve it, open a new ticket and describe the situation in detail.",
+          "Follow the specialist's replies in the thread and send any extra information.",
+          "Mark the ticket as closed once it is resolved."
+        ],
+        "tips": [
+          "Say which page you were on, what you did and what error appeared — that gets you a faster answer.",
+          "A screenshot is the quickest way to explain a problem."
+        ]
+      }
+    }
+  },
+  "faq": {
+    "title": "FAQ",
+    "subtitle": "Short, precise answers to the questions people ask most",
+    "intro": "Search for your question or browse the categories. If the answer is not here, open the Support section and a specialist will reply.",
+    "searchPlaceholder": "Search questions...",
+    "guideLink": "Full user guide",
+    "supportLink": "Contact support",
+    "categories": [
+      {
+        "key": "general",
+        "title": "General",
+        "items": [
+          {
+            "q": "How do I sign in?",
+            "a": "On the login page pick your country code, enter your phone number and your password. Your administrator creates both under Settings → Users."
+          },
+          {
+            "q": "I forgot my password — what now?",
+            "a": "Ask your company administrator: they can set a new password under Settings → Users. The new password must be at least 8 characters with an uppercase letter, a lowercase letter and a digit — a digits-only password is rejected."
+          },
+          {
+            "q": "How does the quick search work?",
+            "a": "Click the search field in the top bar or press Ctrl+K (⌘K on a Mac). Type a product name, SKU, customer name, phone number, order or invoice number — results appear grouped, and selecting one opens that page."
+          },
+          {
+            "q": "How do I change the language?",
+            "a": "Use the language button in the top bar to switch between Uzbek, Russian and English. Your choice is stored in the browser and is used again next time you sign in."
+          }
+        ]
+      },
+      {
+        "key": "inventory",
+        "title": "Inventory and products",
+        "items": [
+          {
+            "q": "The stock figure does not match reality.",
+            "a": "Open Inventory → Stock movements and review that product's history: every entry shows the quantity before and after the change. Once you find where the gap came from, post the stock count result as an adjustment — never delete old entries, or the history breaks."
+          },
+          {
+            "q": "I cannot delete a product.",
+            "a": "If the product appears on sales or purchases, deleting it would break that history. Mark it inactive instead — it disappears from the lists and the POS while past documents stay intact."
+          },
+          {
+            "q": "The Excel import did not work.",
+            "a": "Download the template from that same section and leave the column headers untouched. Check that the required fields (name, SKU, price) are filled in, and that the unit of measurement matches one under Inventory → Units."
+          },
+          {
+            "q": "How do I keep track of items running low?",
+            "a": "Give every product a minimum stock level. Once the quantity drops below it, the product shows up in the low-stock list on the dashboard and a notification appears under the bell in the top bar."
+          }
+        ]
+      },
+      {
+        "key": "sales",
+        "title": "Sales and POS",
+        "items": [
+          {
+            "q": "A product does not show up in the POS.",
+            "a": "There are three likely reasons: the product is inactive, its stock is zero, or a search/category filter is on. Check its status and quantity under Inventory → Products."
+          },
+          {
+            "q": "I sold on credit but the cashbox balance did not change.",
+            "a": "That is correct: on a credit sale no money has arrived yet, the amount is recorded as the customer's debt. When they pay, record an income under the debt collection category in Finance → Cashbox — the balance then rises and the debt falls."
+          },
+          {
+            "q": "How do I give a discount?",
+            "a": "In the POS you can set a discount percentage per basket line. On a sales order the price and discount are edited per line — the total is recalculated automatically."
+          },
+          {
+            "q": "Is an invoice created automatically?",
+            "a": "Yes. A sale made through the POS or through Sales → Orders issues an invoice automatically: paid immediately for cash, card and transfer, and sent with a 14-day due date for a credit sale."
+          }
+        ]
+      },
+      {
+        "key": "finance",
+        "title": "Finance",
+        "items": [
+          {
+            "q": "The cash in the till does not match the balance in the system.",
+            "a": "Review every income and expense for that day under Finance → Transactions. An expense may be missing or an income entered twice. The best habit is to reconcile the till at the end of each working day."
+          },
+          {
+            "q": "Profit looks wrong.",
+            "a": "Profit is the difference between selling price and cost price. Check for products with a missing or wrong cost price, and enter the real cost on every purchase order."
+          },
+          {
+            "q": "Is money deducted automatically when I buy stock?",
+            "a": "No. A purchase order fills the warehouse and records the cost, but you enter the payment yourself as an expense under Finance → Cashbox. That keeps cash, transfer and pay-later purchases apart."
+          },
+          {
+            "q": "What happens if I delete a transaction?",
+            "a": "Deleting a transaction also reverses its effect on the cashbox balance, so the balance returns to what it was. Correcting or removing a mistaken entry is therefore safe."
+          }
+        ]
+      },
+      {
+        "key": "staff",
+        "title": "Staff and permissions",
+        "items": [
+          {
+            "q": "How do I give an employee access to the system?",
+            "a": "Create the employee under Employees and set a phone number and password in the system-access block. Then assign them a role or individual permissions under Settings → Users."
+          },
+          {
+            "q": "How do I limit someone to their own customers?",
+            "a": "In the permission grid set that module's data scope to \"Own only\". The person then sees, both in the list and on the map, only the records assigned to them (plus any not yet assigned to anyone)."
+          },
+          {
+            "q": "What is a role and why use one?",
+            "a": "A role is a ready-made set of permissions (\"Salesperson\", \"Storekeeper\"). Instead of configuring rights per person you assign a role; changing the role updates everyone who has it at once."
+          },
+          {
+            "q": "What should I do when someone leaves?",
+            "a": "Do not delete them — disable their account. They can no longer sign in, while the orders, payments and history tied to their name are kept."
+          }
+        ]
+      },
+      {
+        "key": "technical",
+        "title": "Technical questions",
+        "items": [
+          {
+            "q": "The map does not show my location.",
+            "a": "Check that the browser is allowed to use geolocation (the padlock icon at the left of the address bar). Once allowed, press the \"My location\" button on the map. Geolocation only works over a secure (https) connection."
+          },
+          {
+            "q": "I cannot type the full phone number.",
+            "a": "The field refuses more digits than the selected country's format allows: for Uzbekistan that is exactly 9 digits after +998. For another country, pick its code from the list first."
+          },
+          {
+            "q": "The data looks stale and does not refresh.",
+            "a": "Lists normally refresh by themselves once a change is saved. If you are looking at data from several minutes ago, reload the page (F5); if it keeps happening, tell support which page it was and when."
+          },
+          {
+            "q": "A dialog will not close, or my form disappeared.",
+            "a": "Save and Cancel both close the dialog, as does the X in the top-right corner. If you closed it by accident, what you typed is kept temporarily and is still there when you return to the form."
+          }
+        ]
+      }
+    ]
   }
 }

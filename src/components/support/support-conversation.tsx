@@ -30,6 +30,8 @@ interface Message {
   sender_name: string
   body: string
   created_at: string
+  /** Local-only: shown dimmed until the server confirms the write. */
+  pending?: boolean
 }
 
 const STATUS_TONE: Record<ThreadSummary['status'], StatusTone> = {
@@ -91,6 +93,9 @@ export function SupportConversation({
   const [reply, setReply] = useState('')
   const [isSending, setIsSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  /** Ids for optimistic bubbles. A counter, not Math.random/Date.now — those
+   *  are impure during render under the React Compiler lint rules. */
+  const pendingCounter = useRef(0)
 
   const loadThreads = useCallback(async () => {
     try {
@@ -151,19 +156,24 @@ export function SupportConversation({
    */
   useEffect(() => {
     const supabase = createClient()
-    const channels = [
-      inboxTopic ? supabase.channel(inboxTopic) : null,
-      activeId ? supabase.channel(`support-thread:${activeId}`) : null,
-    ].filter(Boolean) as ReturnType<typeof supabase.channel>[]
+    const channels: ReturnType<typeof supabase.channel>[] = []
 
-    for (const channel of channels) {
-      channel
-        .on('broadcast', { event: 'support_message' }, () => {
-          loadThreads()
-          if (activeId) loadMessages(activeId, false)
-        })
-        .subscribe()
+    // Inbox topic → the thread list changed (new ticket, unread count, order).
+    if (inboxTopic) {
+      const channel = supabase.channel(inboxTopic)
+      channel.on('broadcast', { event: 'support_message' }, () => { loadThreads() }).subscribe()
+      channels.push(channel)
     }
+    // Thread topic → only this conversation changed. Refetching the thread list
+    // as well (as this used to) doubled the requests for every single message.
+    if (activeId) {
+      const channel = supabase.channel(`support-thread:${activeId}`)
+      channel
+        .on('broadcast', { event: 'support_message' }, () => { loadMessages(activeId, false) })
+        .subscribe()
+      channels.push(channel)
+    }
+
     return () => {
       channels.forEach((channel) => supabase.removeChannel(channel))
     }
@@ -184,23 +194,59 @@ export function SupportConversation({
     bottomRef.current?.scrollIntoView({ block: 'end' })
   }, [messages])
 
+  /**
+   * Sending is optimistic: the bubble appears the moment Enter is pressed and
+   * the textarea clears, then the server's row replaces the placeholder when
+   * the POST returns. Previously the input stayed frozen through a POST plus a
+   * full re-read of the conversation *and* the thread list — three round trips
+   * before a typed message showed up at all, which is what made it feel like
+   * the chat had hung.
+   */
   const handleSend = async () => {
     const body = reply.trim()
     if (!body || !activeId || isSending) return
+
+    const tempId = `pending-${pendingCounter.current++}`
+    const optimistic: Message = {
+      id: tempId,
+      sender_role: viewer,
+      sender_name: '',
+      body,
+      created_at: new Date().toISOString(),
+      pending: true,
+    }
+    setMessages((prev) => [...prev, optimistic])
+    setReply('')
     setIsSending(true)
+
     try {
       const res = await fetch(`${endpoint}/${activeId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body }),
       })
+      const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
         throw new Error(json.error === 'thread_closed' ? t('threadClosed') : tCommon('error'))
       }
-      setReply('')
-      await Promise.all([loadMessages(activeId, false), loadThreads()])
+      // Swap the placeholder for the stored row (real id and timestamp), or
+      // just drop the pending flag if this server can't return the row.
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === tempId
+            ? json.message
+              ? { ...(json.message as Message), pending: false }
+              : { ...message, pending: false }
+            : message
+        )
+      )
+      // The list only needs its ordering/preview refreshed, and nobody is
+      // waiting on it.
+      loadThreads()
     } catch (error: any) {
+      // Put the text back in the box rather than losing what was typed.
+      setMessages((prev) => prev.filter((message) => message.id !== tempId))
+      setReply(body)
       toast.error(error.message || tCommon('error'))
     } finally {
       setIsSending(false)
@@ -306,7 +352,8 @@ export function SupportConversation({
                       )}
                       <div
                         className={cn(
-                          'max-w-[75%] rounded-2xl px-3.5 py-2 text-sm',
+                          'max-w-[75%] rounded-2xl px-3.5 py-2 text-sm transition-opacity',
+                          message.pending && 'opacity-60',
                           isMine
                             ? 'bg-violet-600 text-white rounded-br-sm'
                             : message.sender_role === 'admin'

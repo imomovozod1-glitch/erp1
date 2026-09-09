@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
@@ -44,7 +44,7 @@ export function CustomerForm({ initialData, categories = [], lang, assignableUse
   const tCommon = useTranslations('common')
   const tSales = useTranslations('sales')
   const tAuth = useTranslations('auth')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/customers`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const [isMapOpen, setIsMapOpen] = useState(false)
@@ -120,7 +120,7 @@ export function CustomerForm({ initialData, categories = [], lang, assignableUse
       
       await invalidateCustomers()
       clearPersistedForm('customer-form-v3')
-      router.push(`/${lang}/customers`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -322,7 +322,7 @@ export function CustomerForm({ initialData, categories = [], lang, assignableUse
           <Button 
             type="button" 
             variant="outline" 
-            onClick={() => router.push(`/${lang}/customers`)}
+            onClick={() => exitForm()}
             disabled={isSubmitting}
           >
             {tCommon('cancel')}

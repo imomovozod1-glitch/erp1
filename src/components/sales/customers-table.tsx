@@ -98,8 +98,8 @@ export function CustomersTable({
               <TableHead>{tCommon('phone')}</TableHead>
               <TableHead className="hidden md:table-cell">{lang === 'uz' ? 'Toifa' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
               <TableHead className="text-right tabular-nums">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</TableHead>
-                <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -33,6 +34,7 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const router = useRouter()
+  const exitForm = useRouteModalExit('/admin/support')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const formSchema = z.object({
@@ -71,7 +73,7 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
         return
       }
       toast.success(mode === 'create' ? t('createSuccess') : t('updateSuccess'))
-      router.push('/admin/support')
+      exitForm()
       router.refresh()
     } catch {
       toast.error(t('genericError'))
@@ -134,7 +136,7 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {mode === 'create' ? t('create') : t('save')}
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/support')}>
+            <Button type="button" variant="outline" onClick={() => exitForm()}>
               {t('cancel')}
             </Button>
           </div>

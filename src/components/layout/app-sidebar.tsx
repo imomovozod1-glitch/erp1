@@ -18,7 +18,6 @@ import {
   Store,
   LifeBuoy,
   Contact,
-  BookOpen,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -100,7 +99,9 @@ const NAV_ITEMS: NavItem[] = [
     ]
   },
   { key: 'settings', icon: Settings, href: 'settings' },
-  { key: 'guide', icon: BookOpen, href: 'guide' },
+  // The guide and the FAQ live in the header's help menu (app-header.tsx),
+  // where they stay reachable from every page instead of being buried at the
+  // bottom of the module list.
 ]
 
 interface AppSidebarProps {
@@ -182,8 +183,8 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
 
   // Sidebar-level enforcement for the module permissions granted in
   // Settings → Users / HR → Add Employee (see src/lib/permissions.ts).
-  // Admins always see everything; 'dashboard' and 'guide' aren't
-  // permission-gated modules and always show.
+  // Admins always see everything; 'dashboard' isn't a permission-gated
+  // module and always shows.
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (!PERMISSION_MODULES.includes(item.key as PermissionModule)) return true
     return hasViewAccess(profile?.role, (profile as any)?.permissions, item.key as PermissionModule)

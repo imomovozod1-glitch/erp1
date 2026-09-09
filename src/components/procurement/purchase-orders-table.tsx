@@ -8,17 +8,10 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
-import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
-
-const STATUS_TONES: Record<string, StatusTone> = {
-  draft: 'blue',
-  sent: 'blue',
-  received: 'emerald',
-  partially_received: 'blue',
-  cancelled: 'rose',
-}
+import { purchaseStatusTone } from '@/lib/statuses'
 
 interface PurchaseOrdersTableProps {
   /** Only the current page's rows — the server applied search and paging. */
@@ -103,7 +96,7 @@ export function PurchaseOrdersTable({
                         {order.creator?.full_name || '—'}
                       </TableCell>
                     <TableCell>
-                      <StatusBadge tone={STATUS_TONES[order.status] ?? 'slate'} label={t(`status.${order.status}`)} />
+                      <StatusBadge tone={purchaseStatusTone(order.status)} label={t(`status.${order.status}`)} />
                     </TableCell>
                   </TableRow>
                 ))

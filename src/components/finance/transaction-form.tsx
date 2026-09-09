@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller, useWatch } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
@@ -32,7 +32,7 @@ interface TransactionFormProps {
 
 export function TransactionForm({ initialData, defaultType = 'income', lang, assignableUsers }: TransactionFormProps) {
   const t = useTranslations()
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/finance/transactions`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const supabase = createClient() as any
@@ -114,7 +114,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang, ass
       
       await invalidateTransactions()
       clearPersistedForm('transaction-form-v3')
-      router.push(`/${lang}/finance/transactions`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || t('common.error'))
     } finally {
@@ -195,7 +195,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang, ass
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => router.push(`/${lang}/finance/transactions`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {t('common.cancel')}

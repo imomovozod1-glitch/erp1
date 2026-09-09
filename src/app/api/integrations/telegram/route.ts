@@ -4,6 +4,7 @@ import { getTenantContext } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import {
   TELEGRAM_EVENTS,
+  discoverChat,
   getBotInfo,
   getTelegramSettings,
   isValidBotTokenFormat,
@@ -38,10 +39,15 @@ function pickKnownEvents(events: Record<string, boolean> | undefined) {
 
 const saveSchema = z.object({
   // Omitted on a re-save when the admin didn't retype the token — the stored
-  // one is then kept, so editing the chat id alone doesn't require pasting
-  // the secret again (the UI can't show it back to them to begin with).
+  // one is then kept, so changing settings doesn't require pasting the secret
+  // again (the UI can't show it back to them to begin with).
   bot_token: z.string().trim().min(1).optional(),
-  chat_id: z.string().trim().min(1),
+  // Optional on purpose: connecting a bot should need nothing but the token
+  // from BotFather. The chat is discovered from the bot's own update queue
+  // once someone presses Start or adds it to a group. Supplying it by hand
+  // stays possible for setups where that isn't practical (e.g. a channel the
+  // bot posts to but nobody writes in).
+  chat_id: z.string().trim().optional(),
   enabled: z.boolean(),
   events: eventsSchema,
 })
@@ -62,7 +68,10 @@ export async function GET() {
   const settings = await getTelegramSettings(ctx!.tenantId)
 
   return NextResponse.json({
-    connected: !!(settings?.telegram_bot_token && settings?.telegram_chat_id),
+    // Connected = we hold a working token. Whether a destination chat is known
+    // yet is reported separately, because that part resolves itself.
+    connected: !!settings?.telegram_bot_token,
+    awaitingChat: !!settings?.telegram_bot_token && !settings?.telegram_chat_id,
     enabled: settings?.telegram_enabled ?? false,
     chatId: settings?.telegram_chat_id ?? '',
     botUsername: settings?.telegram_bot_username ?? null,
@@ -85,7 +94,7 @@ export async function PUT(request: NextRequest) {
   }
   const input = parsed.data
 
-  if (!isValidChatIdFormat(input.chat_id)) {
+  if (input.chat_id && !isValidChatIdFormat(input.chat_id)) {
     return NextResponse.json({ error: 'invalid_chat_id' }, { status: 400 })
   }
 
@@ -106,13 +115,26 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'token_rejected', detail: info.error }, { status: 400 })
   }
 
+  // No chat given: try to work it out from the bot's pending updates. A brand
+  // new bot has none yet, which is fine — the row is still saved and the chat
+  // resolves on the first Start (see notifyTelegram / the detect-chat route).
+  let chatId = input.chat_id?.trim() || existing?.telegram_chat_id || null
+  let discoveredTitle: string | null = null
+  if (!chatId) {
+    const found = await discoverChat(token)
+    if (found.ok && found.data) {
+      chatId = found.data.chatId
+      discoveredTitle = found.data.title
+    }
+  }
+
   const { error: upsertError } = await supabase
     .from('integration_settings')
     .upsert(
       {
         tenant_id: tenantId,
         telegram_bot_token: token,
-        telegram_chat_id: input.chat_id,
+        telegram_chat_id: chatId,
         telegram_bot_username: info.data.username,
         telegram_enabled: input.enabled,
         telegram_events: pickKnownEvents(input.events) ?? existing?.telegram_events ?? {},
@@ -125,7 +147,13 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: upsertError.message }, { status: 400 })
   }
 
-  return NextResponse.json({ ok: true, botUsername: info.data.username })
+  return NextResponse.json({
+    ok: true,
+    botUsername: info.data.username,
+    chatId,
+    chatTitle: discoveredTitle,
+    awaitingChat: !chatId,
+  })
 }
 
 export async function DELETE() {

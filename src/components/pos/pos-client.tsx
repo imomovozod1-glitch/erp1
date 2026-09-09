@@ -387,7 +387,10 @@ export function POSClient({
         .insert({
           order_number: generatedOrderNumber,
           customer_id: selectedCustomer ? selectedCustomer.id : null,
-          status: 'confirmed',
+          // A counter sale is finished the moment it is rung up — the customer
+          // walks out with the goods. Recording it as `confirmed` left every
+          // POS sale sitting in an in-progress state that nothing ever closed.
+          status: 'delivered',
           total_amount: totalPayable,
           discount_amount: calculatedDiscount,
           tax_amount: calculatedTax,
@@ -780,15 +783,19 @@ export function POSClient({
                       }`}
                     >
                       {/* Photo band — same height for every tile whether or not the
-                          product has an image, so the grid rows stay aligned. */}
-                      <div className="relative h-24 w-full shrink-0 bg-slate-100 dark:bg-slate-800">
+                          product has an image, so the grid rows stay aligned.
+                          `object-contain` (not `cover`) because a cashier has to
+                          recognise the whole product at a glance: photos come in
+                          every aspect ratio and cropping to fill the band cut the
+                          top and bottom off portrait shots. */}
+                      <div className="relative h-28 w-full shrink-0 bg-slate-100 dark:bg-slate-800 p-1.5">
                         {p.image_url ? (
                           <Image
                             src={p.image_url}
                             alt={p.name}
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                            className="object-cover transition-transform duration-200 group-hover:scale-105"
+                            className="object-contain transition-transform duration-200 group-hover:scale-105"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">

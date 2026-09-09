@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getTenantContext } from '@/lib/auth'
 import { getCachedTenant } from '@/lib/tenant'
-import { escapeHtml, getTelegramSettings, sendMessage } from '@/lib/integrations/telegram'
+import {
+  discoverChat,
+  escapeHtml,
+  getTelegramSettings,
+  sendMessage,
+  storeChatId,
+} from '@/lib/integrations/telegram'
 
 /**
  * Sends a one-off "connection works" message to the configured chat.
@@ -16,8 +22,21 @@ export async function POST() {
   if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const settings = await getTelegramSettings(ctx.tenantId)
-  if (!settings?.telegram_bot_token || !settings.telegram_chat_id) {
+  if (!settings?.telegram_bot_token) {
     return NextResponse.json({ error: 'not_configured' }, { status: 400 })
+  }
+
+  // Resolve the destination on the spot when it isn't known yet, so "paste the
+  // token → press Start → send a test" needs no step in between.
+  let chatId = settings.telegram_chat_id
+  if (!chatId) {
+    const found = await discoverChat(settings.telegram_bot_token)
+    if (!found.ok) {
+      return NextResponse.json({ error: 'detect_failed', detail: found.error }, { status: 400 })
+    }
+    if (!found.data) return NextResponse.json({ error: 'no_chat_yet' }, { status: 400 })
+    chatId = found.data.chatId
+    await storeChatId(ctx.tenantId, chatId)
   }
 
   const tenant = (await getCachedTenant(ctx.tenantId)) as { company_name?: string } | null
@@ -25,7 +44,7 @@ export async function POST() {
 
   const result = await sendMessage(
     settings.telegram_bot_token,
-    settings.telegram_chat_id,
+    chatId,
     `✅ <b>${company}</b>\nTelegram integration connected successfully.`
   )
 

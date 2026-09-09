@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller } from 'react-hook-form'
 import { formatCurrency } from '@/lib/utils'
@@ -33,7 +33,7 @@ interface ProductFormProps {
 export function ProductForm({ initialData, categories, lang, assignableUsers }: ProductFormProps) {
   const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/inventory/products`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   // Kept outside the zod form (like `assignedTo`): the value is produced by an
@@ -320,7 +320,7 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
       await invalidateProducts()
       await invalidateMovements()
       clearPersistedForm('product-form-v3')
-      router.push(`/${lang}/inventory/products`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -663,7 +663,7 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/${lang}/inventory/products`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

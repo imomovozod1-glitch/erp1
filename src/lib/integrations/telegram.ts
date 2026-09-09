@@ -96,6 +96,77 @@ export function getBotInfo(token: string) {
   return callTelegram<TelegramBotInfo>(token, 'getMe')
 }
 
+interface TelegramChat {
+  id: number
+  type: string
+  title?: string
+  username?: string
+  first_name?: string
+}
+
+interface TelegramUpdate {
+  update_id: number
+  message?: { chat: TelegramChat }
+  channel_post?: { chat: TelegramChat }
+  my_chat_member?: { chat: TelegramChat }
+}
+
+export interface DiscoveredChat {
+  chatId: string
+  title: string
+  type: string
+}
+
+function describeChat(chat: TelegramChat): DiscoveredChat {
+  const title =
+    chat.title ||
+    [chat.first_name, chat.username ? `@${chat.username}` : null].filter(Boolean).join(' ') ||
+    String(chat.id)
+  return { chatId: String(chat.id), title, type: chat.type }
+}
+
+/**
+ * Finds the chat a freshly connected bot should post to, so the admin only
+ * ever has to paste the BotFather token.
+ *
+ * Telegram gives a bot no way to ask "who is my owner": the conversation has to
+ * start from the human side. So the admin presses Start in the bot's private
+ * chat (or adds it to a group) and the resulting update tells us the chat id.
+ * We read the pending update queue WITHOUT confirming an offset, so the updates
+ * stay available — nothing here consumes them out from under a future call.
+ *
+ * The newest update wins, and a group/channel is preferred over a private chat
+ * when both are present: adding the bot to the company group is the deliberate
+ * act, pressing Start is often just how the admin verified the token works.
+ */
+export async function discoverChat(token: string): Promise<TelegramResult<DiscoveredChat | null>> {
+  const result = await callTelegram<TelegramUpdate[]>(token, 'getUpdates', {
+    limit: 100,
+    timeout: 0,
+    allowed_updates: ['message', 'channel_post', 'my_chat_member'],
+  })
+  if (!result.ok) return result
+
+  const chats = result.data
+    .slice()
+    .sort((a, b) => b.update_id - a.update_id)
+    .map((update) => update.message?.chat ?? update.channel_post?.chat ?? update.my_chat_member?.chat)
+    .filter((chat): chat is TelegramChat => !!chat)
+
+  const group = chats.find((chat) => chat.type !== 'private')
+  const chosen = group ?? chats[0]
+  return { ok: true, data: chosen ? describeChat(chosen) : null }
+}
+
+/** Persists a discovered chat id on the tenant's integration row. */
+export async function storeChatId(tenantId: string, chatId: string): Promise<void> {
+  const supabase = getCacheClient() as any
+  await supabase
+    .from('integration_settings')
+    .update({ telegram_chat_id: chatId })
+    .eq('tenant_id', tenantId)
+}
+
 /** Sends a message. `text` is treated as HTML — pass it through `escapeHtml`. */
 export function sendMessage(token: string, chatId: string, text: string) {
   return callTelegram<{ message_id: number }>(token, 'sendMessage', {
@@ -151,12 +222,21 @@ export async function notifyTelegram(
   try {
     const settings = await getTelegramSettings(tenantId)
     if (!settings?.telegram_enabled) return { sent: false, reason: 'disabled' }
-    if (!settings.telegram_bot_token || !settings.telegram_chat_id) {
-      return { sent: false, reason: 'not_configured' }
-    }
+    if (!settings.telegram_bot_token) return { sent: false, reason: 'not_configured' }
     if (settings.telegram_events?.[event] !== true) return { sent: false, reason: 'event_off' }
 
-    const result = await sendMessage(settings.telegram_bot_token, settings.telegram_chat_id, text)
+    // Connected with a token but no chat yet: the admin has since pressed Start
+    // (or added the bot to a group), so resolve it now and remember it. This is
+    // what makes "paste the token" enough — no chat id to look up by hand.
+    let chatId = settings.telegram_chat_id
+    if (!chatId) {
+      const discovered = await discoverChat(settings.telegram_bot_token)
+      if (!discovered.ok || !discovered.data) return { sent: false, reason: 'awaiting_chat' }
+      chatId = discovered.data.chatId
+      await storeChatId(tenantId, chatId)
+    }
+
+    const result = await sendMessage(settings.telegram_bot_token, chatId, text)
     if (!result.ok) {
       console.warn(`[telegram] ${event} notification failed for tenant ${tenantId}:`, result.error)
       return { sent: false, reason: result.error }

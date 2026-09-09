@@ -281,7 +281,10 @@ export const getCachedSoldProducts = unstable_cache(
       .select('id, quantity, unit_price, unit_cost, total_price, products(id, name, cost_price, price, sku), sales_orders(id, order_number, status, order_date)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
-    return data ?? []
+    // A cancelled order's lines are not sales: the goods went back into stock
+    // (see cancelSalesOrder in src/lib/status-actions.ts), so leaving them in
+    // would report revenue and quantities that were undone.
+    return (data ?? []).filter((row: any) => row.sales_orders?.status !== 'cancelled')
   },
   ['sold-products-list'],
   { tags: [CACHE_TAGS.orderItems, CACHE_TAGS.products, CACHE_TAGS.orders], revalidate: 30 }
@@ -306,7 +309,15 @@ export const getCachedAnalyticsStats = unstable_cache(
         .order('order_date', { ascending: true }),
     ])
 
-    const totalOrders = salesOrders?.length ?? 0
+    // Cancelled orders are excluded from every figure below — revenue, order
+    // count, the monthly chart and the per-product table. They were reversed
+    // out of stock and (where an invoice existed) out of receivables, so
+    // counting them would report money that was never earned.
+    const liveOrders = (salesOrders ?? []).filter((o: any) => o.status !== 'cancelled')
+    const liveOrderItems = (orderItems ?? []).filter(
+      (item: any) => item.sales_orders?.status !== 'cancelled'
+    )
+    const totalOrders = liveOrders.length
 
     // Aggregate sold products for the analytics table. Each sale of the same
     // product can carry a different realized unit_cost (that's the entire point
@@ -320,13 +331,13 @@ export const getCachedAnalyticsStats = unstable_cache(
     // here and carried on the row as `net_total_price`, because the client
     // re-aggregates these same rows per period (analytics-client.tsx).
     const itemDiscountFactors = orderDiscountFactors(
-      (orderItems ?? []).map((item: any) => ({
+      liveOrderItems.map((item: any) => ({
         order_id: item.order_id,
         total_price: item.total_price,
         discount_amount: item.sales_orders?.discount_amount,
       }))
     )
-    const itemsWithNetRevenue = (orderItems ?? []).map((item: any) => ({
+    const itemsWithNetRevenue = liveOrderItems.map((item: any) => ({
       ...item,
       net_total_price: (Number(item.total_price) || 0) * (itemDiscountFactors.get(item.order_id) ?? 1),
     }))
@@ -368,7 +379,7 @@ export const getCachedAnalyticsStats = unstable_cache(
 
     // Monthly data for chart
     const monthlyData: Record<string, { revenue: number; cost: number }> = {}
-    ;(salesOrders ?? []).forEach((o: any) => {
+    ;liveOrders.forEach((o: any) => {
       const month = o.order_date?.slice(0, 7) ?? 'unknown'
       if (!monthlyData[month]) monthlyData[month] = { revenue: 0, cost: 0 }
       monthlyData[month].revenue += o.total_amount ?? 0
@@ -387,7 +398,7 @@ export const getCachedAnalyticsStats = unstable_cache(
       avgOrderValue,
       chartData,
       rawItems: itemsWithNetRevenue,
-      rawOrders: salesOrders ?? [],
+      rawOrders: liveOrders,
     }
   },
   ['analytics-stats'],
@@ -458,7 +469,8 @@ export const getCachedDashboardStats = unstable_cache(
       soldItemsRes,
       costLayersRes,
     ] = await Promise.all([
-      supabase.from('sales_orders').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      // Cancelled orders are not sales, so they don't belong in the order count.
+      supabase.from('sales_orders').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).neq('status', 'cancelled'),
       supabase.from('products').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
       supabase.from('customers').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
       supabase.from('employees').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
@@ -1195,19 +1207,29 @@ export async function getCustomersPage(
 
 /**
  * Map markers only: the customers map needs every customer that has
- * coordinates, but only the four fields it plots — not the full rows the list
+ * coordinates, but only the fields it plots — not the full rows the list
  * shows. Keeping this separate is what lets the list be paginated while the
- * map still shows everyone.
+ * map still plots the whole (permitted) set.
+ *
+ * `ownerId` applies the same "mine or nobody's" rule `queryPage` uses for the
+ * list (see src/lib/data/paginate.ts), so a user on the `own` data scope can
+ * never see another salesperson's customers by switching to the map tab.
+ * `assigned_to` is returned so the map can additionally offer a strict
+ * "only mine" filter on top of whatever the scope allowed.
  */
 export const getCustomersMapPoints = unstable_cache(
-  async (tenantId: string) => {
+  async (tenantId: string, ownerId?: string) => {
     const supabase = getCacheClient() as any
-    const { data } = await supabase
+    let query = supabase
       .from('customers')
-      .select('id, name, address, latitude, longitude')
+      .select('id, name, phone, address, latitude, longitude, assigned_to')
       .eq('tenant_id', tenantId)
       .not('latitude', 'is', null)
       .not('longitude', 'is', null)
+    if (ownerId) {
+      query = query.or(`assigned_to.eq.${ownerId},assigned_to.is.null`)
+    }
+    const { data } = await query
     return data ?? []
   },
   ['customers-map-points'],

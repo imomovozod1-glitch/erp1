@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -21,7 +21,7 @@ interface CustomerCategoryFormProps {
 
 export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryFormProps) {
   const tCommon = useTranslations('common')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/customers/categories`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
 
@@ -58,7 +58,7 @@ export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryForm
         toast.success(tCommon('success'))
       }
       await invalidateCustomerCategories()
-      router.push(`/${lang}/customers/categories`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -84,7 +84,7 @@ export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryForm
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/${lang}/customers/categories`)}
+          onClick={() => exitForm()}
           disabled={isSubmitting}
         >
           {tCommon('cancel')}

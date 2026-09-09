@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader } from '@/components/shared/page-header'
+import { StatusBadge } from '@/components/shared/status-badge'
+import { purchaseStatusTone } from '@/lib/statuses'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -18,13 +20,6 @@ import {
   Loader2 
 } from 'lucide-react'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
-
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-  ordered: 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/50',
-  received: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/50',
-  cancelled: 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200/50 dark:border-rose-900/50',
-}
 
 export default function PurchaseOrderDetailPage() {
   const params = useParams() as any
@@ -138,9 +133,7 @@ export default function PurchaseOrderDetailPage() {
                 {tCommon('status')}
               </span>
               <div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status] ?? 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
-                  {t(`status.${order.status}`)}
-                </span>
+                <StatusBadge tone={purchaseStatusTone(order.status)} label={t(`status.${order.status}`)} />
               </div>
             </div>
             <div className="space-y-1">

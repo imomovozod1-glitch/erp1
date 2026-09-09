@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { NumericInput } from '@/components/ui/numeric-input'
@@ -57,7 +57,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
   const tAuth = useTranslations('auth')
-  const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/hr/employees`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
 
@@ -333,7 +333,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
       }
 
       await invalidateEmployees()
-      router.push(`/${lang}/hr/employees`)
+      exitForm()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -636,7 +636,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => router.push(`/${lang}/hr/employees`)}
+              onClick={() => exitForm()}
               disabled={isSubmitting}
             >
               {tCommon('cancel')}

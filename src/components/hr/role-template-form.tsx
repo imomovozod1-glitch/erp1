@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,6 +27,7 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
   const router = useRouter()
+  const exitForm = useRouteModalExit(`/${lang}/hr/roles`)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [permsValue, setPermsValue] = useState<Permissions>(
@@ -76,7 +78,7 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
       }
 
       await invalidateRoleTemplates()
-      router.push(`/${lang}/hr/roles`)
+      exitForm()
       router.refresh()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
@@ -107,7 +109,7 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push(`/${lang}/hr/roles`)}
+              onClick={() => exitForm()}
               disabled={isSubmitting}
             >
               {tCommon('cancel')}
