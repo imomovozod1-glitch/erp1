@@ -24,12 +24,40 @@ export async function POST(
   }
 
   const supabase = getCacheClient() as any
-  const { data: tenant } = await supabase.from('tenants').select('owner_user_id').eq('id', id).maybeSingle()
-  if (!tenant?.owner_user_id) {
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('owner_user_id')
+    .eq('id', id)
+    .maybeSingle()
+  if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+
+  // `tenants.owner_user_id` is only filled in by the provisioning route
+  // (/api/admin/tenants). Tenants that predate that column — or whose owner
+  // row was created some other way — have it NULL, and this endpoint used to
+  // give up with "Tenant has no owner login" even though the account plainly
+  // exists. Fall back to the tenant's admin profile and backfill the link so
+  // it resolves directly next time.
+  let ownerId: string | null = tenant.owner_user_id ?? null
+  if (!ownerId) {
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('tenant_id', id)
+      .eq('role', 'admin')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    ownerId = adminProfile?.id ?? null
+    if (ownerId) {
+      await supabase.from('tenants').update({ owner_user_id: ownerId }).eq('id', id)
+    }
+  }
+
+  if (!ownerId) {
     return NextResponse.json({ error: 'Tenant has no owner login' }, { status: 404 })
   }
 
-  const { error } = await supabase.auth.admin.updateUserById(tenant.owner_user_id, {
+  const { error } = await supabase.auth.admin.updateUserById(ownerId, {
     password: parsed.data.password,
   })
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
@@ -39,7 +67,7 @@ export async function POST(
   await supabase
     .from('profiles')
     .update({ force_logout_at: new Date().toISOString() })
-    .eq('id', tenant.owner_user_id)
+    .eq('id', ownerId)
 
   return NextResponse.json({ success: true })
 }

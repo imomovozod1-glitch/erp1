@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Bell, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, LifeBuoy, CircleQuestionMark } from 'lucide-react'
+import { Bell, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
@@ -38,7 +38,6 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   const t = useTranslations('auth')
   const tSettings = useTranslations('settings')
   const tNav = useTranslations('nav')
-  const tSupport = useTranslations('support')
   const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
 
   const [notifications, setNotifications] = useState<any[]>([])
@@ -324,13 +323,6 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           >
             <HelpCircle className="h-3.5 w-3.5 text-violet-600" />
             <span className="text-sm">{tNav('faq')}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => router.push(`/${lang}/support`)}
-            className="rounded-lg gap-2 py-1.5 cursor-pointer"
-          >
-            <LifeBuoy className="h-3.5 w-3.5 text-violet-600" />
-            <span className="text-sm">{tSupport('title')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

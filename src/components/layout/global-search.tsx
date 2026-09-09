@@ -57,7 +57,7 @@ interface NavTarget {
 
 const NAV_TARGETS: NavTarget[] = [
   { href: 'dashboard', icon: LayoutDashboard, labelKey: ['nav', 'dashboard'] },
-  { href: 'analytics', icon: TrendingUp, labelKey: ['nav', 'analytics'], module: 'analytics' },
+  { href: 'reports', icon: TrendingUp, labelKey: ['nav', 'reports'], module: 'analytics' },
   { href: 'pos', icon: Store, labelKey: ['nav', 'pos'], module: 'pos' },
   { href: 'inventory/products', icon: Package, labelKey: ['inventory', 'products'], module: 'inventory' },
   { href: 'inventory/categories', icon: Tags, labelKey: ['inventory', 'categories'], module: 'inventory' },

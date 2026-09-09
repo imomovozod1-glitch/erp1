@@ -1,45 +1,17 @@
-import { getCachedAnalyticsStats, getCachedDashboardStats } from '@/lib/data/queries'
-import { getCurrentTenantId } from '@/lib/tenant'
-import { AnalyticsClient } from '@/components/analytics/analytics-client'
-import { PageHeader } from '@/components/shared/page-header'
-import { getTranslations } from 'next-intl/server'
+import { redirect } from 'next/navigation'
 
-interface AnalyticsPageProps {
+/**
+ * The section was renamed Analytics → Reports. The route moved with it; this
+ * keeps every old link, bookmark and browser-history entry working instead of
+ * turning them into 404s. The permission module is still called `analytics`
+ * internally (it is what is stored in `profiles.permissions`), so no tenant's
+ * saved permissions had to be rewritten.
+ */
+export default async function AnalyticsRedirectPage({
+  params,
+}: {
   params: Promise<{ lang: string }>
-}
-
-export default async function AnalyticsPage({ params }: AnalyticsPageProps) {
+}) {
   const { lang } = await params
-  const t = await getTranslations('analytics')
-  const tInfo = await getTranslations('pageInfo')
-  const tenantId = await getCurrentTenantId()
-
-  // getCachedDashboardStats() shares the same underlying cache entry as the
-  // dashboard page, so calling it here too costs nothing extra when both
-  // pages are viewed within the cache window — it's just where recentOrders/
-  // lowStockRows (moved here from the dashboard) already live.
-  const [stats, dashboardStats] = await Promise.all([
-    getCachedAnalyticsStats(tenantId as string),
-    getCachedDashboardStats(tenantId as string),
-  ])
-
-  return (
-    <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t('title')}
-        info={tInfo('analytics')}
-        breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
-          { label: t('title') }
-        ]}
-      />
-
-      <AnalyticsClient
-        lang={lang}
-        stats={stats}
-        recentOrders={dashboardStats.recentOrders}
-        lowStockRows={dashboardStats.lowStockRows}
-      />
-    </div>
-  )
+  redirect(`/${lang}/reports`)
 }
