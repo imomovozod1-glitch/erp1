@@ -125,7 +125,7 @@ export function SuperAdminsTable({
             <div className="sm:col-span-3 flex justify-end">
               <Button
                 type="submit"
-                disabled={isSubmitting || !fullName.trim() || !email.trim() || !isStrongPassword(password)}
+                disabled={isSubmitting || !fullName.trim() || !email.trim()}
                 className="bg-violet-600 hover:bg-violet-500 gap-2 disabled:cursor-not-allowed"
               >
                 {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}

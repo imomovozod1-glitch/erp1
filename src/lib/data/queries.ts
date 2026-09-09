@@ -421,7 +421,7 @@ export const getCachedAnalyticsStats = unstable_cache(
  * than subtracting it from the order as a whole) keeps per-product revenue and
  * profit correct too.
  */
-function orderDiscountFactors(
+export function orderDiscountFactors(
   rows: { order_id?: string | null; total_price?: number | null; discount_amount?: number | null }[]
 ): Map<string, number> {
   const subtotals = new Map<string, number>()

@@ -46,12 +46,15 @@ interface NavItem {
   key: string
   icon: React.ElementType
   href: string
+  /** Permission module, when it differs from `key` (Reports is gated by the
+   *  `analytics` module — the name tenants already have stored). */
+  module?: PermissionModule
   subItems?: { key: string; href: string }[]
 }
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', icon: LayoutDashboard, href: 'dashboard' },
-  { key: 'analytics', icon: TrendingUp, href: 'analytics' },
+  { key: 'reports', icon: TrendingUp, href: 'reports', module: 'analytics' },
   { key: 'pos', icon: Store, href: 'pos' },
   {
     key: 'inventory', icon: Package, href: 'inventory',
@@ -186,8 +189,9 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
   // Admins always see everything; 'dashboard' isn't a permission-gated
   // module and always shows.
   const visibleNavItems = NAV_ITEMS.filter((item) => {
-    if (!PERMISSION_MODULES.includes(item.key as PermissionModule)) return true
-    return hasViewAccess(profile?.role, (profile as any)?.permissions, item.key as PermissionModule)
+    const permissionModule = item.module ?? (item.key as PermissionModule)
+    if (!PERMISSION_MODULES.includes(permissionModule)) return true
+    return hasViewAccess(profile?.role, (profile as any)?.permissions, permissionModule)
   })
 
   return (

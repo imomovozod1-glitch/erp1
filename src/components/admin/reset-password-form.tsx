@@ -19,6 +19,8 @@ export function ResetPasswordForm({ tenantId }: { tenantId: string }) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!isStrongPassword(password)) {
+      // The submit button used to be disabled here instead, so a password that
+      // failed the policy produced no reaction at all — the form looked broken.
       toast.error(t('tooShort'))
       return
     }
@@ -57,12 +59,16 @@ export function ResetPasswordForm({ tenantId }: { tenantId: string }) {
             hideLabel={tPassword('hide')}
           />
         </div>
-        <Button type="submit" variant="outline" disabled={isSubmitting || !isStrongPassword(password)} className="gap-2 disabled:cursor-not-allowed">
+        <Button type="submit" variant="outline" disabled={isSubmitting} className="gap-2">
           {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
           {t('submit')}
         </Button>
       </div>
-      <p className="text-xs text-slate-400 dark:text-slate-500">{tAuth('passwordRequirements')}</p>
+      {password && !isStrongPassword(password) ? (
+        <p className="text-xs text-red-500">{tAuth('passwordRequirements')}</p>
+      ) : (
+        <p className="text-xs text-slate-400 dark:text-slate-500">{tAuth('passwordRequirements')}</p>
+      )}
     </form>
   )
 }

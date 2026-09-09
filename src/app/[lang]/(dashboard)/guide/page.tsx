@@ -53,7 +53,7 @@ const SECTIONS: GuideSection[] = [
     titleKey: ['nav', 'dashboard'],
     items: [
       { key: 'dashboard', icon: LayoutDashboard, labelKey: ['nav', 'dashboard'], href: 'dashboard' },
-      { key: 'analytics', icon: TrendingUp, labelKey: ['nav', 'analytics'], href: 'analytics' },
+      { key: 'analytics', icon: TrendingUp, labelKey: ['nav', 'reports'], href: 'reports' },
       { key: 'pos', icon: Store, labelKey: ['nav', 'pos'], href: 'pos' },
     ],
   },

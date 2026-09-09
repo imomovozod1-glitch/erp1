@@ -124,7 +124,13 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
   }
 
   const handleResetPassword = async () => {
-    if (!resetTarget || !isStrongPassword(resetPassword)) return
+    if (!resetTarget) return
+    // Say why nothing happened instead of silently returning — with the button
+    // also disabled, a password that failed the policy looked like a dead form.
+    if (!isStrongPassword(resetPassword)) {
+      toast.error(tAuth('passwordRequirements'))
+      return
+    }
     setIsResetting(true)
     try {
       const res = await fetch(`/api/tenant/users/${resetTarget.id}/reset-password`, {
@@ -466,7 +472,7 @@ export function UsersList({ profiles: initialProfiles, currentUserProfile, lang 
             </Button>
             <Button
               onClick={handleResetPassword}
-              disabled={isResetting || !isStrongPassword(resetPassword)}
+              disabled={isResetting}
               className="bg-violet-600 hover:bg-violet-700 gap-2 disabled:cursor-not-allowed"
             >
               {isResetting && <Loader2 className="h-4 w-4 animate-spin" />}

@@ -1,14 +1,14 @@
 import { requireModuleView } from '@/lib/permissions-server'
 
 /**
- * Permission gate for the whole /analytics subtree.
+ * Permission gate for the whole /reports subtree.
  *
  * Living in the layout rather than in each page means every current page — and
  * any page added later — inherits the check without anyone having to remember
  * it. Previously the only thing between a user without this permission and the
  * module was the sidebar not rendering its link; typing the URL worked fine.
  */
-export default async function AnalyticsModuleLayout({
+export default async function ReportsModuleLayout({
   children,
   params,
 }: {
@@ -16,6 +16,9 @@ export default async function AnalyticsModuleLayout({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
+  // The module key stays `analytics` — that string is what tenants already
+  // have stored in `profiles.permissions`; only the section's name and URL
+  // changed.
   await requireModuleView('analytics', lang)
   return <>{children}</>
 }
