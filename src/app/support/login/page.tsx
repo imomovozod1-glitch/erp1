@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getSupportAgentSession } from '@/lib/admin-auth'
 import { SupportLoginForm } from '@/components/support-portal/support-login-form'
+import { AuthScreen } from '@/components/auth/auth-card'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('supportPortal')
@@ -14,10 +15,8 @@ export default async function SupportLoginPage() {
   if (session) redirect('/support')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <SupportLoginForm />
-      </div>
-    </div>
+    <AuthScreen>
+      <SupportLoginForm />
+    </AuthScreen>
   )
 }

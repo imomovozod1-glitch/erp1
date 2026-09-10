@@ -1117,6 +1117,8 @@
     "loginSubheading": "Telefon raqamingiz va parolingiz bilan kiring",
     "phone": "Telefon",
     "password": "Parol",
+    "invalidPhone": "Noto'g'ri telefon raqam",
+    "passwordRequired": "Parol kiritilishi shart",
     "signIn": "Kirish",
     "signingIn": "Kirilmoqda...",
     "invalidCredentials": "Telefon yoki parol noto'g'ri",

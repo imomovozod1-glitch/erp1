@@ -8,12 +8,17 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ShieldCheck, Loader2, Mail } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ShieldCheck, Mail } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
-import { AdminLocaleSwitcher } from '@/components/admin/admin-locale-switcher'
+import { LocaleSwitcher } from '@/components/shared/locale-switcher'
+import {
+  AuthCard,
+  AuthField,
+  AuthSubmitButton,
+  authInputClass,
+  authInputErrorClass,
+} from '@/components/auth/auth-card'
 import { cn } from '@/lib/utils'
 
 export function AdminLoginForm() {
@@ -58,79 +63,54 @@ export function AdminLoginForm() {
   }
 
   return (
-    <div className="relative">
-      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-violet-500/20 rounded-xl border border-violet-500/30">
-              <ShieldCheck className="h-6 w-6 text-violet-400" />
-            </div>
-            <div>
-              <h1 className="text-white font-bold text-xl leading-none">{t('brandTitle')}</h1>
-              <p className="text-slate-400 text-xs mt-0.5">{t('brandSubtitle')}</p>
-            </div>
-          </div>
-          <AdminLocaleSwitcher />
-        </div>
-
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white">{t('heading')}</h2>
-          <p className="text-slate-400 text-sm mt-1">{t('subheading')}</p>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-slate-300 text-sm">{t('email')}</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                id="email"
-                type="email"
-                placeholder={t('emailPlaceholder')}
-                {...register('email')}
-                className={cn(
-                  'pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11',
-                  errors.email && 'border-red-500/50'
-                )}
-              />
-            </div>
-            {errors.email && <p className="text-red-400 text-xs">{errors.email.message}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-slate-300 text-sm">{t('password')}</Label>
-              <Link href="/admin/forgot-password" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">
-                {t('forgotPassword')}
-              </Link>
-            </div>
-            <PasswordInput
-              id="password"
-              placeholder="••••••••"
-              showLabel={tPassword('show')}
-              hideLabel={tPassword('hide')}
-              {...register('password')}
-              className={cn(
-                'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11',
-                errors.password && 'border-red-500/50'
-              )}
+    <AuthCard
+      icon={ShieldCheck}
+      brandTitle={t('brandTitle')}
+      brandSubtitle={t('brandSubtitle')}
+      heading={t('heading')}
+      subheading={t('subheading')}
+      // Cookie mode: the console is fast-pathed past next-intl's middleware in
+      // src/proxy.ts, so it has no `[lang]` URL segment to rewrite.
+      action={<LocaleSwitcher mode="cookie" variant="glass" />}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <AuthField id="email" label={t('email')} error={errors.email?.message}>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="username"
+              placeholder={t('emailPlaceholder')}
+              {...register('email')}
+              className={cn('pl-10', authInputClass, errors.email && authInputErrorClass)}
             />
-            {errors.password && <p className="text-red-400 text-xs">{errors.password.message}</p>}
           </div>
+        </AuthField>
 
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-11 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 mt-2"
-          >
-            {isLoading ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t('signingIn')}</>
-            ) : t('signIn')}
-          </Button>
-        </form>
-      </div>
+        <AuthField
+          id="password"
+          label={t('password')}
+          error={errors.password?.message}
+          action={
+            <Link href="/admin/forgot-password" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">
+              {t('forgotPassword')}
+            </Link>
+          }
+        >
+          <PasswordInput
+            id="password"
+            placeholder="••••••••"
+            autoComplete="current-password"
+            showLabel={tPassword('show')}
+            hideLabel={tPassword('hide')}
+            {...register('password')}
+            className={cn(authInputClass, errors.password && authInputErrorClass)}
+          />
+        </AuthField>
 
-      <div className="absolute -inset-1 bg-[linear-gradient-to-r] from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
-    </div>
+        <AuthSubmitButton isLoading={isLoading} label={t('signIn')} loadingLabel={t('signingIn')} />
+      </form>
+    </AuthCard>
   )
 }

@@ -1117,6 +1117,8 @@
     "loginSubheading": "Войдите с помощью номера телефона и пароля",
     "phone": "Телефон",
     "password": "Пароль",
+    "invalidPhone": "Неверный номер телефона",
+    "passwordRequired": "Пароль обязателен",
     "signIn": "Войти",
     "signingIn": "Выполняется вход...",
     "invalidCredentials": "Неверный телефон или пароль",
