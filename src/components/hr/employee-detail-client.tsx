@@ -183,6 +183,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             start={customStart}
             end={customEnd}
             onApply={handleApplyCustomRange}
+            lang={lang}
           />
         </div>
 

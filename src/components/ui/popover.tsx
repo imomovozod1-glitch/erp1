@@ -19,11 +19,17 @@ function PopoverContent({
   alignOffset = 0,
   side = "bottom",
   sideOffset = 4,
+  // Keeps a floating panel clear of the app's fixed header (h-16 plus the
+  // device safe area) and off the other three viewport edges. Without the top
+  // value a tall panel — the calendar especially — is flipped upwards and
+  // drawn straight over the header, which sits at a lower z-index and cannot
+  // be raised above it because the header holds its own dropdown menu.
+  collisionPadding = { top: 76, bottom: 8, left: 8, right: 8 },
   ...props
 }: PopoverPrimitive.Popup.Props &
   Pick<
     PopoverPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
+    "align" | "alignOffset" | "side" | "sideOffset" | "collisionPadding"
   >) {
   return (
     <PopoverPrimitive.Portal>
@@ -32,6 +38,7 @@ function PopoverContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
         className="isolate z-50"
       >
         <PopoverPrimitive.Popup

@@ -5,6 +5,7 @@ import { CalendarIcon } from 'lucide-react'
 import { uz, ru, enUS } from 'react-day-picker/locale'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { useCloseOnScroll } from '@/lib/hooks/use-close-on-scroll'
 import { cn, formatDate } from '@/lib/utils'
 
 /**
@@ -45,6 +46,7 @@ interface DatePickerProps {
 export function DatePicker({ id, value, onChange, placeholder, lang, disabled, className }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const selected = parseIsoDate(value)
+  useCloseOnScroll(open, () => setOpen(false))
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -69,6 +71,10 @@ export function DatePicker({ id, value, onChange, placeholder, lang, disabled, c
         <Calendar
           mode="single"
           selected={selected}
+          // Open on the month being edited. Without this DayPicker starts at
+          // today, so changing a 2024 date meant paging back through two years
+          // of months before the value was even visible.
+          defaultMonth={selected}
           onSelect={(date) => {
             if (date) {
               onChange(toIsoDate(date))

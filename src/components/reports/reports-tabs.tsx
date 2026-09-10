@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { BarChart3, SlidersHorizontal, Table2 } from 'lucide-react'
+import { SlidersHorizontal } from 'lucide-react'
 import { AnalyticsClient } from '@/components/analytics/analytics-client'
-import { PeriodFilter, type PeriodValue } from '@/components/analytics/period-filter'
+import { PeriodFilter, presetRange } from '@/components/shared/period-filter'
 import { ReportBuilder } from '@/components/reports/report-builder'
 import { ReportSettingsDialog } from '@/components/reports/report-settings-dialog'
 import { PageHeader } from '@/components/shared/page-header'
@@ -53,11 +53,32 @@ export function ReportsTabs({
 
   const [tab, setTab] = useState<'overview' | 'custom'>('overview')
 
-  const [periodValue, setPeriodValue] = useState<PeriodValue>(() => ({
-    period: 'all',
+  const [periodValue, setPeriodValue] = useState(() => ({
+    period: 'all' as string,
     customStart: formatDateISO(new Date()) + 'T00:00',
     customEnd: formatDateISO(new Date()) + 'T23:59',
   }))
+
+  // The presets this page offers, labelled from the analytics namespace where
+  // "week"/"month" mean rolling 7/30-day windows — not the dashboard's
+  // calendar week and month.
+  const presets = (['today', 'yesterday', 'week', 'month', 'thisMonth', 'lastMonth', 'all'] as const)
+    .map((value) => ({ value: value as string, label: tAnalytics(`presets.${value}`) }))
+
+  const handlePeriodChange = (next: string) => {
+    const range = presetRange(next)
+    setPeriodValue((prev) => ({
+      period: next,
+      // "All time" ignores the range, so keep whatever the custom picker last
+      // held rather than overwriting it.
+      customStart: range?.start ?? prev.customStart,
+      customEnd: range?.end ?? prev.customEnd,
+    }))
+  }
+
+  const handleApplyCustomRange = (start: string, end: string) => {
+    setPeriodValue({ period: 'custom', customStart: start, customEnd: end })
+  }
 
   // Restore the last period after mount rather than in the initialiser: reading
   // sessionStorage during the first render makes the server and client markup
@@ -134,7 +155,15 @@ export function ReportsTabs({
             carries its own date range and column picker. */}
         {tab === 'overview' && (
           <>
-            <PeriodFilter value={periodValue} onChange={setPeriodValue} />
+            <PeriodFilter
+              presets={presets}
+              period={periodValue.period}
+              onPeriodChange={handlePeriodChange}
+              customStart={periodValue.customStart}
+              customEnd={periodValue.customEnd}
+              onApplyCustomRange={handleApplyCustomRange}
+              lang={lang}
+            />
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}

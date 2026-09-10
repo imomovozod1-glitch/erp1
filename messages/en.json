@@ -113,7 +113,9 @@
     "markAs": "Mark as \"{status}\"",
     "statusUpdated": "Status updated",
     "cancelOrderConfirm": "Cancel this order? The goods go back into stock.",
-    "orderCancelled": "Order cancelled, goods returned to stock"
+    "orderCancelled": "Order cancelled, goods returned to stock",
+    "hour": "Hour",
+    "minute": "Minute"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -607,7 +609,9 @@
       "endTime": "End Time",
       "startDateTime": "Start Date & Time",
       "endDateTime": "End Date & Time",
-      "confirm": "Apply"
+      "confirm": "Apply",
+      "startDate": "Start date",
+      "endDate": "End date"
     }
   },
   "settings": {

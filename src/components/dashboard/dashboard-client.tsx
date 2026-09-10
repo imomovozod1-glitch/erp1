@@ -358,6 +358,7 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
             start={customStart}
             end={customEnd}
             onApply={handleApplyCustomRange}
+            lang={lang}
           />
         </div>
       </div>

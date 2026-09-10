@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { adjustCashboxBalance } from '@/lib/finance-helpers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -163,7 +164,20 @@ export function TransactionForm({ initialData, defaultType = 'income', lang, ass
 
         <div className="space-y-2">
           <Label htmlFor="transaction_date">{t('common.date')} *</Label>
-          <Input id="transaction_date" type="date" {...register('transaction_date')} />
+          {/* DatePicker, not a raw <input type="date">: every other form in the
+              app picks dates on the same localised calendar. */}
+          <Controller
+            control={control}
+            name="transaction_date"
+            render={({ field }) => (
+              <DatePicker
+                id="transaction_date"
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                lang={lang}
+              />
+            )}
+          />
           {errors.transaction_date && <p className="text-sm text-red-500">{errors.transaction_date.message}</p>}
         </div>
 
