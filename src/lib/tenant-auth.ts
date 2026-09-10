@@ -10,10 +10,11 @@ import { groupNationalDigits, splitPhone } from '@/lib/phone-countries'
  * create the `auth.users` row with this exact same email so login matches.
  */
 /**
- * Subdomains that can never belong to a tenant — "admin" is rewritten by
- * src/proxy.ts to the super-admin console (src/app/admin/**), so a tenant
- * claiming it would either break that routing or spoof it. Enforced at
- * provisioning and edit time (src/app/api/admin/tenants/**).
+ * Subdomains that can never belong to a tenant — "admin" and "support" are
+ * rewritten by src/proxy.ts to the super-admin console (src/app/admin/**)
+ * and the support-agent portal (src/app/support/**), so a tenant claiming
+ * either would break that routing or spoof it. Enforced at provisioning and
+ * edit time (src/app/api/admin/tenants/**).
  */
 export const RESERVED_SUBDOMAINS = ['admin', 'www', 'api', 'app', 'support']
 
