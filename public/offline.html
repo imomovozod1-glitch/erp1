@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Offline</title>
+<!--
+  Offline fallback for the Capacitor shell.
+
+  Wired up as `server.errorPath` in capacitor.config.ts: when the WebView
+  cannot reach the live deployment, Android loads this file from the APK's
+  bundled assets instead of showing a raw net::ERR_INTERNET_DISCONNECTED page.
+
+  Two hard constraints shape this file:
+
+  1. It must work with ZERO network. Everything is inline — no Google Fonts,
+     no external CSS, no images. The system font stack is used deliberately.
+  2. Capacitor plugins are NOT available here on Android (documented on
+     `errorPath` in @capacitor/cli). So this is plain HTML/JS only — no
+     imports from the app bundle, no Capacitor API.
+
+  It deliberately mirrors the sign-in card design in
+  src/components/auth/auth-card.tsx so the app does not appear to jump to a
+  different product when the connection drops.
+-->
+<style>
+  :root {
+    --violet: #7c3aed;
+    --violet-light: #a78bfa;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    /* Matches AuthScreen's bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 */
+    background: linear-gradient(to bottom right, var(--slate-900), var(--slate-800), var(--slate-900));
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 28rem;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .5);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 2rem;
+  }
+
+  .brand-icon {
+    padding: .625rem;
+    background: rgba(124, 58, 237, .2);
+    border: 1px solid rgba(124, 58, 237, .3);
+    border-radius: .75rem;
+    display: flex;
+    color: var(--violet-light);
+  }
+
+  .brand h1 { font-size: 1.25rem; font-weight: 700; margin: 0; line-height: 1; }
+  .brand p { font-size: .75rem; color: var(--slate-400); margin: .125rem 0 0; }
+
+  h2 { font-size: 1.5rem; font-weight: 700; margin: 0 0 .25rem; line-height: 1.2; }
+
+  .lede { color: var(--slate-400); font-size: .875rem; margin: 0 0 1.5rem; line-height: 1.6; }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: .625rem;
+    padding: .75rem .875rem;
+    font-size: .8125rem;
+    color: #cbd5e1;
+    margin-bottom: 1.25rem;
+  }
+
+  .dot {
+    width: .5rem;
+    height: .5rem;
+    border-radius: 999px;
+    background: #f59e0b;
+    flex-shrink: 0;
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  .dot.online { background: #10b981; animation: none; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot { animation: none; }
+  }
+
+  button {
+    width: 100%;
+    height: 2.75rem;
+    border: 0;
+    border-radius: .75rem;
+    background: var(--violet);
+    color: #fff;
+    font-size: .9375rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color .2s;
+  }
+  button:hover { background: #8b5cf6; }
+  button:focus-visible { outline: 2px solid var(--violet-light); outline-offset: 2px; }
+  button:disabled { opacity: .55; cursor: default; }
+
+  .hint {
+    margin: 1.25rem 0 0;
+    font-size: .75rem;
+    color: var(--slate-500);
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="brand">
+    <div class="brand-icon">
+      <!-- lucide "building-2", matching the tenant sign-in card -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+        <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
+        <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
+        <path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>
+      </svg>
+    </div>
+    <div>
+      <h1>UzLider ERP</h1>
+      <p id="brand-sub">Enterprise Management</p>
+    </div>
+  </div>
+
+  <h2 id="title">Internet aloqasi yo'q</h2>
+  <p class="lede" id="lede">
+    Tizimga kirish uchun internet aloqasi kerak. Ulanishni yoqing — ilova o'zi ochiladi.
+  </p>
+
+  <div class="status" role="status" aria-live="polite">
+    <span class="dot" id="dot"></span>
+    <span id="status-text">Ulanish kutilmoqda...</span>
+  </div>
+
+  <button type="button" id="retry">Qayta urinish</button>
+
+  <p class="hint" id="hint">
+    Wi-Fi yoki mobil internetni yoqing. Ulanish tiklanishi bilan tizimga kirish sahifasi avtomatik ochiladi.
+  </p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /*
+   * Must stay in sync with `server.url` in capacitor.config.ts — this file is
+   * loaded from the APK's own assets, so it has no way to read that config.
+   */
+  var APP_URL = 'https://erp1-livid.vercel.app';
+
+  var STRINGS = {
+    uz: {
+      brandSub: 'Boshqaruv tizimi',
+      title: "Internet aloqasi yo'q",
+      lede: "Tizimga kirish uchun internet aloqasi kerak. Ulanishni yoqing — ilova o'zi ochiladi.",
+      waiting: 'Ulanish kutilmoqda...',
+      checking: 'Tekshirilmoqda...',
+      found: 'Ulanish tiklandi, ochilmoqda...',
+      retry: 'Qayta urinish',
+      hint: "Wi-Fi yoki mobil internetni yoqing. Ulanish tiklanishi bilan tizimga kirish sahifasi avtomatik ochiladi."
+    },
+    ru: {
+      brandSub: 'Система управления',
+      title: 'Нет подключения к интернету',
+      lede: 'Для входа нужно подключение к интернету. Включите его — приложение откроется само.',
+      waiting: 'Ожидание подключения...',
+      checking: 'Проверка...',
+      found: 'Связь восстановлена, открываем...',
+      retry: 'Повторить',
+      hint: 'Включите Wi-Fi или мобильный интернет. Как только связь появится, страница входа откроется автоматически.'
+    },
+    en: {
+      brandSub: 'Enterprise Management',
+      title: 'No internet connection',
+      lede: 'Signing in needs an internet connection. Turn it on and the app will open by itself.',
+      waiting: 'Waiting for a connection...',
+      checking: 'Checking...',
+      found: 'Back online, opening...',
+      retry: 'Try again',
+      hint: 'Turn on Wi-Fi or mobile data. The sign-in page opens automatically once the connection is back.'
+    }
+  };
+
+  /* next-intl is not available here, so fall back to the device language. */
+  var lang = (navigator.language || 'uz').slice(0, 2).toLowerCase();
+  var t = STRINGS[lang] || STRINGS.uz;
+  document.documentElement.lang = STRINGS[lang] ? lang : 'uz';
+
+  var el = function (id) { return document.getElementById(id); };
+  el('brand-sub').textContent = t.brandSub;
+  el('title').textContent = t.title;
+  el('lede').textContent = t.lede;
+  el('status-text').textContent = t.waiting;
+  el('retry').textContent = t.retry;
+  el('hint').textContent = t.hint;
+
+  /*
+   * Where to return to. Under Capacitor the shell serves this file from
+   * https://localhost, so the app lives at the remote URL; served from the web
+   * build (public/offline.html) the app is simply the site root.
+   */
+  function appUrl() {
+    return location.hostname === 'localhost' ? APP_URL : '/';
+  }
+
+  var settled = false;
+
+  function goOnline() {
+    if (settled) return;
+    settled = true;
+    el('dot').className = 'dot online';
+    el('status-text').textContent = t.found;
+    location.replace(appUrl());
+  }
+
+  /*
+   * navigator.onLine only reports that some interface is up — a hotspot with
+   * no uplink still says true. So actually reach the deployment before
+   * declaring victory. `no-cors` keeps this a plain reachability probe: the
+   * response is opaque, but a resolved promise means the host answered.
+   */
+  function probe() {
+    if (settled) return;
+    if (!navigator.onLine) {
+      el('status-text').textContent = t.waiting;
+      return;
+    }
+    el('status-text').textContent = t.checking;
+    fetch(appUrl() + '/api/build-id', { cache: 'no-store', mode: 'no-cors' })
+      .then(goOnline)
+      .catch(function () {
+        el('status-text').textContent = t.waiting;
+      });
+  }
+
+  el('retry').addEventListener('click', probe);
+  window.addEventListener('online', probe);
+
+  /* Poll as a backstep: Android does not always fire the `online` event when
+     a WebView regains connectivity in the background. */
+  setInterval(probe, 3000);
+  probe();
+})();
+</script>
+
+</body>
+</html>

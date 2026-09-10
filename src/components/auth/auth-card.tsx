@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils'
 /** Full-screen backdrop; centres a single card. */
 export function AuthScreen({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">{children}</div>
     </div>
   )
@@ -39,6 +39,7 @@ export function AuthCard({
   heading,
   subheading,
   action,
+  behind,
   children,
 }: {
   icon: LucideIcon
@@ -48,11 +49,18 @@ export function AuthCard({
   subheading?: string
   /** Slot at the top-right of the card — the language switcher. */
   action?: ReactNode
+  /**
+   * Secondary panel tucked *behind* the card and peeking out below it — the
+   * cross-portal links. Kept out of the card body on purpose: they are an
+   * escape hatch to a different sign-in, not part of signing in here, and
+   * sitting behind the card is what says so before any label is read.
+   */
+  behind?: ReactNode
   children: ReactNode
 }) {
   return (
     <div className="relative">
-      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+      <div className="relative z-10 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
         <div className="flex items-start justify-between gap-3 mb-8">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-violet-500/20 rounded-xl border border-violet-500/30">
@@ -73,6 +81,17 @@ export function AuthCard({
 
         {children}
       </div>
+
+      {behind && (
+        // Negative margin slides the panel's top edge under the card, and the
+        // narrower width lets it show at the sides — so it reads as one object
+        // behind another rather than a second card stacked below. The top
+        // padding compensates for the hidden strip so the content still clears
+        // the card's bottom edge.
+        <div className="relative z-0  pl-[25%] pt-5 pb-5 ">
+          {behind}
+        </div>
+      )}
 
       {/* Background glow. Must be the real `bg-gradient-to-r` utility: the
           three sign-in cards previously wrapped the same value in Tailwind's

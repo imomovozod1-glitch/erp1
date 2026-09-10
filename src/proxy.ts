@@ -358,7 +358,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all pathnames except for Next.js internals and API routes
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Match all pathnames except for Next.js internals and API routes.
+    // `.html` is excluded so static files served straight out of public/
+    // (public/offline.html, the Capacitor shell's offline fallback) are not
+    // caught by the locale redirect and bounced to /uz/offline.html.
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|html)$).*)',
   ],
 }

@@ -162,7 +162,11 @@
     "invalidCredentials": "Invalid email or password",
     "tooManyAttempts": "Too many attempts. Try again in 15 minutes.",
     "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a digit",
-    "forgotPasswordHint": "To reset your password, contact your company administrator or support"
+    "forgotPasswordHint": "To reset your password, contact your company administrator or support",
+    "staffAccess": "Staff access",
+    "adminPortal": "Admin panel",
+    "supportPortal": "Support",
+    "tenantPortal": "Company account"
   },
   "tenantStatus": {
     "notFoundTitle": "Organization not found",
@@ -1736,6 +1740,74 @@
       "before": "Before",
       "after": "After",
       "reason": "Reason"
+    },
+    "viewTable": "Table",
+    "viewChart": "Chart",
+    "filters": "Filters",
+    "addFilter": "Add filter",
+    "noFilters": "No filters — every row is shown",
+    "filterValue": "Value",
+    "removeFilter": "Remove filter",
+    "dimension": "Dimension",
+    "measures": "Measures",
+    "chartPickMeasure": "Pick at least one measure to chart",
+    "chartCapped": "The chart shows only the {count} largest values. The table has the full list.",
+    "filteredRows": "{shown} of {total} rows",
+    "filterAfterCap": "Filters applied to the 5000 loaded rows only — shorten the period",
+    "chartType": {
+      "bar": "Bar",
+      "line": "Line",
+      "area": "Area",
+      "pie": "Pie"
+    },
+    "op": {
+      "contains": "Contains",
+      "notContains": "Does not contain",
+      "eq": "Equals",
+      "neq": "Not equal",
+      "gt": "Greater than",
+      "gte": "Greater or equal",
+      "lt": "Less than",
+      "lte": "Less or equal"
+    },
+    "customizeView": "Customize view",
+    "visibleBlocks": "Visible blocks",
+    "resetView": "Reset",
+    "widget": {
+      "kpi": "Key metrics",
+      "revenueChart": "Revenue chart",
+      "topProducts": "Top products",
+      "recentOrders": "Recent orders",
+      "lowStock": "Low stock",
+      "soldProducts": "Sold products table"
+    },
+    "done": "Done",
+    "metricsSection": "Metrics",
+    "metricsHint": "Pick the ones you need — the order you pick is the order they appear.",
+    "snapshotMetric": "Current state, not tied to the period",
+    "metric": {
+      "revenue": "Revenue",
+      "profit": "Profit",
+      "cost": "Cost",
+      "margin": "Profit margin",
+      "orders": "Sales count",
+      "avgOrder": "Average order",
+      "soldQty": "Units sold",
+      "avgUnitPrice": "Average unit price",
+      "avgItemsPerOrder": "Units per order",
+      "productTypes": "Distinct products sold",
+      "topProductRevenue": "Top product revenue",
+      "lowStockCount": "Low stock items"
     }
+  },
+  "offline": {
+    "offlineTitle": "No internet connection",
+    "offlineDescription": "You are working offline. Changes are saved and will be sent when the connection returns.",
+    "pending": "{count} changes queued",
+    "syncing": "Syncing...",
+    "synced": "All changes sent",
+    "syncFailed": "Sync failed",
+    "retry": "Retry",
+    "blocked": "{count} changes were rejected and need review"
   }
 }

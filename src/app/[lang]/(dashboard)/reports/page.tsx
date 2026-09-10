@@ -1,9 +1,6 @@
 import { getCachedAnalyticsStats, getCachedDashboardStats } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { AnalyticsClient } from '@/components/analytics/analytics-client'
 import { ReportsTabs } from '@/components/reports/reports-tabs'
-import { PageHeader } from '@/components/shared/page-header'
-import { getTranslations } from 'next-intl/server'
 
 interface ReportsPageProps {
   params: Promise<{ lang: string }>
@@ -11,8 +8,6 @@ interface ReportsPageProps {
 
 export default async function ReportsPage({ params }: ReportsPageProps) {
   const { lang } = await params
-  const t = await getTranslations('analytics')
-  const tInfo = await getTranslations('pageInfo')
   const tenantId = await getCurrentTenantId()
 
   // getCachedDashboardStats() shares the same underlying cache entry as the
@@ -26,27 +21,17 @@ export default async function ReportsPage({ params }: ReportsPageProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t('title')}
-        info={tInfo('analytics')}
-        breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
-          { label: t('title') }
-        ]}
-      />
-
+      {/* The page header is rendered by ReportsTabs, not here: the period
+          selector and view settings sit on the title row and need its client
+          state. */}
       <ReportsTabs
         // `new Date()` on the server, not in the client component: an impure
         // call during render is a React Compiler lint error (see AGENTS.md).
         today={new Date().toISOString().slice(0, 10)}
-        overview={
-          <AnalyticsClient
-            lang={lang}
-            stats={stats}
-            recentOrders={dashboardStats.recentOrders}
-            lowStockRows={dashboardStats.lowStockRows}
-          />
-        }
+        lang={lang}
+        stats={stats}
+        recentOrders={dashboardStats.recentOrders}
+        lowStockRows={dashboardStats.lowStockRows}
       />
     </div>
   )

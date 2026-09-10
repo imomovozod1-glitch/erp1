@@ -6,6 +6,7 @@ import { getStaffIdentity } from '@/lib/admin-auth'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { OfflineBanner } from '@/components/shared/offline-banner'
 
 export default async function DashboardLayout({
   children,
@@ -72,6 +73,7 @@ export default async function DashboardLayout({
       <SidebarInset>
         <AppHeader profile={profile} lang={lang} />
         <main className="flex-1 p-6 pt-[calc(5.5rem+env(safe-area-inset-top))] bg-slate-50/50 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
+          <OfflineBanner />
           {children}
           {modal}
         </main>

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   AreaChart,
@@ -11,14 +10,23 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatNumber } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
-import { BanknotesIcon, ChartBarIcon, ShoppingCartIcon, TagIcon } from '@heroicons/react/24/outline'
-import { TrendingUp, Calendar, ChevronDown } from 'lucide-react'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Coins, PiggyBank, Receipt, Percent, ShoppingBag, Wallet,
+  Package, Tag, Layers, Boxes, Crown, TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react'
 import { subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { SoldProductsTable } from './sold-products-table'
 import { RecentOrders } from '@/components/dashboard/recent-orders'
+import { type OverviewWidget } from '@/lib/reports/widgets'
+import {
+  METRIC_FORMAT,
+  SNAPSHOT_METRICS,
+  computeMetric,
+  type MetricId,
+} from '@/lib/reports/metrics'
 import { LowStockAlert } from '@/components/dashboard/low-stock-alert'
 
 interface AnalyticsClientProps {
@@ -36,76 +44,89 @@ interface AnalyticsClientProps {
   }
   recentOrders?: any[]
   lowStockRows?: any[]
+  /* The period is owned by ReportsTabs so the selector can live in the page
+     header row; this component only reads it. */
+  period: string
+  customStart: string
+  customEnd: string
+  periodLabel: string
+  visibleMetrics: MetricId[]
+  hiddenWidgets: OverviewWidget[]
 }
 
-const KPICard = ({ title, value, subtitle, icon: Icon, color }: any) => (
-  <Card className="border-0 shadow-sm">
-    <CardContent className="p-6">
-      <div className="flex items-center gap-4">
-        <div className={`p-3 rounded-xl ${color}`}>
-          <Icon className="w-6 h-6" />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{value}</h3>
-          {subtitle && (
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{subtitle}</p>
-          )}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
+/**
+ * Icon and colour per metric. Money-ish figures share the emerald/violet end
+ * of the palette, counts sit on blue/amber, and the one warning metric is the
+ * only red — so the row is readable as a group before any label is read.
+ */
+const METRIC_STYLES: Record<MetricId, { icon: LucideIcon; tone: string }> = {
+  revenue:           { icon: Coins,         tone: 'emerald' },
+  profit:            { icon: PiggyBank,     tone: 'violet' },
+  cost:              { icon: Receipt,       tone: 'slate' },
+  margin:            { icon: Percent,       tone: 'violet' },
+  orders:            { icon: ShoppingBag,   tone: 'blue' },
+  avgOrder:          { icon: Wallet,        tone: 'emerald' },
+  soldQty:           { icon: Package,       tone: 'amber' },
+  avgUnitPrice:      { icon: Tag,           tone: 'emerald' },
+  avgItemsPerOrder:  { icon: Layers,        tone: 'blue' },
+  productTypes:      { icon: Boxes,         tone: 'blue' },
+  topProductRevenue: { icon: Crown,         tone: 'amber' },
+  lowStockCount:     { icon: TriangleAlert, tone: 'rose' },
+}
+
+const TILE_TONES: Record<string, string> = {
+  emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400',
+  violet:  'bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400',
+  blue:    'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400',
+  amber:   'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400',
+  rose:    'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400',
+  slate:   'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+}
+
+function formatMetric(value: number, format: 'money' | 'number' | 'percent'): string {
+  if (format === 'money') return formatCurrency(value)
+  // One decimal: a margin is read as a trend, and 42.7% carries that where 43%
+  // does not.
+  if (format === 'percent') return `${value.toFixed(1)}%`
+  return formatNumber(Math.round(value * 100) / 100)
+}
+
+const MetricTile = ({
+  title, value, subtitle, icon: Icon, tone,
+}: {
+  title: string
+  value: string
+  subtitle?: string
+  icon: LucideIcon
+  tone: string
+}) => (
+  <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex items-start justify-between gap-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        {title}
+      </p>
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 ${TILE_TONES[tone] ?? TILE_TONES.slate}`}>
+        <Icon className="h-4 w-4" />
+      </span>
+    </div>
+    <p className="mt-3 truncate text-2xl font-bold tracking-tight tabular-nums text-slate-900 dark:text-slate-100">
+      {value}
+    </p>
+    {subtitle && <p className="mt-1 truncate text-xs text-slate-400 dark:text-slate-500">{subtitle}</p>}
+  </div>
 )
 
-const formatDateISO = (d: Date) => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows = [] }: AnalyticsClientProps) {
+export function AnalyticsClient({
+  stats, lang, recentOrders = [], lowStockRows = [],
+  period, customStart, customEnd, periodLabel,
+  visibleMetrics, hiddenWidgets,
+}: AnalyticsClientProps) {
   const t = useTranslations('analytics')
   const tc = useTranslations('common')
   const td = useTranslations('dashboard')
 
-  const [period, setPeriod] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('analytics_period')
-      if (saved) return saved
-    }
-    return 'all'
-  })
-
-  const [customStart, setCustomStart] = useState<string>(() => {
-    return formatDateISO(new Date()) + 'T00:00'
-  })
-
-  const [customEnd, setCustomEnd] = useState<string>(() => {
-    return formatDateISO(new Date()) + 'T23:59'
-  })
-
-  const [tempPeriod, setTempPeriod] = useState<string>(period)
-  const [tempStart, setTempStart] = useState<string>(customStart)
-  const [tempEnd, setTempEnd] = useState<string>(customEnd)
-  const [isOpen, setIsOpen] = useState(false)
-
-  // Custom date/time picker mode and temp values
-  const [tempMode, setTempMode] = useState<'single' | 'range'>('range')
-  const [tempSingleDate, setTempSingleDate] = useState<string>(() => formatDateISO(new Date()))
-  const [tempSingleStartHour, setTempSingleStartHour] = useState<string>('00:00')
-  const [tempSingleEndHour, setTempSingleEndHour] = useState<string>('23:59')
-
-  const [tempStartDateVal, setTempStartDateVal] = useState<string>(() => formatDateISO(new Date()))
-  const [tempStartTimeVal, setTempStartTimeVal] = useState<string>('00:00')
-  const [tempEndDateVal, setTempEndDateVal] = useState<string>(() => formatDateISO(new Date()))
-  const [tempEndTimeVal, setTempEndTimeVal] = useState<string>('23:59')
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('analytics_period', period)
-    }
-  }, [period])
+  const shows = (id: OverviewWidget) => !hiddenWidgets.includes(id)
+  const tr = useTranslations('reports')
 
   const getFilteredData = () => {
     const rawItems = stats.rawItems ?? []
@@ -330,368 +351,55 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
   // Top 5 products
   const topProducts = aggregatedProducts.slice(0, 5)
 
-  const lowStock = (lowStockRows ?? []).filter((p) => p.stock < p.min_stock).slice(0, 5)
+  const lowStockAll = (lowStockRows ?? []).filter((p) => p.stock < p.min_stock)
+  const lowStock = lowStockAll.slice(0, 5)
 
-  const PRESETS = [
-    { value: 'today', label: t('presets.today') },
-    { value: 'yesterday', label: t('presets.yesterday') },
-    { value: 'week', label: t('presets.week') },
-    { value: 'month', label: t('presets.month') },
-    { value: 'thisMonth', label: t('presets.thisMonth') },
-    { value: 'lastMonth', label: t('presets.lastMonth') },
-    { value: 'all', label: t('presets.all') },
-    { value: 'custom', label: t('presets.custom') },
-  ]
-
-  const getPeriodDisplayLabel = () => {
-    switch (period) {
-      case 'today': return t('presets.today')
-      case 'yesterday': return t('presets.yesterday')
-      case 'week': return t('presets.week')
-      case 'month': return t('presets.month')
-      case 'thisMonth': return t('presets.thisMonth')
-      case 'lastMonth': return t('presets.lastMonth')
-      case 'all': return t('presets.all')
-      case 'custom':
-        const parseDT = (str: string) => {
-          if (!str) return { date: '—', time: '—' }
-          const parts = str.split('T')
-          const datePart = parts[0]
-          const timePart = parts[1] || '00:00'
-          const dateSubparts = datePart.split('-')
-          const formattedDate = dateSubparts.length === 3 ? `${dateSubparts[2]}.${dateSubparts[1]}.${dateSubparts[0]}` : datePart
-          return { date: formattedDate, time: timePart }
-        }
-        const s = parseDT(customStart)
-        const e = parseDT(customEnd)
-        if (s.date === e.date) {
-          return `${s.date} ${s.time} - ${e.time}`
-        }
-        return `${s.date} ${s.time} - ${e.date} ${e.time}`
-      default: return period
-    }
-  }
-
-  const handlePresetClick = (p: string) => {
-    setTempPeriod(p)
-    const today = new Date()
-    if (p === 'today') {
-      setTempStart(formatDateISO(today) + 'T00:00')
-      setTempEnd(formatDateISO(today) + 'T23:59')
-    } else if (p === 'yesterday') {
-      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
-      setTempStart(formatDateISO(yesterday) + 'T00:00')
-      setTempEnd(formatDateISO(yesterday) + 'T23:59')
-    } else if (p === 'week') {
-      setTempStart(formatDateISO(subDays(today, 7)) + 'T00:00')
-      setTempEnd(formatDateISO(today) + 'T23:59')
-    } else if (p === 'month') {
-      setTempStart(formatDateISO(subDays(today, 30)) + 'T00:00')
-      setTempEnd(formatDateISO(today) + 'T23:59')
-    } else if (p === 'thisMonth') {
-      setTempStart(formatDateISO(startOfMonth(today)) + 'T00:00')
-      setTempEnd(formatDateISO(today) + 'T23:59')
-    } else if (p === 'lastMonth') {
-      const lastMonth = subMonths(today, 1)
-      setTempStart(formatDateISO(startOfMonth(lastMonth)) + 'T00:00')
-      setTempEnd(formatDateISO(endOfMonth(lastMonth)) + 'T23:59')
-    }
-    
-    if (p !== 'custom') {
-      setPeriod(p)
-      if (p === 'all') {
-        // all time
-      } else {
-        const today = new Date()
-        if (p === 'today') {
-          setCustomStart(formatDateISO(today) + 'T00:00')
-          setCustomEnd(formatDateISO(today) + 'T23:59')
-        } else if (p === 'yesterday') {
-          const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
-          setCustomStart(formatDateISO(yesterday) + 'T00:00')
-          setCustomEnd(formatDateISO(yesterday) + 'T23:59')
-        } else if (p === 'week') {
-          setCustomStart(formatDateISO(subDays(today, 7)) + 'T00:00')
-          setCustomEnd(formatDateISO(today) + 'T23:59')
-        } else if (p === 'month') {
-          setCustomStart(formatDateISO(subDays(today, 30)) + 'T00:05')
-          setCustomEnd(formatDateISO(today) + 'T23:59')
-        } else if (p === 'thisMonth') {
-          setCustomStart(formatDateISO(startOfMonth(today)) + 'T00:00')
-          setCustomEnd(formatDateISO(today) + 'T23:59')
-        } else if (p === 'lastMonth') {
-          const lastMonth = subMonths(today, 1)
-          setCustomStart(formatDateISO(startOfMonth(lastMonth)) + 'T00:00')
-          setCustomEnd(formatDateISO(endOfMonth(lastMonth)) + 'T23:59')
-        }
-      }
-      setIsOpen(false)
-    }
-  }
-
-  const handleApply = () => {
-    let finalStart = ''
-    let finalEnd = ''
-    
-    if (tempMode === 'single') {
-      finalStart = `${tempSingleDate}T${tempSingleStartHour}`
-      finalEnd = `${tempSingleDate}T${tempSingleEndHour}`
-    } else {
-      finalStart = `${tempStartDateVal}T${tempStartTimeVal}`
-      finalEnd = `${tempEndDateVal}T${tempEndTimeVal}`
-    }
-
-    setPeriod('custom')
-    setCustomStart(finalStart)
-    setCustomEnd(finalEnd)
-    setIsOpen(false)
-  }
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open)
-    if (open) {
-      setTempPeriod(period)
-      setTempStart(customStart)
-      setTempEnd(customEnd)
-
-      const startParts = customStart.split('T')
-      const endParts = customEnd.split('T')
-      
-      const startDate = startParts[0] || formatDateISO(new Date())
-      const startTime = startParts[1] || '00:00'
-      const endDate = endParts[0] || formatDateISO(new Date())
-      const endTime = endParts[1] || '23:59'
-
-      setTempStartDateVal(startDate)
-      setTempStartTimeVal(startTime)
-      setTempEndDateVal(endDate)
-      setTempEndTimeVal(endTime)
-
-      if (startDate === endDate) {
-        setTempMode('single')
-        setTempSingleDate(startDate)
-        setTempSingleStartHour(startTime)
-        setTempSingleEndHour(endTime)
-      } else {
-        setTempMode('range')
-      }
-    }
+  /*
+   * Everything the metric catalogue needs, already narrowed to the selected
+   * period by getFilteredData() above — except the stock count, which is a
+   * live snapshot of the warehouse and has no period to narrow to. The tile
+   * for it is labelled accordingly (SNAPSHOT_METRICS).
+   */
+  const metricInput = {
+    totalRevenue,
+    totalProfit,
+    totalSold,
+    totalOrders,
+    productTypes: aggregatedProducts.length,
+    topProductRevenue: aggregatedProducts[0]?.totalSum ?? 0,
+    lowStockCount: lowStockAll.length,
   }
 
   return (
     <div className="space-y-6">
-      {/* Period Selection Bar */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border shadow-sm">
-        <div>
-          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-            {tc('filter')}
-          </h2>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            {t('subtitle')}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-          {/* Quick presets inline - scrollable horizontally on mobile */}
-          <div className="flex items-center gap-1 bg-slate-50/75 dark:bg-slate-800/75 p-1 rounded-xl border border-slate-100/80 dark:border-slate-700/80 overflow-x-auto scrollbar-none w-full sm:w-auto">
-            {PRESETS.filter((p) => p.value !== 'custom').map((p) => {
-              const active = period === p.value
-              return (
-                <button
-                  key={p.value}
-                  onClick={() => handlePresetClick(p.value)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
-                    active
-                      ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-white/40 dark:hover:bg-slate-700/40'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Custom Date Range selector */}
-          <Popover open={isOpen} onOpenChange={handleOpenChange}>
-            <PopoverTrigger
-              render={
-                <button
-                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-200 shadow-xs cursor-pointer h-[38px] w-full sm:w-auto justify-center sm:justify-start ${
-                    period === 'custom'
-                      ? 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  <Calendar className={`h-4 w-4 ${period === 'custom' ? 'text-violet-600 dark:text-violet-400' : 'text-slate-400'}`} />
-                  <span>
-                    {period === 'custom' ? getPeriodDisplayLabel() : t('presets.custom')}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                </button>
-              }
+      {/* KPI tiles — driven by the metric catalogue, not a fixed list.
+          `auto-fit` lets the row hold anywhere from one to twelve tiles
+          without a breakpoint per count. */}
+      {shows('kpi') && visibleMetrics.length > 0 && (
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+        {visibleMetrics.map((id) => {
+          const style = METRIC_STYLES[id]
+          return (
+            <MetricTile
+              key={id}
+              title={tr(`metric.${id}`)}
+              value={formatMetric(computeMetric(id, metricInput), METRIC_FORMAT[id])}
+              subtitle={SNAPSHOT_METRICS.includes(id) ? tr('snapshotMetric') : periodLabel}
+              icon={style.icon}
+              tone={style.tone}
             />
-            <PopoverContent align="end" className="w-[360px] p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-4">
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                  {t('customFilter.title')}
-                </h4>
-
-                {/* Mode Selector */}
-                <div className="grid grid-cols-2 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => setTempMode('single')}
-                    className={`py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                      tempMode === 'single' ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
-                    }`}
-                  >
-                    {t('customFilter.singleDay')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTempMode('range')}
-                    className={`py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                      tempMode === 'range' ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-xs border border-slate-200/50 dark:border-slate-600' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
-                    }`}
-                  >
-                    {t('customFilter.dateRange')}
-                  </button>
-                </div>
-
-                {/* Date Inputs depending on tempMode */}
-                {tempMode === 'single' ? (
-                  <div className="space-y-3 pt-1">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                        {t('customFilter.date')}
-                      </span>
-                      <input
-                        type="date"
-                        value={tempSingleDate}
-                        onChange={(e) => setTempSingleDate(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                          {t('customFilter.startTime')}
-                        </span>
-                        <input
-                          type="time"
-                          value={tempSingleStartHour}
-                          onChange={(e) => setTempSingleStartHour(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                          {t('customFilter.endTime')}
-                        </span>
-                        <input
-                          type="time"
-                          value={tempSingleEndHour}
-                          onChange={(e) => setTempSingleEndHour(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3 pt-1">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                        {t('customFilter.startDateTime')}
-                      </span>
-                      <div className="grid grid-cols-5 gap-2">
-                        <input
-                          type="date"
-                          value={tempStartDateVal}
-                          onChange={(e) => setTempStartDateVal(e.target.value)}
-                          className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
-                        />
-                        <input
-                          type="time"
-                          value={tempStartTimeVal}
-                          onChange={(e) => setTempStartTimeVal(e.target.value)}
-                          className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                        {t('customFilter.endDateTime')}
-                      </span>
-                      <div className="grid grid-cols-5 gap-2">
-                        <input
-                          type="date"
-                          value={tempEndDateVal}
-                          onChange={(e) => setTempEndDateVal(e.target.value)}
-                          className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
-                        />
-                        <input
-                          type="time"
-                          value={tempEndTimeVal}
-                          onChange={(e) => setTempEndTimeVal(e.target.value)}
-                          className="col-span-2 bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all dark:scheme-dark"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={handleApply}
-                  className="px-3.5 py-1.5 text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-all shadow-sm cursor-pointer"
-                >
-                  {t('customFilter.confirm')}
-                </button>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
+          )
+        })}
       </div>
+      )}
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title={t('revenue')}
-          value={formatCurrency(totalRevenue)}
-          subtitle={`${tc('total')} ${t('revenue')}`}
-          icon={BanknotesIcon}
-          color="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400"
-        />
-        <KPICard
-          title={t('sales')}
-          value={totalOrders.toString()}
-          subtitle={`${tc('total')} ${tc('sum')}`}
-          icon={ShoppingCartIcon}
-          color="bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400"
-        />
-        <KPICard
-          title={tc('profit')}
-          value={formatCurrency(totalProfit)}
-          subtitle={`${tc('total')} ${tc('profit')}`}
-          icon={ChartBarIcon}
-          color="bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400"
-        />
-        <KPICard
-          title={tc('quantity')}
-          value={totalSold.toString()}
-          subtitle={`${tc('total')} ${tc('pieces')}`}
-          icon={TagIcon}
-          color="bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400"
-        />
-      </div>
-
+      {(shows('revenueChart') || shows('topProducts')) && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Over Time Chart */}
-        <Card className="border-0 shadow-sm lg:col-span-2">
+        {shows('revenueChart') && (
+        // Widens to the full row when its neighbour is hidden, so a hidden
+        // block leaves no dead column behind.
+        <Card className={`border-0 shadow-sm ${shows('topProducts') ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
           <CardHeader>
             <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-200">{t('revenueOverTime')}</CardTitle>
           </CardHeader>
@@ -752,9 +460,11 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Top Products */}
-        <Card className="border-0 shadow-sm">
+        {shows('topProducts') && (
+        <Card className={`border-0 shadow-sm ${shows('revenueChart') ? '' : 'lg:col-span-3'}`}>
           <CardHeader>
             <CardTitle className="text-base font-semibold text-slate-800 dark:text-slate-200">{t('topProducts')}</CardTitle>
           </CardHeader>
@@ -783,21 +493,33 @@ export function AnalyticsClient({ stats, lang, recentOrders = [], lowStockRows =
             )}
           </CardContent>
         </Card>
+        )}
       </div>
+      )}
 
       {/* Recent Orders + Low Stock — moved here from the dashboard */}
+      {(shows('recentOrders') || shows('lowStock')) && (
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        {shows('recentOrders') && (
+        <div className={shows('lowStock') ? 'lg:col-span-2' : 'lg:col-span-3'}>
           <RecentOrders orders={recentOrders} lang={lang} title={td('recentOrdersTitle')} />
         </div>
-        <LowStockAlert products={lowStock} lang={lang} />
+        )}
+        {shows('lowStock') && (
+        <div className={shows('recentOrders') ? '' : 'lg:col-span-3'}>
+          <LowStockAlert products={lowStock} lang={lang} />
+        </div>
+        )}
       </div>
+      )}
 
       {/* Sold Products Table */}
+      {shows('soldProducts') && (
       <div>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">{t('soldProducts')}</h2>
         <SoldProductsTable products={aggregatedProducts} lang={lang} />
       </div>
+      )}
     </div>
   )
 }
