@@ -199,6 +199,20 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url)
   }
 
+  // support.<domain> is the support-agent portal (support_agents, its own auth
+  // model — see getSupportAgentSession() in src/lib/admin-auth.ts), not a
+  // tenant. Same rewrite trick as "admin" above, so support.<domain>/login
+  // stays in the URL bar while Next.js serves src/app/support/**. "support" is
+  // likewise reserved at provisioning time (RESERVED_SUBDOMAINS in
+  // src/lib/tenant-auth.ts), so it can never collide with a real tenant.
+  if (tenantSubdomain === 'support') {
+    const url = request.nextUrl.clone()
+    if (!pathname.startsWith('/support')) {
+      url.pathname = `/support${pathname === '/' ? '' : pathname}`
+    }
+    return NextResponse.rewrite(url)
+  }
+
   // Clone headers and append tenant context if present
   const requestHeaders = new Headers(request.headers)
   if (tenantSubdomain) {
