@@ -1117,6 +1117,8 @@
     "loginSubheading": "Sign in with your phone number and password",
     "phone": "Phone",
     "password": "Password",
+    "invalidPhone": "Invalid phone number",
+    "passwordRequired": "Password is required",
     "signIn": "Sign in",
     "signingIn": "Signing in...",
     "invalidCredentials": "Invalid phone or password",

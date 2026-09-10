@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { isSuperAdmin } from '@/lib/admin-auth'
+import { AuthScreen } from '@/components/auth/auth-card'
 
 export default async function AuthLayout({
   children,
@@ -19,9 +20,5 @@ export default async function AuthLayout({
     redirect((await isSuperAdmin(user.id)) ? '/admin/tenants' : `/${lang}/dashboard`)
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">{children}</div>
-    </div>
-  )
+  return <AuthScreen>{children}</AuthScreen>
 }

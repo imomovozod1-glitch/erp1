@@ -1,28 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { LifeBuoy, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
+import { LifeBuoy } from 'lucide-react'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { PasswordInput } from '@/components/ui/password-input'
+import { LocaleSwitcher } from '@/components/shared/locale-switcher'
+import {
+  AuthCard,
+  AuthField,
+  AuthSubmitButton,
+  authInputClass,
+  authInputErrorClass,
+  authPhoneInputClasses,
+} from '@/components/auth/auth-card'
 import { phoneSchema } from '@/lib/phone-validation'
+import { cn } from '@/lib/utils'
 
 export function SupportLoginForm() {
   const t = useTranslations('supportPortal')
+  const tAuth = useTranslations('auth')
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  const loginSchema = z.object({
-    phone: phoneSchema(t('invalidCredentials')),
-    password: z.string().min(1),
-  })
+  const loginSchema = useMemo(
+    () =>
+      z.object({
+        phone: phoneSchema(t('invalidPhone')),
+        password: z.string().min(1, t('passwordRequired')),
+      }),
+    [t]
+  )
   type LoginForm = z.infer<typeof loginSchema>
 
   const { control, register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
@@ -51,67 +64,48 @@ export function SupportLoginForm() {
   }
 
   return (
-    <div className="relative">
-      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2.5 bg-violet-500/20 rounded-xl border border-violet-500/30">
-            <LifeBuoy className="h-6 w-6 text-violet-400" />
-          </div>
-          <div>
-            <h1 className="text-white font-bold text-xl leading-none">{t('brandTitle')}</h1>
-            <p className="text-slate-400 text-xs mt-0.5">{t('brandSubtitle')}</p>
-          </div>
-        </div>
+    <AuthCard
+      icon={LifeBuoy}
+      brandTitle={t('brandTitle')}
+      brandSubtitle={t('brandSubtitle')}
+      heading={t('loginHeading')}
+      subheading={t('loginSubheading')}
+      // Cookie mode: the portal is fast-pathed past next-intl's middleware in
+      // src/proxy.ts, so it has no `[lang]` URL segment to rewrite.
+      action={<LocaleSwitcher mode="cookie" variant="glass" />}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <AuthField id="phone" label={t('phone')} error={errors.phone?.message}>
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneInput
+                id="phone"
+                placeholder="90 123 45 67"
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                hasError={!!errors.phone}
+                {...authPhoneInputClasses}
+              />
+            )}
+          />
+        </AuthField>
 
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white">{t('loginHeading')}</h2>
-          <p className="text-slate-400 text-sm mt-1">{t('loginSubheading')}</p>
-        </div>
+        <AuthField id="password" label={t('password')} error={errors.password?.message}>
+          <PasswordInput
+            id="password"
+            placeholder="••••••••"
+            autoComplete="current-password"
+            showLabel={tAuth('showPassword')}
+            hideLabel={tAuth('hidePassword')}
+            {...register('password')}
+            className={cn(authInputClass, errors.password && authInputErrorClass)}
+          />
+        </AuthField>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="phone" className="text-slate-300 text-sm">{t('phone')}</Label>
-            <Controller
-              control={control}
-              name="phone"
-              render={({ field }) => (
-                <PhoneInput
-                  id="phone"
-                  placeholder="90 123 45 67"
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  hasError={!!errors.phone}
-                  triggerClassName="bg-white/5 border-white/10 text-white !h-11"
-                  inputClassName="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11"
-                  contentClassName="bg-slate-900 border border-white/10 text-white [&_[data-slot=select-item]]:text-white [&_[data-slot=select-item]]:focus:bg-white/10"
-                />
-              )}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-slate-300 text-sm">{t('password')}</Label>
-            <PasswordInput
-              id="password"
-              placeholder="••••••••"
-              {...register('password')}
-              className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-violet-500/20 h-11"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-11 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 mt-2"
-          >
-            {isLoading ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t('signingIn')}</>
-            ) : t('signIn')}
-          </Button>
-        </form>
-      </div>
-
-      <div className="absolute -inset-1 bg-[linear-gradient-to-r] from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
-    </div>
+        <AuthSubmitButton isLoading={isLoading} label={t('signIn')} loadingLabel={t('signingIn')} />
+      </form>
+    </AuthCard>
   )
 }

@@ -156,7 +156,7 @@ export function AdminResetPasswordForm() {
         )}
       </div>
 
-      <div className="absolute -inset-1 bg-[linear-gradient-to-r] from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
+      <div className="absolute -inset-1 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
     </div>
   )
 }
