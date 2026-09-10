@@ -4,12 +4,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
+  ArrowDown,
+  ArrowUp,
   BarChart3,
+  ChevronsUpDown,
   Download,
   Loader2,
   Play,
   Search,
   Save,
+  Table2,
   Trash2,
   SlidersHorizontal,
 } from 'lucide-react'
@@ -25,6 +29,8 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { ReportChart, CHART_TYPES, type ChartType } from '@/components/reports/report-chart'
+import { ReportFilters } from '@/components/reports/report-filters'
 import { exportRowsToExcel } from '@/lib/excel-io'
 import { formatCurrency, formatDate, formatNumber } from '@/lib/utils'
 import {
@@ -35,10 +41,21 @@ import {
   type ReportResult,
   type ReportSource,
 } from '@/lib/reports/definitions'
+import {
+  applyFilters,
+  applySort,
+  computeTotals,
+  dimensionColumns,
+  numericColumns,
+  type FilterRule,
+  type SortRule,
+} from '@/lib/reports/view'
 
 /** Saved report configurations, per browser. Mirrors how measurement units and
  *  the cashbox fallback already persist small user preferences locally. */
 const SAVED_KEY = 'erp_saved_reports'
+
+type ViewMode = 'table' | 'chart'
 
 interface SavedReport {
   name: string
@@ -48,6 +65,13 @@ interface SavedReport {
   to: string
   search: string
   hidden: string[]
+  /** Added after the first release — older entries simply lack them. */
+  filters?: FilterRule[]
+  sort?: SortRule | null
+  view?: ViewMode
+  chartType?: ChartType
+  dimension?: string
+  measures?: string[]
 }
 
 function readSaved(): SavedReport[] {
@@ -67,12 +91,15 @@ function isoDaysAgo(days: number, today: string): string {
 }
 
 /**
- * The custom report builder: pick a source, a period, a grouping and the
- * columns you care about, run it, read the totals, export to Excel.
+ * The custom report builder: pick a source, a period and a grouping, then
+ * shape what comes back — which columns to show, which rows to keep, how to
+ * sort them, and whether to read the result as a table or a chart.
  *
- * The query itself runs server-side (/api/reports/run) rather than from the
- * browser client, because a report has to respect the caller's module
- * permission and data scope — RLS alone only enforces the tenant boundary.
+ * The query runs server-side (/api/reports/run) because it has to respect the
+ * caller's module permission and data scope; everything after that — filters,
+ * sorting, charting — is applied in the browser over the returned rows, so
+ * exploring a result never costs another round trip. See src/lib/reports/view.ts
+ * for the one caveat that follows from it.
  */
 export function ReportBuilder({ today }: { today: string }) {
   const t = useTranslations('reports')
@@ -84,6 +111,13 @@ export function ReportBuilder({ today }: { today: string }) {
   const [to, setTo] = useState(today)
   const [search, setSearch] = useState('')
   const [hidden, setHidden] = useState<string[]>([])
+
+  const [filters, setFilters] = useState<FilterRule[]>([])
+  const [sort, setSort] = useState<SortRule | null>(null)
+  const [view, setView] = useState<ViewMode>('table')
+  const [chartType, setChartType] = useState<ChartType>('bar')
+  const [dimension, setDimension] = useState('')
+  const [measures, setMeasures] = useState<string[]>([])
 
   const [result, setResult] = useState<ReportResult | null>(null)
   const [isRunning, setIsRunning] = useState(false)
@@ -101,6 +135,8 @@ export function ReportBuilder({ today }: { today: string }) {
   const groupings = SOURCE_GROUPINGS[source]
   const isDated = DATED_SOURCES.includes(source)
 
+  const columns = useMemo(() => result?.columns ?? [], [result])
+
   const handleSourceChange = (next: ReportSource) => {
     setSource(next)
     // Every source offers a different set of groupings; keep the current one
@@ -108,6 +144,12 @@ export function ReportBuilder({ today }: { today: string }) {
     setGroupBy((prev) => (SOURCE_GROUPINGS[next].includes(prev) ? prev : SOURCE_GROUPINGS[next][0]))
     setResult(null)
     setHidden([])
+    // Filters, sort and the chart axes all reference column keys that the new
+    // source does not have.
+    setFilters([])
+    setSort(null)
+    setDimension('')
+    setMeasures([])
   }
 
   const run = async (override?: Partial<SavedReport>) => {
@@ -142,9 +184,57 @@ export function ReportBuilder({ today }: { today: string }) {
   }
 
   const visibleColumns = useMemo(
-    () => (result?.columns ?? []).filter((column) => !hidden.includes(column.key)),
-    [result, hidden]
+    () => columns.filter((column) => !hidden.includes(column.key)),
+    [columns, hidden]
   )
+
+  // Filter first, then sort: sorting a set the user is still narrowing would
+  // reorder rows that are about to disappear.
+  const filteredRows = useMemo(
+    () => applyFilters(result?.rows ?? [], columns, filters),
+    [result, columns, filters]
+  )
+  const rows = useMemo(
+    () => applySort(filteredRows, columns, sort),
+    [filteredRows, columns, sort]
+  )
+  // Recomputed from the filtered rows so the footer can never contradict what
+  // is shown above it.
+  const totals = useMemo(() => computeTotals(columns, filteredRows), [columns, filteredRows])
+
+  /*
+   * Chart axes are derived, not stored in an effect: picking defaults from the
+   * result inside `useEffect` would be a setState-in-effect (a React Compiler
+   * lint error here). Falling back at read time keeps a user's explicit choice
+   * while staying valid when the columns change under it.
+   */
+  const dimensions = useMemo(() => dimensionColumns(columns), [columns])
+  const numerics = useMemo(() => numericColumns(columns), [columns])
+
+  const activeDimension =
+    dimension && columns.some((column) => column.key === dimension)
+      ? dimension
+      : dimensions[0]?.key ?? ''
+
+  const chosenMeasures = measures.filter((key) => numerics.some((column) => column.key === key))
+  const activeMeasures =
+    chosenMeasures.length > 0 ? chosenMeasures : numerics[0] ? [numerics[0].key] : []
+
+  const toggleMeasure = (key: string) => {
+    const next = activeMeasures.includes(key)
+      ? activeMeasures.filter((item) => item !== key)
+      : [...activeMeasures, key]
+    // A chart with no series is not a chart; keep the last one selected.
+    setMeasures(next.length > 0 ? next : activeMeasures)
+  }
+
+  const toggleSort = (key: string) => {
+    setSort((prev) => {
+      if (prev?.column !== key) return { column: key, direction: 'desc' }
+      if (prev.direction === 'desc') return { column: key, direction: 'asc' }
+      return null // third click clears it and restores the engine's own order
+    })
+  }
 
   const renderCell = (value: string | number | null, type: string) => {
     if (value === null || value === '') return '—'
@@ -156,13 +246,14 @@ export function ReportBuilder({ today }: { today: string }) {
   }
 
   const handleExport = async () => {
-    if (!result || result.rows.length === 0) return
-    const columns = visibleColumns.map((column) => ({
+    if (rows.length === 0) return
+    const exportColumns = visibleColumns.map((column) => ({
       header: t(`col.${column.key}`),
       key: column.key,
     }))
     const stamp = isDated ? `${from}_${to}` : today
-    await exportRowsToExcel(result.rows, columns, `${t(`source.${source}`)}_${stamp}.xlsx`, 'Report')
+    // Exports what is on screen — filtered and sorted — not the raw result.
+    await exportRowsToExcel(rows, exportColumns, `${t(`source.${source}`)}_${stamp}.xlsx`, 'Report')
   }
 
   const persist = (next: SavedReport[]) => {
@@ -177,7 +268,12 @@ export function ReportBuilder({ today }: { today: string }) {
   const handleSave = () => {
     const name = window.prompt(t('savePrompt'))?.trim()
     if (!name) return
-    const entry: SavedReport = { name, source, groupBy, from, to, search, hidden }
+    const entry: SavedReport = {
+      name, source, groupBy, from, to, search, hidden,
+      filters, sort, view, chartType,
+      dimension: activeDimension,
+      measures: activeMeasures,
+    }
     persist([...saved.filter((item) => item.name !== name), entry])
     toast.success(t('saved'))
   }
@@ -189,8 +285,32 @@ export function ReportBuilder({ today }: { today: string }) {
     setTo(entry.to)
     setSearch(entry.search)
     setHidden(entry.hidden ?? [])
+    setFilters(entry.filters ?? [])
+    setSort(entry.sort ?? null)
+    setView(entry.view ?? 'table')
+    setChartType(entry.chartType ?? 'bar')
+    setDimension(entry.dimension ?? '')
+    setMeasures(entry.measures ?? [])
     run(entry)
   }
+
+  const viewButton = (mode: ViewMode, Icon: typeof Table2, label: string) => (
+    <button
+      type="button"
+      onClick={() => setView(mode)}
+      aria-pressed={view === mode}
+      className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+        view === mode
+          ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm'
+          : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </button>
+  )
+
+  const hasActiveFilters = filters.some((rule) => rule.column && rule.value.trim())
 
   return (
     <div className="space-y-4">
@@ -275,7 +395,7 @@ export function ReportBuilder({ today }: { today: string }) {
             <Button
               variant="outline"
               onClick={handleExport}
-              disabled={!result || result.rows.length === 0}
+              disabled={rows.length === 0}
               className="gap-2"
             >
               <Download className="h-4 w-4" />
@@ -285,13 +405,13 @@ export function ReportBuilder({ today }: { today: string }) {
 
           {/* Column picker — appears once a report has been run, because the
               available columns depend on the source and grouping. */}
-          {result && result.columns.length > 0 && (
+          {columns.length > 0 && (
             <div className="space-y-2 border-t pt-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <SlidersHorizontal className="h-3.5 w-3.5" /> {t('columns')}
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {result.columns.map((column) => (
+                {columns.map((column) => (
                   <label key={column.key} className="flex items-center gap-2 cursor-pointer">
                     <Checkbox
                       checked={!hidden.includes(column.key)}
@@ -308,6 +428,10 @@ export function ReportBuilder({ today }: { today: string }) {
                 ))}
               </div>
             </div>
+          )}
+
+          {columns.length > 0 && (
+            <ReportFilters columns={columns} rules={filters} onChange={setFilters} />
           )}
 
           {saved.length > 0 && (
@@ -348,70 +472,170 @@ export function ReportBuilder({ today }: { today: string }) {
               <BarChart3 className="h-8 w-8 opacity-40" />
               <p className="text-sm">{t('emptyState')}</p>
             </div>
-          ) : result.rows.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-16 text-muted-foreground">
-              <BarChart3 className="h-8 w-8 opacity-40" />
-              <p className="text-sm">{tCommon('noData')}</p>
-            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                    {visibleColumns.map((column) => (
-                      <TableHead
-                        key={column.key}
-                        className={column.type === 'money' || column.type === 'number' ? 'text-right tabular-nums' : ''}
-                      >
-                        {t(`col.${column.key}`)}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {result.rows.map((row, index) => (
-                    <TableRow key={index}>
-                      {visibleColumns.map((column) => (
-                        <TableCell
-                          key={column.key}
-                          className={
-                            column.type === 'money' || column.type === 'number'
-                              ? 'text-right tabular-nums'
-                              : ''
-                          }
-                        >
-                          {renderCell(row[column.key], column.type)}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                  <TableRow className="bg-slate-50 dark:bg-slate-800/60 font-bold">
-                    {visibleColumns.map((column, index) => (
-                      <TableCell
-                        key={column.key}
-                        className={
-                          column.type === 'money' || column.type === 'number'
-                            ? 'text-right tabular-nums'
-                            : ''
-                        }
-                      >
-                        {index === 0
-                          ? tCommon('total')
-                          : column.key in result.totals
-                            ? renderCell(result.totals[column.key], column.type)
-                            : ''}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableBody>
-              </Table>
-              <div className="flex items-center justify-between border-t p-3 text-xs text-muted-foreground">
-                <span>
-                  {result.rows.length} {tCommon('rows')}
-                </span>
-                {result.truncated && <span className="text-amber-600">{t('truncated')}</span>}
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b p-3">
+                <div className="inline-flex items-center gap-1 rounded-lg border bg-slate-100 p-1 shadow-inner dark:bg-slate-800">
+                  {viewButton('table', Table2, t('viewTable'))}
+                  {viewButton('chart', BarChart3, t('viewChart'))}
+                </div>
+
+                {view === 'chart' && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select value={chartType} onValueChange={(value) => setChartType(value as ChartType)}>
+                      <SelectTrigger className="h-9 w-32">
+                        <SelectValue>{t(`chartType.${chartType}`)}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CHART_TYPES.map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {t(`chartType.${item}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={activeDimension} onValueChange={(value) => setDimension(value ?? '')}>
+                      <SelectTrigger className="h-9 w-40">
+                        <SelectValue>
+                          {activeDimension ? t(`col.${activeDimension}`) : t('dimension')}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dimensions.map((column) => (
+                          <SelectItem key={column.key} value={column.key}>
+                            {t(`col.${column.key}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
-            </div>
+
+              {view === 'chart' && numerics.length > 0 && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b bg-slate-50/50 px-4 py-2.5 dark:bg-slate-800/30">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {t('measures')}
+                  </span>
+                  {numerics.map((column) => (
+                    <label key={column.key} className="flex cursor-pointer items-center gap-2">
+                      <Checkbox
+                        checked={activeMeasures.includes(column.key)}
+                        onCheckedChange={() => toggleMeasure(column.key)}
+                      />
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {t(`col.${column.key}`)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {rows.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-16 text-muted-foreground">
+                  <BarChart3 className="h-8 w-8 opacity-40" />
+                  <p className="text-sm">{tCommon('noData')}</p>
+                </div>
+              ) : view === 'chart' ? (
+                <ReportChart
+                  columns={columns}
+                  rows={rows}
+                  chartType={chartType}
+                  dimension={activeDimension}
+                  // Pie renders a single series; extra measures would silently
+                  // do nothing, so only the first is passed.
+                  measures={chartType === 'pie' ? activeMeasures.slice(0, 1) : activeMeasures}
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        {visibleColumns.map((column) => {
+                          const numeric = column.type === 'money' || column.type === 'number'
+                          const active = sort?.column === column.key
+                          return (
+                            <TableHead
+                              key={column.key}
+                              className={numeric ? 'text-right tabular-nums' : ''}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleSort(column.key)}
+                                className={`inline-flex items-center gap-1 transition-colors hover:text-violet-600 dark:hover:text-violet-400 ${
+                                  numeric ? 'flex-row-reverse' : ''
+                                } ${active ? 'text-violet-600 dark:text-violet-400' : ''}`}
+                              >
+                                {t(`col.${column.key}`)}
+                                {active ? (
+                                  sort.direction === 'asc' ? (
+                                    <ArrowUp className="h-3 w-3" />
+                                  ) : (
+                                    <ArrowDown className="h-3 w-3" />
+                                  )
+                                ) : (
+                                  <ChevronsUpDown className="h-3 w-3 opacity-30" />
+                                )}
+                              </button>
+                            </TableHead>
+                          )
+                        })}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rows.map((row, index) => (
+                        <TableRow key={index}>
+                          {visibleColumns.map((column) => (
+                            <TableCell
+                              key={column.key}
+                              className={
+                                column.type === 'money' || column.type === 'number'
+                                  ? 'text-right tabular-nums'
+                                  : ''
+                              }
+                            >
+                              {renderCell(row[column.key], column.type)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-slate-50 dark:bg-slate-800/60 font-bold">
+                        {visibleColumns.map((column, index) => (
+                          <TableCell
+                            key={column.key}
+                            className={
+                              column.type === 'money' || column.type === 'number'
+                                ? 'text-right tabular-nums'
+                                : ''
+                            }
+                          >
+                            {index === 0
+                              ? tCommon('total')
+                              : column.key in totals
+                                ? renderCell(totals[column.key], column.type)
+                                : ''}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t p-3 text-xs text-muted-foreground">
+                <span>
+                  {hasActiveFilters
+                    ? t('filteredRows', { shown: rows.length, total: result.rows.length })
+                    : `${rows.length} ${tCommon('rows')}`}
+                </span>
+                {result.truncated && (
+                  <span className="text-amber-600">
+                    {hasActiveFilters ? t('filterAfterCap') : t('truncated')}
+                  </span>
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -11,6 +11,7 @@ import { LifeBuoy } from 'lucide-react'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
+import { AuthPortalLinks } from '@/components/auth/auth-portal-links'
 import {
   AuthCard,
   AuthField,
@@ -72,6 +73,7 @@ export function SupportLoginForm() {
       subheading={t('loginSubheading')}
       // Cookie mode: the portal is fast-pathed past next-intl's middleware in
       // src/proxy.ts, so it has no `[lang]` URL segment to rewrite.
+      behind={<AuthPortalLinks current="support" />}
       action={<LocaleSwitcher mode="cookie" variant="glass" />}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

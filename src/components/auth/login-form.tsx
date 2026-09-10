@@ -12,6 +12,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
+import { AuthPortalLinks } from '@/components/auth/auth-portal-links'
 import {
   AuthCard,
   AuthField,
@@ -90,6 +91,7 @@ export function LoginForm({ lang }: { lang: string }) {
       brandSubtitle="Enterprise Management"
       heading={t('loginTitle')}
       subheading={t('loginSubtitle')}
+      behind={<AuthPortalLinks current="tenant" lang={lang} />}
       action={<LocaleSwitcher mode="path" variant="glass" />}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

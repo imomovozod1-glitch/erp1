@@ -13,6 +13,13 @@ const config: CapacitorConfig = {
     // same as the web app today.
     url: 'https://erp1-livid.vercel.app',
     cleartext: false,
+    // Shown when the WebView cannot reach the URL above. Without it the app
+    // falls back to Android's raw net::ERR_INTERNET_DISCONNECTED page, which
+    // looks like a crash. public/offline.html is bundled into the APK from
+    // `webDir`, so it loads with no network at all; it polls for connectivity
+    // and navigates back to the app on its own once the connection returns.
+    // NOTE: it hard-codes the URL above — change one, change the other.
+    errorPath: 'offline.html',
   },
   ios: {
     contentInset: 'automatic',

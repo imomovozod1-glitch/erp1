@@ -162,7 +162,11 @@
     "invalidCredentials": "Elektron pochta yoki parol noto'g'ri",
     "tooManyAttempts": "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring.",
     "passwordRequirements": "Kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak",
-    "forgotPasswordHint": "Parolni tiklash uchun kompaniyangiz administratoriga yoki qo'llab-quvvatlash xizmatiga murojaat qiling"
+    "forgotPasswordHint": "Parolni tiklash uchun kompaniyangiz administratoriga yoki qo'llab-quvvatlash xizmatiga murojaat qiling",
+    "staffAccess": "Xodimlar uchun",
+    "adminPortal": "Admin panel",
+    "supportPortal": "Qo'llab-quvvatlash",
+    "tenantPortal": "Kompaniya hisobi"
   },
   "tenantStatus": {
     "notFoundTitle": "Tashkilot topilmadi",
@@ -1736,6 +1740,74 @@
       "before": "Oldin",
       "after": "Keyin",
       "reason": "Sabab"
+    },
+    "viewTable": "Jadval",
+    "viewChart": "Grafik",
+    "filters": "Filtrlar",
+    "addFilter": "Filtr qo'shish",
+    "noFilters": "Filtr yo'q — barcha qatorlar ko'rsatiladi",
+    "filterValue": "Qiymat",
+    "removeFilter": "Filtrni o'chirish",
+    "dimension": "Kesim",
+    "measures": "Ko'rsatkichlar",
+    "chartPickMeasure": "Grafik uchun kamida bitta ko'rsatkichni tanlang",
+    "chartCapped": "Grafikda faqat {count} ta eng katta qiymat ko'rsatildi. To'liq ro'yxat jadvalda.",
+    "filteredRows": "{total} tadan {shown} ta qator",
+    "filterAfterCap": "Filtr faqat yuklangan 5000 qatorga qo'llandi — davrni qisqartiring",
+    "chartType": {
+      "bar": "Ustunli",
+      "line": "Chiziqli",
+      "area": "Maydonli",
+      "pie": "Doiraviy"
+    },
+    "op": {
+      "contains": "Ichida bor",
+      "notContains": "Ichida yo'q",
+      "eq": "Teng",
+      "neq": "Teng emas",
+      "gt": "Katta",
+      "gte": "Katta yoki teng",
+      "lt": "Kichik",
+      "lte": "Kichik yoki teng"
+    },
+    "customizeView": "Ko'rinishni sozlash",
+    "visibleBlocks": "Ko'rinadigan bloklar",
+    "resetView": "Tiklash",
+    "widget": {
+      "kpi": "Asosiy ko'rsatkichlar",
+      "revenueChart": "Tushum grafigi",
+      "topProducts": "Eng ko'p sotilganlar",
+      "recentOrders": "So'nggi buyurtmalar",
+      "lowStock": "Qoldig'i kam mahsulotlar",
+      "soldProducts": "Sotilgan mahsulotlar jadvali"
+    },
+    "done": "Tayyor",
+    "metricsSection": "Ko'rsatkichlar",
+    "metricsHint": "Xohlaganingizni tanlang — tanlash tartibi ko'rinish tartibi bo'ladi.",
+    "snapshotMetric": "Hozirgi holat, davrga bog'liq emas",
+    "metric": {
+      "revenue": "Tushum",
+      "profit": "Foyda",
+      "cost": "Tannarx",
+      "margin": "Foyda marjasi",
+      "orders": "Sotuvlar soni",
+      "avgOrder": "O'rtacha chek",
+      "soldQty": "Sotilgan miqdor",
+      "avgUnitPrice": "O'rtacha dona narxi",
+      "avgItemsPerOrder": "Chekdagi o'rtacha dona",
+      "productTypes": "Sotilgan mahsulot turlari",
+      "topProductRevenue": "Eng yaxshi mahsulot tushumi",
+      "lowStockCount": "Qoldig'i kam mahsulotlar"
     }
+  },
+  "offline": {
+    "offlineTitle": "Internet aloqasi yo'q",
+    "offlineDescription": "Offline rejimda ishlayapsiz. O'zgarishlar saqlanadi va ulanish tiklanganda yuboriladi.",
+    "pending": "{count} ta o'zgarish navbatda",
+    "syncing": "Sinxronlanmoqda...",
+    "synced": "Barcha o'zgarishlar yuborildi",
+    "syncFailed": "Sinxronlash muvaffaqiyatsiz",
+    "retry": "Qayta urinish",
+    "blocked": "{count} ta o'zgarish rad etildi, tekshirish kerak"
   }
 }
