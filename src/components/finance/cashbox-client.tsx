@@ -1029,6 +1029,7 @@ export function CashboxClient({ lang }: { lang: string }) {
             start={customStart}
             end={customEnd}
             onApply={handleApplyCustomRange}
+            lang={lang}
           />
         </div>
       </PageHeader>

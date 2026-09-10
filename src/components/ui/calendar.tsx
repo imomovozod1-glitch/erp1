@@ -16,6 +16,7 @@ function Calendar({
   buttonVariant = 'ghost',
   formatters,
   components,
+  locale,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>['variant']
@@ -37,8 +38,17 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
+      locale={locale}
       formatters={{
-        formatMonthDropdown: (date) => date.toLocaleString('default', { month: 'short' }),
+        // Month names must come from the same date-fns locale DayPicker already
+        // uses for the weekday headers. The stock formatter calls
+        // toLocaleString('default'), i.e. the *browser's* locale — which put an
+        // English "Sep" in the dropdown directly above Uzbek "Du Se Cho"
+        // headers. Full month names, not abbreviations: this dropdown exists to
+        // be read and picked from.
+        formatMonthDropdown: (date: Date) =>
+          (locale as any)?.localize?.month(date.getMonth(), { width: 'wide' }) ??
+          date.toLocaleString('default', { month: 'long' }),
         ...formatters,
       }}
       classNames={{
@@ -46,17 +56,22 @@ function Calendar({
         months: cn('relative flex flex-col gap-4 md:flex-row', defaultClassNames.months),
         month: cn('flex w-full flex-col gap-4', defaultClassNames.month),
         nav: cn(
-          'absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1',
+          // `pointer-events-none` matters: this bar is stretched across the
+          // full width on top of the caption, so its empty middle sat over the
+          // month/year dropdowns and swallowed every click aimed at them — the
+          // dropdowns looked interactive but could not be opened. The arrows
+          // take pointer events back individually below.
+          'pointer-events-none absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1',
           defaultClassNames.nav
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          'size-(--cell-size) p-0 select-none aria-disabled:opacity-50',
+          'pointer-events-auto size-(--cell-size) p-0 select-none aria-disabled:opacity-50',
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          'size-(--cell-size) p-0 select-none aria-disabled:opacity-50',
+          'pointer-events-auto size-(--cell-size) p-0 select-none aria-disabled:opacity-50',
           defaultClassNames.button_next
         ),
         month_caption: cn(
