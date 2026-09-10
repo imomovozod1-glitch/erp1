@@ -163,12 +163,17 @@
     "invalidEmail": "Noto'g'ri elektron pochta manzili",
     "invalidCredentials": "Elektron pochta yoki parol noto'g'ri",
     "tooManyAttempts": "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring.",
-    "passwordRequirements": "Kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak",
+    "passwordRequirements": "Kamida 8 ta belgi (faqat raqamlardan iborat bo'lishi ham mumkin)",
     "forgotPasswordHint": "Parolni tiklash uchun kompaniyangiz administratoriga yoki qo'llab-quvvatlash xizmatiga murojaat qiling",
     "staffAccess": "Xodimlar uchun",
     "adminPortal": "Admin panel",
     "supportPortal": "Qo'llab-quvvatlash",
-    "tenantPortal": "Kompaniya hisobi"
+    "tenantPortal": "Kompaniya hisobi",
+    "currentPassword": "Joriy parol",
+    "newPassword": "Yangi parol",
+    "currentPasswordRequired": "Joriy parolni kiriting",
+    "currentPasswordWrong": "Joriy parol noto'g'ri",
+    "passwordChangedSignedOutOthers": "Parol o'zgartirildi. Boshqa qurilmalardagi seanslar yopildi."
   },
   "tenantStatus": {
     "notFoundTitle": "Tashkilot topilmadi",
@@ -751,7 +756,8 @@
       "errorDetectFailed": "Manzilni aniqlab bo'lmadi"
     },
     "cannotChangeOwnAccess": "O'z rolingiz yoki holatingizni o'zgartira olmaysiz",
-    "lastAdminError": "Oxirgi faol administratorni o'zgartirib bo'lmaydi"
+    "lastAdminError": "Oxirgi faol administratorni o'zgartirib bo'lmaydi",
+    "phoneLockedHint": "Telefon raqami — tizimga kirish uchun loginingiz. O'zgartirish uchun administratorga murojaat qiling."
   },
   "tools": {
     "title": "Vositalar",
@@ -934,7 +940,11 @@
       "subscriptionEndRequired": "Obuna tugash sanasini tanlang",
       "custom": "Boshqa",
       "months": "oy",
-      "selectDatePlaceholder": "Sanani tanlang"
+      "selectDatePlaceholder": "Sanani tanlang",
+      "sectionBasicsHint": "Tashkilot nomi, kirish uchun subdomen va administrator hisobi.",
+      "sectionSubscriptionHint": "Litsenziyalar soni, muddat va hisoblash usuli.",
+      "sectionSupportHint": "Bu tashkilotga biriktiriladigan qo'llab-quvvatlash xodimi.",
+      "sectionNotesHint": "Faqat super-adminga ko'rinadigan ichki eslatmalar."
     },
     "password": {
       "show": "Parolni ko'rsatish",
@@ -1022,7 +1032,11 @@
         "success": "Parol yangilandi",
         "error": "Parolni yangilab bo'lmadi",
         "tooShort": "Parol kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak",
-        "mismatch": "Parollar mos kelmadi"
+        "mismatch": "Parollar mos kelmadi",
+        "currentPassword": "Joriy parol",
+        "currentRequired": "Joriy parolni kiriting",
+        "currentWrong": "Joriy parol noto'g'ri",
+        "successSignedOutOthers": "Parol o'zgartirildi. Boshqa qurilmalardagi seanslar yopildi."
       },
       "admins": {
         "count": "{count, plural, other {# ta super-admin}}",
@@ -1085,13 +1099,24 @@
         "cancel": "Bekor qilish",
         "createSuccess": "Support xodimi yaratildi",
         "updateSuccess": "Ma'lumotlar yangilandi",
-        "genericError": "Xatolik yuz berdi"
+        "genericError": "Xatolik yuz berdi",
+        "sectionAgent": "Xodim ma'lumotlari",
+        "sectionAgentHint": "Ismi, kirish uchun telefon raqami va paroli."
       },
       "detail": {
         "back": "Support ro'yxatiga qaytish",
         "assignedTenants": "Biriktirilgan tashkilotlar",
         "deleteAgent": "Support xodimini o'chirish",
         "deleteConfirm": "Rostdan ham o'chirmoqchimisiz? Bu xodim login qila olmay qoladi."
+      },
+      "message": {
+        "title": "{name} uchun xabar",
+        "hint": "Xabar to'g'ridan-to'g'ri xodimning qo'llab-quvvatlash paneliga yuboriladi.",
+        "subject": "Mavzu",
+        "subjectPlaceholder": "Masalan: Yangi tashkilot biriktirildi",
+        "body": "Xabar matni",
+        "bodyPlaceholder": "Xabaringizni yozing…",
+        "send": "Yuborish"
       }
     }
   },

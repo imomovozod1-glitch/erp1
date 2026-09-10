@@ -94,7 +94,7 @@ export default async function TenantDetailPage({
         supportAgents={supportAgents ?? []}
       />
 
-      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Receipt className="h-4 w-4 text-violet-600 dark:text-violet-400" /> {t('paymentHistory')}
@@ -105,7 +105,7 @@ export default async function TenantDetailPage({
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <KeyRound className="h-4 w-4 text-violet-600 dark:text-violet-400" /> {t('ownerLogin')}
@@ -116,7 +116,7 @@ export default async function TenantDetailPage({
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl border-rose-100 dark:border-rose-900/30">
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 border-rose-100 dark:border-rose-900/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base text-rose-600 dark:text-rose-400">
             <ShieldAlert className="h-4 w-4" /> {t('dangerZone')}

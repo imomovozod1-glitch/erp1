@@ -163,12 +163,17 @@
     "invalidEmail": "Invalid email address",
     "invalidCredentials": "Invalid email or password",
     "tooManyAttempts": "Too many attempts. Try again in 15 minutes.",
-    "passwordRequirements": "At least 8 characters, with an uppercase letter, a lowercase letter, and a digit",
+    "passwordRequirements": "At least 8 characters (digits only is fine)",
     "forgotPasswordHint": "To reset your password, contact your company administrator or support",
     "staffAccess": "Staff access",
     "adminPortal": "Admin panel",
     "supportPortal": "Support",
-    "tenantPortal": "Company account"
+    "tenantPortal": "Company account",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "currentPasswordRequired": "Enter your current password",
+    "currentPasswordWrong": "Current password is incorrect",
+    "passwordChangedSignedOutOthers": "Password changed. Sessions on other devices were signed out."
   },
   "tenantStatus": {
     "notFoundTitle": "Organization not found",
@@ -751,7 +756,8 @@
       "errorDetectFailed": "Could not work out the destination"
     },
     "cannotChangeOwnAccess": "You cannot change your own role or status",
-    "lastAdminError": "Cannot change the last active administrator"
+    "lastAdminError": "Cannot change the last active administrator",
+    "phoneLockedHint": "Your phone number is how you sign in. Contact your administrator to change it."
   },
   "tools": {
     "title": "Tools",
@@ -934,7 +940,11 @@
       "subscriptionEndRequired": "Select the subscription end date",
       "custom": "Custom",
       "months": "mo",
-      "selectDatePlaceholder": "Select a date"
+      "selectDatePlaceholder": "Select a date",
+      "sectionBasicsHint": "Organisation name, the subdomain it signs in on, and its administrator account.",
+      "sectionSubscriptionHint": "Licence count, term, and costing method.",
+      "sectionSupportHint": "The support agent assigned to this organisation.",
+      "sectionNotesHint": "Internal notes, visible only to super-admins."
     },
     "password": {
       "show": "Show password",
@@ -1022,7 +1032,11 @@
         "success": "Password updated",
         "error": "Could not update password",
         "tooShort": "Password must be at least 8 characters, with an uppercase letter, a lowercase letter, and a digit",
-        "mismatch": "Passwords don't match"
+        "mismatch": "Passwords don't match",
+        "currentPassword": "Current password",
+        "currentRequired": "Enter your current password",
+        "currentWrong": "Current password is incorrect",
+        "successSignedOutOthers": "Password changed. Sessions on other devices were signed out."
       },
       "admins": {
         "count": "{count, plural, other {# super admins}}",
@@ -1085,13 +1099,24 @@
         "cancel": "Cancel",
         "createSuccess": "Support agent created",
         "updateSuccess": "Details updated",
-        "genericError": "Something went wrong"
+        "genericError": "Something went wrong",
+        "sectionAgent": "Agent details",
+        "sectionAgentHint": "Name, the phone number they sign in with, and their password."
       },
       "detail": {
         "back": "Back to support list",
         "assignedTenants": "Assigned tenants",
         "deleteAgent": "Delete support agent",
         "deleteConfirm": "Are you sure? This agent will no longer be able to log in."
+      },
+      "message": {
+        "title": "Message {name}",
+        "hint": "Sends a direct message into this agent's support portal.",
+        "subject": "Subject",
+        "subjectPlaceholder": "e.g. New tenant assigned",
+        "body": "Message",
+        "bodyPlaceholder": "Write your message…",
+        "send": "Send"
       }
     }
   },

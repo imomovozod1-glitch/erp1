@@ -42,7 +42,7 @@ export default async function SupportAgentDetailPage({
 
       <SupportAgentForm mode="edit" initialData={{ id: agent.id, full_name: agent.full_name, phone: agent.phone }} />
 
-      <Card className="border-0 shadow-sm max-w-xl">
+      <Card className="border-0 shadow-sm">
         <CardContent className="pt-6 space-y-3">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('assignedTenants')}</h3>
           {agent.tenants.length === 0 ? (

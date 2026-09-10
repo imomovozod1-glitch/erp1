@@ -92,7 +92,7 @@ export function SuperAdminsTable({
   }
 
   return (
-    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
+    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
       <CardContent className="pt-6 space-y-6">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{t('count', { count: admins.length })}</p>

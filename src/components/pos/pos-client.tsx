@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   Search,
@@ -197,15 +197,26 @@ export function POSClient({
       })
   }, [])
 
-  // Filtered products list
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch =
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory =
-      selectedCategory === 'all' || p.category_id === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+  /*
+   * Memoised because this component re-renders on every cart interaction —
+   * adding an item, changing a quantity, typing a discount — and without it the
+   * entire catalogue was re-filtered, and the whole product grid re-rendered,
+   * each time. On a till with a few thousand products that is what made adding
+   * to the basket feel heavy. (React Compiler would do this automatically, but
+   * it is not enabled in next.config.ts — only its lint rules are.)
+   */
+  const filteredProducts = useMemo(() => {
+    const needle = searchQuery.trim().toLowerCase()
+    return products.filter((p) => {
+      const matchesSearch =
+        !needle ||
+        p.name.toLowerCase().includes(needle) ||
+        p.sku.toLowerCase().includes(needle)
+      const matchesCategory =
+        selectedCategory === 'all' || p.category_id === selectedCategory
+      return matchesSearch && matchesCategory
+    })
+  }, [products, searchQuery, selectedCategory])
 
   // Cart operations
   const addToCart = (product: any) => {
@@ -286,17 +297,25 @@ export function POSClient({
     }
   }
 
-  // Financial calculations
-  const subtotal = cart.reduce((sum, item) => {
-    const originalPrice = item.product.price * item.quantity
-    const itemDiscount = originalPrice * (item.discountPercent / 100)
-    return sum + (originalPrice - itemDiscount)
-  }, 0)
+  // Financial calculations — recomputed only when the basket or the discount
+  // actually changes, not on every keystroke in the product search.
+  const subtotal = useMemo(
+    () =>
+      cart.reduce((sum, item) => {
+        const originalPrice = item.product.price * item.quantity
+        const itemDiscount = originalPrice * (item.discountPercent / 100)
+        return sum + (originalPrice - itemDiscount)
+      }, 0),
+    [cart]
+  )
 
-  const calculatedDiscount =
-    generalDiscountType === 'percent'
-      ? subtotal * (generalDiscountValue / 100)
-      : Math.min(subtotal, generalDiscountValue)
+  const calculatedDiscount = useMemo(
+    () =>
+      generalDiscountType === 'percent'
+        ? subtotal * (generalDiscountValue / 100)
+        : Math.min(subtotal, generalDiscountValue),
+    [subtotal, generalDiscountType, generalDiscountValue]
+  )
 
   const postDiscountTotal = subtotal - calculatedDiscount
   const calculatedTax = 0
@@ -358,13 +377,24 @@ export function POSClient({
     const supabase = createClient() as any
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      // getSession() reads the JWT already in memory; getUser() spends a network
+      // round trip re-validating it with the auth server before a single row is
+      // written. At a till that delay is paid on every sale, and it buys nothing
+      // here — the id below is only used to stamp created_by/assigned_to, and
+      // the database validates the caller's identity from the same token
+      // regardless of what this code claims.
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error(tCommon('sessionNotFound'))
 
-      // 1 & 2. Fetch cashier profile and current stock for all cart items in parallel
-      const [{ data: profile }, { data: freshProducts }] = await Promise.all([
+      // Cashier profile, current stock, and the tenant's costing method: none
+      // depends on the others, so they travel together. The costing method used
+      // to be fetched after the order insert, turning it into a third
+      // sequential wait in the middle of the checkout.
+      const [{ data: profile }, { data: freshProducts }, { data: tenant }] = await Promise.all([
         supabase.from('profiles').select('full_name').eq('id', user.id).single(),
         supabase.from('products').select('id, stock').in('id', cart.map((item) => item.product.id)),
+        supabase.from('tenants').select('costing_method').limit(1).single(),
       ])
 
       const cashierName = profile?.full_name || 'Cashier'
@@ -411,18 +441,17 @@ export function POSClient({
       // before the parallel batch below since both the order item and the stock movement
       // need the realized cost, and layer consumption isn't safe to run twice per line.
       // RLS scopes this to the caller's own tenant row — no explicit filter needed.
-      const { data: tenant } = await supabase
-        .from('tenants')
-        .select('costing_method')
-        .limit(1)
-        .single()
-
       const method = getEffectiveCostingMethod(tenant)
-      const costByProductId = new Map<string, { unitCost: number; totalCost: number }>()
-      for (const item of cart) {
-        const consumed = await consumeCostLayers(supabase, item.product.id, item.quantity, method)
-        costByProductId.set(item.product.id, consumed)
-      }
+      // Each call only touches its own product's cost layers, and a cart never
+      // holds the same product twice (addToCart merges duplicates), so these are
+      // independent. Run at once: sequentially this was one full round trip per
+      // line, which is what made a large basket crawl.
+      const consumed = await Promise.all(
+        cart.map((item) => consumeCostLayers(supabase, item.product.id, item.quantity, method))
+      )
+      const costByProductId = new Map<string, { unitCost: number; totalCost: number }>(
+        cart.map((item, i) => [item.product.id, consumed[i]])
+      )
 
       // 4-7. Everything below only depends on orderData.id, not on each other —
       // fire them all in parallel instead of awaiting one round-trip at a time.
@@ -588,8 +617,22 @@ export function POSClient({
       })
       setProducts(updatedProducts)
 
-      // Revalidate cache
-      await Promise.all([
+      // Reset the till immediately. This used to run *after* awaiting the seven
+      // cache invalidations below, so the sale was already committed and the
+      // receipt already on screen while the just-sold items sat in the cart for
+      // as long as those round trips took — the cashier closed the receipt and
+      // watched the basket empty itself a couple of seconds later.
+      setCart([])
+      setSelectedCustomer(null)
+      setGeneralDiscountValue(0)
+      setTaxActive(false)
+      setPaymentMethod('cash')
+
+      // Cache invalidation is for *other* pages (reports, stock lists) on their
+      // next visit. Nothing on this screen is waiting for it — the product list
+      // and cart were both updated above from values already confirmed by the
+      // database — so it must not hold the till.
+      void Promise.all([
         invalidateProducts(),
         invalidateOrders(),
         invalidateOrderItems(),
@@ -597,14 +640,10 @@ export function POSClient({
         invalidateMovements(),
         invalidateCustomers(),
         invalidateInvoices()
-      ])
-
-      // Reset cart
-      setCart([])
-      setSelectedCustomer(null)
-      setGeneralDiscountValue(0)
-      setTaxActive(false)
-      setPaymentMethod('cash')
+      ]).catch(() => {
+        // A failed revalidation only means another page may show stale numbers
+        // until its own cache window lapses; the sale itself is already saved.
+      })
 
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
