@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { newPasswordSchema } from '@/lib/password-validation'
+import { changeOwnPassword } from '@/lib/change-password'
 
 export function SecurityForm() {
   const t = useTranslations('settings')
@@ -21,6 +22,7 @@ export function SecurityForm() {
   const supabase = createClient()
 
   const securitySchema = z.object({
+    currentPassword: z.string().min(1, tAuth('currentPasswordRequired')),
     password: newPasswordSchema(tAuth('passwordRequirements')),
     confirmPassword: newPasswordSchema(tAuth('passwordRequirements')),
   }).refine((data) => data.password === data.confirmPassword, {
@@ -30,9 +32,10 @@ export function SecurityForm() {
 
   type FormData = z.infer<typeof securitySchema>
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, reset, setError, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(securitySchema),
     defaultValues: {
+      currentPassword: '',
       password: '',
       confirmPassword: '',
     },
@@ -41,13 +44,16 @@ export function SecurityForm() {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true)
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: data.password,
-      })
+      const result = await changeOwnPassword(supabase, data.currentPassword, data.password)
+      if (!result.ok) {
+        if (result.reason === 'wrong-current') {
+          setError('currentPassword', { message: tAuth('currentPasswordWrong') })
+          return
+        }
+        throw new Error(result.message || tCommon('error'))
+      }
 
-      if (error) throw error
-
-      toast.success(tCommon('success'))
+      toast.success(tAuth('passwordChangedSignedOutOthers'))
       reset()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
@@ -65,7 +71,23 @@ export function SecurityForm() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="password">{tAuth('password')} *</Label>
+            <Label htmlFor="currentPassword">{tAuth('currentPassword')} *</Label>
+            <PasswordInput
+              id="currentPassword"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              showLabel={tAuth('showPassword')}
+              hideLabel={tAuth('hidePassword')}
+              {...register('currentPassword')}
+              className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
+            />
+            {errors.currentPassword && (
+              <p className="text-sm text-red-500">{errors.currentPassword.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">{tAuth('newPassword')} *</Label>
             <PasswordInput
               id="password"
               placeholder="••••••••"

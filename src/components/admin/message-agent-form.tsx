@@ -3,7 +3,13 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Loader2, Send } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { useTranslations } from 'next-intl'
+import {
+  AdminField,
+  AdminFormActions,
+  AdminFormSection,
+  AdminFormShell,
+} from '@/components/admin/admin-form-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
  * so an agent has one place to look rather than two.
  */
 export function MessageAgentForm({ agentId, agentName }: { agentId: string; agentName: string }) {
+  const t = useTranslations('admin.support.message')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -51,38 +58,42 @@ export function MessageAgentForm({ agentId, agentName }: { agentId: string; agen
   }
 
   return (
-    <Card className="border-0 shadow-sm max-w-3xl">
-      <CardHeader>
-        <CardTitle className="text-base">Message {agentName}</CardTitle>
-        <CardDescription>Sends a direct message into this agent&apos;s support portal.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSend} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="agent-msg-subject">Subject</Label>
+    <AdminFormShell>
+      <form onSubmit={handleSend}>
+        <AdminFormSection
+          icon={Send}
+          title={t('title', { name: agentName })}
+          description={t('hint')}
+          columns={1}
+        >
+          <AdminField>
+            <Label htmlFor="agent-msg-subject">{t('subject')}</Label>
             <Input
               id="agent-msg-subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g. New tenant assigned"
+              placeholder={t('subjectPlaceholder')}
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="agent-msg-body">Message</Label>
+          </AdminField>
+          <AdminField>
+            <Label htmlFor="agent-msg-body">{t('body')}</Label>
             <Textarea
               id="agent-msg-body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={4}
-              placeholder="Write your message…"
+              placeholder={t('bodyPlaceholder')}
             />
-          </div>
-          <Button type="submit" disabled={isSending}>
+          </AdminField>
+        </AdminFormSection>
+
+        <AdminFormActions>
+          <Button type="submit" disabled={isSending} className="bg-violet-600 hover:bg-violet-500">
             {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            Send
+            {t('send')}
           </Button>
-        </form>
-      </CardContent>
-    </Card>
+        </AdminFormActions>
+      </form>
+    </AdminFormShell>
   )
 }

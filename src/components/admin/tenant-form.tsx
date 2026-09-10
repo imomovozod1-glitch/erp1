@@ -16,8 +16,13 @@ import { Textarea } from '@/components/ui/textarea'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { DatePicker } from '@/components/ui/date-picker'
+import {
+  AdminField,
+  AdminFormActions,
+  AdminFormSection,
+  AdminFormShell,
+} from '@/components/admin/admin-form-layout'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
 import { isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
@@ -58,13 +63,6 @@ function addMonths(dateStr: string, months: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-function SectionHeading({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
-  return (
-    <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-      <Icon className="h-3.5 w-3.5" /> {children}
-    </h3>
-  )
-}
 
 /**
  * Preset-pill selector with a "custom" fallback — the modern equivalent of a
@@ -262,201 +260,190 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
   }
 
   return (
-    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          <div className="space-y-4">
-            <SectionHeading icon={Building2}>{t('sectionBasics')}</SectionHeading>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="company_name" className="flex items-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {t('companyName')}
-                </Label>
-                <Input id="company_name" placeholder={t('companyNamePlaceholder')} {...register('company_name')} />
-                {errors.company_name && <p className="text-sm text-red-500">{errors.company_name.message}</p>}
-              </div>
+    <AdminFormShell>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <AdminFormSection icon={Building2} title={t('sectionBasics')} description={t('sectionBasicsHint')}>
+          <AdminField>
+            <Label htmlFor="company_name" className="flex items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {t('companyName')}
+            </Label>
+            <Input id="company_name" placeholder={t('companyNamePlaceholder')} {...register('company_name')} />
+            {errors.company_name && <p className="text-sm text-red-500">{errors.company_name.message}</p>}
+          </AdminField>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="subdomain" className="flex items-center gap-1.5">
-                  <Globe className="h-3.5 w-3.5 text-muted-foreground" /> {t('subdomain')}
-                </Label>
-                <Input id="subdomain" placeholder={t('subdomainPlaceholder')} {...register('subdomain')} />
-                {errors.subdomain ? (
-                  <p className="text-sm text-red-500">{errors.subdomain.message}</p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">{t('subdomainHint')}</p>
-                )}
-              </div>
+          <AdminField>
+            <Label htmlFor="subdomain" className="flex items-center gap-1.5">
+              <Globe className="h-3.5 w-3.5 text-muted-foreground" /> {t('subdomain')}
+            </Label>
+            <Input id="subdomain" placeholder={t('subdomainPlaceholder')} {...register('subdomain')} />
+            {errors.subdomain ? (
+              <p className="text-sm text-red-500">{errors.subdomain.message}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">{t('subdomainHint')}</p>
+            )}
+          </AdminField>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="phone" className="flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground" /> {t('phone')}
-                </Label>
-                <Controller
-                  control={control}
-                  name="phone"
-                  render={({ field }) => (
-                    <PhoneInput
-                      id="phone"
-                      placeholder={t('phonePlaceholder')}
-                      value={field.value ?? ''}
-                      onChange={field.onChange}
-                      hasError={!!errors.phone}
-                    />
-                  )}
+          <AdminField>
+            <Label htmlFor="phone" className="flex items-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-muted-foreground" /> {t('phone')}
+            </Label>
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field }) => (
+                <PhoneInput
+                  id="phone"
+                  placeholder={t('phonePlaceholder')}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  hasError={!!errors.phone}
                 />
-                {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
-              </div>
-
-              {mode === 'create' && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="password" className="flex items-center gap-1.5">
-                    <KeyRound className="h-3.5 w-3.5 text-muted-foreground" /> {t('password')}
-                  </Label>
-                  <PasswordInput
-                    id="password"
-                    placeholder={t('passwordPlaceholder')}
-                    showLabel={tPassword('show')}
-                    hideLabel={tPassword('hide')}
-                    {...register('password')}
-                  />
-                  {errors.password ? (
-                    <p className="text-sm text-red-500">{errors.password.message}</p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
-                  )}
-                </div>
               )}
-            </div>
-          </div>
+            />
+            {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
+          </AdminField>
 
-          <div className="space-y-5 border-t pt-6 dark:border-slate-800">
-            <SectionHeading icon={ReceiptText}>{t('sectionSubscription')}</SectionHeading>
-
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
+          {mode === 'create' && (
+            <AdminField>
+              <Label htmlFor="password" className="flex items-center gap-1.5">
+                <KeyRound className="h-3.5 w-3.5 text-muted-foreground" /> {t('password')}
               </Label>
-              <Controller
-                control={control}
-                name="costing_method"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full sm:w-64">
-                      <SelectValue>
-                        {(value: 'fifo' | 'lifo' | 'aveco') => tCosting(value)}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fifo">{tCosting('fifo')}</SelectItem>
-                      <SelectItem value="lifo">{tCosting('lifo')}</SelectItem>
-                      <SelectItem value="aveco">{tCosting('aveco')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
+              <PasswordInput
+                id="password"
+                placeholder={t('passwordPlaceholder')}
+                showLabel={tPassword('show')}
+                hideLabel={tPassword('hide')}
+                {...register('password')}
               />
-            </div>
+              {errors.password ? (
+                <p className="text-sm text-red-500">{errors.password.message}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
+              )}
+            </AdminField>
+          )}
+        </AdminFormSection>
 
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseCount')}
+        <AdminFormSection icon={ReceiptText} title={t('sectionSubscription')} description={t('sectionSubscriptionHint')}>
+          <AdminField>
+            <Label className="flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
+            </Label>
+            <Controller
+              control={control}
+              name="costing_method"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {(value: 'fifo' | 'lifo' | 'aveco') => tCosting(value)}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fifo">{tCosting('fifo')}</SelectItem>
+                    <SelectItem value="lifo">{tCosting('lifo')}</SelectItem>
+                    <SelectItem value="aveco">{tCosting('aveco')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </AdminField>
+
+          <AdminField wide>
+            <Label className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseCount')}
+            </Label>
+            <Controller
+              control={control}
+              name="license_count"
+              render={({ field: { value } }) => (
+                <PresetPicker
+                  value={value}
+                  options={LICENSE_COUNT_PRESETS}
+                  onSelect={(v) => setValue('license_count', v, { shouldValidate: true })}
+                  customLabel={t('custom')}
+                />
+              )}
+            />
+            {errors.license_count && <p className="text-sm text-red-500">{errors.license_count.message}</p>}
+          </AdminField>
+
+          <AdminField wide>
+            <Label className="flex items-center gap-1.5">
+              <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseMonths')}
+            </Label>
+            <Controller
+              control={control}
+              name="license_months"
+              render={({ field: { value } }) => (
+                <PresetPicker
+                  value={value}
+                  options={DURATION_PRESETS}
+                  onSelect={applyDurationPreset}
+                  customLabel={t('custom')}
+                  suffix={t('months')}
+                />
+              )}
+            />
+            {errors.license_months && <p className="text-sm text-red-500">{errors.license_months.message}</p>}
+          </AdminField>
+
+          <AdminField>
+            <Label htmlFor="subscription_started_at" className="flex items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionStart')}
+            </Label>
+            <Controller
+              control={control}
+              name="subscription_started_at"
+              render={({ field }) => (
+                <DatePicker
+                  id="subscription_started_at"
+                  value={field.value}
+                  onChange={handleStartDateChange}
+                  lang={lang}
+                  placeholder={t('selectDatePlaceholder')}
+                />
+              )}
+            />
+            {errors.subscription_started_at && (
+              <p className="text-sm text-red-500">{errors.subscription_started_at.message}</p>
+            )}
+          </AdminField>
+
+          <AdminField>
+            <Label className="flex items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
+            </Label>
+            {/* Computed from start date + duration preset above — not
+                directly editable, so it can never drift out of sync with
+                the chosen duration (see handleStartDateChange/applyDurationPreset). */}
+            <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+              {watchedEndDate ? formatDate(watchedEndDate) : '—'}
+            </div>
+            {errors.subscription_ends_at && (
+              <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
+            )}
+          </AdminField>
+
+          {mode === 'create' && (
+            <AdminField>
+              <Label htmlFor="price_paid" className="flex items-center gap-1.5">
+                <Wallet className="h-3.5 w-3.5 text-muted-foreground" /> {t('initialPayment')}
               </Label>
               <Controller
                 control={control}
-                name="license_count"
+                name="price_paid"
                 render={({ field: { value, onChange } }) => (
-                  <PresetPicker
-                    value={value}
-                    options={LICENSE_COUNT_PRESETS}
-                    onSelect={onChange}
-                    customLabel={t('custom')}
-                  />
+                  <NumericInput id="price_paid" placeholder="0" value={value ?? undefined} onChange={onChange} />
                 )}
               />
-              {errors.license_count && <p className="text-sm text-red-500">{errors.license_count.message}</p>}
-            </div>
+              {errors.price_paid && <p className="text-sm text-red-500">{errors.price_paid.message}</p>}
+            </AdminField>
+          )}
+        </AdminFormSection>
 
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5">
-                <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseMonths')}
-              </Label>
-              <Controller
-                control={control}
-                name="license_months"
-                render={({ field: { value } }) => (
-                  <PresetPicker
-                    value={value}
-                    options={DURATION_PRESETS}
-                    onSelect={applyDurationPreset}
-                    customLabel={t('custom')}
-                    suffix={t('months')}
-                  />
-                )}
-              />
-              {errors.license_months && <p className="text-sm text-red-500">{errors.license_months.message}</p>}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="subscription_started_at" className="flex items-center gap-1.5">
-                  <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionStart')}
-                </Label>
-                <Controller
-                  control={control}
-                  name="subscription_started_at"
-                  render={({ field }) => (
-                    <DatePicker
-                      id="subscription_started_at"
-                      value={field.value}
-                      onChange={handleStartDateChange}
-                      lang={lang}
-                      placeholder={t('selectDatePlaceholder')}
-                    />
-                  )}
-                />
-                {errors.subscription_started_at && (
-                  <p className="text-sm text-red-500">{errors.subscription_started_at.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
-                </Label>
-                {/* Computed from start date + duration preset above — not
-                    directly editable, so it can never drift out of sync with
-                    the chosen duration (see handleStartDateChange/applyDurationPreset). */}
-                <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 dark:bg-slate-800/50 px-3 text-sm text-slate-700 dark:text-slate-300">
-                  {watchedEndDate ? formatDate(watchedEndDate) : '—'}
-                </div>
-                {errors.subscription_ends_at && (
-                  <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
-                )}
-                {errors.subscription_ends_at && (
-                  <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
-                )}
-              </div>
-
-              {mode === 'create' && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="price_paid" className="flex items-center gap-1.5">
-                    <Wallet className="h-3.5 w-3.5 text-muted-foreground" /> {t('initialPayment')}
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="price_paid"
-                    render={({ field: { value, onChange } }) => (
-                      <NumericInput id="price_paid" placeholder="0" value={value ?? undefined} onChange={onChange} />
-                    )}
-                  />
-                  {errors.price_paid && <p className="text-sm text-red-500">{errors.price_paid.message}</p>}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-1.5 border-t pt-6 dark:border-slate-800">
-            <SectionHeading icon={LifeBuoy}>{t('sectionSupport')}</SectionHeading>
+        <AdminFormSection icon={LifeBuoy} title={t('sectionSupport')} description={t('sectionSupportHint')} columns={1}>
+          <AdminField>
             <Controller
               control={control}
               name="support_agent_id"
@@ -479,26 +466,25 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
                 </Select>
               )}
             />
-          </div>
+          </AdminField>
+        </AdminFormSection>
 
-          <div className="space-y-4 border-t pt-6 dark:border-slate-800">
-            <SectionHeading icon={FileText}>{t('sectionNotes')}</SectionHeading>
-            <div className="space-y-1.5">
-              <Textarea id="details" rows={4} placeholder={t('detailsPlaceholder')} {...register('details')} />
-            </div>
-          </div>
+        <AdminFormSection icon={FileText} title={t('sectionNotes')} description={t('sectionNotesHint')} columns={1}>
+          <AdminField>
+            <Textarea id="details" rows={4} placeholder={t('detailsPlaceholder')} {...register('details')} />
+          </AdminField>
+        </AdminFormSection>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500">
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {mode === 'create' ? t('create') : t('save')}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => exitForm()}>
-              {t('cancel')}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        <AdminFormActions>
+          <Button type="button" variant="outline" onClick={() => exitForm()}>
+            {t('cancel')}
+          </Button>
+          <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500">
+            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {mode === 'create' ? t('create') : t('save')}
+          </Button>
+        </AdminFormActions>
+      </form>
+    </AdminFormShell>
   )
 }

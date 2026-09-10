@@ -14,7 +14,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { PasswordInput } from '@/components/ui/password-input'
-import { Card, CardContent } from '@/components/ui/card'
+import {
+  AdminField,
+  AdminFormActions,
+  AdminFormSection,
+  AdminFormShell,
+} from '@/components/admin/admin-form-layout'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
 
@@ -82,18 +87,18 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
   }
 
   return (
-    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-3xl">
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
+    <AdminFormShell>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <AdminFormSection icon={User} title={t('sectionAgent')} description={t('sectionAgentHint')}>
+          <AdminField>
             <Label htmlFor="full_name" className="flex items-center gap-1.5">
               <User className="h-3.5 w-3.5 text-muted-foreground" /> {t('fullName')}
             </Label>
             <Input id="full_name" {...register('full_name')} />
             {errors.full_name && <p className="text-sm text-red-500">{errors.full_name.message}</p>}
-          </div>
+          </AdminField>
 
-          <div className="space-y-1.5">
+          <AdminField>
             <Label htmlFor="phone" className="flex items-center gap-1.5">
               <Phone className="h-3.5 w-3.5 text-muted-foreground" /> {t('phone')}
             </Label>
@@ -111,9 +116,9 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
               )}
             />
             {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
-          </div>
+          </AdminField>
 
-          <div className="space-y-1.5">
+          <AdminField>
             <Label htmlFor="password" className="flex items-center gap-1.5">
               <KeyRound className="h-3.5 w-3.5 text-muted-foreground" /> {t('password')}
             </Label>
@@ -129,19 +134,19 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
             ) : (
               <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
             )}
-          </div>
+          </AdminField>
+        </AdminFormSection>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500">
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {mode === 'create' ? t('create') : t('save')}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => exitForm()}>
-              {t('cancel')}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        <AdminFormActions>
+          <Button type="button" variant="outline" onClick={() => exitForm()}>
+            {t('cancel')}
+          </Button>
+          <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500">
+            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {mode === 'create' ? t('create') : t('save')}
+          </Button>
+        </AdminFormActions>
+      </form>
+    </AdminFormShell>
   )
 }
