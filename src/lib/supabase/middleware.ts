@@ -30,6 +30,29 @@ function markForceLogoutChecked(response: NextResponse, userId: string) {
   })
 }
 
+// A stale `sb-*-auth-token` cookie whose refresh token no longer exists on the
+// Auth server (project/keys swapped, user deleted, token already rotated) makes
+// every single request log an AuthApiError and never recovers on its own: the
+// browser keeps re-sending the same dead cookie. Detect that specific case and
+// expire the auth cookies so the next request is cleanly anonymous and lands on
+// /login instead of looping through the same failed refresh.
+function isDeadRefreshToken(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false
+  return (
+    error.code === 'refresh_token_not_found' ||
+    error.code === 'refresh_token_already_used' ||
+    /refresh token/i.test(error.message ?? '')
+  )
+}
+
+function clearAuthCookies(request: NextRequest, response: NextResponse) {
+  for (const cookie of request.cookies.getAll()) {
+    if (cookie.name.startsWith('sb-') || cookie.name === FORCE_LOGOUT_CHECK_COOKIE) {
+      response.cookies.set(cookie.name, '', { maxAge: 0, path: '/' })
+    }
+  }
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -63,9 +86,12 @@ export async function updateSession(request: NextRequest) {
   )
 
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user }, error } = await supabase.auth.getUser()
+
+    if (isDeadRefreshToken(error)) {
+      clearAuthCookies(request, supabaseResponse)
+      return { supabaseResponse, user: null }
+    }
 
     if (user && !wasForceLogoutRecentlyChecked(request, user.id)) {
       // Force-logout check: if a super-admin reset this user's password more
