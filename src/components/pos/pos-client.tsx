@@ -59,13 +59,13 @@ import {
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useSidebar } from '@/components/ui/sidebar'
-import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from 'sonner'
 import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { isValidPhone } from '@/lib/phone-validation'
 import { printReceiptDirect } from '@/lib/printer/print'
+import { getPrinterConfig, DEFAULT_PRINTER_CONFIG, type PrinterConfig } from '@/lib/printer/storage'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 
 // Module-level pure helper functions to satisfy strict React compiler rules
@@ -166,6 +166,14 @@ export function POSClient({
   const [isLoadingCheckout, setIsLoadingCheckout] = useState(false)
   const [checkoutSuccessOrder, setCheckoutSuccessOrder] = useState<any>(null)
   const [companyInfo, setCompanyInfo] = useState<{ name: string; phone?: string }>({ name: 'ERP System' })
+  /* Receipt wording/lines, configured in Settings → Receipt. Read after mount
+     rather than in the initialiser: getPrinterConfig() touches localStorage,
+     which does not exist during the server render and would desync hydration. */
+  const [receiptConfig, setReceiptConfig] = useState<PrinterConfig>(DEFAULT_PRINTER_CONFIG)
+  useEffect(() => {
+    const timer = setTimeout(() => setReceiptConfig(getPrinterConfig()), 0)
+    return () => clearTimeout(timer)
+  }, [])
   
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false)
   const [newCustomerName, setNewCustomerName] = useState('')
@@ -809,17 +817,24 @@ export function POSClient({
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+              /* Tighter, quieter tiles than before: the old card lifted on
+                 hover, scaled its photo, printed the price in violet and
+                 stamped a coloured pill on every single item — three accent
+                 colours per tile across a grid of forty. A till needs the
+                 photo, the name and the price to read instantly; stock is
+                 secondary text and only speaks up (in one colour) when it is
+                 actually running out. */
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                 {filteredProducts.map((p) => {
                   const isOutOfStock = p.stock <= 0
                   const isLowStock = p.stock > 0 && p.stock <= p.min_stock
                   return (
-                    <Card
+                    <button
                       key={p.id}
-                      onClick={() => !isOutOfStock && addToCart(p)}
-                      className={`border border-slate-200 dark:border-slate-700 hover:border-violet-300 dark:hover:border-violet-700 hover:-translate-y-0.5 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl cursor-pointer bg-white dark:bg-slate-900 overflow-hidden group select-none py-0 ${
-                        isOutOfStock ? 'opacity-50 pointer-events-none' : ''
-                      }`}
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={() => addToCart(p)}
+                      className="group flex select-none flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-colors duration-150 hover:border-violet-400 disabled:pointer-events-none disabled:opacity-45 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-violet-600"
                     >
                       {/* Photo band — same height for every tile whether or not the
                           product has an image, so the grid rows stay aligned.
@@ -827,48 +842,42 @@ export function POSClient({
                           recognise the whole product at a glance: photos come in
                           every aspect ratio and cropping to fill the band cut the
                           top and bottom off portrait shots. */}
-                      <div className="relative h-28 w-full shrink-0 bg-slate-100 dark:bg-slate-800 p-1.5">
+                      <div className="relative h-24 w-full shrink-0 bg-slate-50 p-2 dark:bg-slate-800/60">
                         {p.image_url ? (
                           <Image
                             src={p.image_url}
                             alt={p.name}
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                            className="object-contain transition-transform duration-200 group-hover:scale-105"
+                            className="object-contain"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
-                            <Package className="h-8 w-8" />
+                            <Package className="h-7 w-7" />
                           </div>
                         )}
                       </div>
-                      <CardContent className="p-3.5 flex flex-col justify-between h-34 gap-2">
-                        <div className="space-y-1">
-                          <p className="font-semibold text-slate-800 dark:text-slate-200 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">
-                            {p.name}
-                          </p>
-                          <code className="text-[10px] text-slate-400 dark:text-slate-500 font-mono tracking-wider">
-                            {p.sku}
-                          </code>
-                        </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                          <p className="font-bold text-violet-700 dark:text-violet-400 text-sm md:text-base">
-                            {formatCurrency(p.price)}
-                          </p>
-
-                          {isOutOfStock ? (
-                            <StatusBadge tone="rose" label={t('outOfStock')} />
-                          ) : (
-                            <StatusBadge
-                              tone={isLowStock ? 'amber' : 'emerald'}
-                              label={`${p.stock} ${p.unit || tCommon('pieces')}`}
-                              className="px-1.5 py-0 text-[10px]"
-                            />
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+                      <div className="flex flex-1 flex-col gap-1 p-3">
+                        <p className="line-clamp-2 min-h-[2.2rem] text-xs font-medium leading-snug text-slate-800 dark:text-slate-200">
+                          {p.name}
+                        </p>
+                        <p className="mt-auto text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                          {formatCurrency(p.price)}
+                        </p>
+                        <p
+                          className={
+                            isOutOfStock || isLowStock
+                              ? 'text-[11px] font-medium text-amber-600 dark:text-amber-400'
+                              : 'text-[11px] text-slate-400 dark:text-slate-500'
+                          }
+                        >
+                          {isOutOfStock
+                            ? t('outOfStock')
+                            : `${p.stock} ${p.unit || tCommon('pieces')}`}
+                        </p>
+                      </div>
+                    </button>
                   )
                 })}
               </div>
@@ -1278,6 +1287,9 @@ export function POSClient({
           >
             <div className="text-center space-y-1 mb-4">
               <h2 className="text-base font-bold text-slate-800">{companyInfo.name}</h2>
+              {receiptConfig.headerText && (
+                <p className="text-[10px] text-slate-500">{receiptConfig.headerText}</p>
+              )}
               {companyInfo.phone && <p className="text-[10px] text-slate-400">{companyInfo.phone}</p>}
               <div className="border-b border-dashed border-slate-200 my-2" />
             </div>
@@ -1291,14 +1303,18 @@ export function POSClient({
                 <span>Date:</span>
                 <span>{checkoutSuccessOrder?.date}</span>
               </div>
-              <div className="flex justify-between">
-                <span>{t('cashier')}:</span>
-                <span>{checkoutSuccessOrder?.cashier}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t('customer')}:</span>
-                <span className="font-medium text-slate-700">{checkoutSuccessOrder?.customerName}</span>
-              </div>
+              {receiptConfig.showCashier && (
+                <div className="flex justify-between">
+                  <span>{t('cashier')}:</span>
+                  <span>{checkoutSuccessOrder?.cashier}</span>
+                </div>
+              )}
+              {receiptConfig.showCustomer && (
+                <div className="flex justify-between">
+                  <span>{t('customer')}:</span>
+                  <span className="font-medium text-slate-700">{checkoutSuccessOrder?.customerName}</span>
+                </div>
+              )}
             </div>
 
             <div className="border-b border-dashed border-slate-200 my-2" />
@@ -1345,19 +1361,25 @@ export function POSClient({
                 <span>{t('total')}:</span>
                 <span>{formatCurrency(checkoutSuccessOrder?.total || 0)}</span>
               </div>
-              <div className="flex justify-between text-[11px] font-semibold text-slate-500">
-                <span>{t('paymentMethod')}:</span>
-                <span className="uppercase">{checkoutSuccessOrder?.paymentMethod}</span>
-              </div>
+              {receiptConfig.showPaymentMethod && (
+                <div className="flex justify-between text-[11px] font-semibold text-slate-500">
+                  <span>{t('paymentMethod')}:</span>
+                  <span className="uppercase">{checkoutSuccessOrder?.paymentMethod}</span>
+                </div>
+              )}
             </div>
 
             {/* Footer barcode mockup */}
             <div className="text-center space-y-1.5 pt-2 border-t border-dashed border-slate-200">
-              <div className="inline-block tracking-widest font-mono text-[9px] bg-slate-100 text-slate-500 px-3 py-1 rounded">
-                |||| | ||||| | || |||| | | ||| | |||
-              </div>
-              <p className="text-[10px] text-slate-400">{t('thankYou')}</p>
-              <p className="text-[9px] text-slate-400 font-bold">powered by ERP System</p>
+              {receiptConfig.showBarcode && (
+                <div className="inline-block tracking-widest font-mono text-[9px] bg-slate-100 text-slate-500 px-3 py-1 rounded">
+                  |||| | ||||| | || |||| | | ||| | |||
+                </div>
+              )}
+              <p className="text-[10px] text-slate-400">{receiptConfig.footerText || t('thankYou')}</p>
+              {receiptConfig.showPoweredBy && (
+                <p className="text-[9px] text-slate-400 font-bold">powered by ERP System</p>
+              )}
             </div>
           </div>
 

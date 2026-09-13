@@ -102,7 +102,7 @@ export function SuppliersTable({
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/${lang}/procurement/suppliers/${supplier.id}`}
-                            className="text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 hover:underline transition-colors font-semibold"
+                            className="font-semibold text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
                           >
                             {supplier.name}
                           </Link>

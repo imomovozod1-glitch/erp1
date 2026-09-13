@@ -662,8 +662,8 @@
     "permissionsSaveError": "Failed to save permissions",
     "permissionsAdminHint": "Users with the Admin role always have full access to every module",
     "moduleColumn": "Module",
-    "printerTitle": "Receipt printer",
-    "printerCardDesc": "Connect and configure a receipt printer",
+    "printerTitle": "Receipt settings",
+    "printerCardDesc": "Connect a receipt printer and configure what the slip says",
     "printer": {
       "title": "Receipt printer settings",
       "description": "Print POS receipts directly to a printer (USB/Bluetooth) or through the system print dialog",
@@ -706,7 +706,20 @@
       "labelTax": "Tax",
       "labelPaymentMethod": "Payment method",
       "paperWidthCustom": "Custom",
-      "customColumnsHint": "Characters per line ({min}-{max})"
+      "customColumnsHint": "Characters per line ({min}-{max})",
+      "receiptSection": "Receipt content",
+      "receiptSectionDesc": "Choose what gets printed on the slip",
+      "headerText": "Header line",
+      "headerTextPlaceholder": "Branch name or slogan",
+      "footerText": "Footer line",
+      "footerTextPlaceholder": "Thank you for your purchase!",
+      "receiptLines": "Receipt lines",
+      "showCashier": "Cashier",
+      "showCustomer": "Customer",
+      "showPaymentMethod": "Payment method",
+      "showBarcode": "Barcode",
+      "showPoweredBy": "\"powered by\" line",
+      "receiptPreview": "Preview"
     },
     "integrationsTitle": "Integrations",
     "integrationsCardDesc": "Connect a Telegram bot and external services",
@@ -1768,7 +1781,12 @@
       "stock_out": "Out",
       "before": "Before",
       "after": "After",
-      "reason": "Reason"
+      "reason": "Reason",
+      "seller": "Seller",
+      "share": "Share",
+      "avgCheck": "Average check",
+      "cumulativeShare": "Cumulative share",
+      "abcClass": "Class"
     },
     "viewTable": "Table",
     "viewChart": "Chart",
@@ -1827,6 +1845,62 @@
       "productTypes": "Distinct products sold",
       "topProductRevenue": "Top product revenue",
       "lowStockCount": "Low stock items"
+    },
+    "catalog": "Reports",
+    "openReport": "Open",
+    "dailyRevenue": "Daily revenue",
+    "topProductsTitle": "Top selling products",
+    "recentSales": "Recent sales",
+    "searchOrderOrCustomer": "Order or customer…",
+    "searchProduct": "Product name or SKU…",
+    "activeSellers": "Sellers",
+    "activeCustomers": "Customers",
+    "walkInCustomer": "Walk-in",
+    "cards": {
+      "sales": {
+        "title": "Sales overview",
+        "desc": "Revenue, profit, receipt count and a daily chart for the period"
+      },
+      "employees": {
+        "title": "Sales by employee",
+        "desc": "Revenue, receipts and average check per salesperson"
+      },
+      "customers": {
+        "title": "Sales by customer",
+        "desc": "Who bought how much, and their share of the total"
+      },
+      "products": {
+        "title": "Sales by product",
+        "desc": "Best sellers, and the products barely selling or not selling at all"
+      },
+      "abc": {
+        "title": "ABC analysis",
+        "desc": "Products split into A, B and C by their contribution to revenue"
+      }
+    },
+    "slowMovers": {
+      "title": "Slow-moving products",
+      "desc": "Products that barely sold in the period — ranked by the money tied up in their stock",
+      "kpiLabel": "Slow movers",
+      "kpiHint": "{value} sitting in stock",
+      "neverSold": "Never sold",
+      "neverSoldShort": "Never",
+      "upToUnits": "Up to {count} units",
+      "includeOutOfStock": "Include zero stock",
+      "soldInPeriod": "Sold in period",
+      "lastSale": "Last sale",
+      "daysAgo": "{count} days ago",
+      "tiedUpValue": "Tied-up value",
+      "totalTiedUp": "Total tied up"
+    },
+    "abc": {
+      "rule": {
+        "A": "First 80% of revenue",
+        "B": "Next 15%",
+        "C": "Final 5%"
+      },
+      "groupSummary": "{count} products ({countShare}%) — {share}% of revenue",
+      "barHint": "Width is the share of products: A earns the first {a}% of revenue, B up to {b}%, C the rest"
     }
   },
   "offline": {

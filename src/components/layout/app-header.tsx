@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Bell, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
+import { Bell, LogOut, Settings, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
@@ -477,10 +477,6 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => window.location.href = `/${lang}/settings/profile`}>
-            <User className="mr-2 h-4 w-4" />
-            {tSettings('profile')}
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => window.location.href = `/${lang}/settings`}>
             <Settings className="mr-2 h-4 w-4" />
             {tSettings('title')}

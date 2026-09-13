@@ -121,7 +121,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
   const tProcurement = useTranslations('procurement')
   const tSettings = useTranslations('settings')
   const pathname = usePathname()
-  const { isMobile, setOpenMobile } = useSidebar()
+  const { isMobile, setOpenMobile, state, setOpen } = useSidebar()
   const closeOnMobile = () => {
     if (isMobile) setOpenMobile(false)
   }
@@ -143,6 +143,15 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
   })
 
   const toggleExpand = (key: string) => {
+    // Collapsed to icons, the sub-menu is hidden by CSS
+    // (group-data-[collapsible=icon]:hidden), so toggling a group did nothing
+    // visible at all — the click looked broken. Re-open the rail first, then
+    // expand the group the user actually asked for.
+    if (!isMobile && state === 'collapsed') {
+      setOpen(true)
+      setExpandedItems(prev => ({ ...prev, [key]: true }))
+      return
+    }
     setExpandedItems(prev => ({
       ...prev,
       [key]: !prev[key]
@@ -310,7 +319,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
             ) : (
               <SidebarMenuButton
                 size="lg"
-                render={<Link href={`/${lang}/settings/profile`} prefetch={true} onClick={closeOnMobile} />}
+                render={<Link href={`/${lang}/settings`} prefetch={true} onClick={closeOnMobile} />}
               >
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarFallback className="rounded-lg bg-violet-100 text-violet-700 text-xs font-semibold">

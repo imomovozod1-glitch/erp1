@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { UserCheck } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useCurrentUserId } from '@/lib/hooks/use-current-user-id'
 
 export interface AssignableUser {
   id: string
@@ -21,7 +22,10 @@ export interface AssignableUser {
  *
  * Defaults to the current user when nothing is chosen, so a document is never
  * left unassigned by accident (an unassigned document is invisible to everyone
- * whose scope is `own`).
+ * whose scope is `own`). Half the forms did not pass `currentUserId`, so the
+ * picker read "Unassigned" while the submit handler was quietly saving the
+ * document to the current user anyway — the fallback is resolved here now, so
+ * what the field shows is what gets written.
  */
 export function AssigneeSelect({
   value,
@@ -37,7 +41,8 @@ export function AssigneeSelect({
   disabled?: boolean
 }) {
   const t = useTranslations('common')
-  const selected = value ?? currentUserId ?? null
+  const sessionUserId = useCurrentUserId()
+  const selected = value ?? currentUserId ?? sessionUserId ?? null
   const label = (id: string | null) =>
     users.find((u) => u.id === id)?.full_name || t('unassigned')
 

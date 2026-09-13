@@ -445,7 +445,7 @@ export function ReportBuilder({ today }: { today: string }) {
                     key={entry.name}
                     className="inline-flex items-center gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 pl-3 pr-1.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300"
                   >
-                    <button type="button" onClick={() => handleLoad(entry)} className="hover:underline">
+                    <button type="button" onClick={() => handleLoad(entry)} className="transition-colors hover:text-violet-600 dark:hover:text-violet-400">
                       {entry.name}
                     </button>
                     <button

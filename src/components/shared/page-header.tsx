@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 import { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageInfoButton } from '@/components/shared/page-info-button'
+import { BackButton } from '@/components/shared/back-button'
 import Link from 'next/link'
 
 interface PageHeaderProps {
@@ -15,6 +16,13 @@ interface PageHeaderProps {
     icon?: LucideIcon
   }
   breadcrumbs?: { label: string; href?: string }[]
+  /**
+   * Back control. Rendered on every page by default — the dashboard is the
+   * only route with nothing above it, and BackButton returns null there of its
+   * own accord. Pass `false` to suppress it, or a path to override where it
+   * goes when there is no in-app history to return to.
+   */
+  back?: boolean | string
   children?: React.ReactNode
   className?: string
 }
@@ -25,6 +33,7 @@ export function PageHeader({
   info,
   action,
   breadcrumbs,
+  back = true,
   children,
   className,
 }: PageHeaderProps) {
@@ -49,7 +58,8 @@ export function PageHeader({
             ))}
           </nav>
         )}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
+          {back !== false && <BackButton href={typeof back === 'string' ? back : undefined} />}
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{title}</h1>
           {info && <PageInfoButton text={info} />}
         </div>

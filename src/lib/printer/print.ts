@@ -46,6 +46,13 @@ export async function printReceiptDirect(
     cyrillic: config.cyrillic,
     codepage: config.codepage,
     openDrawer: config.openDrawerOnSale,
+    content: {
+      headerText: config.headerText,
+      footerText: config.footerText,
+      showCashier: config.showCashier,
+      showCustomer: config.showCustomer,
+      showPaymentMethod: config.showPaymentMethod,
+    },
   })
 
   try {

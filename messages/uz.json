@@ -662,8 +662,8 @@
     "permissionsSaveError": "Ruxsatlarni saqlab bo'lmadi",
     "permissionsAdminHint": "Administrator rolidagi foydalanuvchilar har doim barcha bo'limlarga to'liq kirish huquqiga ega",
     "moduleColumn": "Bo'lim",
-    "printerTitle": "Chek printeri",
-    "printerCardDesc": "Chek (kvitansiya) printerini ulash va sozlash",
+    "printerTitle": "Chek sozlamalari",
+    "printerCardDesc": "Chek printerini ulash va chek ko'rinishini sozlash",
     "printer": {
       "title": "Chek printeri sozlamalari",
       "description": "POS savdolarida chekni to'g'ridan-to'g'ri printerga (USB/Bluetooth) yoki tizim orqali chop eting",
@@ -706,7 +706,20 @@
       "labelTax": "Soliq",
       "labelPaymentMethod": "To'lov turi",
       "paperWidthCustom": "Boshqa",
-      "customColumnsHint": "Bir qatordagi belgilar soni ({min}-{max} oralig'ida)"
+      "customColumnsHint": "Bir qatordagi belgilar soni ({min}-{max} oralig'ida)",
+      "receiptSection": "Chek mazmuni",
+      "receiptSectionDesc": "Chekda nima chop etilishini sozlang",
+      "headerText": "Yuqoridagi matn",
+      "headerTextPlaceholder": "Filial nomi yoki shior",
+      "footerText": "Pastdagi matn",
+      "footerTextPlaceholder": "Xaridingiz uchun rahmat!",
+      "receiptLines": "Chekdagi qatorlar",
+      "showCashier": "Kassir",
+      "showCustomer": "Mijoz",
+      "showPaymentMethod": "To'lov turi",
+      "showBarcode": "Shtrix-kod",
+      "showPoweredBy": "\"powered by\" qatori",
+      "receiptPreview": "Ko'rinishi"
     },
     "integrationsTitle": "Integratsiyalar",
     "integrationsCardDesc": "Telegram bot va tashqi xizmatlarni ulash",
@@ -1768,7 +1781,12 @@
       "stock_out": "Chiqim",
       "before": "Oldin",
       "after": "Keyin",
-      "reason": "Sabab"
+      "reason": "Sabab",
+      "seller": "Sotuvchi",
+      "share": "Ulushi",
+      "avgCheck": "O'rtacha chek",
+      "cumulativeShare": "Jamlangan ulush",
+      "abcClass": "Guruh"
     },
     "viewTable": "Jadval",
     "viewChart": "Grafik",
@@ -1827,6 +1845,62 @@
       "productTypes": "Sotilgan mahsulot turlari",
       "topProductRevenue": "Eng yaxshi mahsulot tushumi",
       "lowStockCount": "Qoldig'i kam mahsulotlar"
+    },
+    "catalog": "Hisobotlar",
+    "openReport": "Ochish",
+    "dailyRevenue": "Kunlik tushum",
+    "topProductsTitle": "Eng ko'p sotilgan mahsulotlar",
+    "recentSales": "So'nggi sotuvlar",
+    "searchOrderOrCustomer": "Buyurtma yoki mijoz…",
+    "searchProduct": "Mahsulot nomi yoki SKU…",
+    "activeSellers": "Sotuvchilar",
+    "activeCustomers": "Mijozlar",
+    "walkInCustomer": "Mijozsiz savdo",
+    "cards": {
+      "sales": {
+        "title": "Umumiy savdo",
+        "desc": "Davr bo'yicha tushum, foyda, cheklar soni va kunlik grafik"
+      },
+      "employees": {
+        "title": "Xodimlar bo'yicha savdo",
+        "desc": "Har bir sotuvchining tushumi, cheklari va o'rtacha cheki"
+      },
+      "customers": {
+        "title": "Mijozlar bo'yicha savdo",
+        "desc": "Qaysi mijoz qancha xarid qilgani va ulushi"
+      },
+      "products": {
+        "title": "Mahsulotlar bo'yicha savdo",
+        "desc": "Eng ko'p sotilganlar va kam sotilayotgan, umuman sotilmayotgan mahsulotlar"
+      },
+      "abc": {
+        "title": "ABC tahlil",
+        "desc": "Mahsulotlarni tushumga qo'shgan hissasi bo'yicha A, B, C guruhlarga ajratish"
+      }
+    },
+    "slowMovers": {
+      "title": "Kam sotilayotgan mahsulotlar",
+      "desc": "Tanlangan davrda deyarli sotilmagan mahsulotlar — omborda qotib qolgan pul miqdori bo'yicha tartiblangan",
+      "kpiLabel": "Kam sotilganlar",
+      "kpiHint": "{value} omborda turibdi",
+      "neverSold": "Umuman sotilmagan",
+      "neverSoldShort": "Hech qachon",
+      "upToUnits": "{count} donagacha",
+      "includeOutOfStock": "Qoldig'i yo'qlarni ham",
+      "soldInPeriod": "Davrda sotilgan",
+      "lastSale": "Oxirgi savdo",
+      "daysAgo": "{count} kun oldin",
+      "tiedUpValue": "Qotib qolgan summa",
+      "totalTiedUp": "Jami qotib qolgan summa"
+    },
+    "abc": {
+      "rule": {
+        "A": "Tushumning 80% i",
+        "B": "Keyingi 15%",
+        "C": "Qolgan 5%"
+      },
+      "groupSummary": "{count} ta mahsulot ({countShare}%) — tushumning {share}% i",
+      "barHint": "Kengligi mahsulotlar ulushini ko'rsatadi: A — tushumning birinchi {a}% ini, B — {b}% igacha, C — qolganini beradi"
     }
   },
   "offline": {

@@ -499,7 +499,7 @@ export function ProductsTable({
                           <p className="font-semibold text-slate-800 dark:text-slate-200">
                             <Link
                               href={`/${lang}/inventory/products/${product.id}`}
-                              className="text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 hover:underline transition-colors"
+                              className="text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
                             >
                               {product.name}
                             </Link>
