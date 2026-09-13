@@ -662,8 +662,8 @@
     "permissionsSaveError": "Не удалось сохранить права доступа",
     "permissionsAdminHint": "Пользователи с ролью Администратор всегда имеют полный доступ ко всем разделам",
     "moduleColumn": "Раздел",
-    "printerTitle": "Чековый принтер",
-    "printerCardDesc": "Подключение и настройка чекового принтера",
+    "printerTitle": "Настройка чека",
+    "printerCardDesc": "Подключение чекового принтера и настройка вида чека",
     "printer": {
       "title": "Настройки чекового принтера",
       "description": "Печатайте чеки в POS напрямую на принтер (USB/Bluetooth) или через систему",
@@ -706,7 +706,20 @@
       "labelTax": "Налог",
       "labelPaymentMethod": "Способ оплаты",
       "paperWidthCustom": "Другое",
-      "customColumnsHint": "Количество символов в строке (от {min} до {max})"
+      "customColumnsHint": "Количество символов в строке (от {min} до {max})",
+      "receiptSection": "Содержимое чека",
+      "receiptSectionDesc": "Настройте, что печатается на чеке",
+      "headerText": "Текст сверху",
+      "headerTextPlaceholder": "Название филиала или слоган",
+      "footerText": "Текст снизу",
+      "footerTextPlaceholder": "Спасибо за покупку!",
+      "receiptLines": "Строки чека",
+      "showCashier": "Кассир",
+      "showCustomer": "Клиент",
+      "showPaymentMethod": "Способ оплаты",
+      "showBarcode": "Штрихкод",
+      "showPoweredBy": "Строка «powered by»",
+      "receiptPreview": "Предпросмотр"
     },
     "integrationsTitle": "Интеграции",
     "integrationsCardDesc": "Подключение Telegram-бота и внешних сервисов",
@@ -1768,7 +1781,12 @@
       "stock_out": "Расход",
       "before": "До",
       "after": "После",
-      "reason": "Причина"
+      "reason": "Причина",
+      "seller": "Продавец",
+      "share": "Доля",
+      "avgCheck": "Средний чек",
+      "cumulativeShare": "Накопленная доля",
+      "abcClass": "Группа"
     },
     "viewTable": "Таблица",
     "viewChart": "График",
@@ -1827,6 +1845,62 @@
       "productTypes": "Проданных наименований",
       "topProductRevenue": "Выручка лучшего товара",
       "lowStockCount": "Товары на исходе"
+    },
+    "catalog": "Отчёты",
+    "openReport": "Открыть",
+    "dailyRevenue": "Выручка по дням",
+    "topProductsTitle": "Самые продаваемые товары",
+    "recentSales": "Последние продажи",
+    "searchOrderOrCustomer": "Заказ или клиент…",
+    "searchProduct": "Название товара или SKU…",
+    "activeSellers": "Продавцы",
+    "activeCustomers": "Клиенты",
+    "walkInCustomer": "Продажа без клиента",
+    "cards": {
+      "sales": {
+        "title": "Общие продажи",
+        "desc": "Выручка, прибыль, количество чеков и график по дням"
+      },
+      "employees": {
+        "title": "Продажи по сотрудникам",
+        "desc": "Выручка, чеки и средний чек каждого продавца"
+      },
+      "customers": {
+        "title": "Продажи по клиентам",
+        "desc": "Кто из клиентов сколько купил и какая у него доля"
+      },
+      "products": {
+        "title": "Продажи по товарам",
+        "desc": "Лидеры продаж и товары, которые почти или совсем не продаются"
+      },
+      "abc": {
+        "title": "ABC-анализ",
+        "desc": "Разделение товаров на группы A, B и C по вкладу в выручку"
+      }
+    },
+    "slowMovers": {
+      "title": "Товары с низкими продажами",
+      "desc": "Товары, почти не продававшиеся за выбранный период — отсортированы по сумме, замороженной на складе",
+      "kpiLabel": "Низкие продажи",
+      "kpiHint": "{value} лежит на складе",
+      "neverSold": "Совсем не продавались",
+      "neverSoldShort": "Никогда",
+      "upToUnits": "до {count} шт.",
+      "includeOutOfStock": "Включая нулевой остаток",
+      "soldInPeriod": "Продано за период",
+      "lastSale": "Последняя продажа",
+      "daysAgo": "{count} дн. назад",
+      "tiedUpValue": "Заморожено",
+      "totalTiedUp": "Всего заморожено"
+    },
+    "abc": {
+      "rule": {
+        "A": "80% выручки",
+        "B": "Следующие 15%",
+        "C": "Остальные 5%"
+      },
+      "groupSummary": "{count} товаров ({countShare}%) — {share}% выручки",
+      "barHint": "Ширина показывает долю товаров: A даёт первые {a}% выручки, B — до {b}%, C — остальное"
     }
   },
   "offline": {

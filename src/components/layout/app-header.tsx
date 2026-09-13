@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Bell, LogOut, Settings, User, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
+import { Bell, LogOut, Settings, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
@@ -265,7 +265,15 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   return (
     <header
       className={`flex min-h-16 shrink-0 items-center gap-1.5 sm:gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-3 sm:px-4 pt-[env(safe-area-inset-top)] fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
-        isSidebarMobile ? 'left-0' : sidebarState === 'expanded' ? 'left-0 md:left-(--sidebar-width)' : 'left-0 md:left-(--sidebar-width-icon)'
+        isSidebarMobile
+          ? 'left-0'
+          : sidebarState === 'expanded'
+            ? 'left-0 md:left-(--sidebar-width)'
+            // The sidebar uses variant="inset", so when collapsed its rail is
+            // --sidebar-width-icon *plus* the p-2 padding on both sides. Offsetting
+            // the header by the bare icon width alone left it sitting on top of that
+            // padding — matching the gap element's calc keeps them flush.
+            : 'left-0 md:left-[calc(var(--sidebar-width-icon)+1rem)]'
       }`}
     >
       <SidebarTrigger className="-ml-1" />
@@ -477,10 +485,6 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => window.location.href = `/${lang}/settings/profile`}>
-            <User className="mr-2 h-4 w-4" />
-            {tSettings('profile')}
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => window.location.href = `/${lang}/settings`}>
             <Settings className="mr-2 h-4 w-4" />
             {tSettings('title')}

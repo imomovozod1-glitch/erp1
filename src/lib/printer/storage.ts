@@ -24,6 +24,23 @@ export interface PrinterConfig {
   /** Bluetooth GATT UUIDs — the common default works for most cheap thermal-printer BLE modules, but firmware varies; exposed here so an unusual model can be reconfigured without a code change. */
   bleServiceUuid: string
   bleCharacteristicUuid: string
+
+  // ─── Receipt content ──────────────────────────────────────────────────────
+  // What is actually PRINTED on the slip, as opposed to how the bytes reach
+  // the printer. Kept in the same record because both are edited on the same
+  // screen and both are per-device: a shop with a counter printer and a
+  // delivery-desk printer wants a different footer on each.
+
+  /** Extra line under the company name — a branch name, a slogan, a tax id. */
+  headerText: string
+  /** Closing line. Empty falls back to the translated "thank you". */
+  footerText: string
+  showCashier: boolean
+  showCustomer: boolean
+  showPaymentMethod: boolean
+  /** The decorative barcode strip and "powered by" line on the on-screen/HTML receipt. */
+  showBarcode: boolean
+  showPoweredBy: boolean
 }
 
 export const DEFAULT_BLE_SERVICE_UUID = '000018f0-0000-1000-8000-00805f9b34fb'
@@ -38,6 +55,13 @@ export const DEFAULT_PRINTER_CONFIG: PrinterConfig = {
   openDrawerOnSale: false,
   bleServiceUuid: DEFAULT_BLE_SERVICE_UUID,
   bleCharacteristicUuid: DEFAULT_BLE_CHARACTERISTIC_UUID,
+  headerText: '',
+  footerText: '',
+  showCashier: true,
+  showCustomer: true,
+  showPaymentMethod: true,
+  showBarcode: true,
+  showPoweredBy: true,
 }
 
 const STORAGE_KEY = 'erp_printer_config'

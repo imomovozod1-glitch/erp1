@@ -46,6 +46,28 @@ export const PAPER_WIDTH_COLUMNS = { '58mm': 32, '80mm': 48 } as const
 export type PresetPaperWidth = keyof typeof PAPER_WIDTH_COLUMNS
 export type PaperWidth = PresetPaperWidth | 'custom'
 
+/**
+ * The parts of a receipt a shop can turn on, off or reword — see
+ * `PrinterConfig` in ./storage.ts, which is where these are edited and
+ * persisted. Defined here so the builder owns its own contract and callers
+ * that print without a stored config still get a sensible slip.
+ */
+export interface ReceiptContentOptions {
+  headerText?: string
+  footerText?: string
+  showCashier?: boolean
+  showCustomer?: boolean
+  showPaymentMethod?: boolean
+}
+
+export const DEFAULT_RECEIPT_CONTENT: Required<ReceiptContentOptions> = {
+  headerText: '',
+  footerText: '',
+  showCashier: true,
+  showCustomer: true,
+  showPaymentMethod: true,
+}
+
 export const DEFAULT_CUSTOM_COLUMNS = 32
 /** ESC/POS text mode gets unreadable outside this range — far too few columns for a total line, or wide enough that no realistic thermal printer supports it. */
 export const CUSTOM_COLUMNS_MIN = 16
@@ -63,12 +85,22 @@ export function buildReceiptBytes(
   order: ReceiptOrder,
   company: ReceiptCompanyInfo,
   labels: ReceiptLabels,
-  opts: { paperWidth: PaperWidth; customColumns?: number; cyrillic: boolean; codepage: number; openDrawer: boolean }
+  opts: {
+    paperWidth: PaperWidth
+    customColumns?: number
+    cyrillic: boolean
+    codepage: number
+    openDrawer: boolean
+    /** Receipt content settings (Settings → Receipt). All optional so existing callers keep the previous layout. */
+    content?: ReceiptContentOptions
+  }
 ): Uint8Array {
+  const content = { ...DEFAULT_RECEIPT_CONTENT, ...(opts.content ?? {}) }
   const cols = resolveColumns(opts.paperWidth, opts.customColumns)
   const p = new EscPosBuilder({ columns: cols, cyrillic: opts.cyrillic, codepage: opts.codepage })
 
   p.align('center').bold(true).size(1, 1).line(company.name).bold(false)
+  if (content.headerText) p.line(content.headerText)
   if (company.address) p.line(company.address)
   if (company.phone) p.line(company.phone)
   p.hr('=')
@@ -76,8 +108,8 @@ export function buildReceiptBytes(
   p.align('left')
   p.row(labels.receipt, `#${order.orderNumber}`)
   p.row(labels.date, order.date)
-  p.row(labels.cashier, order.cashier)
-  p.row(labels.customer, order.customerName)
+  if (content.showCashier) p.row(labels.cashier, order.cashier)
+  if (content.showCustomer) p.row(labels.customer, order.customerName)
   p.hr()
 
   for (const item of order.items) {
@@ -93,11 +125,11 @@ export function buildReceiptBytes(
   p.bold(true).size(1, 2)
   p.row(labels.total, formatCurrency(order.total))
   p.size(1, 1).bold(false)
-  p.row(labels.paymentMethod, order.paymentMethod.toUpperCase())
+  if (content.showPaymentMethod) p.row(labels.paymentMethod, order.paymentMethod.toUpperCase())
   p.hr()
 
   p.align('center')
-  p.line(labels.thankYou)
+  p.line(content.footerText || labels.thankYou)
   p.feed(1)
 
   if (opts.openDrawer) p.openDrawer()

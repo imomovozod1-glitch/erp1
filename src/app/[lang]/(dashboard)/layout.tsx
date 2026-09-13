@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { getCurrentTenantId, getCachedTenant } from '@/lib/tenant'
 import { getStaffIdentity } from '@/lib/admin-auth'
@@ -36,6 +36,11 @@ export default async function DashboardLayout({
   // four sequential Supabase round trips had completed, one after another,
   // even though none of them depends on the result of the others.
   const requestedSubdomain = (await headers()).get('x-tenant-subdomain')
+  // SidebarProvider writes `sidebar_state` whenever the sidebar is toggled, but
+  // nothing ever read it back — so every navigation re-mounted the provider at
+  // its `defaultOpen = true` and the sidebar sprang open again a moment after
+  // being closed. Seeding it from the cookie is what makes "closed" stick.
+  const sidebarOpen = (await cookies()).get('sidebar_state')?.value !== 'false'
   const [staffIdentity, profile, tenant] = await Promise.all([
     // Super-admin and support-agent sessions share the same auth cookies as
     // tenant users, so a staff session must never render the tenant dashboard
@@ -68,7 +73,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={sidebarOpen}>
       <AppSidebar lang={lang} profile={profile} />
       <SidebarInset>
         <AppHeader profile={profile} lang={lang} />
