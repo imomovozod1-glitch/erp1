@@ -95,7 +95,7 @@ function Body({
     const periodItems = items.filter((i) => inRange(i.order_date, range))
     return {
       totals: computeTotals(periodOrders, periodItems),
-      series: dailySeries(periodOrders, range),
+      series: dailySeries(periodOrders, periodItems, range),
       sold: groupItems(
         periodItems,
         (i) => i.product_id ?? i.product_name,

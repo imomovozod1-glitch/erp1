@@ -178,24 +178,48 @@ export interface DayPoint {
 }
 
 /**
- * Revenue per calendar day across the selected range.
+ * Revenue and receipt count per calendar day across the selected range.
  *
  * Every day in the range gets a point, including the ones with no sales —
  * a chart that simply omits quiet days draws a flat line between two peaks
- * and reads as "steady trade" when the truth is "closed on Sunday". When the
- * range is open-ended ("all time"), the series spans the first to the last
- * sale instead, and a range wider than `maxDays` falls back to the days that
- * actually have sales so the axis stays legible.
+ * and reads as "steady trade" when the truth is "closed on Sunday". The
+ * series therefore spans exactly what the period filter selected: one point
+ * for "today", seven for "last 7 days", the whole calendar month for
+ * "this month". When the range is open-ended ("all time") it spans the first
+ * to the last sale instead, and a range wider than `maxDays` falls back to the
+ * days that actually have sales so the axis stays legible.
+ *
+ * Revenue is summed from the ORDER LINES, not from `orders.total_amount`:
+ * every other figure on these screens — the revenue KPI, the product and
+ * seller tables — is the sum of line revenue net of the order's general
+ * discount, and a chart drawn from a different column silently disagrees with
+ * the number printed directly above it. `orders` still counts receipts, so a
+ * day with a sale but no lines is drawn as a real (zero-revenue) day rather
+ * than vanishing.
  */
-export function dailySeries(orders: SalesOrderRow[], range: DateRange, maxDays = 180): DayPoint[] {
+export function dailySeries(
+  orders: SalesOrderRow[],
+  items: SalesItemRow[],
+  range: DateRange,
+  maxDays = 180
+): DayPoint[] {
   const buckets = new Map<string, DayPoint>()
+  const bucketFor = (day: string) => {
+    let entry = buckets.get(day)
+    if (!entry) {
+      entry = { day, revenue: 0, orders: 0 }
+      buckets.set(day, entry)
+    }
+    return entry
+  }
+
   for (const order of orders) {
     if (!order.order_date) continue
-    const day = order.order_date.slice(0, 10)
-    const entry = buckets.get(day) ?? { day, revenue: 0, orders: 0 }
-    entry.revenue += order.total_amount
-    entry.orders += 1
-    buckets.set(day, entry)
+    bucketFor(order.order_date.slice(0, 10)).orders += 1
+  }
+  for (const item of items) {
+    if (!item.order_date) continue
+    bucketFor(item.order_date.slice(0, 10)).revenue += item.revenue
   }
 
   const sold = [...buckets.keys()].sort()

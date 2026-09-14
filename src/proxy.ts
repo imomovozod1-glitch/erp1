@@ -129,9 +129,37 @@ async function getTenantBySubdomain(subdomain: string): Promise<TenantGateInfo |
   }
 }
 
-/** Fire-and-forget — never blocks the response on this. */
-function touchTenantLastActive(tenantId: string) {
+/**
+ * Fire-and-forget — never blocks the response on this.
+ *
+ * Throttled by a cookie because "last active" is a coarse admin-console signal
+ * measured in minutes, and this fired a service-role write on EVERY navigation:
+ * a click-heavy session was issuing hundreds of pointless UPDATEs against the
+ * same row, each one a connection the database had to serve while the user was
+ * waiting on a real query.
+ */
+const LAST_ACTIVE_COOKIE = 'la_ping'
+const LAST_ACTIVE_TTL_MS = 5 * 60 * 1000
+
+function shouldTouchLastActive(request: NextRequest, tenantId: string): boolean {
+  const raw = request.cookies.get(LAST_ACTIVE_COOKIE)?.value
+  if (!raw) return true
+  try {
+    const parsed: { id: string; t: number } = JSON.parse(raw)
+    return parsed.id !== tenantId || Date.now() - parsed.t > LAST_ACTIVE_TTL_MS
+  } catch {
+    return true
+  }
+}
+
+function touchTenantLastActive(response: NextResponse, tenantId: string) {
   patchTenant(tenantId, { last_active_at: new Date().toISOString() })
+  response.cookies.set(LAST_ACTIVE_COOKIE, JSON.stringify({ id: tenantId, t: Date.now() }), {
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 600,
+    path: '/',
+  })
 }
 
 const IPV4_PATTERN = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/
@@ -336,8 +364,8 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
-  if (user && gatedTenant) {
-    touchTenantLastActive(gatedTenant.id)
+  if (user && gatedTenant && shouldTouchLastActive(request, gatedTenant.id)) {
+    touchTenantLastActive(supabaseResponse, gatedTenant.id)
   }
 
   if (tenantGateNeedsWrite && gatedTenant && tenantSubdomain) {

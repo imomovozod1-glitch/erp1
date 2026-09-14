@@ -23,6 +23,7 @@ import {
   Select, SelectContent,
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
+import { isoDate } from '@/lib/utils'
 
 
 interface InvoiceFormProps {
@@ -77,7 +78,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
       paid_amount: initialData?.paid_amount ?? '' as any,
       issued_at: initialData?.issued_at 
         ? initialData.issued_at.split('T')[0] 
-        : new Date().toISOString().split('T')[0],
+        : isoDate(),
       due_at: initialData?.due_at ? initialData.due_at.split('T')[0] : '',
       paid_at: initialData?.paid_at ? initialData.paid_at.split('T')[0] : '',
       notes: initialData?.notes || '',

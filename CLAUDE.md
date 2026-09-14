@@ -17,11 +17,11 @@
 
 - App Router under `src/app/[lang]/`, locale-prefixed (`uz` default, `ru`, `en` — `src/i18n/routing.ts`). Route groups: `(auth)` for `/login`, `(dashboard)` for the authenticated shell.
 - `src/proxy.ts` (the middleware entrypoint) parses a tenant subdomain (`tenant.urlerp.com` / `tenant.localhost`) and forwards it as an `x-tenant-subdomain` header, enforces auth via `src/lib/supabase/middleware.ts`, then hands off to `next-intl`'s middleware.
-- **Caveat**: this subdomain parsing is scaffolding only. `supabase/schema.sql` has **no `tenant_id`/`company_id` column on any table**, and every RLS policy is `USING (true)` for any authenticated user (see Gotchas). Don't assume tenant isolation exists at the data layer — it doesn't yet.
+- Tenancy IS enforced at the data layer: `supabase/migration_multi_tenant.sql` adds a NOT NULL `tenant_id` to every business table (18 indexes on it), rewrites each RLS policy as `tenant_id = (SELECT tenant_id FROM profiles WHERE id = auth.uid())`, and attaches a `set_tenant_id()` BEFORE INSERT trigger — which is why client-side inserts never pass `tenant_id` themselves. Server-side reads that use the service-role client (`getCacheClient()`) bypass RLS and must filter `.eq('tenant_id', …)` by hand; reads through the user's own client (`@/lib/supabase/server` or `/client`) are scoped for you.
 
 ### Auth & session caching
 
-- `src/lib/auth.ts`: `getSessionUser()` reads the session from the JWT cookie directly (no network call, `cache()`-memoized per request). `getCachedProfile(userId)` caches the profile row 5 minutes via `unstable_cache`, tagged `profile:<userId>`. This is only safe because the middleware already validates the JWT with `getUser()` on every request — don't remove that check or reuse this pattern somewhere the middleware doesn't run first.
+- `src/lib/auth.ts`: `getSessionUser()` reads the session from the JWT cookie directly (no network call, `cache()`-memoized per request). `getCachedProfile(userId)` caches the profile row 5 minutes via `unstable_cache`, tagged `profile:<userId>`. This is only safe because the middleware validates the JWT on every request — don't remove that check or reuse this pattern somewhere the middleware doesn't run first. That validation is a local ES256 signature check (`getClaims()` against a module-cached JWKS in `src/lib/supabase/middleware.ts`), not a call to the Auth server; it still falls back to `getUser()` for the force-logout check and whenever the key set or a symmetric token makes local verification impossible.
 
 ### Data layer & mutation pattern
 
@@ -87,12 +87,13 @@ Message catalogs: `messages/{uz,ru,en}.json`, ~540 keys each across 14 namespace
 - Path alias `@/*` → `src/*`.
 - `src/components/ui/` (27 files, shadcn-based) — primitives only. Notably **missing**: `form.tsx`, `pagination.tsx`, `alert-dialog.tsx`, `toast.tsx` — that's why forms use raw `react-hook-form` + manual error `<p>` tags, and tables hand-roll pagination (see `AGENTS.md` § Table Interfaces).
 - Feature components are grouped by domain (`inventory/`, `sales/`, `hr/`, `finance/`, `procurement/`, `analytics/`, `pos/`, `settings/`, `support/`), with `shared/` for cross-domain pieces (`PageHeader`, `PageClock`, `StatsCard`, `StatusBadge`, `ImportExportMenu`).
-- Locale-aware formatting follows the ternary pattern `lang === 'uz' ? 'uz-UZ' : lang === 'ru' ? 'ru-RU' : 'en-US'`, not automatic `Intl` locale negotiation.
+- Locale-aware formatting follows the ternary pattern `lang === 'uz' ? 'uz-UZ' : lang === 'ru' ? 'ru-RU' : 'en-US'`, not automatic `Intl` locale negotiation — but anything rendered on BOTH sides of hydration must be locale-independent, since Node and the browser ship different ICU data (`formatCurrency`/`formatNumber` in `src/lib/utils.ts` are hand-rolled for exactly that reason).
+- "Today" as `YYYY-MM-DD` is `isoDate()` from `src/lib/utils.ts`, never `toISOString().slice(0, 10)` — the latter is UTC and answers with yesterday's date for the first five hours of every Uzbek day.
 - `next.config.ts` sets `typescript.ignoreBuildErrors: true` — `next build` will NOT fail on type errors. Run `tsc --noEmit` or `npm run lint` to actually catch them.
 
 ## Gotchas
 
-- **RLS is not real tenant/role isolation today**: every table's policies are `FOR SELECT/ALL TO authenticated USING (true)`. Any authenticated user can read/write any row, regardless of the `x-tenant-subdomain` header set in middleware. The one exception is `profiles`, which restricts updates to self or an admin. Don't assume per-tenant or per-role data scoping is enforced anywhere below the UI.
+- **RLS scopes by tenant, not by role**: policies isolate one tenant's rows from another's (see Routing & tenancy), but within a tenant every authenticated member passes them. Per-role access (`profiles.permissions`) is an application-level check only — `src/lib/permissions-server.ts` — so a user who crafts raw PostgREST calls can still reach data the UI hides from their role.
 - **Unused dependencies — don't assume they're wired up**: `@tanstack/react-table` and `zustand` are in `package.json` but have zero usages in `src/`. Tables are hand-rolled (see `AGENTS.md`); there's no global client store. `@tanstack/react-query` is installed and provided (`src/components/providers/query-provider.tsx`) but is likewise essentially unused elsewhere — most reads are Server Components + `unstable_cache`, not client-side queries.
 - **React Compiler purity rules are lint errors, not warnings**: no impure calls (`Date.now()`, `Math.random()`) during render, and no `setState` called synchronously inside `useEffect` (`react-hooks/set-state-in-effect`). For values that change outside React's render cycle (clocks, external subscriptions), use `useSyncExternalStore` — see `src/components/shared/page-clock.tsx`.
 - Check `node_modules/next/dist/docs/` before assuming an API from training data — this Next.js version has breaking changes (per `AGENTS.md`).

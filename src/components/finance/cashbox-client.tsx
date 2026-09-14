@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { 
   Wallet, 
   Plus, 
@@ -33,21 +33,14 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { DatePicker } from '@/components/ui/date-picker'
 import { PageHeader } from '@/components/shared/page-header'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { formatCurrency, formatDateTime, isoDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateTransactions, invalidateSuppliers, invalidateEmployees, invalidateCustomers, invalidateInvoices } from '@/lib/data/revalidate'
+import { invalidateCashbox, invalidateTransactions, invalidateSuppliers, invalidateEmployees, invalidateCustomers, invalidateInvoices } from '@/lib/data/revalidate'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { toast } from 'sonner'
 
 type CashboxType = 'cash' | 'card' | 'transfer' | 'other'
 type Period = 'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'
-
-const formatDateISO = (d: Date) => {
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 interface Cashbox {
   id: string
@@ -65,61 +58,95 @@ interface TransactionCategory {
   person_type: 'employee' | 'supplier' | 'customer' | 'none'
 }
 
-export function CashboxClient({ lang }: { lang: string }) {
+/** Everything the server hands this screen — see `getCachedCashboxPageData`. */
+export interface CashboxPageData {
+  /** True when the cashboxes read itself failed, i.e. Supabase is unreachable. */
+  failed: boolean
+  cashboxes: Cashbox[]
+  transactions: any[]
+  customers: { id: string; name: string }[]
+  employees: { id: string; name: string }[]
+  suppliers: { id: string; name: string }[]
+  categories: TransactionCategory[]
+}
+
+export function CashboxClient({
+  lang,
+  initialData,
+  period,
+  customStart,
+  customEnd,
+}: {
+  lang: string
+  initialData: CashboxPageData
+  /** Resolved from the URL by the page; the history arrives already filtered. */
+  period: Period
+  customStart: string
+  customEnd: string
+}) {
   const t = useTranslations('finance')
   const tCommon = useTranslations('common')
   const tInfo = useTranslations('pageInfo')
   const tDash = useTranslations('dashboard')
   const supabase = createClient() as any
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const [cashboxes, setCashboxes] = useState<Cashbox[]>([])
-  const [transactions, setTransactions] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLocalStorageFallback, setIsLocalStorageFallback] = useState(false)
+  // The six lists arrive as props, already fetched and cached on the server.
+  // They are held in state anyway because the offline path below rewrites them
+  // from the localStorage mirror, and every kirim/chiqim handler in this file
+  // edits them in place when Supabase is unreachable.
+  //
+  // Re-seeded during render rather than from an effect when the server sends a
+  // fresh copy (after `router.refresh()`), which is React's documented way to
+  // adjust state to a changed prop — an effect would render the stale list once
+  // first, and this project's lint rules forbid setState inside one anyway.
+  const [snapshot, setSnapshot] = useState<CashboxPageData>(initialData)
+  const [lastServerData, setLastServerData] = useState<CashboxPageData>(initialData)
+  if (lastServerData !== initialData) {
+    setLastServerData(initialData)
+    if (!snapshot.failed) setSnapshot(initialData)
+  }
+
+  const { cashboxes, transactions, customers, employees, suppliers, categories } = snapshot
+  const isLocalStorageFallback = snapshot.failed
+
+  const patchSnapshot = <K extends keyof CashboxPageData>(key: K, value: CashboxPageData[K]) =>
+    setSnapshot((prev) => ({ ...prev, [key]: value }))
+  const setCashboxes = (value: Cashbox[]) => patchSnapshot('cashboxes', value)
+  const setTransactions = (value: any[]) => patchSnapshot('transactions', value)
+
+  const [isLoading, setIsLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [txSearch, setTxSearch] = useState('')
 
-  // Time filter for the transaction history (and the Income/Expense stat cards),
-  // same tab-style preset + CustomDateRangePicker combo as the dashboard.
-  // `now` is captured once via a lazy initializer, not called bare in the render body,
-  // since a fresh `new Date()` on every render trips the project's purity lint rule.
-  const [now] = useState(() => new Date())
-  const [period, setPeriod] = useState<Period>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('cashbox_period')
-      if (saved === 'today' || saved === 'yesterday' || saved === 'week' || saved === 'month' || saved === 'all' || saved === 'custom') {
-        return saved
+  // Time filter for the transaction history (and the Income/Expense stat cards).
+  // It writes to the URL rather than to component state + sessionStorage: the
+  // history is now filtered by Postgres, so changing the period has to re-run a
+  // server query, and a range in the URL is linkable and survives a reload —
+  // which the sessionStorage version could only approximate.
+  const setParams = useCallback(
+    (next: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString())
+      for (const [key, value] of Object.entries(next)) {
+        if (value === null || value === '') params.delete(key)
+        else params.set(key, value)
       }
-    }
-    return 'all'
-  })
-  const [customStart, setCustomStart] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('cashbox_custom_start')
-      if (saved) return saved
-    }
-    return formatDateISO(new Date()) + 'T00:00'
-  })
-  const [customEnd, setCustomEnd] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('cashbox_custom_end')
-      if (saved) return saved
-    }
-    return formatDateISO(new Date()) + 'T23:59'
-  })
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams]
+  )
 
-  useEffect(() => {
-    sessionStorage.setItem('cashbox_period', period)
-    sessionStorage.setItem('cashbox_custom_start', customStart)
-    sessionStorage.setItem('cashbox_custom_end', customEnd)
-  }, [period, customStart, customEnd])
+  const handlePeriodChange = (next: Period) => {
+    // Always written out, never dropped for a "default" value: the default here
+    // is the last 30 days, so an absent param does not mean "all".
+    setParams({ period: next, from: null, to: null })
+  }
 
   const handleApplyCustomRange = (start: string, end: string) => {
-    setCustomStart(start)
-    setCustomEnd(end)
-    setPeriod('custom')
+    setParams({ period: 'custom', from: start || null, to: end || null })
   }
 
   // Modal form states for cashbox management
@@ -131,9 +158,6 @@ export function CashboxClient({ lang }: { lang: string }) {
   const [description, setDescription] = useState('')
   const [isSavingCashbox, setIsSavingCashbox] = useState(false)
 
-  // Transaction categories (manageable, like inventory categories — see /finance/categories)
-  const [categories, setCategories] = useState<TransactionCategory[]>([])
-
   // Modal states for Kirim (Income) / Chiqim (Expense)
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
   const [selectedCashboxForTx, setSelectedCashboxForTx] = useState<Cashbox | null>(null)
@@ -143,95 +167,17 @@ export function CashboxClient({ lang }: { lang: string }) {
   const [txDate, setTxDate] = useState('')
   const [txDescription, setTxDescription] = useState('')
 
-  // Customer debt states
-  const [customers, setCustomers] = useState<any[]>([])
+  // Customer debt states — the customer list itself comes from the server (see
+  // `snapshot` above); only the selection and the looked-up debt live here.
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [customerDebt, setCustomerDebt] = useState<number | null>(null)
   const [isLoadingDebt, setIsLoadingDebt] = useState(false)
 
   // Employee payroll states
-  const [employees, setEmployees] = useState<any[]>([])
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
 
   // Supplier payment states
-  const [suppliers, setSuppliers] = useState<any[]>([])
   const [selectedSupplierId, setSelectedSupplierId] = useState('')
-
-  const fetchCustomers = async (fallback: boolean) => {
-    try {
-      if (fallback) {
-        const localCust = localStorage.getItem('erp_customers')
-        if (localCust) setCustomers(JSON.parse(localCust))
-      } else {
-        const { data, error } = await supabase
-          .from('customers')
-          .select('id, name')
-          .eq('is_active', true)
-          .order('name', { ascending: true })
-        if (!error) setCustomers(data || [])
-      }
-    } catch (err: any) {
-      console.warn('Failed to fetch customers:', err.message)
-    }
-  }
-
-  const fetchEmployees = async (fallback: boolean) => {
-    try {
-      if (fallback) {
-        const localEmp = localStorage.getItem('erp_employees')
-        if (localEmp) setEmployees(JSON.parse(localEmp))
-      } else {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('id, employee_code, profiles(full_name)')
-          .eq('is_active', true)
-        if (!error && data) {
-          const formatted = data.map((emp: any) => ({
-            id: emp.id,
-            name: emp.profiles?.full_name || emp.employee_code || 'Xodim'
-          }))
-          setEmployees(formatted)
-        }
-      }
-    } catch (err: any) {
-      console.warn('Failed to fetch employees:', err.message)
-    }
-  }
-
-  const fetchSuppliers = async (fallback: boolean) => {
-    try {
-      if (fallback) {
-        const localSup = localStorage.getItem('erp_suppliers')
-        if (localSup) setSuppliers(JSON.parse(localSup))
-      } else {
-        const { data, error } = await supabase
-          .from('suppliers')
-          .select('id, name')
-          .order('name', { ascending: true })
-        if (!error) setSuppliers(data || [])
-      }
-    } catch (err: any) {
-      console.warn('Failed to fetch suppliers:', err.message)
-    }
-  }
-
-  const fetchCategories = async (fallback: boolean) => {
-    try {
-      if (fallback) {
-        const localCat = localStorage.getItem('erp_transaction_categories')
-        if (localCat) setCategories(JSON.parse(localCat))
-      } else {
-        const { data, error } = await supabase
-          .from('transaction_categories')
-          .select('id, name, type, person_type')
-          .order('name', { ascending: true })
-        if (!error) setCategories(data || [])
-      }
-    } catch (err: any) {
-      console.warn('Failed to fetch transaction categories:', err.message)
-    }
-  }
-
 
   const fetchCustomerDebt = async (cId: string, fallback: boolean) => {
     setIsLoadingDebt(true)
@@ -266,72 +212,47 @@ export function CashboxClient({ lang }: { lang: string }) {
     }
   }
 
-  const fetchCashboxes = async () => {
-    setIsLoading(true)
-    let fallbackMode = false
-    try {
-      const { data, error } = await supabase
-        .from('cashboxes')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      setCashboxes(data || [])
-      setIsLocalStorageFallback(false)
-      fallbackMode = false
-
-      // Fetch transaction logs linked to cash registers
-      const { data: txData, error: txError } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('reference_type', 'cashbox')
-        .order('created_at', { ascending: false })
-      
-      if (!txError) {
-        setTransactions(txData || [])
-      }
-    } catch (err: any) {
-      console.warn('Supabase fetch failed, falling back to LocalStorage:', err.message)
-      setIsLocalStorageFallback(true)
-      fallbackMode = true
-
-      const localData = localStorage.getItem('erp_cashboxes')
-      if (localData) {
-        setCashboxes(JSON.parse(localData))
-      } else {
-        const seedData: Cashbox[] = []
-        localStorage.setItem('erp_cashboxes', JSON.stringify(seedData))
-        setCashboxes(seedData)
-      }
-
-      const localTxs = localStorage.getItem('erp_transactions')
-      if (localTxs) {
-        setTransactions(JSON.parse(localTxs))
-      } else {
-        setTransactions([])
-      }
-    } finally {
-      setIsLoading(false)
-    }
-    return fallbackMode
+  /**
+   * Pulls a fresh copy of the server data after a write.
+   *
+   * `invalidateCashbox()` is a Server Action, so it drops both the server-side
+   * cache entry and the client Router Cache; `router.refresh()` then re-renders
+   * this route and the new lists arrive as props. This replaces a hand-rolled
+   * re-fetch that issued its own two queries and left every other screen's
+   * cached copy stale.
+   */
+  const refreshFromServer = async () => {
+    await invalidateCashbox()
+    router.refresh()
   }
 
+  // Offline mirror. Only runs when the server could not read the cashboxes at
+  // all — an empty tenant is not a failure and must not be overwritten with
+  // whatever this browser last cached. Deferred by a 0 ms timer so no state is
+  // set synchronously inside the effect (react-hooks/set-state-in-effect).
   useEffect(() => {
-    // Avoid calling setState synchronously within the effect body
+    if (!initialData.failed) return
     const timer = setTimeout(() => {
-      fetchCashboxes().then((fallback) => {
-        fetchCustomers(fallback)
-        fetchEmployees(fallback)
-        fetchSuppliers(fallback)
-        fetchCategories(fallback)
+      const read = (key: string) => {
+        try {
+          const raw = localStorage.getItem(key)
+          return raw ? JSON.parse(raw) : null
+        } catch {
+          return null
+        }
+      }
+      setSnapshot({
+        failed: true,
+        cashboxes: read('erp_cashboxes') ?? [],
+        transactions: read('erp_transactions') ?? [],
+        customers: read('erp_customers') ?? [],
+        employees: read('erp_employees') ?? [],
+        suppliers: read('erp_suppliers') ?? [],
+        categories: read('erp_transaction_categories') ?? [],
       })
     }, 0)
-    
     return () => clearTimeout(timer)
-  }, [])
+  }, [initialData.failed])
 
   // Auto-routing parameters checking (e.g. "collect debt" button on the invoices page)
   useEffect(() => {
@@ -356,7 +277,7 @@ export function CashboxClient({ lang }: { lang: string }) {
           setTxType(actionTxType)
           setTxAmount('')
           setTxCategory(targetCategory?.id || '')
-          setTxDate(new Date().toISOString().split('T')[0])
+          setTxDate(isoDate())
           setTxDescription('')
           setIsTransactionModalOpen(true)
 
@@ -454,7 +375,7 @@ export function CashboxClient({ lang }: { lang: string }) {
             description: `${initialBalanceLabel} - ${name.trim()}`,
             reference_type: 'cashbox',
             reference_id: newId,
-            transaction_date: new Date().toISOString().split('T')[0],
+            transaction_date: isoDate(),
             created_at: new Date().toISOString(),
           })
         }
@@ -510,7 +431,7 @@ export function CashboxClient({ lang }: { lang: string }) {
               description: `${initialBalanceLabel} - ${name.trim()}`,
               reference_type: 'cashbox',
               reference_id: newCb.id,
-              transaction_date: new Date().toISOString().split('T')[0],
+              transaction_date: isoDate(),
               created_by: userId,
             })
             if (txErr) throw txErr
@@ -519,7 +440,7 @@ export function CashboxClient({ lang }: { lang: string }) {
         }
         toast.success(tCommon('success'))
         setIsModalOpen(false)
-        fetchCashboxes()
+        refreshFromServer()
       } catch (err: any) {
         toast.error(err.message || tCommon('error'))
       } finally {
@@ -546,7 +467,7 @@ export function CashboxClient({ lang }: { lang: string }) {
           const { error } = await supabase.from('cashboxes').delete().eq('id', id)
           if (error) throw error
           toast.success(tCommon('success'))
-          fetchCashboxes()
+          refreshFromServer()
         } catch (err: any) {
           toast.error(err.message || tCommon('error'))
         }
@@ -561,7 +482,7 @@ export function CashboxClient({ lang }: { lang: string }) {
     setTxAmount('')
     const defaultCategory = categories.find(c => c.type === type)
     setTxCategory(defaultCategory?.id || '')
-    setTxDate(new Date().toISOString().split('T')[0])
+    setTxDate(isoDate())
     setTxDescription('')
     setSelectedCustomerId('')
     setSelectedEmployeeId('')
@@ -842,7 +763,7 @@ export function CashboxClient({ lang }: { lang: string }) {
 
         toast.success(tCommon('success'))
         setIsTransactionModalOpen(false)
-        fetchCashboxes()
+        refreshFromServer()
 
         // Telegram notification (Settings → Integrations). Only for money
         // actually collected from a customer — that's the "debt payment" the
@@ -932,7 +853,7 @@ export function CashboxClient({ lang }: { lang: string }) {
         if (tx.employee_id) await invalidateEmployees()
 
         toast.success(tCommon('success'))
-        fetchCashboxes()
+        refreshFromServer()
       }
     } catch (err: any) {
       toast.error(err.message || tCommon('error'))
@@ -944,27 +865,6 @@ export function CashboxClient({ lang }: { lang: string }) {
   // Categories are managed at /finance/categories (like inventory categories)
   const incomeCategories = categories.filter(c => c.type === 'income')
   const expenseCategories = categories.filter(c => c.type === 'expense')
-
-  // Time-filtered transactions (period only, independent of the text search box below) —
-  // drives the transaction history table.
-  const todayStr = formatDateISO(now)
-  const yesterdayStr = formatDateISO(new Date(now.getTime() - 24 * 60 * 60 * 1000))
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-  const customStartDate = customStart ? new Date(customStart) : null
-  const customEndDate = customEnd ? new Date(customEnd) : null
-
-  const periodTransactions = transactions.filter((tx) => {
-    if (period === 'today') return tx.transaction_date === todayStr
-    if (period === 'yesterday') return tx.transaction_date === yesterdayStr
-    if (period === 'week') return new Date(tx.transaction_date) >= weekAgo
-    if (period === 'month') return new Date(tx.transaction_date) >= monthAgo
-    if (period === 'custom') {
-      const d = new Date(tx.transaction_date)
-      return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
-    }
-    return true
-  })
 
   const CASHBOX_TYPES: { key: CashboxType; label: string; icon: typeof Coins }[] = [
     { key: 'cash', label: t('cashboxTypeCash'), icon: Coins },
@@ -988,7 +888,9 @@ export function CashboxClient({ lang }: { lang: string }) {
     0
   )
 
-  const filteredTransactions = periodTransactions.filter((tx) => {
+  // Period filtering happens in Postgres — `transactions` is already the
+  // selected range, and this only applies the history search box on top.
+  const filteredTransactions = transactions.filter((tx) => {
     const cbName = cashboxes.find(c => c.id === tx.reference_id)?.name || ''
     return (
       (tx.description ?? '').toLowerCase().includes(txSearch.toLowerCase()) ||
@@ -1015,7 +917,7 @@ export function CashboxClient({ lang }: { lang: string }) {
               <button
                 key={p}
                 type="button"
-                onClick={() => setPeriod(p)}
+                onClick={() => handlePeriodChange(p)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
                   period === p ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}

@@ -82,12 +82,16 @@ export function CustomDateRangePicker({
     if (!open) return
 
     // Seed the draft from what is applied, so opening shows the range in force
-    // rather than today's date.
-    const [sDate = formatDateISO(new Date()), sTime = '00:00'] = start.split('T')
-    const [eDate = formatDateISO(new Date()), eTime = '23:59'] = end.split('T')
+    // rather than today's date. Falling back with `||` rather than a
+    // destructuring default: an unset range reaches here as `''`, and `''`
+    // splits to `['']`, which is not `undefined` and so never triggers one —
+    // the pickers opened blank instead of on today.
+    const today = formatDateISO(new Date())
+    const [sDate, sTime = '00:00'] = start.split('T')
+    const [eDate, eTime = '23:59'] = end.split('T')
 
-    setStartDate(sDate)
-    setEndDate(eDate)
+    setStartDate(sDate || today)
+    setEndDate(eDate || today)
     setStartTime(sTime)
     setEndTime(eTime)
 

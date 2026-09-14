@@ -32,7 +32,7 @@ import {
 import { ReportChart, CHART_TYPES, type ChartType } from '@/components/reports/report-chart'
 import { ReportFilters } from '@/components/reports/report-filters'
 import { exportRowsToExcel } from '@/lib/excel-io'
-import { formatCurrency, formatDate, formatNumber } from '@/lib/utils'
+import { formatCurrency, formatDate, formatNumber, isoDate } from '@/lib/utils'
 import {
   DATED_SOURCES,
   REPORT_SOURCES,
@@ -87,7 +87,7 @@ function readSaved(): SavedReport[] {
 function isoDaysAgo(days: number, today: string): string {
   const date = new Date(`${today}T00:00:00`)
   date.setDate(date.getDate() - days)
-  return date.toISOString().slice(0, 10)
+  return isoDate(date)
 }
 
 /**

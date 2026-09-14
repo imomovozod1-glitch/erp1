@@ -1849,6 +1849,11 @@
     "catalog": "Отчёты",
     "openReport": "Открыть",
     "dailyRevenue": "Выручка по дням",
+    "chart": {
+      "avgPerDay": "Среднее за день",
+      "bestDay": "Лучший день",
+      "dayCount": "{count} дн."
+    },
     "topProductsTitle": "Самые продаваемые товары",
     "recentSales": "Последние продажи",
     "searchOrderOrCustomer": "Заказ или клиент…",

@@ -1,6 +1,52 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// ─── Local JWT verification ───────────────────────────────────────────────────
+//
+// `supabase.auth.getUser()` asks the Auth server to validate the access token.
+// That is a full network round trip — measured at ~500 ms from Tashkent to the
+// project's region — and it ran on EVERY protected navigation, before Next.js
+// even began rendering. It was the single largest fixed cost in the app.
+//
+// This project signs its JWTs with an asymmetric key (ES256; see
+// /auth/v1/.well-known/jwks.json), so the signature can be verified right here
+// with WebCrypto and no network call at all — `getClaims()` does exactly that,
+// and still checks the expiry. The security difference against `getUser()` is
+// narrow and bounded: a token revoked server-side (signed out elsewhere, user
+// deleted) keeps verifying until it expires on its own, at most one access-token
+// TTL. The one revocation this app actually acts on — an admin password reset —
+// is caught by the force-logout check below, which is unchanged.
+//
+// The catch is that auth-js caches the JWKS on the CLIENT instance, and
+// middleware builds a fresh client per request — so left to itself it would
+// simply swap one round trip for another. The key set is therefore cached here,
+// in module scope (shared by every request the server process handles), and
+// handed to `getClaims()` so it never fetches.
+const JWKS_TTL_MS = 10 * 60 * 1000
+
+let cachedJwks: { keys: unknown[] } | null = null
+let cachedJwksAt = 0
+
+async function getSigningKeys(supabaseUrl: string, anonKey: string) {
+  if (cachedJwks && Date.now() - cachedJwksAt < JWKS_TTL_MS) return cachedJwks
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/.well-known/jwks.json`, {
+      headers: { apikey: anonKey },
+      cache: 'no-store',
+    })
+    if (!res.ok) return null
+    const jwks = await res.json()
+    if (!jwks?.keys?.length) return null
+    cachedJwks = jwks
+    cachedJwksAt = Date.now()
+    return cachedJwks
+  } catch {
+    // A failed key fetch must not lock anyone out: the caller falls back to
+    // getUser(), which is what this replaced.
+    return null
+  }
+}
+
 // The force-logout check below is a second, separate Supabase network round-trip
 // (beyond the getUser() JWT validation) that ran on every single protected-route
 // request. Its whole purpose is catching a super-admin password reset quickly, so
@@ -86,6 +132,26 @@ export async function updateSession(request: NextRequest) {
   )
 
   try {
+    // Fast path: verify the token's signature locally. Falls through to
+    // getUser() if the key set is unavailable or the token is symmetric.
+    const jwks = await getSigningKeys(supabaseUrl, supabaseAnonKey)
+    if (jwks) {
+      const { data, error } = await supabase.auth.getClaims(undefined, { jwks } as any)
+      if (isDeadRefreshToken(error)) {
+        clearAuthCookies(request, supabaseResponse)
+        return { supabaseResponse, user: null }
+      }
+      const userId = data?.claims?.sub
+      if (!userId) return { supabaseResponse, user: null }
+
+      // The force-logout check needs `last_sign_in_at`, which is not a JWT
+      // claim — so the one request in each window that runs that check takes
+      // the full getUser() path anyway, and every other request skips both.
+      if (wasForceLogoutRecentlyChecked(request, userId)) {
+        return { supabaseResponse, user: { id: userId } }
+      }
+    }
+
     const { data: { user }, error } = await supabase.auth.getUser()
 
     if (isDeadRefreshToken(error)) {

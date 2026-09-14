@@ -1,6 +1,7 @@
 import { getCachedSalesReportData } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { AbcAnalysisReport } from '@/components/reports/abc-analysis-report'
+import { isoDate } from '@/lib/utils'
 
 export default async function AbcReportPage({
   params,
@@ -14,7 +15,7 @@ export default async function AbcReportPage({
   return (
     <AbcAnalysisReport
       lang={lang}
-      today={new Date().toISOString().slice(0, 10)}
+      today={isoDate()}
       items={data.items}
     />
   )

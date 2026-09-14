@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { PageHeader } from '@/components/shared/page-header'
 import { PeriodFilter } from '@/components/shared/period-filter'
-import { parseBound, presetRangeFrom, type DateRange } from '@/lib/reports/sales-analytics'
+import { isoDay, parseBound, presetRangeFrom, type DateRange } from '@/lib/reports/sales-analytics'
 
 /** The presets every sales report offers, in one place so five screens can't drift apart. */
 const PRESETS = ['today', 'yesterday', 'week', 'month', 'thisMonth', 'lastMonth', 'all'] as const
@@ -63,10 +63,19 @@ export function ReportLayout({
   const t = useTranslations('reports')
   const tAnalytics = useTranslations('analytics')
 
-  const todayDate = new Date(`${today}T12:00`)
+  // The server stamps `today` in ITS timezone, which is not the shop's — in
+  // production that is UTC, five hours behind Tashkent. Between midnight and
+  // 05:00 local the server therefore still says "yesterday", and on the 1st of
+  // a month that is not an off-by-one on a label: "last month" resolves to the
+  // month before the one the user means, and the whole report is about the
+  // wrong 30 days. The browser knows the real local date, so once mounted the
+  // presets are resolved against that instead.
+  const [clientToday, setClientToday] = useState<string | null>(null)
+  const effectiveToday = clientToday ?? today
+  const todayDate = new Date(`${effectiveToday}T12:00`)
 
   const [state, setState] = useState(() => {
-    const initial = presetRangeFrom(DEFAULT_PERIOD, todayDate)
+    const initial = presetRangeFrom(DEFAULT_PERIOD, new Date(`${today}T12:00`))
     return {
       period: DEFAULT_PERIOD as string,
       start: initial?.start ?? null,
@@ -74,18 +83,22 @@ export function ReportLayout({
     }
   })
 
-  // Restored after mount, not in the initialiser: reading sessionStorage during
-  // the first render makes the server and client markup disagree. Deferred by a
-  // 0 ms timer so no state is set synchronously inside the effect
-  // (react-hooks/set-state-in-effect — see AGENTS.md).
+  // Both corrections land after mount, not in the initialiser: reading
+  // sessionStorage or the browser clock during the first render makes the
+  // server and client markup disagree. Deferred by a 0 ms timer so no state is
+  // set synchronously inside the effect (react-hooks/set-state-in-effect — see
+  // AGENTS.md).
   useEffect(() => {
     const timer = setTimeout(() => {
+      const browserToday = isoDay(new Date())
       const saved = sessionStorage.getItem(storageKey)
       // A saved "custom" has no bounds stored with it, so it can't be restored
       // meaningfully — those sessions just reopen on the default window.
-      if (!saved || saved === 'custom') return
-      const restored = presetRangeFrom(saved, new Date(`${today}T12:00`))
-      setState({ period: saved, start: restored?.start ?? null, end: restored?.end ?? null })
+      const period = saved && saved !== 'custom' ? saved : DEFAULT_PERIOD
+      if (browserToday === today && period === DEFAULT_PERIOD) return
+      const restored = presetRangeFrom(period, new Date(`${browserToday}T12:00`))
+      setClientToday(browserToday)
+      setState({ period, start: restored?.start ?? null, end: restored?.end ?? null })
     }, 0)
     return () => clearTimeout(timer)
   }, [storageKey, today])

@@ -11,7 +11,7 @@ import { CustomDateRangePicker } from '@/components/shared/custom-date-range-pic
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
+import { formatCurrency, formatDate, formatDateTime, isoDate } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import {
   Download, DollarSign, ShoppingCart, X
@@ -61,7 +61,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   }
 
   const [now] = useState(() => new Date())
-  const todayStr = now.toISOString().split('T')[0]
+  const todayStr = isoDate(now)
   const oneDayMs = 24 * 60 * 60 * 1000
   const weekAgo = new Date(now.getTime() - 7 * oneDayMs)
   const monthAgo = new Date(now.getTime() - 30 * oneDayMs)

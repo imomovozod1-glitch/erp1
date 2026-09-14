@@ -1,4 +1,5 @@
 import { ReportsTabs } from '@/components/reports/reports-tabs'
+import { isoDate } from '@/lib/utils'
 
 interface ReportsPageProps {
   params: Promise<{ lang: string }>
@@ -17,7 +18,7 @@ export default async function ReportsPage({ params }: ReportsPageProps) {
     <ReportsTabs
       // `new Date()` on the server, not in the client component: an impure
       // call during render is a React Compiler lint error (see AGENTS.md).
-      today={new Date().toISOString().slice(0, 10)}
+      today={isoDate()}
       lang={lang}
     />
   )

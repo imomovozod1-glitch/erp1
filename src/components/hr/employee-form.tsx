@@ -26,7 +26,7 @@ import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
 import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
 import { isStrongPassword } from '@/lib/password-validation'
 import { isValidPhone } from '@/lib/phone-validation'
-import { cn } from '@/lib/utils'
+import { cn, isoDate } from '@/lib/utils'
 
 
 interface EmployeeFormProps {
@@ -150,7 +150,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   // hired in the year 3000, and marking someone inactive without a termination
   // date quietly stored NULL — so the record said "not employed" with no
   // indication of when that happened.
-  const todayISO = new Date().toISOString().split('T')[0]
+  const todayISO = isoDate()
 
   const innerFormSchema = z
     .object({
@@ -601,7 +601,7 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
                 if (checked) {
                   setValue('terminated_at', '')
                 } else {
-                  setValue('terminated_at', new Date().toISOString().split('T')[0])
+                  setValue('terminated_at', isoDate())
                 }
               }}
             />

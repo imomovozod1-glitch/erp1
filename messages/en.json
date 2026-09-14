@@ -1849,6 +1849,11 @@
     "catalog": "Reports",
     "openReport": "Open",
     "dailyRevenue": "Daily revenue",
+    "chart": {
+      "avgPerDay": "Daily average",
+      "bestDay": "Best day",
+      "dayCount": "{count} days"
+    },
     "topProductsTitle": "Top selling products",
     "recentSales": "Recent sales",
     "searchOrderOrCustomer": "Order or customer…",

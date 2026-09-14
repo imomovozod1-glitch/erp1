@@ -27,7 +27,7 @@ import { isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { PhoneInput } from '@/components/ui/phone-input'
-import { cn, formatDate } from '@/lib/utils'
+import { cn, formatDate, isoDate } from '@/lib/utils'
 
 export interface TenantFormInitialData {
   id: string
@@ -60,7 +60,7 @@ const DURATION_PRESETS = [1, 3, 6, 12]
 function addMonths(dateStr: string, months: number): string {
   const d = new Date(dateStr)
   d.setMonth(d.getMonth() + (Number(months) || 1))
-  return d.toISOString().slice(0, 10)
+  return isoDate(d)
 }
 
 
@@ -200,8 +200,8 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
           costing_method: 'fifo',
           license_count: 1,
           license_months: 1,
-          subscription_started_at: new Date().toISOString().slice(0, 10),
-          subscription_ends_at: addMonths(new Date().toISOString().slice(0, 10), 1),
+          subscription_started_at: isoDate(),
+          subscription_ends_at: addMonths(isoDate(), 1),
           price_paid: 0,
           support_agent_id: null,
         },

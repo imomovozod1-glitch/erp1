@@ -107,3 +107,9 @@ export async function invalidateAll() {
   Object.values(CACHE_TAGS).forEach((tag) => updateTag(tag))
 }
 
+
+export async function invalidateCashbox() {
+  updateTag(CACHE_TAGS.cashbox)
+  updateTag(CACHE_TAGS.transactions)
+  updateTag(CACHE_TAGS.dashboard)
+}

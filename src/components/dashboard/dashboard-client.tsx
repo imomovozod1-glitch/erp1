@@ -19,7 +19,7 @@ import {
   Building2,
   UserPlus,
 } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, isoDate } from '@/lib/utils'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 import { PageInfoButton } from '@/components/shared/page-info-button'
 
@@ -93,17 +93,6 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     setCustomEnd(end)
     setPeriod('custom')
   }
-
-  const [currentTime, setCurrentTime] = useState<Date | null>(null)
-  
-  useEffect(() => {
-    const timeoutId = setTimeout(() => setCurrentTime(new Date()), 0)
-    const timerId = setInterval(() => setCurrentTime(new Date()), 60000)
-    return () => {
-      clearTimeout(timeoutId)
-      clearInterval(timerId)
-    }
-  }, [])
 
   const td = useTranslations('dashboard')
   const tInfo = useTranslations('pageInfo')
@@ -212,9 +201,9 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
 
   // Date constants (initialized once to keep render pure)
   const [now] = useState(() => new Date())
-  const todayStr = now.toISOString().split('T')[0]
+  const todayStr = isoDate(now)
   const oneDayMs = 24 * 60 * 60 * 1000
-  const yesterdayStr = new Date(now.getTime() - oneDayMs).toISOString().split('T')[0]
+  const yesterdayStr = isoDate(new Date(now.getTime() - oneDayMs))
   const weekAgo = new Date(now.getTime() - 7 * oneDayMs)
   const monthAgo = new Date(now.getTime() - 30 * oneDayMs)
 

@@ -96,7 +96,7 @@ function Body({
 
     return {
       totals: computeTotals(periodOrders, periodItems),
-      series: dailySeries(periodOrders, range),
+      series: dailySeries(periodOrders, periodItems, range),
       groups: groupItems(periodItems, keyOf, (item) => names.get(keyOf(item)) ?? unnamed),
     }
   }, [orders, items, range, dimension, unnamed])

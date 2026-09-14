@@ -1,4 +1,5 @@
 import type { StatusTone } from '@/components/shared/status-badge'
+import { isoDate } from '@/lib/utils'
 
 /**
  * One source of truth for every document status in the app.
@@ -133,7 +134,7 @@ export function effectiveInvoiceStatus(invoice: {
   const outstanding = (Number(invoice.total_amount) || 0) - (Number(invoice.paid_amount) || 0)
   if (outstanding <= 0) return status
   // Compare dates only: an invoice due today is not late yet.
-  const today = new Date().toISOString().split('T')[0]
+  const today = isoDate()
   return String(invoice.due_at).split('T')[0] < today ? 'overdue' : status
 }
 

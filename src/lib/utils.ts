@@ -23,6 +23,22 @@ export function formatCurrency(
   return `${currency} ${formatted}`
 }
 
+/**
+ * `YYYY-MM-DD` for a date, in LOCAL time.
+ *
+ * The app was spelling this as `new Date().toISOString().slice(0, 10)` in
+ * nineteen files, and that is UTC: in Tashkent (UTC+5) every one of them
+ * answered with YESTERDAY's date between midnight and 05:00. A sale rung up at
+ * 01:30 was filed under the previous day, the dashboard's "today" tile counted
+ * the wrong day's takings, and an invoice fell due a day early.
+ */
+export function isoDate(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 export function formatDate(dateStr: string, fmt: string = "dd.MM.yyyy"): string {
   try {
     return format(parseISO(dateStr), fmt)
@@ -36,8 +52,23 @@ export function formatDateTime(dateStr: string, fmt: string = "dd.MM.yyyy HH:mm"
   return formatDate(dateStr, fmt)
 }
 
+/**
+ * Grouped digits with a comma decimal separator — "1 234 567,89".
+ *
+ * Spelled out by hand rather than via `Intl.NumberFormat("uz-UZ")`, which
+ * answers differently depending on how complete the runtime's locale data is:
+ * Node renders "17,4" and a browser without Uzbek data renders "17.4". Every
+ * fractional number on a server-rendered page was therefore a hydration
+ * mismatch — React logged an error and threw away the server's markup to
+ * re-render the whole tree on the client, which is both a visible flash and
+ * real work on every page carrying one. `formatCurrency` above is
+ * locale-independent for the same reason.
+ */
 export function formatNumber(value: number): string {
-  return new Intl.NumberFormat("uz-UZ").format(value)
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 })
+    .format(value)
+    .replace(/,/g, " ")
+    .replace(".", ",")
 }
 
 export function generateCode(prefix: string, id: number): string {
