@@ -222,7 +222,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                   <button
                     type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline cursor-pointer"
+                    className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
                   >
                     {lang === 'uz' ? "Kattaroq xaritada ko'rish" : lang === 'ru' ? 'Показать на большой карте' : 'View larger map'}
                   </button>
@@ -234,7 +234,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                 <Globe className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">Website</span>
-                  <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-violet-600 dark:text-violet-400 hover:underline text-xs break-all">
+                  <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-violet-600 dark:text-violet-400 text-xs break-all">
                     {supplier.website}
                   </a>
                 </div>

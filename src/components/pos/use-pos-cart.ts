@@ -157,13 +157,30 @@ export function usePosCart({
   }
 
   /**
-   * Empties the quantity box without dropping the line, so the cashier can
-   * type a new number into it. The line is removed on blur if it is still
-   * empty — see the `onBlur` in the cart list.
+   * The quantity as it is being TYPED, which is not the same thing as the
+   * quantity the steppers set.
+   *
+   * `setQuantity` drops the line at zero, because pressing − on a line of one
+   * means "take it off". Typing goes through every prefix of what the cashier
+   * means: reaching 0.5 kg means passing through "0", and through "0." — both
+   * of which read as zero. The line used to vanish on that first keystroke, so
+   * a fractional quantity below one could not be entered at all.
+   *
+   * So this accepts zero and keeps the line; the `onBlur` in the cart list
+   * removes it if the cashier walked away leaving it at zero.
    */
-  const clearQuantity = (productId: string) => {
-    setItems(items.map((i) => (i.product.id === productId ? { ...i, quantity: 0 } : i)))
+  const setTypedQuantity = (productId: string, quantity: number) => {
+    const item = items.find((i) => i.product.id === productId)
+    if (!item) return
+    if (quantity > item.product.stock) {
+      onStockExceeded()
+      return
+    }
+    setItems(items.map((i) => (i.product.id === productId ? { ...i, quantity } : i)))
   }
+
+  /** Empties the box while keeping the line — same reasoning as above. */
+  const clearQuantity = (productId: string) => setTypedQuantity(productId, 0)
 
   const setLineDiscount = (productId: string, discountPercent: number) => {
     const value = Math.max(0, Math.min(100, discountPercent))
@@ -210,6 +227,7 @@ export function usePosCart({
     items,
     add,
     setQuantity,
+    setTypedQuantity,
     clearQuantity,
     setLineDiscount,
     remove,

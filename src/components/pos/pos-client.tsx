@@ -13,7 +13,7 @@ import {
   invalidateCustomers,
   invalidateInvoices
 } from '@/lib/data/revalidate'
-import { useSidebar } from '@/components/ui/sidebar'
+import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
 import { toast } from 'sonner'
 import { printReceiptDirect } from '@/lib/printer/print'
 import { getPrinterConfig, DEFAULT_PRINTER_CONFIG, type PrinterConfig } from '@/lib/printer/storage'
@@ -67,7 +67,7 @@ export function POSClient({
   // `useTranslations()` comes last in the file.
   const tCommon = useTranslations('common')
   const t = useTranslations('pos')
-  const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
+  const sidebarOffset = useSidebarOffset()
 
   // State
   const [products, setProducts] = useState(initialProducts)
@@ -124,7 +124,7 @@ export function POSClient({
    */
   const filteredProducts = useMemo(() => {
     const needle = searchQuery.trim().toLowerCase()
-    return products.filter((p) => {
+    const matches = products.filter((p) => {
       const matchesSearch =
         !needle ||
         p.name.toLowerCase().includes(needle) ||
@@ -133,6 +133,12 @@ export function POSClient({
         selectedCategory === 'all' || p.category_id === selectedCategory
       return matchesSearch && matchesCategory
     })
+
+    // Sold-out products stay in the grid — a cashier has to be able to tell
+    // "we stock this and it is finished" from "we do not stock this", and the
+    // second is what hiding them would say. They sink to the end instead, so
+    // they never take a tile the cashier could have tapped.
+    return matches.sort((a, b) => Number(a.stock <= 0) - Number(b.stock <= 0))
   }, [products, searchQuery, selectedCategory])
 
   /** Empties the basket AND the sale around it — customer and payment method. */
@@ -348,9 +354,7 @@ export function POSClient({
 
   return (
     <div
-      className={`relative select-none md:fixed md:top-16 md:right-0 md:bottom-0 md:flex md:flex-col md:overflow-hidden md:p-6 transition-[left] duration-200 ease-linear ${
-        isSidebarMobile ? 'md:left-0' : sidebarState === 'expanded' ? 'md:left-(--sidebar-width)' : 'md:left-(--sidebar-width-icon)'
-      }`}
+      className={`relative select-none md:fixed md:top-16 md:right-0 md:bottom-0 md:flex md:flex-col md:overflow-hidden md:p-6 ${sidebarOffset}`}
     >
       {/* Print & Scrollbar Style Injection */}
       <style jsx global>{`

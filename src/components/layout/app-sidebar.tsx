@@ -208,11 +208,20 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href={`/${lang}/dashboard`} prefetch={true} onClick={closeOnMobile} />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
+            {/* Collapsed, this button is exactly 32px wide — the rail is 3rem
+                minus the sidebar's own padding. The mark therefore needs
+                `shrink-0` or the label block squeezes it into an oval, and the
+                label needs hiding or it wins that fight. Both only apply in
+                icon mode; expanded is unchanged. */}
+            <SidebarMenuButton
+              size="lg"
+              tooltip="ERP System"
+              render={<Link href={`/${lang}/dashboard`} prefetch={true} onClick={closeOnMobile} />}
+            >
+              <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
                 <Building2 className="size-4" />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">ERP System</span>
                 <span className="truncate text-xs text-muted-foreground">Enterprise</span>
               </div>
@@ -269,9 +278,13 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                     >
                       <Icon />
                       <span>{tNav(item.key as string)}</span>
+                      {/* Hidden in icon mode: the button is 32px wide and the
+                          chevron would sit half outside it, beside the icon.
+                          There is nothing to expand there either — the
+                          sub-menu is hidden at that width. */}
                       <ChevronRight
                         className={cn(
-                          'ml-auto transition-transform duration-200',
+                          'ml-auto transition-transform duration-200 group-data-[collapsible=icon]:hidden',
                           isExpanded && 'rotate-90'
                         )}
                       />
@@ -305,13 +318,14 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
             {profile?.role === 'admin' ? (
               <SidebarMenuButton
                 size="lg"
+                tooltip={lang === 'uz' ? "Qo'llab-quvvatlash" : lang === 'ru' ? 'Поддержка' : 'Support'}
                 render={<Link href={`/${lang}/support`} prefetch={true} onClick={closeOnMobile} />}
                 className="gap-3 text-slate-700 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-900/40 transition-colors">
+                <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-900/40 transition-colors">
                   <LifeBuoy className="size-4 text-violet-600 animate-pulse" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">{lang === 'uz' ? 'Qo\'llab-quvvatlash' : lang === 'ru' ? 'Поддержка' : 'Support'}</span>
                   <span className="truncate text-xs text-muted-foreground">{lang === 'uz' ? 'Yordam xizmati' : lang === 'ru' ? 'Служба поддержки' : 'Help Desk'}</span>
                 </div>
@@ -319,20 +333,21 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
             ) : (
               <SidebarMenuButton
                 size="lg"
+                tooltip={profile?.full_name ?? 'User'}
                 render={<Link href={`/${lang}/settings`} prefetch={true} onClick={closeOnMobile} />}
               >
-                <Avatar className="h-8 w-8 rounded-lg">
+                <Avatar className="h-8 w-8 shrink-0 rounded-lg">
                   <AvatarFallback className="rounded-lg bg-violet-100 text-violet-700 text-xs font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">{profile?.full_name ?? 'User'}</span>
                   <span className="truncate text-xs text-muted-foreground">{profile?.email}</span>
                 </div>
                 <Badge
                   variant="outline"
-                  className="ml-auto text-[10px] px-1.5 capitalize border-violet-200 text-violet-600"
+                  className="ml-auto text-[10px] px-1.5 capitalize border-violet-200 text-violet-600 group-data-[collapsible=icon]:hidden"
                 >
                   {profile?.role ? tSettings(`role.${profile.role}`) : ''}
                 </Badge>

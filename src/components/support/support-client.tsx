@@ -35,7 +35,11 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
   const tCommon = useTranslations('common')
   const tChat = useTranslations('supportChat')
   const tNav = useTranslations('nav')
-  const t = useTranslations('support')
+  // Root translator with fully-qualified keys, as in products-table.tsx: with
+  // five namespaces in one file the editor's i18n plugin cannot tell which one
+  // a bare `t(...)` belongs to, and it reported every key here as missing. A
+  // full key is unambiguous to the plugin and to the next reader.
+  const t = useTranslations()
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -65,7 +69,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
         throw new Error(json.error || tCommon('error'))
       }
       setIsSubmitted(true)
-      toast.success(t('ticketSuccess'))
+      toast.success(t('support.ticketSuccess'))
       setSubject('')
       setMessage('')
       // Tell the conversation panel below to pull in the new thread.
@@ -85,12 +89,12 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <PageHeader
-        title={t('title')}
-        subtitle={t('description')}
+        title={t('support.title')}
+        subtitle={t('support.description')}
         info={tInfo('support')}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
-          { label: t('title') },
+          { label: t('support.title') },
         ]}
       />
 
@@ -110,10 +114,10 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
               <Bot className="h-6 w-6" />
             </div>
             <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 group-hover:text-sky-600 transition-colors">
-              {t('contactTelegram')}
+              {t('support.contactTelegram')}
             </h3>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              {t('contactTelegramDesc')}
+              {t('support.contactTelegramDesc')}
             </p>
           </div>
           <div className="flex items-center gap-1 text-sky-600 dark:text-sky-400 text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
@@ -133,10 +137,10 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
               <Phone className="h-6 w-6" />
             </div>
             <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 transition-colors">
-              {t('contactPhone')}
+              {t('support.contactPhone')}
             </h3>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              {t('contactPhoneDesc')}
+              {t('support.contactPhoneDesc')}
             </p>
           </div>
           <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
@@ -156,10 +160,10 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
               <Mail className="h-6 w-6" />
             </div>
             <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">
-              {t('contactEmail')}
+              {t('support.contactEmail')}
             </h3>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              {t('contactEmailDesc')}
+              {t('support.contactEmailDesc')}
             </p>
           </div>
           <div className="flex items-center gap-1 text-violet-600 dark:text-violet-400 text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
@@ -175,7 +179,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-              {t('submitTicket')}
+              {t('support.submitTicket')}
             </CardTitle>
             <CardDescription>
               {lang === 'uz' ? "Xabaringizni yozib qoldiring va biz tez orada siz bilan bog'lanamiz." : lang === 'ru' ? 'Оставьте сообщение, и мы свяжемся с вами в ближайшее время.' : 'Leave a message and we will respond to you shortly.'}
@@ -188,7 +192,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                   <CheckCircle2 className="h-10 w-10" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{lang === 'uz' ? "Murojaat qabul qilindi!" : lang === 'ru' ? 'Обращение принято!' : 'Ticket Received!'}</h3>
-                <p className="text-sm text-muted-foreground max-w-sm mt-2">{t('ticketSuccess')}</p>
+                <p className="text-sm text-muted-foreground max-w-sm mt-2">{t('support.ticketSuccess')}</p>
                 <Button 
                   onClick={() => setIsSubmitted(false)}
                   className="mt-6 bg-violet-600 hover:bg-violet-500"
@@ -200,7 +204,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    {t('ticketSubject')}
+                    {t('support.ticketSubject')}
                   </label>
                   <Input 
                     value={subject}
@@ -211,7 +215,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    {t('ticketMessage')}
+                    {t('support.ticketMessage')}
                   </label>
                   <Textarea
                     value={message}
@@ -226,7 +230,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                   className="w-full bg-violet-600 hover:bg-violet-500 font-medium rounded-xl gap-2 h-11"
                 >
                   <Send className="h-4 w-4" />
-                  {isSubmitting ? (lang === 'uz' ? 'Yuborilmoqda...' : lang === 'ru' ? 'Отправка...' : 'Sending...') : t('submitTicket')}
+                  {isSubmitting ? (lang === 'uz' ? 'Yuborilmoqda...' : lang === 'ru' ? 'Отправка...' : 'Sending...') : t('support.submitTicket')}
                 </Button>
               </form>
             )}
@@ -245,14 +249,14 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                 </span>
                 <span className="text-xs font-bold uppercase tracking-wider text-violet-100">
-                  {t('liveStatus')}
+                  {t('support.liveStatus')}
                 </span>
               </div>
               <h3 className="text-xl font-extrabold leading-snug">
                 {lang === 'uz' ? 'Har doim aloqadamiz' : lang === 'ru' ? 'Всегда на связи' : 'Always Connected'}
               </h3>
               <p className="text-xs text-violet-100/90 leading-relaxed">
-                {t('liveStatusDesc')}
+                {t('support.liveStatusDesc')}
               </p>
               <div className="pt-2 flex items-center gap-2 text-xs font-semibold bg-white/15 px-3 py-2 rounded-xl w-fit">
                 <span>Premium Support Active</span>

@@ -139,27 +139,45 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
     setIsSubmitting(true)
     try {
       const supabase = createClient() as any
-      const { data: { user } } = await supabase.auth.getUser()
+      // getSession() reads the JWT already in memory; getUser() spends a network
+      // round trip re-validating it before a single row is written, and buys
+      // nothing — the id below only stamps created_by/assigned_to, and the
+      // database validates the caller from the same token regardless. The POS
+      // checkout made this trade already; this form had not.
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error('Not authenticated')
 
       const orderNumber = generateOrderNumber()
       const orderDateStr = getTodayString()
 
-      // Re-read stock immediately before writing. `products` is a server-rendered
-      // snapshot from page load, so deducting from it wrote back a stale figure
-      // and silently reverted anything sold/received in between (the POS flow
-      // already does this check — this form was missing it entirely).
-      const { data: freshProducts, error: freshErr } = await supabase
-        .from('products')
-        .select('id, stock, name')
-        .in('id', items.map((i) => i.productId))
+      // Current stock and the costing method: neither depends on the other, so
+      // they travel together. Stock is re-read immediately before writing
+      // because `products` is a snapshot from page load — deducting from it
+      // wrote back a stale figure and silently reverted anything sold or
+      // received in between.
+      const [{ data: freshProducts, error: freshErr }, { data: tenant }] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id, stock, name')
+          .in('id', items.map((i) => i.productId)),
+        supabase.from('tenants').select('costing_method').limit(1).single(),
+      ])
       if (freshErr) throw freshErr
 
       const stockById = new Map<string, number>((freshProducts || []).map((p: any) => [p.id, Number(p.stock)]))
+      // Lines are validated against the TOTAL a product is sold in this order —
+      // the same product may appear on two lines, and checking each line alone
+      // let their sum exceed what is on the shelf.
+      const quantityByProduct = new Map<string, number>()
       for (const item of items) {
-        const currentStock = stockById.get(item.productId)
-        if (currentStock === undefined || currentStock < item.quantity) {
-          throw new Error(`${t('availableStock')}: ${currentStock ?? 0} — ${item.productName}`)
+        quantityByProduct.set(item.productId, (quantityByProduct.get(item.productId) ?? 0) + item.quantity)
+      }
+      for (const [productId, quantity] of quantityByProduct) {
+        const currentStock = stockById.get(productId)
+        if (currentStock === undefined || currentStock < quantity) {
+          const name = items.find((i) => i.productId === productId)?.productName ?? ''
+          throw new Error(`${t('availableStock')}: ${currentStock ?? 0} — ${name}`)
         }
       }
 
@@ -180,21 +198,24 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
 
       if (orderError) throw orderError
 
-      // Cost each line at whatever FIFO/LIFO/AVECO charges right now, before deducting
-      // stock, so the realized cost can be stored alongside the order item and movement.
-      // RLS scopes this to the caller's own tenant row — no explicit filter needed.
-      const { data: tenant } = await supabase
-        .from('tenants')
-        .select('costing_method')
-        .limit(1)
-        .single()
-
+      // Cost every line at whatever FIFO/LIFO/AVECO charges right now, before
+      // stock is deducted, so the realised cost can be stored on the order item
+      // and the movement.
+      //
+      // Consumed once per PRODUCT rather than once per line: the layers are
+      // shared, so two lines of the same product must not walk them twice, and
+      // grouping is what makes the calls independent enough to run at once.
+      // This loop used to await one round trip per line, three deep.
       const method = getEffectiveCostingMethod(tenant)
-      const costByProductId = new Map<string, { unitCost: number; totalCost: number }>()
-      for (const item of items) {
-        const consumed = await consumeCostLayers(supabase, item.productId, item.quantity, method)
-        costByProductId.set(item.productId, consumed)
-      }
+      const productIds = [...quantityByProduct.keys()]
+      const consumed = await Promise.all(
+        productIds.map((productId) =>
+          consumeCostLayers(supabase, productId, quantityByProduct.get(productId) as number, method)
+        )
+      )
+      const costByProductId = new Map<string, { unitCost: number; totalCost: number }>(
+        productIds.map((productId, i) => [productId, consumed[i]])
+      )
 
       // Create sales order items
       const orderItems = items.map(item => ({
@@ -206,44 +227,48 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
         total_price: item.totalPrice,
       }))
 
-      const { error: itemsError } = await supabase
-        .from('sales_order_items')
-        .insert(orderItems as any)
-
-      if (itemsError) throw itemsError
-
-      // Deduct stock and create stock movements
+      // Stock and movements, worked out in memory first so the writes can all
+      // go at once. One UPDATE per product (two parallel updates of the same row
+      // would race and one would be lost) and one movement per line, each with
+      // its own before/after so a product listed twice reads correctly.
+      const movementRows: any[] = []
+      const finalStockByProduct = new Map<string, number>()
       for (const item of items) {
-        const quantityBefore = stockById.get(item.productId)
+        const quantityBefore = finalStockByProduct.get(item.productId) ?? stockById.get(item.productId)
         if (quantityBefore === undefined) continue
-
         const quantityAfter = quantityBefore - item.quantity
-        // Keep the map in step so a product listed twice in one order deducts
-        // cumulatively instead of each line overwriting the previous one.
-        stockById.set(item.productId, quantityAfter)
+        finalStockByProduct.set(item.productId, quantityAfter)
         const cost = costByProductId.get(item.productId)
-
-        await supabase
-          .from('products')
-          .update({ stock: quantityAfter } as any)
-          .eq('id', item.productId)
-
-        await supabase
-          .from('stock_movements')
-          .insert([{
-            product_id: item.productId,
-            type: 'out' as any,
-            quantity: item.quantity,
-            quantity_before: quantityBefore,
-            quantity_after: quantityAfter,
-            reference_type: 'sales_orders',
-            reference_id: order.id,
-            reason: `Sale ${orderNumber}`,
-            unit_cost: cost?.unitCost ?? null,
-            total_cost: cost?.totalCost ?? null,
-            created_by: user.id,
-          } as any])
+        movementRows.push({
+          product_id: item.productId,
+          type: 'out' as any,
+          quantity: item.quantity,
+          quantity_before: quantityBefore,
+          quantity_after: quantityAfter,
+          reference_type: 'sales_orders',
+          reference_id: order.id,
+          reason: `Sale ${orderNumber}`,
+          unit_cost: cost?.unitCost ?? null,
+          total_cost: cost ? cost.unitCost * item.quantity : null,
+          created_by: user.id,
+        })
       }
+
+      const [{ error: itemsError }, { error: movementsError }] = await Promise.all([
+        supabase.from('sales_order_items').insert(orderItems as any),
+        supabase.from('stock_movements').insert(movementRows as any),
+        ...[...finalStockByProduct].map(([productId, stock]) =>
+          supabase
+            .from('products')
+            .update({ stock } as any)
+            .eq('id', productId)
+            .then(({ error }: any) => {
+              if (error) throw error
+            })
+        ),
+      ])
+      if (itemsError) throw itemsError
+      if (movementsError) throw movementsError
 
       // If this is a debt sale and the customer already has credit (haqdorlik) on file,
       // spend it down against this purchase first — otherwise they'd show a credit
@@ -255,46 +280,58 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
       }
       const debtFullyCoveredByCredit = isDebtSale && appliedCredit >= totalAmount
 
-      // Always create an invoice — 'paid' immediately for cash/card/transfer,
-      // 'sent' (unpaid) for debt sales so the customer's debt is tracked.
-      const { error: invoiceError } = await supabase.from('invoices').insert({
-        invoice_number: generateInvoiceNumber(),
-        order_id: order.id,
-        customer_id: customerId || null,
-        status: isDebtSale ? (debtFullyCoveredByCredit ? 'paid' : 'sent') : 'paid',
-        total_amount: totalAmount,
-        paid_amount: isDebtSale ? appliedCredit : totalAmount,
-        issued_at: orderDateStr,
-        due_at: isDebtSale ? getDueDateString(14) : orderDateStr,
-        paid_at: isDebtSale ? (debtFullyCoveredByCredit ? orderDateStr : null) : orderDateStr,
-        notes: isDebtSale
-          ? `Qarzga sotildi - Order #${orderNumber}${appliedCredit > 0 ? ` (${formatCurrency(appliedCredit)} haqdorlikdan to'landi)` : ''}`
-          : `Paid via ${paymentMethod}`,
-        created_by: user.id,
-        assigned_to: assignedTo ?? user.id,
-      })
+      // The invoice, the income transaction and the cashbox all hang off the
+      // order that already exists — none of them depends on another, so they
+      // go together rather than one round trip at a time.
+      const isCashSale = !isDebtSale
+      const [{ error: invoiceError }] = await Promise.all([
+        // Always create an invoice — 'paid' immediately for cash/card/transfer,
+        // 'sent' (unpaid) for debt sales so the customer's debt is tracked.
+        supabase.from('invoices').insert({
+          invoice_number: generateInvoiceNumber(),
+          order_id: order.id,
+          customer_id: customerId || null,
+          status: isDebtSale ? (debtFullyCoveredByCredit ? 'paid' : 'sent') : 'paid',
+          total_amount: totalAmount,
+          paid_amount: isDebtSale ? appliedCredit : totalAmount,
+          issued_at: orderDateStr,
+          due_at: isDebtSale ? getDueDateString(14) : orderDateStr,
+          paid_at: isDebtSale ? (debtFullyCoveredByCredit ? orderDateStr : null) : orderDateStr,
+          notes: isDebtSale
+            ? `Qarzga sotildi - Order #${orderNumber}${appliedCredit > 0 ? ` (${formatCurrency(appliedCredit)} haqdorlikdan to'landi)` : ''}`
+            : `Paid via ${paymentMethod}`,
+          created_by: user.id,
+          assigned_to: assignedTo ?? user.id,
+        }),
+        // Only record cash-basis income when money actually changed hands — a
+        // debt sale creates its income transaction later, when the debt is
+        // collected through the cashbox, or the revenue is counted twice.
+        isCashSale
+          ? supabase
+              .from('transactions')
+              .insert({
+                type: 'income',
+                amount: totalAmount,
+                category: 'Sales',
+                description: `Sale - Order #${orderNumber}`,
+                reference_type: 'sales_orders',
+                reference_id: order.id,
+                transaction_date: orderDateStr,
+                created_by: user.id,
+              })
+              .then(({ error }: any) => {
+                if (error) throw error
+              })
+          : Promise.resolve(),
+        isCashSale
+          ? adjustCashboxBalance(totalAmount, 'income', supabase, paymentMethod as 'cash' | 'card' | 'transfer')
+          : Promise.resolve(),
+      ])
       if (invoiceError) throw invoiceError
 
-      // Only record cash-basis income when money actually changed hands — debt sales
-      // create the income transaction later, when the debt is collected via the
-      // cashbox's debt collection flow (avoids double-counting revenue).
-      if (!isDebtSale) {
-        const { error: txError } = await supabase.from('transactions').insert({
-          type: 'income',
-          amount: totalAmount,
-          category: 'Sales',
-          description: `Sale - Order #${orderNumber}`,
-          reference_type: 'sales_orders',
-          reference_id: order.id,
-          transaction_date: orderDateStr,
-          created_by: user.id,
-        })
-        if (txError) throw txError
-
-        await adjustCashboxBalance(totalAmount, 'income', supabase, paymentMethod as 'cash' | 'card' | 'transfer')
-      }
-
-      await Promise.all([
+      // Cache invalidation is for *other* pages on their next visit; nothing
+      // here waits for it, so it must not hold the form open.
+      void Promise.all([
         invalidateOrders(),
         invalidateOrderItems(),
         invalidateProducts(),
@@ -302,7 +339,10 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
         invalidateTransactions(),
         invalidateInvoices(),
         invalidateCustomers(),
-      ])
+      ]).catch(() => {
+        // A failed revalidation only means another page may show stale numbers
+        // until its cache window lapses; the sale itself is already saved.
+      })
       // Telegram notification (Settings → Integrations). Fire-and-forget: the
       // sale is already committed, so a Telegram failure must not surface here.
       fireTelegramNotification({

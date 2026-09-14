@@ -2,13 +2,16 @@
 
 import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/providers/theme-provider'
 
 interface ThemeToggleProps {
+  /** Lets a host surface (e.g. the app header toolbar) match its own controls. */
+  className?: string
   labels?: { light: string; dark: string }
 }
 
-export function ThemeToggle({ labels }: ThemeToggleProps) {
+export function ThemeToggle({ labels, className }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme()
 
   return (
@@ -28,7 +31,10 @@ export function ThemeToggle({ labels }: ThemeToggleProps) {
           ? labels?.light ?? 'Light mode'
           : labels?.dark ?? 'Dark mode'
       }
-      className="text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+      className={cn(
+        'text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
+        className
+      )}
     >
       {/*
         Both icons are always rendered and swapped purely by the `dark` class

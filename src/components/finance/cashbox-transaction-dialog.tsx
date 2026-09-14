@@ -168,7 +168,7 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="tx_category" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t('category')} *</Label>
-              <Link href={`/${lang}/finance/categories`} className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline">
+              <Link href={`/${lang}/finance/categories`} className="text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300">
                 {t('txCategories')}
               </Link>
             </div>

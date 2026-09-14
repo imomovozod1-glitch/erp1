@@ -74,8 +74,11 @@ export function readExcelFile(file: File): Promise<Record<string, any>[]> {
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
-        const bstr = e.target?.result
-        const wb = XLSX.read(bstr, { type: 'binary' })
+        // `type: 'array'` over an ArrayBuffer, not the deprecated
+        // `readAsBinaryString` — the binary-string signature is marked
+        // deprecated in the DOM types and mangles bytes above 0x7f.
+        const buffer = e.target?.result as ArrayBuffer
+        const wb = XLSX.read(new Uint8Array(buffer), { type: 'array' })
         const wsName = wb.SheetNames[0]
         const ws = wb.Sheets[wsName]
         resolve(XLSX.utils.sheet_to_json(ws))
@@ -84,7 +87,7 @@ export function readExcelFile(file: File): Promise<Record<string, any>[]> {
       }
     }
     reader.onerror = () => reject(new Error('File read failed'))
-    reader.readAsBinaryString(file)
+    reader.readAsArrayBuffer(file)
   }))
 }
 

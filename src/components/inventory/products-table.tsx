@@ -200,8 +200,10 @@ export function ProductsTable({
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: "binary" });
+        // `type: 'array'` over an ArrayBuffer, not the deprecated
+        // `readAsBinaryString` — see readExcelFile in lib/excel-io.ts.
+        const buffer = evt.target?.result as ArrayBuffer;
+        const wb = XLSX.read(new Uint8Array(buffer), { type: "array" });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws) as any[];
@@ -346,7 +348,7 @@ export function ProductsTable({
         toast.error(`${t("inventory.excelReadError")}: ${err.message}`);
       }
     };
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
     e.target.value = "";
   };
 
