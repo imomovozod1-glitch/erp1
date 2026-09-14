@@ -797,6 +797,7 @@
     "quickAddCustomer": "Quick Add Customer",
     "receipt": "Sales Receipt",
     "printReceipt": "Print Receipt",
+    "saveFailed": "The sale was not saved — check the connection and ring it up again",
     "orderSuccess": "Sale completed successfully!",
     "cashier": "Cashier",
     "noProducts": "No products found",
