@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { isoDate } from '@/lib/utils'
 
 const paymentSchema = z.object({
   amount: z.number().positive(),
@@ -11,7 +12,7 @@ const paymentSchema = z.object({
 function addMonths(dateStr: string, months: number): string {
   const d = new Date(dateStr)
   d.setMonth(d.getMonth() + months)
-  return d.toISOString().slice(0, 10)
+  return isoDate(d)
 }
 
 /**
@@ -45,7 +46,7 @@ export async function POST(
     .maybeSingle()
   if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = isoDate()
   const base =
     tenant.subscription_ends_at && new Date(tenant.subscription_ends_at).getTime() > Date.now()
       ? tenant.subscription_ends_at

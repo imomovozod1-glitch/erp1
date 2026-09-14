@@ -572,6 +572,117 @@ export type SalesReportData = Awaited<ReturnType<typeof getCachedSalesReportData
 
 // ─── Dashboard stats (heavier query, shorter cache) ───────────────────────────
 
+/**
+ * The cashbox screen's standing data: the registers themselves plus the four
+ * picker lists behind the kirim/chiqim dialog.
+ *
+ * The screen used to fetch all of this from the BROWSER after hydrating: the
+ * cashboxes, then — awaiting that first — their transactions, then four more
+ * lookups for the customer/employee/supplier/category pickers. Against a
+ * Supabase project ~500 ms away that is a second and a half of empty cards
+ * after the page has already been delivered, every single visit, and none of
+ * it was cached anywhere.
+ *
+ * Fetched together rather than as five exported queries because the screen
+ * always needs all five, and one cache entry means one round trip on a miss
+ * instead of five. The transaction history is deliberately NOT part of it —
+ * see `getCachedCashboxTransactions`.
+ *
+ * `failed` is part of the contract: the client keeps a localStorage mirror for
+ * when Supabase is unreachable (see `adjustCashboxBalance` in
+ * finance-helpers.ts), and it can only decide to use it if it can tell an
+ * empty tenant apart from a failed read.
+ */
+export const getCachedCashboxPageData = unstable_cache(
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
+
+    const [cashboxRes, customers, employees, suppliers, categories] = await Promise.all([
+      supabase
+        .from('cashboxes')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('customers')
+        .select('id, name')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+        .order('name'),
+      supabase
+        .from('employees')
+        .select('id, employee_code, profiles(full_name)')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true),
+      supabase
+        .from('suppliers')
+        .select('id, name')
+        .eq('tenant_id', tenantId)
+        .order('name'),
+      supabase
+        .from('transaction_categories')
+        .select('id, name, type, person_type')
+        .eq('tenant_id', tenantId)
+        .order('name'),
+    ])
+
+    return {
+      // Only the cashboxes read decides `failed` — the pickers are optional
+      // extras, and an empty supplier list should never push the whole screen
+      // into offline mode.
+      failed: Boolean(cashboxRes.error),
+      cashboxes: cashboxRes.data ?? [],
+      customers: customers.data ?? [],
+      employees: (employees.data ?? []).map((emp: any) => ({
+        id: emp.id as string,
+        name: (emp.profiles?.full_name || emp.employee_code || '') as string,
+      })),
+      suppliers: suppliers.data ?? [],
+      categories: categories.data ?? [],
+    }
+  },
+  ['cashbox-page-data'],
+  {
+    tags: [
+      CACHE_TAGS.cashbox,
+      CACHE_TAGS.transactionCategories,
+      CACHE_TAGS.customers,
+      CACHE_TAGS.employees,
+      CACHE_TAGS.suppliers,
+    ],
+    revalidate: 30,
+  }
+)
+
+/**
+ * The cashbox transaction history for one period.
+ *
+ * Split out from the standing data above and keyed on the range so that
+ * changing the period re-runs THIS query only, instead of re-reading the five
+ * lists that cannot have changed. Filtering here rather than in the browser is
+ * what stops the screen from shipping a tenant's entire cashbox history —
+ * every row ever written — just to display last week's.
+ *
+ * Bounded by `transaction_date`, the day the money moved, which is the column
+ * the screen's period tabs have always meant (see `resolvePeriodDays`).
+ */
+export const getCachedCashboxTransactions = unstable_cache(
+  async (tenantId: string, from?: string, to?: string) => {
+    const supabase = getCacheClient() as any
+    let query = supabase
+      .from('transactions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('reference_type', 'cashbox')
+    if (from) query = query.gte('transaction_date', from)
+    if (to) query = query.lte('transaction_date', to)
+    const { data } = await query.order('created_at', { ascending: false })
+    return data ?? []
+  },
+  ['cashbox-transactions'],
+  { tags: [CACHE_TAGS.cashbox, CACHE_TAGS.transactions], revalidate: 30 }
+)
+
 export const getCachedDashboardStats = unstable_cache(
   async (tenantId: string) => {
     const supabase = getCacheClient() as any

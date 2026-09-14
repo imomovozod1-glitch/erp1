@@ -662,7 +662,7 @@
     "permissionsSaveError": "Ruxsatlarni saqlab bo'lmadi",
     "permissionsAdminHint": "Administrator rolidagi foydalanuvchilar har doim barcha bo'limlarga to'liq kirish huquqiga ega",
     "moduleColumn": "Bo'lim",
-    "printerTitle": "Chek sozlamalari",
+    "printerTitle": "Chek sozlash",
     "printerCardDesc": "Chek printerini ulash va chek ko'rinishini sozlash",
     "printer": {
       "title": "Chek printeri sozlamalari",
@@ -1849,6 +1849,11 @@
     "catalog": "Hisobotlar",
     "openReport": "Ochish",
     "dailyRevenue": "Kunlik tushum",
+    "chart": {
+      "avgPerDay": "Kunlik o'rtacha",
+      "bestDay": "Eng yuqori kun",
+      "dayCount": "{count} kun"
+    },
     "topProductsTitle": "Eng ko'p sotilgan mahsulotlar",
     "recentSales": "So'nggi sotuvlar",
     "searchOrderOrCustomer": "Buyurtma yoki mijoz…",

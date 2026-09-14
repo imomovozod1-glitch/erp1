@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
-import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
+import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
@@ -51,11 +51,11 @@ function generateInvoiceNumber() {
 }
 
 function getDueDateString(daysFromNow: number): string {
-  return new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  return isoDate(new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000))
 }
 
 function getTodayString(): string {
-  return new Date().toISOString().split('T')[0]
+  return isoDate()
 }
 
 export function SaleForm({ products, customers, assignableUsers, lang }: SaleFormProps) {

@@ -58,7 +58,25 @@ const nextConfig: any = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', '@heroicons/react', 'date-fns'],
+    // Next 15 changed the client Router Cache default for dynamic pages to 0
+    // seconds, so every navigation — including going BACK to the list you were
+    // just on — refetched the whole page from the server. Against a Supabase
+    // project ~500 ms away that is half a second of blank waiting for a screen
+    // the browser was already holding.
+    //
+    // Safe to re-enable here because every mutation in this app goes through a
+    // Server Action in src/lib/data/revalidate.ts that calls `updateTag()`, and
+    // `updateTag` clears the client Router Cache as well as the server-side one
+    // — so a save is never followed by a stale list. The bounded risk is a
+    // change made by ANOTHER user in the last 20 seconds; the write paths that
+    // actually depend on fresh numbers (POS, sale form) re-read stock from the
+    // database immediately before writing, so a stale figure on screen cannot
+    // turn into an oversell.
+    staleTimes: {
+      dynamic: 20,
+      static: 180,
+    },
   },
   turbopack: {
     root: process.cwd(),

@@ -60,7 +60,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useSidebar } from '@/components/ui/sidebar'
 import { toast } from 'sonner'
-import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
+import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { isValidPhone } from '@/lib/phone-validation'
@@ -78,11 +78,11 @@ function generatePOSInvoiceNumber(): string {
 }
 
 function getPOSDateString(): string {
-  return new Date().toISOString().split('T')[0]
+  return isoDate()
 }
 
 function getPOSDueDateString(daysFromNow: number): string {
-  return new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  return isoDate(new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000))
 }
 
 interface POSClientProps {

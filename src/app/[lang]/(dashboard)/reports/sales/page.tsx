@@ -1,6 +1,7 @@
 import { getCachedSalesReportData } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { SalesOverviewReport } from '@/components/reports/sales-overview-report'
+import { isoDate } from '@/lib/utils'
 
 export default async function SalesReportPage({
   params,
@@ -14,7 +15,7 @@ export default async function SalesReportPage({
   return (
     <SalesOverviewReport
       lang={lang}
-      today={new Date().toISOString().slice(0, 10)}
+      today={isoDate()}
       orders={data.orders}
       items={data.items}
     />

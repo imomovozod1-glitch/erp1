@@ -23,6 +23,7 @@ import {
   Select, SelectContent,
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
+import { isoDate } from '@/lib/utils'
 
 interface OrderFormProps {
   initialData?: any
@@ -33,7 +34,7 @@ interface OrderFormProps {
 }
 
 function getTodayString(): string {
-  return new Date().toISOString().split('T')[0]
+  return isoDate()
 }
 
 export function OrderForm({ initialData, customers, assignableUsers, lang }: OrderFormProps) {

@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { GlobalSearch } from '@/components/layout/global-search'
-import { getInitials } from '@/lib/utils'
+import { getInitials, isoDate } from '@/lib/utils'
 import type { Profile } from '@/types/database.types'
 
 const LOCALES = [
@@ -100,7 +100,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       // migration_low_stock_column.sql, so "stock <= min_stock" is now an
       // indexed predicate the database evaluates instead of a filter over the
       // whole table in the client. Overdue invoices filter on due_at directly.
-      const todayISO = new Date().toISOString().split('T')[0]
+      const todayISO = isoDate()
       const [{ data: products }, { data: invoices }, { data: supportReplies }] = await Promise.all([
         supabase
           .from('products')
@@ -183,10 +183,18 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       setNotifications(allNotifications)
     }
 
-    fetchNotifications()
-
-    const interval = setInterval(fetchNotifications, 120000)
-    return () => clearInterval(interval)
+    // Deliberately NOT fetched on mount: these three queries are a background
+    // convenience (a badge on a bell), and firing them the instant the shell
+    // hydrates put them in a race with the queries the page the user actually
+    // asked for is waiting on. A short delay hands the network to the page
+    // first; two minutes was also far more often than a low-stock warning
+    // changes.
+    const firstFetch = setTimeout(fetchNotifications, 1500)
+    const interval = setInterval(fetchNotifications, 300000)
+    return () => {
+      clearTimeout(firstFetch)
+      clearInterval(interval)
+    }
   }, [lang])
 
   const initials = getInitials(profile?.full_name) || 'U'
