@@ -43,10 +43,10 @@ function translateSourceType(sourceType: string, lang: string): string {
 }
 
 export function ProductDetailClient({ lang, product, movements, sales, purchases, costLayers = [], effectiveCostingMethod, nextSaleCost }: ProductDetailClientProps) {
-  const t = useTranslations('inventory')
   const tc = useTranslations('common')
   const tSales = useTranslations('sales')
   const tProc = useTranslations('procurement')
+  const t = useTranslations('inventory')
   const [activeTab, setActiveTab] = useState<'movements' | 'sales' | 'purchases' | 'costLayers'>('movements')
 
   const profitMarginPercent = product.price > 0 

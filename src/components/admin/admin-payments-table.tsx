@@ -23,8 +23,8 @@ export interface AdminPaymentRow {
 const ITEMS_PER_PAGE = 10
 
 export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }) {
-  const t = useTranslations('admin.payments')
   const tCommon = useTranslations('common')
+  const t = useTranslations('admin.payments')
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)

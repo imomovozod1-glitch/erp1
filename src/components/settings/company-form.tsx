@@ -1,12 +1,7 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { Building2, Globe, Phone, CalendarDays, Wallet, FileText, Users, IdCard } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
-import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 type TenantInfo = {
@@ -47,40 +42,14 @@ function InfoField({ icon: Icon, label, value }: { icon: React.ElementType; labe
  * `costing_method` column (see `supabase/migration_multi_tenant.sql`), so
  * this card is intentionally display-only — editing happens in `InventoryCostingForm`.
  */
-export function CompanyForm() {
-  const t = useTranslations('settings')
-  const tForm = useTranslations('admin.form')
-  const [tenant, setTenant] = useState<TenantInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      const supabase = createClient() as any
-      const { data } = await supabase
-        .from('tenants')
-        .select('company_name, subdomain, phone, status, license_count, license_months, subscription_started_at, subscription_ends_at, price_paid, details')
-        .limit(1)
-        .maybeSingle()
-      setTenant(data ?? null)
-      setIsLoading(false)
-    }, 0)
-    return () => clearTimeout(timer)
-  }, [])
-
-  if (isLoading) {
-    return (
-      <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
-        <CardHeader>
-          <Skeleton className="h-6 w-1/3 mb-2" />
-          <Skeleton className="h-4 w-1/2" />
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </CardContent>
-      </Card>
-    )
-  }
+export async function CompanyForm({ tenant }: { tenant: TenantInfo | null }) {
+  // No hooks, no state, no interactivity: with the tenant row now arriving as
+  // a prop this card is pure output, so it renders on the server and ships no
+  // JavaScript at all.
+  const [t, tForm] = await Promise.all([
+    getTranslations('settings'),
+    getTranslations('admin.form'),
+  ])
 
   if (!tenant) {
     return (

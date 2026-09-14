@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Send, CheckCircle2, Loader2, Unplug, ExternalLink, RefreshCw, AlertTriangle, ChevronDown } from 'lucide-react'
@@ -10,21 +10,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { PasswordInput } from '@/components/ui/password-input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TELEGRAM_EVENTS, type TelegramEvent } from '@/lib/integrations/telegram-events'
+import type { TelegramStatus } from '@/lib/integrations/telegram-types'
 
-interface TelegramStatus {
-  connected: boolean
-  /** Token stored, but no destination chat known yet. */
-  awaitingChat: boolean
-  enabled: boolean
-  chatId: string
-  botUsername: string | null
-  tokenHint: string | null
-  events: Partial<Record<TelegramEvent, boolean>>
-  linkedAt: string | null
-}
 
 /**
  * Telegram bot connection UI.
@@ -36,12 +25,15 @@ interface TelegramStatus {
  * token field is left blank on an existing connection, meaning "keep the
  * current one" unless the admin types a new value.
  */
-export function TelegramIntegrationForm() {
-  const t = useTranslations('settings.integrations')
+export function TelegramIntegrationForm({ initialStatus }: { initialStatus: TelegramStatus }) {
   const tCommon = useTranslations('common')
+  const t = useTranslations('settings.integrations')
 
-  const [status, setStatus] = useState<TelegramStatus | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  // The card's state is rendered by the server and arrives as a prop. It used
+  // to fetch it back from our own `/api/integrations/telegram` after hydrating
+  // — an HTTP round trip plus a Supabase query for a screen the server had
+  // just finished rendering, behind a skeleton.
+  const [status, setStatus] = useState<TelegramStatus>(initialStatus)
   const [isSaving, setIsSaving] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -49,9 +41,11 @@ export function TelegramIntegrationForm() {
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   const [botToken, setBotToken] = useState('')
-  const [chatId, setChatId] = useState('')
-  const [enabled, setEnabled] = useState(false)
-  const [events, setEvents] = useState<Partial<Record<TelegramEvent, boolean>>>({})
+  const [chatId, setChatId] = useState(initialStatus.chatId ?? '')
+  const [enabled, setEnabled] = useState(initialStatus.enabled)
+  const [events, setEvents] = useState<Partial<Record<TelegramEvent, boolean>>>(
+    initialStatus.events ?? {}
+  )
 
   const applyStatus = (data: TelegramStatus) => {
     setStatus(data)
@@ -62,26 +56,6 @@ export function TelegramIntegrationForm() {
     setBotToken('')
   }
 
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const res = await fetch('/api/integrations/telegram')
-        if (!res.ok) throw new Error('failed')
-        const data: TelegramStatus = await res.json()
-        if (!cancelled) applyStatus(data)
-      } catch {
-        if (!cancelled) toast.error(tCommon('error'))
-      } finally {
-        if (!cancelled) setIsLoading(false)
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const errorMessage = (code: string | undefined, detail?: string) => {
     switch (code) {
@@ -206,21 +180,7 @@ export function TelegramIntegrationForm() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
-        <CardHeader>
-          <Skeleton className="h-6 w-1/3 mb-2" />
-          <Skeleton className="h-4 w-2/3" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-40" />
-        </CardContent>
-      </Card>
-    )
-  }
+
 
   return (
     <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">

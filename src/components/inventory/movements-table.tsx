@@ -31,8 +31,8 @@ export function MovementsTable({
   total,
   totalPages,
 }: MovementsTableProps) {
-  const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
+  const t = useTranslations('inventory')
   const router = useRouter()
 
 
@@ -123,7 +123,7 @@ export function MovementsTable({
                     {formatNumber(movement.quantity_after)}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <span className="text-sm text-muted-foreground max-w-[200px] truncate block">
+                    <span className="text-sm text-muted-foreground max-w-50 truncate block">
                       {translateMovementReason(movement.reason, lang)}
                     </span>
                   </TableCell>

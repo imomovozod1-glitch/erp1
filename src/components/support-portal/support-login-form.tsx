@@ -24,8 +24,8 @@ import { phoneSchema } from '@/lib/phone-validation'
 import { cn } from '@/lib/utils'
 
 export function SupportLoginForm() {
-  const t = useTranslations('supportPortal')
   const tAuth = useTranslations('auth')
+  const t = useTranslations('supportPortal')
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 

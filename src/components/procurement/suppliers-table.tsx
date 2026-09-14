@@ -45,8 +45,8 @@ export function SuppliersTable({
   total,
   totalPages,
 }: SuppliersTableProps) {
-  const t = useTranslations('procurement')
   const tCommon = useTranslations('common')
+  const t = useTranslations('procurement')
   const router = useRouter()
   const [mapSupplier, setMapSupplier] = useState<{ name: string; address: string; latitude?: number | null; longitude?: number | null } | null>(null)
 

@@ -28,9 +28,9 @@ export function SuperAdminsTable({
   admins: SuperAdminRow[]
   currentAdminId: string
 }) {
-  const t = useTranslations('admin.settings.admins')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
+  const t = useTranslations('admin.settings.admins')
   const router = useRouter()
 
   const [showForm, setShowForm] = useState(false)
@@ -40,7 +40,7 @@ export function SuperAdminsTable({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.SubmitEvent) => {
     e.preventDefault()
     if (!fullName.trim() || !email.trim()) return
     if (!isStrongPassword(password)) {

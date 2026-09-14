@@ -70,8 +70,8 @@ export function AbcAnalysisReport({
 }
 
 function Body({ period, items }: { period: ReportPeriod; items: SalesItemRow[] }) {
-  const t = useTranslations('reports')
   const tc = useTranslations('common')
+  const t = useTranslations('reports')
   const { range } = period
 
   const rows = useMemo(() => {

@@ -39,8 +39,8 @@ interface SupplierDetailClientProps {
 }
 
 export function SupplierDetailClient({ lang, supplier, purchaseOrders, transactions }: SupplierDetailClientProps) {
-  const t = useTranslations('procurement')
   const tc = useTranslations('common')
+  const t = useTranslations('procurement')
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'purchases' | 'payments'>('purchases')
   const [isMapOpen, setIsMapOpen] = useState(false)

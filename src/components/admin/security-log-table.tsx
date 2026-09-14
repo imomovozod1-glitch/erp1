@@ -21,8 +21,8 @@ export interface LoginAttemptRow {
 const ITEMS_PER_PAGE = 15
 
 export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) {
-  const t = useTranslations('admin.security')
   const tCommon = useTranslations('common')
+  const t = useTranslations('admin.security')
   const [search, setSearch] = useState('')
   const [outcomeFilter, setOutcomeFilter] = useState<'all' | 'failed' | 'success'>('all')
   const [currentPage, setCurrentPage] = useState(1)

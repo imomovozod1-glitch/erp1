@@ -30,8 +30,8 @@ interface CategoryFormProps {
 }
 
 export function CategoryForm({ initialData, lang }: CategoryFormProps) {
-  const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
+  const t = useTranslations('inventory')
   const exitForm = useRouteModalExit(`/${lang}/inventory/categories`)
   const [isSubmitting, setIsSubmitting] = useState(false)
    

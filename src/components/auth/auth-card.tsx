@@ -93,7 +93,7 @@ export function AuthCard({
         </div>
       )}
 
-      {/* Background glow. Must be the real `bg-gradient-to-r` utility: the
+      {/* Background glow. Must be the real `bg-linear-to-r` utility: the
           three sign-in cards previously wrapped the same value in Tailwind's
           arbitrary-value brackets, which is not a gradient utility at all —
           it compiled to an invalid `background-color` declaration that every
@@ -101,7 +101,7 @@ export function AuthCard({
           (The broken form is deliberately not spelled out here: Tailwind
           scans source files as plain text, so quoting it would regenerate
           the dead rule.) */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
+      <div className="absolute -inset-1 bg-linear-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
     </div>
   )
 }

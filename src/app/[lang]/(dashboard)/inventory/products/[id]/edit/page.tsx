@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { ProductForm } from '@/components/inventory/product-form'
 import { Metadata } from 'next'
 import { requireModuleEdit } from '@/lib/permissions-server'
-import { getAssignableUsers } from '@/lib/data/queries'
+import { getAssignableUsers, getCachedProductFormOptions } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -21,17 +21,21 @@ export default async function EditProductPage({
 }) {
   const { lang, id } = await params
   const tenantId = (await getCurrentTenantId()) as string
-  const assignableUsers = await getAssignableUsers(tenantId)
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('inventory', lang, '/inventory/products')
-  const t = await getTranslations('inventory')
-  const tCommon = await getTranslations('common')
   const supabase = await createClient()
 
-   
-  const productRes = await supabase.from('products').select('*').eq('id', id).single() as any
-   
-  const categoriesRes = await supabase.from('categories').select('id, name').order('name') as any
+  // Six awaits in a row became one batch: none of these depends on another's
+  // result, and each Supabase call is a ~500 ms round trip, so serialising them
+  // was pure waiting.
+  const [t, tCommon, assignableUsers, options, productRes, categoriesRes] = await Promise.all([
+    getTranslations('inventory'),
+    getTranslations('common'),
+    getAssignableUsers(tenantId),
+    getCachedProductFormOptions(tenantId),
+    supabase.from('products').select('*').eq('id', id).single() as any,
+    supabase.from('categories').select('id, name').order('name') as any,
+  ])
 
   if (!productRes.data) {
     notFound()
@@ -48,11 +52,13 @@ export default async function EditProductPage({
           { label: tCommon('edit') },
         ]}
       />
-      <ProductForm 
-        initialData={productRes.data} 
-        categories={categoriesRes.data || []} 
-        lang={lang} 
-      assignableUsers={assignableUsers} />
+      <ProductForm
+        initialData={productRes.data}
+        categories={categoriesRes.data || []}
+        lang={lang}
+        assignableUsers={assignableUsers}
+        options={options}
+      />
     </div>
   )
 }

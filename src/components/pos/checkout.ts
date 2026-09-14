@@ -1,0 +1,296 @@
+import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers'
+import { consumeCostLayers, getEffectiveCostingMethod } from '@/lib/inventory-costing'
+import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
+import type { CartItem } from '@/components/pos/use-pos-cart'
+
+/**
+ * Committing a POS sale.
+ *
+ * Everything a completed sale writes — the order, its lines, the stock and its
+ * movements, the invoice, the income transaction and the cashbox balance —
+ * lives here rather than inside the till component, because none of it is
+ * about rendering. `pos-client.tsx` was carrying these two hundred lines of
+ * write ordering in the middle of its JSX, which is the main reason a change
+ * to the basket UI meant reading past the accounting.
+ *
+ * Knows nothing about React, toasts or translations: failures are thrown as
+ * plain `Error`s built from the `messages` the caller passes in, the same
+ * contract `printReceiptDirect` already uses for its labels.
+ *
+ * The ordering below is not incidental, and it is the reason this reads as one
+ * function instead of several:
+ *
+ *   1. read the session, cashier, CURRENT stock and costing method (one batch)
+ *   2. reject the sale if the live stock no longer covers the basket
+ *   3. insert the order — everything after it needs its id
+ *   4. consume cost layers per line, before anything that needs a unit cost
+ *   5. fire the remaining writes together; none of them depends on another
+ *
+ * Only steps 3 and 4 are genuinely sequential. Everything else is batched, and
+ * a POS sale used to pay for one full network round trip per line.
+ */
+
+export type PosPaymentMethod = 'cash' | 'card' | 'transfer' | 'debt'
+
+export interface PosSaleInput {
+  /** Browser Supabase client — the sale is written as the signed-in cashier. */
+  supabase: any
+  items: CartItem[]
+  customer: { id: string; name: string } | null
+  paymentMethod: PosPaymentMethod
+  totals: { subtotal: number; discount: number; tax: number; total: number }
+  messages: {
+    sessionNotFound: string
+    /** Prefix; the offending product's name is appended. */
+    insufficientStock: string
+  }
+}
+
+export interface PosSaleResult {
+  orderId: string
+  orderNumber: string
+  invoiceNumber: string
+  cashierName: string
+  orderDate: string
+  /**
+   * Stock as the database held it a moment before the sale, per product id.
+   * Returned so the caller can update the on-screen catalogue and judge
+   * low-stock warnings against what was actually written, not against the
+   * snapshot the page was loaded with.
+   */
+  stockBefore: Map<string, number>
+  /** Customer credit spent against this sale; only ever non-zero on a debt sale. */
+  appliedCredit: number
+}
+
+/** Trade credit term for a debt sale: 14 days before the invoice is overdue. */
+const DEBT_TERM_DAYS = 14
+
+export async function submitPosSale({
+  supabase,
+  items,
+  customer,
+  paymentMethod,
+  totals,
+  messages,
+}: PosSaleInput): Promise<PosSaleResult> {
+  // getSession() reads the JWT already in memory; getUser() spends a network
+  // round trip re-validating it with the auth server before a single row is
+  // written. At a till that delay is paid on every sale, and it buys nothing
+  // here — the id below is only used to stamp created_by/assigned_to, and the
+  // database validates the caller's identity from the same token regardless of
+  // what this code claims.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  const user = session?.user
+  if (!user) throw new Error(messages.sessionNotFound)
+
+  // Cashier profile, current stock and the tenant's costing method: none
+  // depends on the others, so they travel together.
+  const [{ data: profile }, { data: freshProducts }, { data: tenant }] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+    supabase
+      .from('products')
+      .select('id, stock')
+      .in(
+        'id',
+        items.map((item) => item.product.id)
+      ),
+    supabase.from('tenants').select('costing_method').limit(1).single(),
+  ])
+
+  const cashierName = profile?.full_name || 'Cashier'
+
+  // Validate against the stock the database holds right now, not against the
+  // copy this screen was loaded with.
+  const stockBefore = new Map<string, number>(
+    (freshProducts || []).map((p: any) => [p.id, Number(p.stock)])
+  )
+  for (const item of items) {
+    const currentStock = stockBefore.get(item.product.id)
+    if (currentStock === undefined || currentStock < item.quantity) {
+      throw new Error(`${messages.insufficientStock}: ${item.product.name}`)
+    }
+  }
+
+  const orderNumber = generateDocumentNumber('SO-POS')
+  const invoiceNumber = generateDocumentNumber('INV-POS')
+  const orderDate = isoDate()
+  const isDebtSale = paymentMethod === 'debt'
+  const dueDate = isDebtSale
+    ? isoDate(new Date(Date.now() + DEBT_TERM_DAYS * 24 * 60 * 60 * 1000))
+    : orderDate
+
+  const { data: orderData, error: orderErr } = await supabase
+    .from('sales_orders')
+    .insert({
+      order_number: orderNumber,
+      customer_id: customer ? customer.id : null,
+      // A counter sale is finished the moment it is rung up — the customer
+      // walks out with the goods. Recording it as `confirmed` left every POS
+      // sale sitting in an in-progress state that nothing ever closed.
+      status: 'delivered',
+      total_amount: totals.total,
+      discount_amount: totals.discount,
+      tax_amount: totals.tax,
+      notes: `POS Sale - Paid via ${paymentMethod.toUpperCase()}`,
+      created_by: user.id,
+      // A POS sale is owned by the cashier who rang it up; there is no separate
+      // picker at the till. Set explicitly so the row is never left unassigned
+      // and invisible to 'own'-scoped users.
+      assigned_to: user.id,
+      order_date: orderDate,
+    })
+    .select()
+    .single()
+
+  if (orderErr) throw orderErr
+
+  // Cost each line at whatever FIFO/LIFO/AVECO charges right now. Has to happen
+  // before the batch below — both the order line and the stock movement need
+  // the realised cost, and consuming layers twice for one line is not safe.
+  const method = getEffectiveCostingMethod(tenant)
+  // Each call touches only its own product's layers, and a basket never holds
+  // the same product twice (`cart.add` merges duplicates), so these are
+  // independent. Sequentially this was one round trip per line, which is what
+  // made a large basket crawl.
+  const consumed = await Promise.all(
+    items.map((item) => consumeCostLayers(supabase, item.product.id, item.quantity, method))
+  )
+  const costByProductId = new Map<string, { unitCost: number; totalCost: number }>(
+    items.map((item, i) => [item.product.id, consumed[i]])
+  )
+
+  const itemsToInsert = items.map((item) => ({
+    order_id: orderData.id,
+    product_id: item.product.id,
+    quantity: item.quantity,
+    unit_price: item.product.price,
+    unit_cost: costByProductId.get(item.product.id)?.unitCost ?? null,
+    discount_percent: item.discountPercent,
+    total_price: item.product.price * (1 - item.discountPercent / 100) * item.quantity,
+  }))
+
+  const stockAndMovementUpdates = items.flatMap((item) => {
+    // Deduct from the stock just re-read above, not from `item.product.stock` —
+    // that snapshot is as old as the last page load, so on a second POS
+    // terminal (or after any stock edit in another tab) writing
+    // `staleStock - qty` silently reverted every change made in between, and
+    // logged a wrong quantity_before/after on the movement.
+    const before = stockBefore.get(item.product.id) as number
+    const after = before - item.quantity
+    const cost = costByProductId.get(item.product.id)
+    return [
+      supabase
+        .from('products')
+        .update({ stock: after })
+        .eq('id', item.product.id)
+        .then(({ error }: any) => {
+          if (error) throw error
+        }),
+      supabase
+        .from('stock_movements')
+        .insert({
+          product_id: item.product.id,
+          type: 'out',
+          quantity: item.quantity,
+          quantity_before: before,
+          quantity_after: after,
+          reference_type: 'sales_orders',
+          reference_id: orderData.id,
+          reason: 'POS Sale',
+          unit_cost: cost?.unitCost ?? null,
+          total_cost: cost?.totalCost ?? null,
+          created_by: user.id,
+        })
+        .then(({ error }: any) => {
+          if (error) throw error
+        }),
+    ]
+  })
+
+  // If this is a debt sale and the customer already has credit (haqdorlik) on
+  // file, spend it down against this purchase first — otherwise they would show
+  // a credit balance and a fresh debt at the same time for the same money.
+  let appliedCredit = 0
+  if (isDebtSale && customer) {
+    const result = await applyCustomerCredit(supabase, customer.id, totals.total)
+    appliedCredit = result.appliedCredit
+  }
+  const debtFullyCoveredByCredit = isDebtSale && appliedCredit >= totals.total
+
+  await Promise.all([
+    supabase
+      .from('sales_order_items')
+      .insert(itemsToInsert)
+      .then(({ error }: any) => {
+        if (error) throw error
+      }),
+    // Only record cash-basis income when money actually changed hands. A debt
+    // sale creates no income transaction here — that happens when the debt is
+    // collected (see the cashbox debt_collection flow), otherwise the revenue
+    // would be counted twice for the same sale.
+    isDebtSale
+      ? Promise.resolve()
+      : supabase
+          .from('transactions')
+          .insert({
+            type: 'income',
+            amount: totals.total,
+            category: 'Sales',
+            description: `POS Sale - Order #${orderData.order_number}`,
+            reference_type: 'sales_orders',
+            reference_id: orderData.id,
+            transaction_date: orderDate,
+            created_by: user.id,
+          })
+          .then(({ error }: any) => {
+            if (error) throw error
+          }),
+    ...stockAndMovementUpdates,
+    // Always create an invoice: 'paid' immediately for cash/card/transfer,
+    // 'sent' (unpaid) for a debt sale so the outstanding debt is tracked.
+    supabase
+      .from('invoices')
+      .insert({
+        invoice_number: invoiceNumber,
+        order_id: orderData.id,
+        customer_id: customer ? customer.id : null,
+        status: isDebtSale ? (debtFullyCoveredByCredit ? 'paid' : 'sent') : 'paid',
+        total_amount: totals.total,
+        paid_amount: isDebtSale ? appliedCredit : totals.total,
+        issued_at: orderDate,
+        due_at: dueDate,
+        paid_at: isDebtSale ? (debtFullyCoveredByCredit ? orderDate : null) : orderDate,
+        notes: isDebtSale
+          ? `Qarzga sotildi - POS Order #${orderData.order_number}${
+              appliedCredit > 0 ? ` (${formatCurrency(appliedCredit)} haqdorlikdan to'landi)` : ''
+            }`
+          : `Paid instantly on POS via ${paymentMethod}`,
+        created_by: user.id,
+        assigned_to: user.id,
+      })
+      .then(({ error }: any) => {
+        if (error) throw error
+      }),
+    isDebtSale
+      ? Promise.resolve()
+      : adjustCashboxBalance(
+          totals.total,
+          'income',
+          supabase,
+          paymentMethod as 'cash' | 'card' | 'transfer'
+        ),
+  ])
+
+  return {
+    orderId: orderData.id,
+    orderNumber,
+    invoiceNumber,
+    cashierName,
+    orderDate,
+    stockBefore,
+    appliedCredit,
+  }
+}

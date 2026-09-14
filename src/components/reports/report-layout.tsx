@@ -60,8 +60,8 @@ export function ReportLayout({
   actions?: ReactNode
   children: (period: ReportPeriod) => ReactNode
 }) {
-  const t = useTranslations('reports')
   const tAnalytics = useTranslations('analytics')
+  const t = useTranslations('reports')
 
   // The server stamps `today` in ITS timezone, which is not the shop's — in
   // production that is UTC, five hours behind Tashkent. Between midnight and

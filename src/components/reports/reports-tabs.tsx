@@ -47,8 +47,8 @@ const REPORT_CARDS: ReportCard[] = [
 ]
 
 export function ReportsTabs({ today, lang }: { today: string; lang: string }) {
-  const t = useTranslations('reports')
   const tInfo = useTranslations('pageInfo')
+  const t = useTranslations('reports')
 
   const [tab, setTab] = useState<'catalog' | 'custom'>('catalog')
 

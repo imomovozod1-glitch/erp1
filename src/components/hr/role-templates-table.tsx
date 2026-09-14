@@ -37,8 +37,8 @@ function countEnabledModules(permissions: Permissions | null): number {
 }
 
 export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
-  const t = useTranslations('hr')
   const tCommon = useTranslations('common')
+  const t = useTranslations('hr')
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)

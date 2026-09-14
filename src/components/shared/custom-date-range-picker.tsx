@@ -56,8 +56,8 @@ const fieldLabelClass =
 export function CustomDateRangePicker({
   isActive, start, end, onApply, lang, className,
 }: CustomDateRangePickerProps) {
-  const t = useTranslations('analytics')
   const tCommon = useTranslations('common')
+  const t = useTranslations('analytics')
   const [isOpen, setIsOpen] = useState(false)
   useCloseOnScroll(isOpen, () => setIsOpen(false))
 

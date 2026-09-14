@@ -5,6 +5,8 @@ import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { PageHeader } from '@/components/shared/page-header'
 import { TelegramIntegrationForm } from '@/components/settings/telegram-integration-form'
 import { requireModuleView } from '@/lib/permissions-server'
+import { getTelegramStatus } from '@/lib/integrations/telegram'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -37,7 +39,13 @@ export default async function IntegrationsSettingsPage({
     redirect(`/${lang}/settings`)
   }
 
-  const t = await getTranslations('settings')
+  // Read here rather than by the card fetching our own API back after it
+  // hydrates — same function the route handler uses, so the two cannot drift.
+  const tenantId = (await getCurrentTenantId()) as string
+  const [t, status] = await Promise.all([
+    getTranslations('settings'),
+    getTelegramStatus(tenantId),
+  ])
 
   return (
     <div className="space-y-6">
@@ -50,7 +58,7 @@ export default async function IntegrationsSettingsPage({
           { label: t('integrationsTitle') },
         ]}
       />
-      <TelegramIntegrationForm />
+      <TelegramIntegrationForm initialStatus={status} />
     </div>
   )
 }

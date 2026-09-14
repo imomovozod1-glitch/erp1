@@ -28,7 +28,7 @@ export function MessageAgentForm({ agentId, agentName }: { agentId: string; agen
   const [body, setBody] = useState('')
   const [isSending, setIsSending] = useState(false)
 
-  const handleSend = async (e: React.FormEvent) => {
+  const handleSend = async (e: React.SubmitEvent) => {
     e.preventDefault()
     if (isSending) return
     if (subject.trim().length < 3 || !body.trim()) {

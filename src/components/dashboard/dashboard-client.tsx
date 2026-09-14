@@ -99,7 +99,6 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
   const tSales = useTranslations('sales')
   const tInventory = useTranslations('inventory')
   const tProcurement = useTranslations('procurement')
-  const tFinance = useTranslations('finance')
   const tHr = useTranslations('hr')
 
   const {
@@ -110,7 +109,6 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     chartTxData,
     expenseRows,
     lowStockRows,
-    pendingInvoices,
     totalCashboxBalance = 0,
     warehouseValue = 0,
     totalReceivables = 0,
@@ -447,7 +445,7 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
               <Layers className="h-5 w-5" />
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 gap-1 border-t pt-2 mt-2">
+          <div className="mt-3 flex items-center justify-between gap-1 border-t pt-2 text-[11px] text-slate-500 dark:text-slate-400">
             <div className="flex flex-col">
               <span className="text-slate-400 dark:text-slate-500 font-medium text-[9px] uppercase">{t.receivables}</span>
               <span className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{formatCurrency(realReceivables)}</span>

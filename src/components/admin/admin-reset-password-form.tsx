@@ -24,9 +24,9 @@ import Link from 'next/link'
  * as an error state after a short grace period rather than hanging forever.
  */
 export function AdminResetPasswordForm() {
-  const t = useTranslations('admin.accountRecovery')
   const tAuth = useTranslations('auth')
   const tPassword = useTranslations('admin.password')
+  const t = useTranslations('admin.accountRecovery')
   const router = useRouter()
   const [status, setStatus] = useState<'checking' | 'ready' | 'invalid'>('checking')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -156,7 +156,7 @@ export function AdminResetPasswordForm() {
         )}
       </div>
 
-      <div className="absolute -inset-1 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
+      <div className="absolute -inset-1 bg-linear-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
     </div>
   )
 }

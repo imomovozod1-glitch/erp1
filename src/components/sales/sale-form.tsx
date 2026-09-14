@@ -59,9 +59,9 @@ function getTodayString(): string {
 }
 
 export function SaleForm({ products, customers, assignableUsers, lang }: SaleFormProps) {
-  const t = useTranslations('sales')
   const tCommon = useTranslations('common')
   const tPos = useTranslations('pos')
+  const t = useTranslations('sales')
   const exitForm = useRouteModalExit(`/${lang}/sales/orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -123,7 +123,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
 
   const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault()
     if (items.length === 0) {
       toast.error(t('noItems'))

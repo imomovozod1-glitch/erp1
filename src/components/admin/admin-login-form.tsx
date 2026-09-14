@@ -23,8 +23,8 @@ import {
 import { cn } from '@/lib/utils'
 
 export function AdminLoginForm() {
-  const t = useTranslations('admin.login')
   const tPassword = useTranslations('admin.password')
+  const t = useTranslations('admin.login')
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 

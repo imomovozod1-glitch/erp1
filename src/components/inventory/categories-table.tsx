@@ -26,8 +26,8 @@ interface CategoriesTableProps {
 }
 
 export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
-  const t = useTranslations('inventory')
   const tCommon = useTranslations('common')
+  const t = useTranslations('inventory')
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)

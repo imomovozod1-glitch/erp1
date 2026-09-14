@@ -10,9 +10,9 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { isStrongPassword } from '@/lib/password-validation'
 
 export function ResetPasswordForm({ tenantId }: { tenantId: string }) {
-  const t = useTranslations('admin.resetPassword')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
+  const t = useTranslations('admin.resetPassword')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 

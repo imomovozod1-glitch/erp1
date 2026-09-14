@@ -133,10 +133,10 @@ function PresetPicker({
 }
 
 export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps) {
-  const t = useTranslations('admin.form')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const tCosting = useTranslations('inventory')
+  const t = useTranslations('admin.form')
   const lang = useLocale()
   const router = useRouter()
   const exitForm = useRouteModalExit('/admin/tenants')

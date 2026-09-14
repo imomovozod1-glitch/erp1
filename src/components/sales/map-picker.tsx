@@ -105,7 +105,7 @@ export function MapPicker({ onLocationSelect, initialAddress, initialLat, initia
   }
 
   // Geocode address search
-  const handleSearch = async (e?: React.FormEvent) => {
+  const handleSearch = async (e?: React.SubmitEvent) => {
     if (e) e.preventDefault()
     if (!searchQuery.trim()) return
 

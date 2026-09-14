@@ -31,8 +31,8 @@ export function PurchaseOrdersTable({
   total,
   totalPages,
 }: PurchaseOrdersTableProps) {
-  const t = useTranslations('procurement')
   const tCommon = useTranslations('common')
+  const t = useTranslations('procurement')
   const router = useRouter()
 
 

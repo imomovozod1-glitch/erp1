@@ -36,8 +36,8 @@ interface InvoiceFormProps {
 }
 
 export function InvoiceForm({ initialData, customers, orders = [], assignableUsers, lang }: InvoiceFormProps) {
-  const t = useTranslations('sales')
   const tCommon = useTranslations('common')
+  const t = useTranslations('sales')
   const exitForm = useRouteModalExit(`/${lang}/sales/invoices`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any

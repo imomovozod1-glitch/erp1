@@ -36,8 +36,8 @@ export function TransactionsTable({
   totalIncome,
   totalExpense,
 }: TransactionsTableProps) {
-  const t = useTranslations('finance')
   const tCommon = useTranslations('common')
+  const t = useTranslations('finance')
   const router = useRouter()
 
 

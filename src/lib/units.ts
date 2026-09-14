@@ -6,7 +6,7 @@
  * seeded with these same 4 defaults for every tenant. Never read directly;
  * always go through `getMeasurementUnits`.
  */
-const FALLBACK_UNITS = ['Dona', 'Kilogram', 'Litr', 'Metr']
+export const FALLBACK_UNITS = ['Dona', 'Kilogram', 'Litr', 'Metr']
 
 /**
  * The system's configured measurement units — the same list shown in the

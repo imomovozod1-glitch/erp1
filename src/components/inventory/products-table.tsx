@@ -505,7 +505,7 @@ export function ProductsTable({
                             </Link>
                           </p>
                           {product.description && (
-                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                            <p className="text-xs text-muted-foreground truncate max-w-50">
                               {product.description}
                             </p>
                           )}

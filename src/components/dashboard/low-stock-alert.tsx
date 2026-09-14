@@ -12,8 +12,8 @@ interface LowStockAlertProps {
 }
 
 export function LowStockAlert({ products, lang }: LowStockAlertProps) {
-  const t = useTranslations('dashboard')
   const tCommon = useTranslations('common')
+  const t = useTranslations('dashboard')
 
   if (products.length === 0) {
     return (

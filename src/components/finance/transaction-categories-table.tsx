@@ -27,8 +27,8 @@ interface TransactionCategoriesTableProps {
 }
 
 export function TransactionCategoriesTable({ categories, lang }: TransactionCategoriesTableProps) {
-  const t = useTranslations('finance')
   const tCommon = useTranslations('common')
+  const t = useTranslations('finance')
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm, Controller, useWatch } from 'react-hook-form'
@@ -29,9 +29,18 @@ import { isValidPhone } from '@/lib/phone-validation'
 import { cn, isoDate } from '@/lib/utils'
 
 
+/** Dropdown contents, fetched on the server — see `getCachedEmployeeFormOptions`. */
+export interface EmployeeFormOptions {
+  cashboxes: CashboxOption[]
+  roleTemplates: RoleTemplateOption[]
+  profiles: AccountOption[]
+  claimedProfileIds: string[]
+}
+
 interface EmployeeFormProps {
   initialData?: any
   lang: string
+  options: EmployeeFormOptions
 }
 
 interface AccountOption {
@@ -52,26 +61,45 @@ interface CashboxOption {
   name: string
 }
 
-export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
-  const t = useTranslations('hr')
+export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) {
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
   const tAuth = useTranslations('auth')
+  const t = useTranslations('hr')
   const exitForm = useRouteModalExit(`/${lang}/hr/employees`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any
 
   const [accessMode, setAccessMode] = useState<'none' | 'link' | 'create'>(initialData?.profile_id ? 'link' : 'none')
-  const [accountOptions, setAccountOptions] = useState<AccountOption[]>([])
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(initialData?.profile_id ?? null)
-  const [permsValue, setPermsValue] = useState<Permissions>(EMPTY_PERMISSIONS)
   const [newPhone, setNewPhone] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [isPaid, setIsPaid] = useState<boolean>(initialData?.is_paid ?? false)
-  const [roleTemplates, setRoleTemplates] = useState<RoleTemplateOption[]>([])
   const [selectedRoleTemplateId, setSelectedRoleTemplateId] = useState<string | null>(initialData?.role_template_id ?? null)
-  const [cashboxes, setCashboxes] = useState<CashboxOption[]>([])
   const [selectedCashboxId, setSelectedCashboxId] = useState<string | null>(initialData?.cashbox_id ?? null)
+
+  // The three lists behind the selects arrive with the page rather than from
+  // three `useEffect`s after hydration — four queries, half a second each, for
+  // a form the server had already rendered with empty dropdowns.
+  const { cashboxes, roleTemplates } = options
+
+  // Accounts available to link: profiles not already claimed by a DIFFERENT
+  // employee (employees.profile_id is UNIQUE), plus whichever one this employee
+  // already has, so editing an existing link doesn't make it disappear from its
+  // own dropdown.
+  const accountOptions = useMemo(() => {
+    const claimed = new Set(
+      options.claimedProfileIds.filter((id) => id !== initialData?.profile_id)
+    )
+    return options.profiles.filter((p: any) => p.role !== 'admin' && !claimed.has(p.id))
+  }, [options.profiles, options.claimedProfileIds, initialData?.profile_id])
+
+  const [permsValue, setPermsValue] = useState<Permissions>(() => {
+    const current = options.profiles.find((p: any) => p.id === initialData?.profile_id)
+    return current?.permissions && typeof current.permissions === 'object'
+      ? (current.permissions as Permissions)
+      : EMPTY_PERMISSIONS
+  })
 
   // The account fields live in component state rather than react-hook-form, so
   // they need their own error slots. They used to surface only as toasts,
@@ -79,63 +107,12 @@ export function EmployeeForm({ initialData, lang }: EmployeeFormProps) {
   // which box was wrong — and the message vanished on its own.
   const [accessErrors, setAccessErrors] = useState<{ profile?: string; phone?: string; password?: string }>({})
 
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      const { data } = await supabase.from('cashboxes').select('id, name').order('name')
-      if (!cancelled) setCashboxes(data ?? [])
-    })()
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Role templates are tenant-scoped by RLS (see migration_roles_and_seats.sql)
-  // — the browser client only ever sees the caller's own tenant's rows, no
-  // need to pass tenant_id explicitly.
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      const { data } = await supabase.from('role_templates').select('id, name, permissions').order('name')
-      if (!cancelled) setRoleTemplates(data ?? [])
-    })()
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const handleSelectRoleTemplate = (roleId: string | null) => {
     const next = !roleId || roleId === 'none' ? null : roleId
     setSelectedRoleTemplateId(next)
     const chosen = roleTemplates.find((r) => r.id === next)
     setPermsValue(chosen?.permissions && typeof chosen.permissions === 'object' ? (chosen.permissions as Permissions) : EMPTY_PERMISSIONS)
   }
-
-  // Available login accounts to link this employee to — profiles not
-  // already claimed by a different employee (employees.profile_id is
-  // UNIQUE), plus whichever one this employee already has, so editing an
-  // existing link doesn't make it disappear from its own dropdown.
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      const [{ data: profiles }, { data: linkedEmployees }] = await Promise.all([
-        supabase.from('profiles').select('id, full_name, email, role, permissions'),
-        supabase.from('employees').select('profile_id').not('profile_id', 'is', null),
-      ])
-      if (cancelled) return
-      const claimedIds = new Set(
-        (linkedEmployees ?? [])
-          .map((e: any) => e.profile_id)
-          .filter((id: string) => id !== initialData?.profile_id)
-      )
-      const available = (profiles ?? []).filter((p: any) => p.role !== 'admin' && !claimedIds.has(p.id))
-      setAccountOptions(available)
-      const current = (profiles ?? []).find((p: any) => p.id === initialData?.profile_id)
-      if (current) {
-        setPermsValue(current.permissions && typeof current.permissions === 'object' ? current.permissions : EMPTY_PERMISSIONS)
-      }
-    })()
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleSelectAccount = (profileId: string | null) => {
     const next = !profileId || profileId === 'none' ? null : profileId
