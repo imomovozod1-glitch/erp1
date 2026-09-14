@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
+import { generateDocumentNumber } from '@/lib/utils'
 import {
   invalidateProducts,
   invalidateOrders,
@@ -12,7 +13,7 @@ import {
   invalidateCustomers,
   invalidateInvoices
 } from '@/lib/data/revalidate'
-import { useSidebar } from '@/components/ui/sidebar'
+import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
 import { toast } from 'sonner'
 import { printReceiptDirect } from '@/lib/printer/print'
 import { getPrinterConfig, DEFAULT_PRINTER_CONFIG, type PrinterConfig } from '@/lib/printer/storage'
@@ -49,6 +50,8 @@ interface POSClientProps {
   lang: string
   /** Receipt header, read from the tenant row on the server. */
   company: { name: string; phone?: string }
+  /** Printed on the receipt; read from the cached profile on the server. */
+  cashierName: string
 }
 
 export function POSClient({
@@ -56,6 +59,7 @@ export function POSClient({
   initialCategories,
   initialCustomers,
   company,
+  cashierName,
   lang
 }: POSClientProps) {
   // The screen's own namespace is declared last on purpose — see AGENTS.md
@@ -63,7 +67,7 @@ export function POSClient({
   // `useTranslations()` comes last in the file.
   const tCommon = useTranslations('common')
   const t = useTranslations('pos')
-  const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
+  const sidebarOffset = useSidebarOffset()
 
   // State
   const [products, setProducts] = useState(initialProducts)
@@ -82,8 +86,9 @@ export function POSClient({
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | 'debt'>('cash')
 
-  const [isLoadingCheckout, setIsLoadingCheckout] = useState(false)
   const [checkoutSuccessOrder, setCheckoutSuccessOrder] = useState<ReceiptOrder | null>(null)
+  // Whether the sale behind the receipt on screen has landed yet.
+  const [saleStatus, setSaleStatus] = useState<'saving' | 'saved' | 'failed'>('saved')
   // Receipt header. Arrives with the page — it used to be a round trip to
   // `tenants` fired after hydration, for two strings that are printed on a
   // receipt the cashier may never open.
@@ -119,7 +124,7 @@ export function POSClient({
    */
   const filteredProducts = useMemo(() => {
     const needle = searchQuery.trim().toLowerCase()
-    return products.filter((p) => {
+    const matches = products.filter((p) => {
       const matchesSearch =
         !needle ||
         p.name.toLowerCase().includes(needle) ||
@@ -128,6 +133,12 @@ export function POSClient({
         selectedCategory === 'all' || p.category_id === selectedCategory
       return matchesSearch && matchesCategory
     })
+
+    // Sold-out products stay in the grid — a cashier has to be able to tell
+    // "we stock this and it is finished" from "we do not stock this", and the
+    // second is what hiding them would say. They sink to the end instead, so
+    // they never take a tile the cashier could have tapped.
+    return matches.sort((a, b) => Number(a.stock <= 0) - Number(b.stock <= 0))
   }, [products, searchQuery, selectedCategory])
 
   /** Empties the basket AND the sale around it — customer and payment method. */
@@ -159,13 +170,22 @@ export function POSClient({
   }
 
   /**
-   * Rings up the sale, then updates this screen.
+   * Rings up the sale.
    *
-   * The writes themselves live in `checkout.ts`; what is left here is what the
-   * till does about them — validate, show the receipt, refresh the on-screen
-   * stock, empty the basket and let the rest of the app know.
+   * The receipt appears on the click, not after the writes. Everything printed
+   * on it — the order number, the lines, the totals, the cashier — is known
+   * before a single row is written, and committing a sale is seven round trips
+   * deep (order → cost layers → lines, stock, movements, invoice, cashbox).
+   * Against a Supabase project ~500 ms away that was three seconds of spinner
+   * between the cashier pressing the button and being able to hand over a
+   * receipt, for information the till already had.
+   *
+   * So the sale is committed in the background and the receipt carries its own
+   * state: `saving` while the writes run, `failed` if they do not land. That
+   * last part is not decoration — the cashier has taken the money by then, and
+   * has to be told plainly if the sale did not save.
    */
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cart.items.length === 0) {
       toast.error(t('emptyCart'))
       return
@@ -176,115 +196,135 @@ export function POSClient({
       return
     }
 
-    setIsLoadingCheckout(true)
-    try {
-      const sale = await submitPosSale({
-        supabase: createClient(),
-        items: cart.items,
-        customer: selectedCustomer,
-        paymentMethod,
-        totals: {
-          subtotal: cart.subtotal,
-          discount: cart.discount,
-          tax: cart.tax,
-          total: cart.total,
-        },
-        messages: {
-          sessionNotFound: tCommon('sessionNotFound'),
-          insufficientStock: t('insufficientStock'),
-        },
-      })
-
-      toast.success(t('orderSuccess'))
-
-      // Deliberately not awaited and never throws: the sale is already
-      // committed, so a Telegram outage must not turn it into an error toast.
-      fireTelegramNotification({
-        event: 'sale',
-        data: {
-          orderNumber: sale.orderNumber,
-          total: cart.total,
-          paymentMethod,
-          itemCount: cart.items.length,
-          customerName: selectedCustomer?.name ?? null,
-        },
-      })
-
-      // Warn about anything this sale pushed to or below its minimum level.
-      for (const item of cart.items) {
-        const remaining =
-          (sale.stockBefore.get(item.product.id) ?? item.product.stock) - item.quantity
-        const minStock = Number(item.product.min_stock) || 0
-        if (minStock > 0 && remaining <= minStock) {
-          fireTelegramNotification({
-            event: 'low_stock',
-            data: {
-              productName: item.product.name,
-              sku: item.product.sku,
-              stock: remaining,
-              minStock,
-            },
-          })
-        }
-      }
-
-      setCheckoutSuccessOrder({
-        orderNumber: sale.orderNumber,
-        date: new Date().toLocaleString(),
-        cashier: sale.cashierName,
-        customerName: selectedCustomer ? selectedCustomer.name : t('walkInCustomer'),
-        items: cart.items.map((i) => ({
-          name: i.product.name,
-          quantity: i.quantity,
-          price: i.product.price,
-          discount: i.discountPercent,
-          total: i.product.price * (1 - i.discountPercent / 100) * i.quantity,
-        })),
-        subtotal: cart.subtotal,
-        discount: cart.discount,
-        tax: cart.tax,
-        total: cart.total,
-        paymentMethod,
-      })
-
-      // Bring the on-screen catalogue in line with what was written — based on
-      // the stock the sale actually deducted from, not on this page's snapshot.
-      setProducts(
-        products.map((p) => {
-          const sold = cart.items.find((ci) => ci.product.id === p.id)
-          return sold
-            ? { ...p, stock: (sale.stockBefore.get(p.id) ?? p.stock) - sold.quantity }
-            : p
-        })
-      )
-
-      // Reset the till immediately. This used to run *after* awaiting the seven
-      // cache invalidations below, so the sale was already committed and the
-      // receipt already on screen while the just-sold items sat in the basket
-      // for as long as those round trips took — the cashier closed the receipt
-      // and watched it empty itself a couple of seconds later.
-      clearTill()
-
-      // Cache invalidation is for *other* pages (reports, stock lists) on their
-      // next visit. Nothing on this screen is waiting for it, so it must not
-      // hold the till.
-      void Promise.all([
-        invalidateProducts(),
-        invalidateOrders(),
-        invalidateOrderItems(),
-        invalidateTransactions(),
-        invalidateMovements(),
-        invalidateCustomers(),
-        invalidateInvoices(),
-      ]).catch(() => {
-        // A failed revalidation only means another page may show stale numbers
-        // until its own cache window lapses; the sale itself is already saved.
-      })
-    } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
-    } finally {
-      setIsLoadingCheckout(false)
+    // Captured before the till is cleared below — `cart` is emptied
+    // immediately, but the writes still need what was in it.
+    const soldItems = cart.items
+    const totals = {
+      subtotal: cart.subtotal,
+      discount: cart.discount,
+      tax: cart.tax,
+      total: cart.total,
     }
+    const customer = selectedCustomer
+    const method = paymentMethod
+    const orderNumber = generateDocumentNumber('SO-POS')
+
+    setCheckoutSuccessOrder({
+      orderNumber,
+      date: new Date().toLocaleString(),
+      cashier: cashierName,
+      customerName: customer ? customer.name : t('walkInCustomer'),
+      items: soldItems.map((i) => ({
+        name: i.product.name,
+        quantity: i.quantity,
+        price: i.product.price,
+        discount: i.discountPercent,
+        total: i.product.price * (1 - i.discountPercent / 100) * i.quantity,
+      })),
+      subtotal: totals.subtotal,
+      discount: totals.discount,
+      tax: totals.tax,
+      total: totals.total,
+      paymentMethod: method,
+    })
+    setSaleStatus('saving')
+
+    // The catalogue is decremented from what this screen knows; the figures are
+    // corrected below from what the database actually held.
+    setProducts(
+      products.map((p) => {
+        const sold = soldItems.find((ci) => ci.product.id === p.id)
+        return sold ? { ...p, stock: p.stock - sold.quantity } : p
+      })
+    )
+    clearTill()
+
+    void (async () => {
+      try {
+        const sale = await submitPosSale({
+          supabase: createClient(),
+          orderNumber,
+          items: soldItems,
+          customer,
+          paymentMethod: method,
+          totals,
+          messages: {
+            sessionNotFound: tCommon('sessionNotFound'),
+            insufficientStock: t('insufficientStock'),
+          },
+        })
+
+        setSaleStatus('saved')
+        toast.success(t('orderSuccess'))
+
+        // Re-apply the stock from the values the sale actually deducted from,
+        // in case another till moved them between page load and this sale.
+        setProducts((current) =>
+          current.map((p) => {
+            const sold = soldItems.find((ci) => ci.product.id === p.id)
+            return sold && sale.stockBefore.has(p.id)
+              ? { ...p, stock: (sale.stockBefore.get(p.id) as number) - sold.quantity }
+              : p
+          })
+        )
+
+        // Never awaited and never throws: the sale is committed, so a Telegram
+        // outage must not turn it into an error.
+        fireTelegramNotification({
+          event: 'sale',
+          data: {
+            orderNumber,
+            total: totals.total,
+            paymentMethod: method,
+            itemCount: soldItems.length,
+            customerName: customer?.name ?? null,
+          },
+        })
+
+        // Warn about anything this sale pushed to or below its minimum level.
+        for (const item of soldItems) {
+          const remaining =
+            (sale.stockBefore.get(item.product.id) ?? item.product.stock) - item.quantity
+          const minStock = Number(item.product.min_stock) || 0
+          if (minStock > 0 && remaining <= minStock) {
+            fireTelegramNotification({
+              event: 'low_stock',
+              data: {
+                productName: item.product.name,
+                sku: item.product.sku,
+                stock: remaining,
+                minStock,
+              },
+            })
+          }
+        }
+
+        // Cache invalidation is for *other* pages (reports, stock lists) on
+        // their next visit. Nothing here waits for it.
+        void Promise.all([
+          invalidateProducts(),
+          invalidateOrders(),
+          invalidateOrderItems(),
+          invalidateTransactions(),
+          invalidateMovements(),
+          invalidateCustomers(),
+          invalidateInvoices(),
+        ]).catch(() => {
+          // A failed revalidation only means another page may show stale
+          // numbers until its cache window lapses; the sale is already saved.
+        })
+      } catch (error: any) {
+        setSaleStatus('failed')
+        toast.error(error.message || tCommon('error'))
+        // Put the optimistic stock back: this sale did not happen.
+        setProducts((current) =>
+          current.map((p) => {
+            const sold = soldItems.find((ci) => ci.product.id === p.id)
+            return sold ? { ...p, stock: p.stock + sold.quantity } : p
+          })
+        )
+      }
+    })()
   }
 
   // Tries a direct ESC/POS print via the printer configured in Settings →
@@ -314,9 +354,7 @@ export function POSClient({
 
   return (
     <div
-      className={`relative select-none md:fixed md:top-16 md:right-0 md:bottom-0 md:flex md:flex-col md:overflow-hidden md:p-6 transition-[left] duration-200 ease-linear ${
-        isSidebarMobile ? 'md:left-0' : sidebarState === 'expanded' ? 'md:left-(--sidebar-width)' : 'md:left-(--sidebar-width-icon)'
-      }`}
+      className={`relative select-none md:fixed md:top-16 md:right-0 md:bottom-0 md:flex md:flex-col md:overflow-hidden md:p-6 ${sidebarOffset}`}
     >
       {/* Print & Scrollbar Style Injection */}
       <style jsx global>{`
@@ -389,7 +427,7 @@ export function POSClient({
           onPaymentMethodChange={setPaymentMethod}
           onClear={clearTill}
           onCheckout={handleCheckout}
-          isCheckingOut={isLoadingCheckout}
+          isCheckingOut={false}
           lang={lang}
         />
       </div>
@@ -406,6 +444,7 @@ export function POSClient({
 
       <PosReceiptDialog
         order={checkoutSuccessOrder}
+        status={saleStatus}
         company={companyInfo}
         config={receiptConfig}
         onClose={() => setCheckoutSuccessOrder(null)}

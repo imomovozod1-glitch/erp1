@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import { Bell, LogOut, Settings, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
+import { SidebarTrigger } from '@/components/ui/sidebar'
+import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +20,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { GlobalSearch } from '@/components/layout/global-search'
-import { getInitials, isoDate } from '@/lib/utils'
+import { formatDate, getInitials, isoDate } from '@/lib/utils'
 import type { Profile } from '@/types/database.types'
 
 const LOCALES = [
@@ -33,12 +34,24 @@ interface AppHeaderProps {
   lang: string
 }
 
+/**
+ * Every icon control in the bar shares this: same height, same corner, same
+ * border as the search box on the left. They used to be four different things
+ * standing in a row — two bordered pills with full rounding, and two ghost
+ * buttons with none — which read as unrelated widgets rather than one toolbar.
+ */
+const HEADER_CONTROL =
+  'h-8 rounded-lg border border-slate-200 bg-white text-slate-500 shadow-2xs transition-colors ' +
+  'hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 ' +
+  'dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 ' +
+  'dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200'
+
 export function AppHeader({ profile, lang }: AppHeaderProps) {
   const router = useRouter()
   const tSettings = useTranslations('settings')
   const tNav = useTranslations('nav')
   const t = useTranslations('auth')
-  const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
+  const sidebarOffset = useSidebarOffset()
 
   const [notifications, setNotifications] = useState<any[]>([])
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -272,17 +285,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
   return (
     <header
-      className={`flex min-h-16 shrink-0 items-center gap-1.5 sm:gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-3 sm:px-4 pt-[env(safe-area-inset-top)] fixed top-0 right-0 z-30 transition-[left] duration-200 ease-linear ${
-        isSidebarMobile
-          ? 'left-0'
-          : sidebarState === 'expanded'
-            ? 'left-0 md:left-(--sidebar-width)'
-            // The sidebar uses variant="inset", so when collapsed its rail is
-            // --sidebar-width-icon *plus* the p-2 padding on both sides. Offsetting
-            // the header by the bare icon width alone left it sitting on top of that
-            // padding — matching the gap element's calc keeps them flush.
-            : 'left-0 md:left-[calc(var(--sidebar-width-icon)+1rem)]'
-      }`}
+      className={`flex min-h-16 shrink-0 items-center gap-1.5 sm:gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-3 sm:px-4 pt-[env(safe-area-inset-top)] fixed top-0 right-0 z-30 ${sidebarOffset}`}
     >
       <SidebarTrigger className="-ml-1" />
 
@@ -302,7 +305,10 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           variant="outline"
           size="sm"
           onClick={() => router.push(`/${lang}/sales/invoices`)}
-          className="h-8 w-8 sm:w-auto justify-center px-0 sm:px-3 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-800 dark:hover:text-rose-300 font-semibold text-xs rounded-lg sm:rounded-full animate-pulse gap-1.5 transition-all mr-0.5 sm:mr-2"
+          // Rose because it classifies — money that is late. Not animated:
+          // a button that pulses on every page for as long as one invoice is
+          // overdue stops meaning "look here" within a day.
+          className="h-8 w-8 justify-center gap-1.5 rounded-lg border-rose-200 bg-rose-50 px-0 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800 sm:w-auto sm:px-3 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-950/60 dark:hover:text-rose-300"
           title={lang === 'uz' ? "Muddati o'tgan" : lang === 'ru' ? 'Просрочено' : 'Overdue'}
         >
           <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
@@ -319,7 +325,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
               type="button"
               aria-label={tNav('help')}
               title={tNav('help')}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer shadow-2xs"
+              className={`flex w-8 cursor-pointer items-center justify-center ${HEADER_CONTROL}`}
             />
           }
         >
@@ -349,13 +355,13 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           render={
             <button
               type="button"
-              className="flex items-center justify-center gap-1.5 h-8 w-8 sm:w-auto px-0 sm:pl-1.5 sm:pr-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-colors cursor-pointer shadow-2xs"
+              className={`flex w-8 cursor-pointer items-center justify-center gap-1.5 px-0 sm:w-auto sm:pr-2 sm:pl-1.5 ${HEADER_CONTROL}`}
             />
           }
         >
-          <Languages className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
-          <span className="hidden sm:inline text-xs font-semibold text-slate-700 dark:text-slate-300">{currentLocale?.code.toUpperCase()}</span>
-          <ChevronDown className="hidden sm:block h-3 w-3 text-slate-400 dark:text-slate-500" />
+          <Languages className="h-3.5 w-3.5 shrink-0" />
+          <span className="hidden text-xs font-semibold sm:inline">{currentLocale?.code.toUpperCase()}</span>
+          <ChevronDown className="hidden h-3 w-3 opacity-60 sm:block" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-32 rounded-lg p-1">
           {LOCALES.map((locale) => {
@@ -375,6 +381,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       </DropdownMenu>
 
       <ThemeToggle
+        className={`w-8 ${HEADER_CONTROL}`}
         labels={{
           light: lang === 'uz' ? "Yorug' rejim" : lang === 'ru' ? 'Светлая тема' : 'Light mode',
           dark: lang === 'uz' ? "Qorong'i rejim" : lang === 'ru' ? 'Тёмная тема' : 'Dark mode',
@@ -384,7 +391,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       {/* Notifications */}
       <DropdownMenu open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
         <DropdownMenuTrigger render={
-          <Button variant="ghost" size="icon" className="relative text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+          <Button variant="ghost" size="icon" className={`relative w-8 ${HEADER_CONTROL}`}>
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <span className="absolute top-2 right-2 flex h-2 w-2">
@@ -407,7 +414,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 transition-colors flex items-center gap-1 hover:underline cursor-pointer"
+                className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-violet-600 transition-colors hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
               >
                 <Check className="h-3 w-3" />
                 {lang === 'uz' ? 'Hammasini o\'qilgan qilish' : lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
@@ -455,7 +462,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
                           {n.title}
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">
-                          {new Date(n.created_at).toLocaleDateString()}
+                          {formatDate(n.created_at.toISOString())}
                         </span>
                       </div>
                       <p className={`text-xs ${isUnread ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -493,7 +500,9 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => window.location.href = `/${lang}/settings`}>
+          {/* router.push, not window.location: a full document reload here
+              threw away the whole client cache to move one route. */}
+          <DropdownMenuItem onClick={() => router.push(`/${lang}/settings`)}>
             <Settings className="mr-2 h-4 w-4" />
             {tSettings('title')}
           </DropdownMenuItem>

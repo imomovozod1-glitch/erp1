@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { CheckCircle2, Printer } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Loader2, Printer } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ export interface ReceiptOrder {
  */
 export function PosReceiptDialog({
   order,
+  status = 'saved',
   company,
   config,
   onClose,
@@ -62,6 +63,12 @@ export function PosReceiptDialog({
 }: {
   /** The completed sale, or null when no receipt is showing. */
   order: ReceiptOrder | null
+  /**
+   * Whether the sale behind this receipt has landed in the database yet. The
+   * receipt is shown the instant the button is pressed, so it has to be able
+   * to say "not saved" — the cashier has already taken the money by then.
+   */
+  status?: 'saving' | 'saved' | 'failed'
   company: { name: string; phone?: string }
   config: PrinterConfig
   onClose: () => void
@@ -80,10 +87,27 @@ export function PosReceiptDialog({
       {order && (
         <DialogContent className="max-w-md rounded-2xl bg-slate-100 dark:bg-slate-800 border-0 shadow-2xl p-6">
           <DialogHeader className="no-print">
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-1">
-              <CheckCircle2 className="h-5 w-5" />
+            <div
+              className={`mb-1 flex items-center gap-2 ${
+                status === 'failed'
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : 'text-emerald-600 dark:text-emerald-400'
+              }`}
+            >
+              {status === 'saving' ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : status === 'failed' ? (
+                <AlertTriangle className="h-5 w-5" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5" />
+              )}
               <DialogTitle className="text-lg font-bold">{t('orderSuccess')}</DialogTitle>
             </div>
+            {status === 'failed' && (
+              <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+                {t('saveFailed')}
+              </p>
+            )}
           </DialogHeader>
 
           {/* Receipt container */}

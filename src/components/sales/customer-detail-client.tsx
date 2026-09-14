@@ -153,7 +153,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : lang === 'ru' ? 'Всего покупок' : 'Total purchases'}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalPurchases)}</h3>
+            <h3 className="mt-1 text-xl font-bold tracking-tight break-words tabular-nums text-slate-900 dark:text-slate-100">{formatCurrency(totalPurchases)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{salesOrders.length} {lang === 'uz' ? 'ta buyurtma' : lang === 'ru' ? 'заказов' : 'orders'}</span>
           </CardContent>
         </Card>
@@ -161,7 +161,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami to\'langan' : lang === 'ru' ? 'Всего оплачено' : 'Total paid'}</span>
-            <h3 className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight mt-1">{formatCurrency(totalPaid)}</h3>
+            <h3 className="mt-1 text-xl font-bold tracking-tight break-words tabular-nums text-emerald-700 dark:text-emerald-400">{formatCurrency(totalPaid)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{invoices.length} {lang === 'uz' ? 'ta hisob-faktura' : lang === 'ru' ? 'счетов' : 'invoices'}</span>
           </CardContent>
         </Card>
@@ -169,10 +169,21 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</span>
-            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${balance > 0 ? 'text-emerald-600 dark:text-white' : balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'}`}>
+            {/* Musbat — haqdorlik, manfiy — qarz. Qorong'i rejimda musbati
+                `dark:text-white` edi: rang jufti buzilib, faqat manfiysi
+                rangli qolardi. */}
+            <h3
+              className={`mt-1 text-xl font-bold tracking-tight break-words tabular-nums ${
+                balance > 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : balance < 0
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : 'text-slate-900 dark:text-slate-100'
+              }`}
+            >
               {balance > 0 ? '+' : balance < 0 ? '-' : ''}{formatCurrency(Math.abs(balance))}
             </h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+            <span className="mt-2 text-xs tabular-nums text-slate-400 dark:text-slate-500">
               {lang === 'uz' ? 'Qarz' : lang === 'ru' ? 'Долг' : 'Debt'}: {formatCurrency(outstandingDebt)} · {lang === 'uz' ? 'Haqdorlik' : lang === 'ru' ? 'Депозит' : 'Credit'}: {formatCurrency(creditBalance)}
             </span>
           </CardContent>
@@ -181,7 +192,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tc('status')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
+            <h3 className="mt-1 text-xl font-bold tracking-tight break-words tabular-nums text-slate-900 dark:text-slate-100">
               {customer.is_active ? (lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active') : (lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive')}
             </h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{lang === 'uz' ? 'Kontakt' : lang === 'ru' ? 'Контакты' : 'Contact'}: {customer.phone || '—'}</span>
@@ -249,7 +260,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <button
                     type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline cursor-pointer"
+                    className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
                   >
                     {lang === 'uz' ? "Kattaroq xaritada ko'rish" : lang === 'ru' ? 'Показать на большой карте' : 'View larger map'}
                   </button>

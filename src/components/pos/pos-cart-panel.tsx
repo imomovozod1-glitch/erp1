@@ -179,12 +179,15 @@ export function PosCartPanel({
                           </button>
                           <NumericInput
                             value={item.quantity === 0 ? '' : item.quantity}
+                            // Typed, not stepped: `setTypedQuantity` keeps the
+                            // line alive through "0" and "0." on the way to a
+                            // fractional quantity.
                             onChange={(val) => {
                               if (val === '') {
                                 cart.clearQuantity(item.product.id)
                                 return
                               }
-                              cart.setQuantity(item.product.id, val)
+                              cart.setTypedQuantity(item.product.id, val)
                             }}
                             allowDecimals={unitAllowsDecimals(item.product.unit)}
                             onBlur={() => {

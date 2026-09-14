@@ -25,15 +25,22 @@ interface NumericInputProps extends Omit<React.ComponentProps<typeof Input>, "va
   allowDecimals?: boolean;
 }
 
-export function NumericInput({ value, defaultValue, onChange, allowDecimals = true, ...props }: NumericInputProps) {
+export function NumericInput({ value, defaultValue, onChange, allowDecimals = true, onFocus, onBlur, ...props }: NumericInputProps) {
   const [displayValue, setDisplayValue] = React.useState(() => {
     const targetValue = value !== undefined ? value : (defaultValue !== undefined ? defaultValue : "");
     return formatNumberWithSpaces(targetValue);
   });
+  const [isFocused, setIsFocused] = React.useState(false);
 
   const targetValue = value !== undefined ? value : (defaultValue !== undefined ? defaultValue : "");
   const formatted = formatNumberWithSpaces(targetValue);
-  if (parseFormattedNumber(formatted) !== parseFormattedNumber(displayValue)) {
+  // Never overwrite what is being typed. Half of a number is not the number:
+  // reaching 0.5 goes through "0" and "0.", and both parse to 0 — so a value
+  // the parent normalised (0 rendered as an empty box, say) used to be pushed
+  // back into the field mid-keystroke and the decimal could never be reached.
+  // While the field has focus the draft belongs to the field; on blur the
+  // parent's value takes over again.
+  if (!isFocused && parseFormattedNumber(formatted) !== parseFormattedNumber(displayValue)) {
     setDisplayValue(formatted);
   }
 
@@ -79,6 +86,17 @@ export function NumericInput({ value, defaultValue, onChange, allowDecimals = tr
       type="text"
       value={displayValue}
       onChange={handleChange}
+      onFocus={(e) => {
+        setIsFocused(true);
+        onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        setIsFocused(false);
+        // Re-sync to whatever the parent settled on — it may have clamped or
+        // rounded what was typed.
+        setDisplayValue(formatNumberWithSpaces(value !== undefined ? value : ""));
+        onBlur?.(e);
+      }}
       {...props}
     />
   )

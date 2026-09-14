@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { getCachedProducts, getCachedCategories, getCachedCustomers } from '@/lib/data/queries'
 import { getCurrentTenantId, getCachedTenant } from '@/lib/tenant'
+import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { POSClient } from '@/components/pos/pos-client'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -23,11 +24,16 @@ export default async function POSPage({
 }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [products, categories, customers, tenant] = await Promise.all([
+  const user = await getSessionUser()
+  const [products, categories, customers, tenant, profile] = await Promise.all([
     getCachedProducts(tenantId),
     getCachedCategories(tenantId),
     getCachedCustomers(tenantId),
     getCachedTenant(tenantId),
+    // The cashier's name is printed on the receipt. Read here, from cache, so
+    // the receipt can be shown the instant the button is pressed rather than
+    // after a round trip that only exists to fetch this one string.
+    user ? getCachedProfile(user.id) : Promise.resolve(null),
   ])
 
   // Filter only active products for the POS screen
@@ -42,6 +48,7 @@ export default async function POSPage({
         name: (tenant as any)?.company_name || 'ERP System',
         phone: (tenant as any)?.phone || undefined,
       }}
+      cashierName={(profile as any)?.full_name || 'Cashier'}
       lang={lang}
     />
   )

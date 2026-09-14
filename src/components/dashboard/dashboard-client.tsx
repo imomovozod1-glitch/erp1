@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import {
+  type LucideIcon,
   DollarSign,
   ShoppingCart,
   Package,
@@ -20,7 +21,7 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { formatCurrency, isoDate } from '@/lib/utils'
-import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
+import { PeriodFilter } from '@/components/shared/period-filter'
 import { PageInfoButton } from '@/components/shared/page-info-button'
 
 const formatDateISO = (d: Date) => {
@@ -52,6 +53,54 @@ interface DashboardClientProps {
     totalPayables?: number
     soldItems?: { order_id: string; order_date: string; revenue: number; cost: number }[]
   }
+}
+
+
+/**
+ * One KPI tile.
+ *
+ * The five below were five copies of the same twenty lines, differing only in
+ * label, number, icon and footer — so the decorative corner, the type scale and
+ * the hover behaviour all had to be kept in step by hand, and one of them had
+ * already drifted.
+ */
+function KpiTile({
+  label,
+  value,
+  icon: Icon,
+  children,
+}: {
+  label: string
+  value: string
+  icon: LucideIcon
+  /** The small print under the number. */
+  children: React.ReactNode
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:bg-slate-900">
+      <div
+        aria-hidden="true"
+        className="absolute top-0 right-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-50 opacity-40 transition-transform duration-300 group-hover:scale-110 dark:bg-violet-950/40"
+      />
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 space-y-1">
+          <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+            {label}
+          </span>
+          {/* `text-xl`, not 2xl: at five columns a tile leaves roughly 150px
+              for the number once the padding and the icon chip are taken, and a
+              nine-digit sum in 2xl ran straight out of the card. */}
+          <h3 className="text-xl font-bold tracking-tight break-words tabular-nums text-slate-900 dark:text-slate-100">
+            {value}
+          </h3>
+        </div>
+        <div className="shrink-0 rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+      {children}
+    </div>
+  )
 }
 
 export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps) {
@@ -312,42 +361,24 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
       {/* Top Bar with Period Presets */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
-            {/* <Sparkles className="h-5 w-5 text-violet-600 animate-pulse" /> */}
+          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             {t.title}
             <PageInfoButton text={tInfo('dashboard')} />
           </h1>
-          <p className="text-xs text-muted-foreground">
-            {/* {t.subtitle} */}
-          </p>
         </div>
 
-        {/* Period Selector Tabs */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 shadow-inner border">
-            {(['today', 'yesterday', 'week', 'month', 'all'] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
-                  period === p
-                    ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                }`}
-              >
-                {t[p]}
-              </button>
-            ))}
-          </div>
-
-          <CustomDateRangePicker
-            isActive={period === 'custom'}
-            start={customStart}
-            end={customEnd}
-            onApply={handleApplyCustomRange}
-            lang={lang}
-          />
-        </div>
+        {/* The same preset pills + custom-range popover as the reports and
+            transactions screens. This screen used to hand-roll them, which is
+            exactly the duplication PeriodFilter exists to prevent — its default
+            presets are this list, labelled from the same namespace. */}
+        <PeriodFilter
+          period={period}
+          onPeriodChange={(next) => setPeriod(next as typeof period)}
+          customStart={customStart}
+          customEnd={customEnd}
+          onApplyCustomRange={handleApplyCustomRange}
+          lang={lang}
+        />
       </div>
 
       {/* Who to call when something goes wrong, before the numbers. */}
@@ -391,114 +422,79 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
 
       {/* Main KPI Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        {/* Sales Card */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-50 dark:bg-violet-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t.sales}</span>
-              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                {formatCurrency(metrics.revenue)}
-              </h3>
-            </div>
-            <div className="rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              <ShoppingCart className="h-5 w-5" />
-            </div>
-          </div>
+        <KpiTile label={t.sales} value={formatCurrency(metrics.revenue)} icon={ShoppingCart}>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>{td('ordersCountText', { count: metrics.ordersCount })}</span>
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{td('averageCheckText', { amount: formatCurrency(metrics.avgCheck) })}</span>
+            <span className="tabular-nums">{td('ordersCountText', { count: metrics.ordersCount })}</span>
+            <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-300">
+              {td('averageCheckText', { amount: formatCurrency(metrics.avgCheck) })}
+            </span>
           </div>
-        </div>
+        </KpiTile>
 
-        {/* Profit Card */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-50 dark:bg-violet-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t.profit}</span>
-              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                {formatCurrency(metrics.profit)}
-              </h3>
-            </div>
-            <div className="rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              <DollarSign className="h-5 w-5" />
-            </div>
-          </div>
+        <KpiTile label={t.profit} value={formatCurrency(metrics.profit)} icon={DollarSign}>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{td('profitabilityText', { percentage: ((metrics.profit) / (metrics.revenue || 1) * 100).toFixed(1) })}</span>
-            <span>{td('expenseText', { amount: formatCurrency(metrics.expenses) })}</span>
+            <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-300">
+              {td('profitabilityText', {
+                percentage: ((metrics.profit / (metrics.revenue || 1)) * 100).toFixed(1),
+              })}
+            </span>
+            <span className="tabular-nums">{td('expenseText', { amount: formatCurrency(metrics.expenses) })}</span>
           </div>
-        </div>
+        </KpiTile>
 
-        {/* Cash Balance Card */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-50 dark:bg-violet-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t.cashBalance}</span>
-              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                {formatCurrency(realCashboxBalance)}
-              </h3>
-            </div>
-            <div className="rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              <Layers className="h-5 w-5" />
-            </div>
-          </div>
+        <KpiTile label={t.cashBalance} value={formatCurrency(realCashboxBalance)} icon={Layers}>
+          {/* Money owed to us and money we owe: the one place on this screen
+              where colour classifies rather than decorates. */}
           <div className="mt-3 flex items-center justify-between gap-1 border-t pt-2 text-[11px] text-slate-500 dark:text-slate-400">
-            <div className="flex flex-col">
-              <span className="text-slate-400 dark:text-slate-500 font-medium text-[9px] uppercase">{t.receivables}</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{formatCurrency(realReceivables)}</span>
-            </div>
-            <div className="flex flex-col text-right">
-              <span className="text-slate-400 dark:text-slate-500 font-medium text-[9px] uppercase">{t.payables}</span>
-              <span className="font-bold text-rose-600 dark:text-rose-400 mt-0.5">{formatCurrency(realPayables)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Warehouse Card */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-50 dark:bg-violet-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t.warehouseValue}</span>
-              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                {formatCurrency(realWarehouseValue)}
-              </h3>
-            </div>
-            <div className="rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              <Package className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>{td('productsCountText', { count: totalProducts ?? 0 })}</span>
-            <span className="font-semibold text-amber-600 dark:text-amber-400">{td('lowStockCountText', { count: lowStock.length })}</span>
-          </div>
-        </div>
-
-        {/* Sold on Credit (Customer Debt) Card */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute right-0 top-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-50 dark:bg-violet-950/40 opacity-40 group-hover:scale-110 transition-transform duration-300" />
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Qarzga sotilgan' : lang === 'ru' ? 'Продано в долг' : 'Sold on credit'}</span>
-              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+            <div className="flex min-w-0 flex-col">
+              <span className="text-[9px] font-medium uppercase text-slate-400 dark:text-slate-500">
+                {t.receivables}
+              </span>
+              <span className="mt-0.5 font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                 {formatCurrency(realReceivables)}
-              </h3>
+              </span>
             </div>
-            <div className="rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              <AlertTriangle className="h-5 w-5" />
+            <div className="flex min-w-0 flex-col text-right">
+              <span className="text-[9px] font-medium uppercase text-slate-400 dark:text-slate-500">
+                {t.payables}
+              </span>
+              <span className="mt-0.5 font-bold tabular-nums text-rose-600 dark:text-rose-400">
+                {formatCurrency(realPayables)}
+              </span>
             </div>
           </div>
+        </KpiTile>
+
+        <KpiTile label={t.warehouseValue} value={formatCurrency(realWarehouseValue)} icon={Package}>
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span className="tabular-nums">{td('productsCountText', { count: totalProducts ?? 0 })}</span>
+            <span className="font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+              {td('lowStockCountText', { count: lowStock.length })}
+            </span>
+          </div>
+        </KpiTile>
+
+        <KpiTile
+          label={lang === 'uz' ? 'Qarzga sotilgan' : lang === 'ru' ? 'Продано в долг' : 'Sold on credit'}
+          value={formatCurrency(realReceivables)}
+          icon={AlertTriangle}
+        >
           <div className="mt-3 flex items-center text-xs text-slate-500 dark:text-slate-400">
-            <span>{lang === 'uz' ? "Mijozlardan kutilayotgan to'lov" : lang === 'ru' ? 'Ожидаемая оплата от клиентов' : 'Expected from customers'}</span>
+            <span>
+              {lang === 'uz'
+                ? "Mijozlardan kutilayotgan to'lov"
+                : lang === 'ru'
+                  ? 'Ожидаемая оплата от клиентов'
+                  : 'Expected from customers'}
+            </span>
           </div>
-        </div>
+        </KpiTile>
       </div>
 
       {/* Small Secondary Meta info row (Customers & Employees) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Three tiles, three columns — `md:grid-cols-4` left a visible empty
+          cell at the end of the row on every desktop width. */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
           <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('customersCountText', { count: totalCustomers ?? 0 })}</span>
