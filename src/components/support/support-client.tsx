@@ -31,11 +31,11 @@ interface SupportClientProps {
 }
 
 export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps) {
-  const t = useTranslations('support')
   const tInfo = useTranslations('pageInfo')
   const tCommon = useTranslations('common')
   const tChat = useTranslations('supportChat')
   const tNav = useTranslations('nav')
+  const t = useTranslations('support')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -45,7 +45,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
   // This used to be a prop: a setTimeout, a success toast, and the text thrown
   // away — nothing was stored, so nothing could ever be answered. It now opens
   // a real thread that the assigned support agent sees in their portal.
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault()
     if (isSubmitting) return
     if (subject.trim().length < 3 || !message.trim()) {
@@ -236,7 +236,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
         {/* Sidebar Info Panel */}
         <div className="lg:col-span-2 space-y-6">
           {/* Operator Status */}
-          <div className="bg-gradient-to-br from-violet-500 to-violet-700 text-white p-6 rounded-2xl relative overflow-hidden shadow-lg">
+          <div className="bg-linear-to-br from-violet-500 to-violet-700 text-white p-6 rounded-2xl relative overflow-hidden shadow-lg">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-8 -translate-y-8" />
             <div className="relative z-10 space-y-4">
               <div className="flex items-center gap-2">

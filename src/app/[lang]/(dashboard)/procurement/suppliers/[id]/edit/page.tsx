@@ -18,9 +18,12 @@ export default async function EditSupplierPage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('procurement', lang, '/procurement/suppliers')
   const tenantId = (await getCurrentTenantId()) as string
-  const assignableUsers = await getAssignableUsers(tenantId)
-  const t = await getTranslations('procurement')
-  const supplier = await getCachedSupplierById(id, tenantId)
+  // Batched, not chained: neither read depends on the other's result.
+  const [assignableUsers, t, supplier] = await Promise.all([
+    getAssignableUsers(tenantId),
+    getTranslations('procurement'),
+    getCachedSupplierById(id, tenantId),
+  ])
 
   if (!supplier) notFound()
 

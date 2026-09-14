@@ -14,8 +14,8 @@ interface RecentOrdersProps {
 }
 
 export function RecentOrders({ orders, lang, title }: RecentOrdersProps) {
-  const t = useTranslations('sales')
   const tCommon = useTranslations('common')
+  const t = useTranslations('sales')
 
   if (orders.length === 0) {
     return (

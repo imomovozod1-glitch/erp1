@@ -20,8 +20,8 @@ interface TransactionCategoryFormProps {
 }
 
 export function TransactionCategoryForm({ initialData, lang }: TransactionCategoryFormProps) {
-  const t = useTranslations('finance')
   const tCommon = useTranslations('common')
+  const t = useTranslations('finance')
   const exitForm = useRouteModalExit(`/${lang}/finance/categories`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any

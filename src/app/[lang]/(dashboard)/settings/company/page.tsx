@@ -5,6 +5,7 @@ import { getSessionUser } from '@/lib/auth'
 import { PageHeader } from '@/components/shared/page-header'
 import { CompanyForm } from '@/components/settings/company-form'
 import { requireModuleView } from '@/lib/permissions-server'
+import { getCurrentTenantId, getCachedTenant } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -28,7 +29,13 @@ export default async function CompanySettingsPage({
     redirect(`/${lang}/login`)
   }
 
-  const t = await getTranslations('settings')
+  // The tenant row is already cached server-side (`getCachedTenant`); the card
+  // used to re-read it from the browser on mount, behind a skeleton.
+  const tenantId = await getCurrentTenantId()
+  const [t, tenant] = await Promise.all([
+    getTranslations('settings'),
+    tenantId ? getCachedTenant(tenantId) : Promise.resolve(null),
+  ])
 
   return (
     <div className="space-y-6">
@@ -40,7 +47,7 @@ export default async function CompanySettingsPage({
           { label: t('company') },
         ]}
       />
-      <CompanyForm />
+      <CompanyForm tenant={tenant} />
     </div>
   )
 }

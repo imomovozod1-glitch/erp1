@@ -42,4 +42,5 @@ There is one established table convention — do not introduce `@tanstack/react-
 
 - Keep analytics/charts on `recharts` via the existing `src/components/ui/chart.tsx` wrapper — this is the only charting library in the project.
 - **Translations/locales**: `uz` (default), `ru`, `en` — see `src/i18n/routing.ts` and `messages/{uz,ru,en}.json`. Every user-facing string goes through `next-intl` (`useTranslations`/`getTranslations`), never hardcoded. Keep all three message files in sync when adding a key.
+  - When a component pulls from several namespaces, declare the bare `const t = useTranslations('<main>')` **last** of the group. Order is irrelevant at runtime, but the editor's i18n-ally resolves an unqualified `t(...)` against the last `useTranslations()` in the file — with the main namespace declared first it reports every key in the file as missing.
 - **Mutations**: write directly with the Supabase browser client from the form component, then call the relevant `invalidate*()` cache-tag action — see `CLAUDE.md` → Architecture → Data layer for the full pattern before adding a new API route or Server Action.

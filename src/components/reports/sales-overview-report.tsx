@@ -71,8 +71,8 @@ function Body({
   orders: SalesOrderRow[]
   items: SalesItemRow[]
 }) {
-  const t = useTranslations('reports')
   const tc = useTranslations('common')
+  const t = useTranslations('reports')
   const { range, periodLabel } = period
 
   const view = useMemo(() => {

@@ -38,8 +38,8 @@ function getTodayString(): string {
 }
 
 export function OrderForm({ initialData, customers, assignableUsers, lang }: OrderFormProps) {
-  const t = useTranslations('sales')
   const tCommon = useTranslations('common')
+  const t = useTranslations('sales')
   const exitForm = useRouteModalExit(`/${lang}/sales/orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient() as any

@@ -52,8 +52,8 @@ export function DailySalesChart({
   lang: string
   height?: number
 }) {
-  const t = useTranslations('reports')
   const tc = useTranslations('common')
+  const t = useTranslations('reports')
 
   const months = pickLocale(MONTHS_SHORT, lang)
   const weekdays = pickLocale(WEEKDAYS_SHORT, lang)

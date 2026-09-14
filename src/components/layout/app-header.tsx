@@ -35,9 +35,9 @@ interface AppHeaderProps {
 
 export function AppHeader({ profile, lang }: AppHeaderProps) {
   const router = useRouter()
-  const t = useTranslations('auth')
   const tSettings = useTranslations('settings')
   const tNav = useTranslations('nav')
+  const t = useTranslations('auth')
   const { state: sidebarState, isMobile: isSidebarMobile } = useSidebar()
 
   const [notifications, setNotifications] = useState<any[]>([])

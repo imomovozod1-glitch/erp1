@@ -15,9 +15,9 @@ import { newPasswordSchema } from '@/lib/password-validation'
 import { changeOwnPassword } from '@/lib/change-password'
 
 export function SecurityForm() {
-  const t = useTranslations('settings')
   const tAuth = useTranslations('auth')
   const tCommon = useTranslations('common')
+  const t = useTranslations('settings')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
 

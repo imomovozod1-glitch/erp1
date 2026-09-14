@@ -102,8 +102,8 @@ function isoDaysAgo(days: number, today: string): string {
  * for the one caveat that follows from it.
  */
 export function ReportBuilder({ today }: { today: string }) {
-  const t = useTranslations('reports')
   const tCommon = useTranslations('common')
+  const t = useTranslations('reports')
 
   const [source, setSource] = useState<ReportSource>('sales')
   const [groupBy, setGroupBy] = useState<ReportGrouping>('day')

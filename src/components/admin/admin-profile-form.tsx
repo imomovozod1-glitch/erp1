@@ -21,7 +21,7 @@ export function AdminProfileForm({ fullName, email }: { fullName: string; email:
   const [name, setName] = useState(fullName)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault()
     if (!name.trim()) return
     setIsSubmitting(true)

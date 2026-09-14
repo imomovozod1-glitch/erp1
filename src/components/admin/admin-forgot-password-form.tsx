@@ -26,8 +26,8 @@ type FormData = z.infer<typeof schema>
  * matching Supabase's own no-enumeration behavior.
  */
 export function AdminForgotPasswordForm() {
-  const t = useTranslations('admin.accountRecovery')
   const tLogin = useTranslations('admin.login')
+  const t = useTranslations('admin.accountRecovery')
   const [isLoading, setIsLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
@@ -119,7 +119,7 @@ export function AdminForgotPasswordForm() {
         )}
       </div>
 
-      <div className="absolute -inset-1 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
+      <div className="absolute -inset-1 bg-linear-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
     </div>
   )
 }

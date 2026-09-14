@@ -83,8 +83,8 @@ function Body({
   items: SalesItemRow[]
   products: CatalogProductRow[]
 }) {
-  const t = useTranslations('reports')
   const tc = useTranslations('common')
+  const t = useTranslations('reports')
   const { range, periodLabel } = period
 
   const [threshold, setThreshold] = useState<number>(0)

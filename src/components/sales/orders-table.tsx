@@ -42,8 +42,8 @@ export function OrdersTable({
   total,
   totalPages,
 }: OrdersTableProps) {
-  const t = useTranslations('sales')
   const tCommon = useTranslations('common')
+  const t = useTranslations('sales')
   const router = useRouter()
   const [pendingId, setPendingId] = useState<string | null>(null)
 

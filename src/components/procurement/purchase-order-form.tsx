@@ -42,8 +42,8 @@ function generatePoNumber() {
 }
 
 export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }: PurchaseOrderFormProps) {
-  const t = useTranslations('procurement')
   const tCommon = useTranslations('common')
+  const t = useTranslations('procurement')
   const exitForm = useRouteModalExit(`/${lang}/procurement/purchase-orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
@@ -151,7 +151,7 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault()
     // The button's own disabled state can lag a render behind the click,
     // so re-check synchronously before doing any work — this form writes to

@@ -82,8 +82,8 @@ export function SupportConversation({
   inboxTopic,
   className,
 }: SupportConversationProps) {
-  const t = useTranslations('supportChat')
   const tCommon = useTranslations('common')
+  const t = useTranslations('supportChat')
 
   const [threads, setThreads] = useState<ThreadSummary[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)

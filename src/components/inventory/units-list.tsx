@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Plus, Trash2, Scale, Pencil, Check, X } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,12 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { Skeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProducts } from '@/lib/data/revalidate'
 
 interface UnitsListProps {
   lang: string
+  /** Read on the server — see `getCachedMeasurementUnits`. */
+  initialUnits: UnitRow[]
 }
 
 interface UnitRow {
@@ -21,12 +22,13 @@ interface UnitRow {
   name: string
 }
 
-export function UnitsList({ lang }: UnitsListProps) {
-  const t = useTranslations('inventory')
+export function UnitsList({ lang, initialUnits }: UnitsListProps) {
   const tCommon = useTranslations('common')
+  const t = useTranslations('inventory')
   const supabase = createClient() as any
-  const [isLoading, setIsLoading] = useState(true)
-  const [units, setUnits] = useState<UnitRow[]>([])
+  // The list arrives with the page instead of from a round trip after
+  // hydration, so the table renders filled on first paint.
+  const [units, setUnits] = useState<UnitRow[]>(initialUnits)
   const [newUnit, setNewUnit] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -40,25 +42,13 @@ export function UnitsList({ lang }: UnitsListProps) {
   const alreadyExistsMessage =
     lang === 'uz' ? "Bu o'lchov birligi allaqachon mavjud" : lang === 'ru' ? 'Эта единица измерения уже существует' : 'This unit already exists'
 
-  useEffect(() => {
-    supabase
-      .from('measurement_units')
-      .select('id, name')
-      .order('name', { ascending: true })
-      .then(({ data, error }: any) => {
-        if (!error && data) setUnits(data)
-        setIsLoading(false)
-      })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // Case/whitespace-insensitive — "Dona" and "dona" are the same unit. The
   // database also enforces this (unique index on LOWER(name)) so a race
   // between two admins can't slip a duplicate through either.
   const existsCaseInsensitive = (value: string, excludeId?: string) =>
     units.some((u) => u.id !== excludeId && u.name.trim().toLowerCase() === value.trim().toLowerCase())
 
-  const handleAddUnit = async (e: React.FormEvent) => {
+  const handleAddUnit = async (e: React.SubmitEvent) => {
     e.preventDefault()
     const trimmed = newUnit.trim()
     if (!trimmed) return
@@ -123,26 +113,6 @@ export function UnitsList({ lang }: UnitsListProps) {
     await invalidateProducts()
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm p-6">
-            <Skeleton className="h-6 w-1/3 mb-2" />
-            <Skeleton className="h-8 w-1/2" />
-          </Card>
-          <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm p-6">
-            <Skeleton className="h-6 w-1/3 mb-2" />
-            <Skeleton className="h-10 w-full" />
-          </Card>
-        </div>
-        <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm p-6">
-          <Skeleton className="h-10 w-full mb-4" />
-          <Skeleton className="h-20 w-full" />
-        </Card>
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">
@@ -237,7 +207,7 @@ export function UnitsList({ lang }: UnitsListProps) {
                             <Input
                               value={editingValue}
                               onChange={(e) => setEditingValue(e.target.value)}
-                              className="h-8 py-1 px-2 text-sm border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 max-w-[200px]"
+                              className="h-8 py-1 px-2 text-sm border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 max-w-50"
                               autoFocus
                             />
                           ) : (

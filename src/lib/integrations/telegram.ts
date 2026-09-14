@@ -1,5 +1,6 @@
 import 'server-only'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import type { TelegramStatus } from '@/lib/integrations/telegram-types'
 
 /**
  * Telegram Bot API integration.
@@ -201,6 +202,34 @@ export async function getTelegramSettings(tenantId: string): Promise<TelegramSet
     .eq('tenant_id', tenantId)
     .maybeSingle()
   return (data as TelegramSettings) ?? null
+}
+
+/**
+ * The integration's state as the browser may see it.
+ *
+ * Shared by `GET /api/integrations/telegram` and the settings page itself, so
+ * the page can render the card already filled in instead of the client
+ * fetching its own state back from our own API after hydration — a full HTTP
+ * round trip plus a Supabase query for a screen the server had just rendered.
+ * One function, so the two can never disagree about what is safe to expose.
+ */
+export type { TelegramStatus }
+
+export async function getTelegramStatus(tenantId: string): Promise<TelegramStatus> {
+  const settings = await getTelegramSettings(tenantId)
+  return {
+    // Connected = we hold a working token. Whether a destination chat is known
+    // yet is reported separately, because that part resolves itself.
+    connected: !!settings?.telegram_bot_token,
+    awaitingChat: !!settings?.telegram_bot_token && !settings?.telegram_chat_id,
+    enabled: settings?.telegram_enabled ?? false,
+    chatId: settings?.telegram_chat_id ?? '',
+    botUsername: settings?.telegram_bot_username ?? null,
+    // Masked — the raw token is never returned to the browser.
+    tokenHint: maskToken(settings?.telegram_bot_token),
+    events: settings?.telegram_events ?? {},
+    linkedAt: settings?.telegram_linked_at ?? null,
+  }
 }
 
 /**

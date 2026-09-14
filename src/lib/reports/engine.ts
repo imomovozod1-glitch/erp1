@@ -1,6 +1,6 @@
 import 'server-only'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { orderDiscountFactors } from '@/lib/data/queries'
+import { orderDiscountFactors } from '@/lib/sales-discounts'
 import {
   REPORT_ROW_LIMIT,
   type ReportColumn,

@@ -4,6 +4,8 @@ import { getTranslations } from 'next-intl/server'
 import { getSessionUser } from '@/lib/auth'
 import { PageHeader } from '@/components/shared/page-header'
 import { UnitsList } from '@/components/inventory/units-list'
+import { getCachedMeasurementUnits } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -23,9 +25,11 @@ export default async function UnitsPage({
     redirect(`/${lang}/login`)
   }
 
-  const [t, tInfo] = await Promise.all([
+  const tenantId = (await getCurrentTenantId()) as string
+  const [t, tInfo, units] = await Promise.all([
     getTranslations('inventory'),
     getTranslations('pageInfo'),
+    getCachedMeasurementUnits(tenantId),
   ])
 
   return (
@@ -39,7 +43,7 @@ export default async function UnitsPage({
           { label: t('unit') },
         ]}
       />
-      <UnitsList lang={lang} />
+      <UnitsList lang={lang} initialUnits={units} />
     </div>
   )
 }

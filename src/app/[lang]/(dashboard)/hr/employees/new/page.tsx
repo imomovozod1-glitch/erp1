@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
+import { getCachedEmployeeFormOptions } from '@/lib/data/queries'
+import { getCurrentTenantId } from '@/lib/tenant'
 import { EmployeeForm } from '@/components/hr/employee-form'
 import { Metadata } from 'next'
 import { requireModuleEdit } from '@/lib/permissions-server'
@@ -18,9 +20,12 @@ export default async function NewEmployeePage({
   const { lang } = await params
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('hr', lang, '/hr/employees')
-  const [t, tCommon] = await Promise.all([
+  const tenantId = (await getCurrentTenantId()) as string
+  // The form's dropdowns are read here, not from three effects after hydration.
+  const [t, tCommon, options] = await Promise.all([
     getTranslations('hr'),
     getTranslations('common'),
+    getCachedEmployeeFormOptions(tenantId),
   ])
 
   return (
@@ -34,7 +39,7 @@ export default async function NewEmployeePage({
           { label: tCommon('add') },
         ]}
       />
-      <EmployeeForm lang={lang} />
+      <EmployeeForm lang={lang} options={options} />
     </div>
   )
 }

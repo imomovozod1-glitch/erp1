@@ -21,9 +21,9 @@ import { newPasswordSchema } from '@/lib/password-validation'
 import { changeOwnPassword } from '@/lib/change-password'
 
 export function AdminSecurityForm() {
-  const t = useTranslations('admin.settings.security')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
+  const t = useTranslations('admin.settings.security')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const schema = z

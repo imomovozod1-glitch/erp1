@@ -39,10 +39,10 @@ interface SupplierFormProps {
 }
 
 export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFormProps) {
-  const t = useTranslations('procurement')
   const tSales = useTranslations('sales')
   const tCommon = useTranslations('common')
   const tAuth = useTranslations('auth')
+  const t = useTranslations('procurement')
   const exitForm = useRouteModalExit(`/${lang}/procurement/suppliers`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)

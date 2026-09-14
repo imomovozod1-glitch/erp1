@@ -82,9 +82,9 @@ export function AllCustomersMapInner({
   currentUserId: string | null
   lang: string
 }) {
-  const t = useTranslations('sales')
   const tPicker = useTranslations('sales.locationPicker')
   const tCommon = useTranslations('common')
+  const t = useTranslations('sales')
 
   const mapRef = useRef<L.Map | null>(null)
   const [myPosition, setMyPosition] = useState<[number, number] | null>(null)

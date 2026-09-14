@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller } from 'react-hook-form'
 import { formatCurrency } from '@/lib/utils'
-import { getMeasurementUnits, unitAllowsDecimals } from '@/lib/units'
+import { FALLBACK_UNITS, unitAllowsDecimals } from '@/lib/units'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -22,17 +22,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { ImageUpload } from '@/components/shared/image-upload'
 
+/** Tenant-level settings the form needs — see `getCachedProductFormOptions`. */
+export interface ProductFormOptions {
+  units: string[]
+  costingMethod: string | null
+  /** max(numeric sku) + 1, computed on the server. */
+  nextSku: string
+}
+
 interface ProductFormProps {
   /** Active tenant members who can be made responsible for this record. */
   assignableUsers: AssignableUser[]
   initialData?: any
   categories: any[]
   lang: string
+  options: ProductFormOptions
 }
 
-export function ProductForm({ initialData, categories, lang, assignableUsers }: ProductFormProps) {
-  const t = useTranslations('inventory')
+export function ProductForm({ initialData, categories, lang, assignableUsers, options }: ProductFormProps) {
   const tCommon = useTranslations('common')
+  const t = useTranslations('inventory')
   const exitForm = useRouteModalExit(`/${lang}/inventory/products`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
@@ -76,31 +85,16 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
 
   type FormData = z.infer<typeof innerFormSchema>
 
-  const [units, setUnits] = useState<string[]>([])
-  // Costing method is a tenant-wide policy set only by the super-admin — there is
-  // no per-product override, so this is fetched once just to drive the "average
-  // cost estimate" hint below, not to let the user pick anything here.
-  const [tenantCostingMethod, setTenantCostingMethod] = useState<CostingMethod>('fifo')
+  // Units and the costing method arrive with the page. Both were fetched from
+  // their own `useEffect` after hydration — two round trips for values that
+  // change about once a year, with the unit picker empty until they landed.
+  // Costing method is a tenant-wide policy set only by the super-admin, used
+  // here just to drive the "average cost estimate" hint below.
+  const units = options.units.length > 0 ? options.units : FALLBACK_UNITS
+  const tenantCostingMethod = (options.costingMethod as CostingMethod) || 'fifo'
 
-  useEffect(() => {
-    getMeasurementUnits(supabase).then(setUnits)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    // RLS scopes this to the caller's own tenant row — no explicit filter needed.
-    supabase
-      .from('tenants')
-      .select('costing_method')
-      .limit(1)
-      .single()
-      .then(({ data }: any) => {
-        if (data?.costing_method) setTenantCostingMethod(data.costing_method)
-      })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const [defaultSku] = useState(() => initialData?.sku || '')
+  // A new product opens on the next free sku; an edit keeps its own.
+  const [defaultSku] = useState(() => initialData?.sku || options.nextSku || '')
 
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = usePersistedForm<FormData>('product-form-v3', {
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
@@ -119,25 +113,6 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
     },
   })
 
-  useEffect(() => {
-    if (initialData?.sku) return
-    if (watch('sku')) return // don't overwrite a restored draft or typed value
-
-    const fetchNextSku = async () => {
-      const { data } = await supabase
-        .from('products')
-        .select('sku')
-
-      let maxSku = 1000
-      for (const row of data || []) {
-        const num = parseInt(row.sku, 10)
-        if (!isNaN(num) && num > maxSku) maxSku = num
-      }
-      setValue('sku', (maxSku + 1).toString(), { shouldValidate: true })
-    }
-    fetchNextSku()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const [markupState, setMarkupState] = useState<string>(() => {
     if (initialData) {
@@ -562,7 +537,7 @@ export function ProductForm({ initialData, categories, lang, assignableUsers }: 
         </div>
 
         {costPriceNum > 0 && priceNum > 0 && (
-          <div className="col-span-1 md:col-span-2 bg-gradient-to-r from-slate-50 dark:from-slate-800 to-slate-100 dark:to-slate-800/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700 shadow-inner flex flex-wrap justify-between items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="col-span-1 md:col-span-2 bg-linear-to-r from-slate-50 dark:from-slate-800 to-slate-100 dark:to-slate-800/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700 shadow-inner flex flex-wrap justify-between items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex gap-8 flex-wrap">
               <div className="space-y-1">
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">{t('expectedProfit')}</span>

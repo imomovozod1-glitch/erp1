@@ -29,9 +29,9 @@ interface EmployeeDetailClientProps {
 }
 
 export function EmployeeDetailClient({ lang, employee, transactions, salesOrders }: EmployeeDetailClientProps) {
-  const t = useTranslations('hr')
   const tc = useTranslations('common')
   const tSales = useTranslations('sales')
+  const t = useTranslations('hr')
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'payouts' | 'sales'>('payouts')
   const [period, setPeriod] = useState<Period>('all')

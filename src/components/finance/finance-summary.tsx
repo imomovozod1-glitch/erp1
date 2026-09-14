@@ -17,7 +17,7 @@ export function FinanceSummary({ totalIncome, totalExpenses }: FinanceSummaryPro
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 dark:from-emerald-950/40 to-white dark:to-slate-900">
+      <Card className="border-0 shadow-sm bg-linear-to-br from-emerald-50 dark:from-emerald-950/40 to-white dark:to-slate-900">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">{t('income')}</span>
@@ -28,7 +28,7 @@ export function FinanceSummary({ totalIncome, totalExpenses }: FinanceSummaryPro
           <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(totalIncome)}</p>
         </CardContent>
       </Card>
-      <Card className="border-0 shadow-sm bg-gradient-to-br from-red-50 dark:from-red-950/40 to-white dark:to-slate-900">
+      <Card className="border-0 shadow-sm bg-linear-to-br from-red-50 dark:from-red-950/40 to-white dark:to-slate-900">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-red-700 dark:text-red-400">{t('expenses')}</span>
@@ -39,7 +39,7 @@ export function FinanceSummary({ totalIncome, totalExpenses }: FinanceSummaryPro
           <p className="text-2xl font-bold text-red-700 dark:text-red-400">{formatCurrency(totalExpenses)}</p>
         </CardContent>
       </Card>
-      <Card className={`border-0 shadow-sm bg-gradient-to-br ${isPositive ? 'from-violet-50 dark:from-violet-950/40 to-white dark:to-slate-900' : 'from-orange-50 dark:from-orange-950/40 to-white dark:to-slate-900'}`}>
+      <Card className={`border-0 shadow-sm bg-linear-to-br ${isPositive ? 'from-violet-50 dark:from-violet-950/40 to-white dark:to-slate-900' : 'from-orange-50 dark:from-orange-950/40 to-white dark:to-slate-900'}`}>
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-2">
             <span className={`text-sm font-medium ${isPositive ? 'text-violet-700 dark:text-violet-400' : 'text-orange-700 dark:text-orange-400'}`}>

@@ -29,8 +29,8 @@ export function PaymentHistory({
   payments: PaymentRow[]
   totalPaid: number
 }) {
-  const t = useTranslations('admin.tenants.detail')
   const tCommon = useTranslations('common')
+  const t = useTranslations('admin.tenants.detail')
   const router = useRouter()
   const [amount, setAmount] = useState<number | ''>('')
   const [note, setNote] = useState('')

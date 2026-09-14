@@ -23,9 +23,9 @@ interface RoleTemplateFormProps {
 }
 
 export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
-  const t = useTranslations('hr')
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
+  const t = useTranslations('hr')
   const router = useRouter()
   const exitForm = useRouteModalExit(`/${lang}/hr/roles`)
   const [isSubmitting, setIsSubmitting] = useState(false)

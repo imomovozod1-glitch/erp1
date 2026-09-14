@@ -50,8 +50,8 @@ export default function OrderDetailPage() {
   const lang = params.lang
   const id = params.id
 
-  const t = useTranslations('sales')
   const tCommon = useTranslations('common')
+  const t = useTranslations('sales')
 
   const [order, setOrder] = useState<any>(null)
   const [items, setItems] = useState<any[]>([])

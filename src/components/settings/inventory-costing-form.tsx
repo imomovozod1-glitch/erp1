@@ -22,8 +22,8 @@ import type { CostingMethod } from '@/lib/inventory-costing'
  * already scope every query here to exactly the caller's own tenant row.
  */
 export function InventoryCostingForm() {
-  const t = useTranslations('settings')
   const tInv = useTranslations('inventory')
+  const t = useTranslations('settings')
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [method, setMethod] = useState<CostingMethod>('fifo')
   const [isLoading, setIsLoading] = useState(true)

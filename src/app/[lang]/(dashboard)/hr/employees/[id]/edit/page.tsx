@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmployeeForm } from '@/components/hr/employee-form'
 import { Metadata } from 'next'
-import { getCachedEmployeeById } from '@/lib/data/queries'
+import { getCachedEmployeeById, getCachedEmployeeFormOptions } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { notFound } from 'next/navigation'
 import { requireModuleEdit } from '@/lib/permissions-server'
@@ -40,9 +40,10 @@ export default async function EditEmployeePage({
   }
   if (!employee) return notFound()
 
-  const [t, tCommon] = await Promise.all([
+  const [t, tCommon, options] = await Promise.all([
     getTranslations('hr'),
     getTranslations('common'),
+    getCachedEmployeeFormOptions(tenantId),
   ])
 
   return (
@@ -56,7 +57,7 @@ export default async function EditEmployeePage({
           { label: tCommon('edit') },
         ]}
       />
-      <EmployeeForm lang={lang} initialData={employee} />
+      <EmployeeForm lang={lang} initialData={employee} options={options} />
     </div>
   )
 }

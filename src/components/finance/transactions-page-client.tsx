@@ -46,8 +46,8 @@ export function TransactionsPageClient({
   customStart,
   customEnd,
 }: TransactionsPageClientProps) {
-  const t = useTranslations('finance')
   const tInfo = useTranslations('pageInfo')
+  const t = useTranslations('finance')
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()

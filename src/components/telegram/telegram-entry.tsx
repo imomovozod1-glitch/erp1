@@ -159,7 +159,7 @@ export function TelegramEntry() {
     }
   }, [goToApp])
 
-  const handleLink = async (e: React.FormEvent) => {
+  const handleLink = async (e: React.SubmitEvent) => {
     e.preventDefault()
     if (isSubmitting) return
     if (!phone.trim() || password.length < 6) {

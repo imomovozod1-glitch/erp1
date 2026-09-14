@@ -27,8 +27,8 @@ export default function PurchaseOrderDetailPage() {
   const lang = params.lang
   const id = params.id
 
-  const t = useTranslations('procurement')
   const tCommon = useTranslations('common')
+  const t = useTranslations('procurement')
 
   const [order, setOrder] = useState<any>(null)
   const [items, setItems] = useState<any[]>([])

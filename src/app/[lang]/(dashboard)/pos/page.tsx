@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { getCachedProducts, getCachedCategories, getCachedCustomers } from '@/lib/data/queries'
-import { getCurrentTenantId } from '@/lib/tenant'
+import { getCurrentTenantId, getCachedTenant } from '@/lib/tenant'
 import { POSClient } from '@/components/pos/pos-client'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -23,10 +23,11 @@ export default async function POSPage({
 }) {
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [products, categories, customers] = await Promise.all([
+  const [products, categories, customers, tenant] = await Promise.all([
     getCachedProducts(tenantId),
     getCachedCategories(tenantId),
     getCachedCustomers(tenantId),
+    getCachedTenant(tenantId),
   ])
 
   // Filter only active products for the POS screen
@@ -37,6 +38,10 @@ export default async function POSPage({
       initialProducts={activeProducts}
       initialCategories={categories}
       initialCustomers={customers}
+      company={{
+        name: (tenant as any)?.company_name || 'ERP System',
+        phone: (tenant as any)?.phone || undefined,
+      }}
       lang={lang}
     />
   )

@@ -45,8 +45,8 @@ export function EmployeesTable({
   status,
   paid,
 }: EmployeesTableProps) {
-  const t = useTranslations('hr')
   const tCommon = useTranslations('common')
+  const t = useTranslations('hr')
   const router = useRouter()
   
   // No client-side filtering or slicing: `employees` IS the current page.

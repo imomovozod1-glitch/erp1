@@ -48,7 +48,7 @@ export default async function TenantStatusPage({
   const message = t(MESSAGES[resolvedReason])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-sm p-8 text-center space-y-4">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400">
           <Icon className="h-7 w-7" />

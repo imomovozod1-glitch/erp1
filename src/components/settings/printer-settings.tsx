@@ -60,8 +60,8 @@ const CONNECTION_TYPES: { value: PrinterConnectionType; icon: typeof Usb }[] = [
 ]
 
 export function PrinterSettings() {
-  const t = useTranslations('settings.printer')
   const tCommon = useTranslations('common')
+  const t = useTranslations('settings.printer')
   // Receipt labels come from the same namespace the POS receipt uses, so the
   // test print is worded exactly like a real one.
   const tPos = useTranslations('pos')

@@ -7,9 +7,9 @@ import {
   discoverChat,
   getBotInfo,
   getTelegramSettings,
+  getTelegramStatus,
   isValidBotTokenFormat,
   isValidChatIdFormat,
-  maskToken,
 } from '@/lib/integrations/telegram'
 
 /**
@@ -65,22 +65,9 @@ export async function GET() {
   const { ctx, error } = await requireAdmin()
   if (error) return error
 
-  const settings = await getTelegramSettings(ctx!.tenantId)
-
-  return NextResponse.json({
-    // Connected = we hold a working token. Whether a destination chat is known
-    // yet is reported separately, because that part resolves itself.
-    connected: !!settings?.telegram_bot_token,
-    awaitingChat: !!settings?.telegram_bot_token && !settings?.telegram_chat_id,
-    enabled: settings?.telegram_enabled ?? false,
-    chatId: settings?.telegram_chat_id ?? '',
-    botUsername: settings?.telegram_bot_username ?? null,
-    // Masked — the raw token is never returned to the browser.
-    tokenHint: maskToken(settings?.telegram_bot_token),
-    events: settings?.telegram_events ?? {},
-    linkedAt: settings?.telegram_linked_at ?? null,
-  })
+  return NextResponse.json(await getTelegramStatus(ctx!.tenantId))
 }
+
 
 export async function PUT(request: NextRequest) {
   const { ctx, error } = await requireAdmin()

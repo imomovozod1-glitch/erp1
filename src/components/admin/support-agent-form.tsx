@@ -35,9 +35,9 @@ interface SupportAgentFormProps {
 }
 
 export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
-  const t = useTranslations('admin.support.form')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
+  const t = useTranslations('admin.support.form')
   const router = useRouter()
   const exitForm = useRouteModalExit('/admin/support')
   const [isSubmitting, setIsSubmitting] = useState(false)
