@@ -186,7 +186,12 @@ export function CashboxClient({
 
   // Employee payroll states
 
-  // Supplier payment states
+  // Supplier payment states — what we still owe the supplier, looked up the
+  // moment one is picked for an expense. Paying a supplier without it on
+  // screen means deciding the amount blind, which is why the cashier used to
+  // have to open the supplier's own page in another tab first.
+  const [supplierDebt, setSupplierDebt] = useState<number | null>(null)
+  const [isLoadingSupplierDebt, setIsLoadingSupplierDebt] = useState(false)
 
   const fetchCustomerDebt = async (cId: string, fallback: boolean) => {
     setIsLoadingDebt(true)
@@ -218,6 +223,64 @@ export function CashboxClient({
       setCustomerDebt(0)
     } finally {
       setIsLoadingDebt(false)
+    }
+  }
+
+  /**
+   * Outstanding balance owed to a supplier: everything ordered from them,
+   * minus everything already paid out.
+   *
+   * Deliberately the same arithmetic as the supplier detail page's "balance
+   * owed" card (supplier-detail-client.tsx) — cancelled purchase orders never
+   * owed anything, and only `expense` transactions are money that actually
+   * left the till, so a stray income row tagged with the supplier cannot
+   * inflate the debt.
+   */
+  const fetchSupplierDebt = async (supplierId: string, fallback: boolean) => {
+    setIsLoadingSupplierDebt(true)
+    try {
+      const sumPaid = (rows: any[]) =>
+        rows
+          .filter((tx) => tx.type === 'expense')
+          .reduce((sum: number, tx: any) => sum + (Number(tx.amount) || 0), 0)
+      const sumOrdered = (rows: any[]) =>
+        rows
+          .filter((po) => po.status !== 'cancelled')
+          .reduce((sum: number, po: any) => sum + (Number(po.total_amount) || 0), 0)
+
+      if (fallback) {
+        const read = (key: string) => {
+          try {
+            const raw = localStorage.getItem(key)
+            return raw ? JSON.parse(raw) : []
+          } catch {
+            return []
+          }
+        }
+        const orders = read('erp_purchase_orders').filter((po: any) => po.supplier_id === supplierId)
+        const paid = read('erp_transactions').filter((tx: any) => tx.supplier_id === supplierId)
+        setSupplierDebt(sumOrdered(orders) - sumPaid(paid))
+      } else {
+        const [{ data: orders, error: ordersError }, { data: paid, error: paidError }] =
+          await Promise.all([
+            supabase
+              .from('purchase_orders')
+              .select('total_amount, status')
+              .eq('supplier_id', supplierId),
+            supabase
+              .from('transactions')
+              .select('amount, type')
+              .eq('supplier_id', supplierId),
+          ])
+        if (ordersError) throw ordersError
+        if (paidError) throw paidError
+        setSupplierDebt(sumOrdered(orders || []) - sumPaid(paid || []))
+      }
+    } catch (err: any) {
+      console.error('Error fetching supplier debt:', err.message)
+      setSupplierDebt(null)
+    } finally {
+      setIsLoadingSupplierDebt(false)
     }
   }
 
@@ -956,6 +1019,15 @@ export function CashboxClient({
               fetchCustomerDebt(customerId, isLocalStorageFallback)
             } else {
               setCustomerDebt(null)
+            }
+          }}
+          supplierDebt={supplierDebt}
+          isLoadingSupplierDebt={isLoadingSupplierDebt}
+          onSupplierSelected={(supplierId) => {
+            if (supplierId && txForm.type === 'expense') {
+              fetchSupplierDebt(supplierId, isLocalStorageFallback)
+            } else {
+              setSupplierDebt(null)
             }
           }}
           onSubmit={handleSaveTransaction}

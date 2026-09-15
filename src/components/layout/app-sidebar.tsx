@@ -107,6 +107,26 @@ const NAV_ITEMS: NavItem[] = [
   // bottom of the module list.
 ]
 
+/**
+ * Top-level modules read as the headings they are: taller row, larger label,
+ * 20px icon instead of the primitive's 16px. The sub-items underneath keep the
+ * smaller default, so "Ombor" and "Mahsulotlar" are visibly two different
+ * levels rather than two identical rows one indent apart.
+ *
+ * Collapsed to the icon rail nothing changes: the primitive already pins the
+ * button to 32px there with an important utility, and the icon is pinned back
+ * to 16px to match — a 20px glyph in a 32px square leaves no padding.
+ */
+const TOP_LEVEL_BUTTON =
+  'h-10 text-[15px] font-semibold [&_svg]:size-5 group-data-[collapsible=icon]:[&_svg]:size-4'
+
+/**
+ * Deliberately one step down from TOP_LEVEL_BUTTON in both size and weight.
+ * The size is marked important because the primitive sets its own font size
+ * through a `data-[size=md]:` variant, which outranks a plain utility class.
+ */
+const SUB_ITEM_BUTTON = 'h-7 text-[13px]! font-normal'
+
 interface AppSidebarProps {
   lang: string
   profile: Profile | null
@@ -247,6 +267,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                         render={<Link href={fullHref} prefetch={true} onClick={closeOnMobile} />}
                         isActive={isActive}
                         tooltip={tNav(item.key as string)}
+                        className={TOP_LEVEL_BUTTON}
                       >
                         <Icon />
                         <span>{tNav(item.key as string)}</span>
@@ -275,6 +296,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                       onClick={() => toggleExpand(item.key)}
                       isActive={isParentActive}
                       tooltip={tNav(item.key as string)}
+                      className={TOP_LEVEL_BUTTON}
                     >
                       <Icon />
                       <span>{tNav(item.key as string)}</span>
@@ -284,7 +306,9 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                           sub-menu is hidden at that width. */}
                       <ChevronRight
                         className={cn(
-                          'ml-auto transition-transform duration-200 group-data-[collapsible=icon]:hidden',
+                          // Kept at 16px while the module icon grew to 20px:
+                          // the chevron is an affordance, not part of the heading.
+                          'ml-auto size-4! transition-transform duration-200 group-data-[collapsible=icon]:hidden',
                           isExpanded && 'rotate-90'
                         )}
                       />
@@ -296,7 +320,11 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                           const isSubActive = sub.key === bestSubKey
                           return (
                             <SidebarMenuSubItem key={sub.key}>
-                              <SidebarMenuSubButton render={<Link href={subFullHref} prefetch={true} onClick={closeOnMobile} />} isActive={isSubActive}>
+                              <SidebarMenuSubButton
+                                render={<Link href={subFullHref} prefetch={true} onClick={closeOnMobile} />}
+                                isActive={isSubActive}
+                                className={SUB_ITEM_BUTTON}
+                              >
                                 <span>{getSubLabel(item.key, sub.key)}</span>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>

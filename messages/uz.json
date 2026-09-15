@@ -1901,12 +1901,18 @@
     },
     "abc": {
       "rule": {
-        "A": "Tushumning 80% i",
+        "A": "Birinchi 80%",
         "B": "Keyingi 15%",
         "C": "Qolgan 5%"
       },
-      "groupSummary": "{count} ta mahsulot ({countShare}%) — tushumning {share}% i",
-      "barHint": "Kengligi mahsulotlar ulushini ko'rsatadi: A — tushumning birinchi {a}% ini, B — {b}% igacha, C — qolganini beradi"
+      "groupSummary": "{count} ta mahsulot ({countShare}%) — ulushi {share}%",
+      "barHint": "Kengligi mahsulotlar ulushini ko'rsatadi: A — birinchi {a}% ini, B — {b}% igacha, C — qolganini beradi",
+      "metricLabel": "Ko'rsatkich",
+      "metric": {
+        "revenue": "Sotuv tushumi",
+        "profit": "Sof foyda",
+        "quantity": "Sotilgan birliklar"
+      }
     }
   },
   "offline": {

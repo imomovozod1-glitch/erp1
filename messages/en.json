@@ -1901,12 +1901,18 @@
     },
     "abc": {
       "rule": {
-        "A": "First 80% of revenue",
+        "A": "First 80%",
         "B": "Next 15%",
         "C": "Final 5%"
       },
-      "groupSummary": "{count} products ({countShare}%) — {share}% of revenue",
-      "barHint": "Width is the share of products: A earns the first {a}% of revenue, B up to {b}%, C the rest"
+      "groupSummary": "{count} products ({countShare}%) — {share}% share",
+      "barHint": "Width is the share of products: A earns the first {a}%, B up to {b}%, C the rest",
+      "metricLabel": "Indicator",
+      "metric": {
+        "revenue": "Sales revenue",
+        "profit": "Net profit",
+        "quantity": "Units sold"
+      }
     }
   },
   "offline": {
