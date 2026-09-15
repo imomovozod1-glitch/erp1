@@ -1,18 +1,20 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ReportLayout, type ReportPeriod } from '@/components/reports/report-layout'
 import { ReportTable } from '@/components/reports/report-table'
 import {
+  ABC_METRICS,
   ABC_THRESHOLDS,
   classifyAbc,
   groupItems,
   inRange,
   type AbcClass,
+  type AbcMetric,
   type SalesItemRow,
 } from '@/lib/reports/sales-analytics'
-import { formatCurrency, formatNumber } from '@/lib/utils'
+import { cn, formatCurrency, formatNumber } from '@/lib/utils'
 
 /**
  * One hue, three steps. A/B/C is a real three-way classification, so it earns
@@ -40,10 +42,15 @@ const CLASSES: AbcClass[] = ['A', 'B', 'C']
 /**
  * ABC analysis: which products earn the money.
  *
- * Products are ranked by revenue over the period and split on the cumulative
- * curve — the ones making the first 80% of revenue are A, up to 95% are B, the
- * long tail is C. It is the one report that turns "we sell 900 products" into
- * "40 of them are the business".
+ * Four steps, in the order the method prescribes: pick the indicator (revenue,
+ * net profit or units sold), rank the products by it, work out each one's share
+ * and the running cumulative share, then cut the curve — the products making
+ * the first 80% are A, up to 95% are B, the long tail is C. It is the one
+ * report that turns "we sell 900 products" into "40 of them are the business".
+ *
+ * The indicator matters: a cheap fast-mover is an A by units sold and a C by
+ * profit, and stocking decisions made off the wrong one are the whole reason
+ * the choice is step one.
  */
 export function AbcAnalysisReport({
   lang,
@@ -69,11 +76,24 @@ export function AbcAnalysisReport({
   )
 }
 
+/** How each indicator is read off a row and printed in the table. */
+const METRIC_FORMAT: Record<AbcMetric, (value: number) => string> = {
+  revenue: (value) => formatCurrency(value),
+  profit: (value) => formatCurrency(value),
+  quantity: (value) => formatNumber(Math.round(value * 100) / 100),
+}
+
 function Body({ period, items }: { period: ReportPeriod; items: SalesItemRow[] }) {
   const tc = useTranslations('common')
   const t = useTranslations('reports')
   const { range } = period
 
+  // Step 1 — choose the indicator. Revenue is the default because it is the
+  // figure every other report on this screen is already denominated in.
+  const [metric, setMetric] = useState<AbcMetric>('revenue')
+
+  // Steps 2-4 — rank by the chosen indicator, compute each share and the
+  // cumulative share, cut at 80 / 95. All of it lives in classifyAbc().
   const rows = useMemo(() => {
     const periodItems = items.filter((i) => inRange(i.order_date, range))
     return classifyAbc(
@@ -81,26 +101,54 @@ function Body({ period, items }: { period: ReportPeriod; items: SalesItemRow[] }
         periodItems,
         (i) => i.product_id ?? i.product_name,
         (i) => i.product_name
-      )
+      ),
+      metric
     )
-  }, [items, range])
+  }, [items, range, metric])
 
-  const totalRevenue = rows.reduce((sum, r) => sum + r.revenue, 0)
+  const metricTotal = rows.reduce((sum, r) => sum + Math.max(0, r.metricValue), 0)
+  const formatMetric = METRIC_FORMAT[metric]
 
   const summary = CLASSES.map((cls) => {
     const classRows = rows.filter((r) => r.abc === cls)
-    const revenue = classRows.reduce((sum, r) => sum + r.revenue, 0)
+    const value = classRows.reduce((sum, r) => sum + r.metricValue, 0)
     return {
       cls,
       count: classRows.length,
-      revenue,
-      share: totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0,
+      value,
+      share: metricTotal > 0 ? (value / metricTotal) * 100 : 0,
       countShare: rows.length > 0 ? (classRows.length / rows.length) * 100 : 0,
     }
   })
 
   return (
     <>
+      {/* Step 1: the indicator picker. Same segmented pill as the period
+          filter directly above it — this is the second axis of the same
+          question, not a different kind of control. */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          {t('abc.metricLabel')}:
+        </span>
+        <div className="flex rounded-lg border bg-slate-100 p-0.5 shadow-inner dark:bg-slate-800">
+          {ABC_METRICS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setMetric(option)}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200',
+                metric === option
+                  ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-700 dark:text-violet-400'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+              )}
+            >
+              {t(`abc.metric.${option}`)}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-3">
         {summary.map((group) => (
           <div
@@ -118,7 +166,7 @@ function Body({ period, items }: { period: ReportPeriod; items: SalesItemRow[] }
               </span>
             </div>
             <p className="mt-3 text-xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
-              {formatCurrency(group.revenue)}
+              {formatMetric(group.value)}
             </p>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               {t('abc.groupSummary', {
@@ -200,9 +248,27 @@ function Body({ period, items }: { period: ReportPeriod; items: SalesItemRow[] }
             key: 'revenue',
             header: t('col.revenue'),
             align: 'right',
+            className: 'hidden md:table-cell',
+            render: (row) => formatCurrency(row.revenue),
+          },
+          // The ranked-by column repeats revenue or quantity when that is the
+          // chosen indicator, and that repetition is the point: it is the one
+          // column the table is sorted and classified on, so it is printed
+          // last, in bold, right before the cumulative curve it feeds.
+          {
+            key: 'metric',
+            header: t(`abc.metric.${metric}`),
+            align: 'right',
             render: (row) => (
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {formatCurrency(row.revenue)}
+              <span
+                className={cn(
+                  'font-semibold',
+                  row.metricValue < 0
+                    ? 'text-rose-600 dark:text-rose-400'
+                    : 'text-slate-900 dark:text-slate-100'
+                )}
+              >
+                {formatMetric(row.metricValue)}
               </span>
             ),
           },
@@ -211,7 +277,7 @@ function Body({ period, items }: { period: ReportPeriod; items: SalesItemRow[] }
             header: t('col.share'),
             align: 'right',
             className: 'hidden sm:table-cell',
-            render: (row) => `${row.share.toFixed(1)}%`,
+            render: (row) => `${row.metricShare.toFixed(1)}%`,
           },
           {
             key: 'cumulative',

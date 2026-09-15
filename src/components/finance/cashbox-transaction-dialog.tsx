@@ -66,6 +66,9 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
   customerDebt,
   isLoadingDebt,
   onCustomerSelected,
+  supplierDebt,
+  isLoadingSupplierDebt,
+  onSupplierSelected,
   onSubmit,
   onClose,
   isSaving,
@@ -86,6 +89,11 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
   isLoadingDebt: boolean
   /** Called when a customer is picked (or cleared) so the caller can read their debt. */
   onCustomerSelected: (customerId: string) => void
+  /** What is still owed to the selected supplier, or null when not looked up. */
+  supplierDebt: number | null
+  isLoadingSupplierDebt: boolean
+  /** Called when a supplier is picked (or cleared) so the caller can read the balance. */
+  onSupplierSelected: (supplierId: string) => void
   onSubmit: (e: React.SubmitEvent) => void
   onClose: () => void
   isSaving: boolean
@@ -184,6 +192,7 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
               }
               if (cat?.person_type !== 'supplier') {
                 onChange({ supplierId: '' })
+                onSupplierSelected('')
               }
             }}>
               <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700 focus:ring-violet-500">
@@ -270,13 +279,16 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
           )}
 
           {personType === 'supplier' && (
-            <div className="space-y-1.5 animate-in fade-in duration-200">
+            <div className="space-y-2 animate-in fade-in duration-200">
               <Label htmlFor="tx_supplier" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                 {lang === 'uz' ? 'Yetkazib beruvchi' : lang === 'ru' ? 'Поставщик' : 'Supplier'} *
               </Label>
               <Select
                 value={value.supplierId}
-                onValueChange={(val) => onChange({ supplierId: val || '' })}
+                onValueChange={(val) => {
+                  onChange({ supplierId: val || '' })
+                  if (val && value.type === 'expense') onSupplierSelected(val)
+                }}
               >
                 <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
                   <SelectValue placeholder={lang === 'uz' ? 'Yetkazib beruvchini tanlang' : lang === 'ru' ? 'Выберите поставщика' : 'Select a supplier'}>
@@ -293,6 +305,34 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* The balance BEFORE the money leaves: purchases made from this
+                  supplier minus what has already been paid out. A negative
+                  figure means they have been overpaid, so it is labelled as an
+                  advance rather than printed as a minus sign the cashier has
+                  to interpret. */}
+              {value.type === 'expense' && value.supplierId && (
+                <div
+                  className={`rounded-2xl p-3.5 mt-2 flex items-center justify-between text-xs animate-in slide-in-from-top-1 duration-200 border ${
+                    supplierDebt === null
+                      ? 'bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                      : supplierDebt > 0
+                        ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
+                        : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
+                  }`}
+                >
+                  <span className="font-medium">
+                    {(supplierDebt ?? 0) < 0
+                      ? (lang === 'uz' ? 'Oldindan to\'langan:' : lang === 'ru' ? 'Переплата:' : 'Overpaid:')
+                      : (lang === 'uz' ? 'Yetkazib beruvchiga qarz:' : lang === 'ru' ? 'Долг поставщику:' : 'Owed to supplier:')}
+                  </span>
+                  <span className="font-extrabold text-sm">
+                    {isLoadingSupplierDebt || supplierDebt === null
+                      ? '...'
+                      : formatCurrency(Math.abs(supplierDebt))}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
