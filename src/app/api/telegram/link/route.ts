@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
-import { checkLoginRateLimit, recordLoginAttempt, getClientIp } from '@/lib/rate-limit'
+import { checkLoginRateLimit, recordLoginAttempt, getClientIp, tooManyAttemptsBody } from '@/lib/rate-limit'
 import { verifyTelegramInitData, telegramDisplayName } from '@/lib/telegram-miniapp'
 
 const schema = z.object({
@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
   const ip = getClientIp(request)
   const rateLimit = await checkLoginRateLimit(email, ip)
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'too_many_attempts' }, { status: 429 })
+    const { body, init } = tooManyAttemptsBody(rateLimit)
+    return NextResponse.json(body, init)
   }
 
   // Signing in here also establishes the normal Supabase session cookies, so

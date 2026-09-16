@@ -165,86 +165,16 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     soldItems = [],
   } = stats
 
-  const [realCashboxBalance, setRealCashboxBalance] = useState(totalCashboxBalance)
-  const [realWarehouseValue, setRealWarehouseValue] = useState(warehouseValue)
-  const [realReceivables, setRealReceivables] = useState(totalReceivables)
-  const [realPayables, setRealPayables] = useState(totalPayables)
-
-  useEffect(() => {
-    // Avoid calling setState synchronously within the effect body
-    const timer = setTimeout(() => {
-      // If local storage contains data, we update balances to make them accurate for demo/local fallback too!
-      const localCash = localStorage.getItem('erp_cashboxes')
-      if (localCash) {
-        try {
-          const parsed = JSON.parse(localCash)
-          const sum = parsed.reduce((acc: number, c: any) => acc + (Number(c.balance) || 0), 0)
-          setRealCashboxBalance(sum)
-        } catch (e) {
-          console.error(e)
-        }
-      } else {
-        setRealCashboxBalance(totalCashboxBalance)
-      }
-
-      const localInv = localStorage.getItem('erp_invoices')
-      if (localInv) {
-        try {
-          const parsed = JSON.parse(localInv)
-          const unpaid = parsed.filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
-          const sum = unpaid.reduce((acc: number, i: any) => acc + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
-          setRealReceivables(sum)
-        } catch (e) {
-          console.error(e)
-        }
-      } else {
-        setRealReceivables(totalReceivables)
-      }
-
-      const localProd = localStorage.getItem('erp_products')
-      if (localProd) {
-        try {
-          const parsed = JSON.parse(localProd)
-          const sum = parsed.reduce((acc: number, p: any) => acc + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
-          setRealWarehouseValue(sum)
-        } catch (e) {
-          console.error(e)
-        }
-      } else {
-        setRealWarehouseValue(warehouseValue)
-      }
-
-      const localPo = localStorage.getItem('erp_purchase_orders')
-      if (localPo) {
-        try {
-          const parsedPo = JSON.parse(localPo)
-          const nonCancelled = parsedPo.filter((po: any) => po.status !== 'cancelled')
-          const purchasesSum = nonCancelled.reduce((acc: number, po: any) => acc + (Number(po.total_amount) || 0), 0)
-
-          let paymentsSum = 0
-          const localTx = localStorage.getItem('erp_transactions')
-          if (localTx) {
-            try {
-              const parsedTx = JSON.parse(localTx)
-              paymentsSum = parsedTx
-                .filter((tx: any) => tx.type === 'expense' && tx.supplier_id)
-                .reduce((acc: number, tx: any) => acc + (Number(tx.amount) || 0), 0)
-            } catch (e) {
-              console.error(e)
-            }
-          }
-
-          setRealPayables(purchasesSum - paymentsSum)
-        } catch (e) {
-          console.error(e)
-        }
-      } else {
-        setRealPayables(totalPayables)
-      }
-    }, 0)
-
-    return () => clearTimeout(timer)
-  }, [totalCashboxBalance, totalReceivables, warehouseValue, totalPayables])
+  // The money tiles show what the server computed (getCachedDashboardStats in
+  // src/lib/data/queries/analytics.ts). They used to be overwritten by
+  // whatever the browser's localStorage mirror held (`erp_cashboxes`,
+  // `erp_invoices`, ...) whenever that key existed at all — and the mirror is
+  // only a stale offline copy, so the dashboard could show old balances while
+  // the database held the real ones.
+  const realCashboxBalance = totalCashboxBalance
+  const realWarehouseValue = warehouseValue
+  const realReceivables = totalReceivables
+  const realPayables = totalPayables
 
   // Date constants (initialized once to keep render pure)
   const [now] = useState(() => new Date())

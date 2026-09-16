@@ -27,7 +27,9 @@ import { CashboxFormDialog, type CashboxFormValues } from '@/components/finance/
 import { CashboxTransactionDialog } from '@/components/finance/cashbox-transaction-dialog'
 import { formatCurrency, formatDateTime, isoDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateCashbox, invalidateTransactions, invalidateSuppliers, invalidateEmployees, invalidateCustomers, invalidateInvoices } from '@/lib/data/revalidate'
+import { invalidateCashbox, invalidateCashboxMovement, invalidateTransactions } from '@/lib/data/revalidate'
+import { BusinessRpcError, businessRpcErrorMessage, callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import {
   emptyTransactionForm,
   type CashboxTransactionForm,
@@ -98,10 +100,12 @@ export function CashboxClient({
   customStart: string
   customEnd: string
 }) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const tInfo = useTranslations('pageInfo')
   const tDash = useTranslations('dashboard')
   const t = useTranslations('finance')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const supabase = createClient() as any
   const router = useRouter()
   const pathname = usePathname()
@@ -476,40 +480,59 @@ export function CashboxClient({
             .eq('id', editingCashbox.id)
           if (error) throw error
         } else {
-          const { data: newCb, error } = await supabase
-            .from('cashboxes')
-            .insert([
-              {
-                name,
-                balance: numBalance,
-                type: cbType,
-                description,
-              },
-            ])
-            .select()
-            .single()
-          if (error) throw error
+          // One transaction: the cashbox and its opening-balance transaction
+          // (supabase/migration_business_rpc.sql).
+          const created = await callBusinessRpc(supabase, 'create_cashbox', {
+            p_cashbox: {
+              name,
+              type: cbType,
+              description,
+              initial_balance: numBalance,
+              initial_label: initialBalanceLabel,
+              date: isoDate(),
+            },
+          })
+          if (created === RPC_MISSING) {
+            // Pre-migration fallback.
+            const { data: newCb, error } = await supabase
+              .from('cashboxes')
+              .insert([
+                {
+                  name,
+                  balance: numBalance,
+                  type: cbType,
+                  description,
+                },
+              ])
+              .select()
+              .single()
+            if (error) throw error
 
-          if (numBalance > 0 && userId && newCb) {
-            const { error: txErr } = await supabase.from('transactions').insert({
-              type: 'income',
-              amount: numBalance,
-              category: initialBalanceLabel,
-              description: `${initialBalanceLabel} - ${name}`,
-              reference_type: 'cashbox',
-              reference_id: newCb.id,
-              transaction_date: isoDate(),
-              created_by: userId,
-            })
-            if (txErr) throw txErr
-            await invalidateTransactions()
+            if (numBalance > 0 && userId && newCb) {
+              const { error: txErr } = await supabase.from('transactions').insert({
+                type: 'income',
+                amount: numBalance,
+                category: initialBalanceLabel,
+                description: `${initialBalanceLabel} - ${name}`,
+                reference_type: 'cashbox',
+                reference_id: newCb.id,
+                transaction_date: isoDate(),
+                created_by: userId,
+              })
+              if (txErr) throw txErr
+            }
           }
+          if (numBalance > 0) await invalidateTransactions()
         }
         toast.success(tCommon('success'))
         setIsModalOpen(false)
         refreshFromServer()
       } catch (err: any) {
-        toast.error(err.message || tCommon('error'))
+        toast.error(
+          err instanceof BusinessRpcError
+            ? businessRpcErrorMessage(tRoot, err)
+            : err.message || tCommon('error')
+        )
       } finally {
         setIsSavingCashbox(false)
       }
@@ -523,7 +546,7 @@ export function CashboxClient({
       return;
     }
     
-    if (confirm(lang === 'uz' ? "Ushbu kassani o'chirishni xohlaysizmi?" : lang === 'ru' ? "Удалить эту кассу?" : "Are you sure you want to delete this cashbox?")) {
+    if (await confirmDelete({ name: cashbox?.name })) {
       if (isLocalStorageFallback) {
         const updated = cashboxes.filter((cb) => cb.id !== id)
         localStorage.setItem('erp_cashboxes', JSON.stringify(updated))
@@ -685,30 +708,43 @@ export function CashboxClient({
         setCashboxes(next.cashboxes)
         setTransactions(next.transactions)
       } else {
-        if (settlesDebt) {
-          await settleCustomerDebt({
-            supabase,
-            customerId: txForm.customerId,
-            amount: numAmount,
-            paidAt: txForm.date,
-          })
+        // One transaction: the debt paydown, the balance (checked against the
+        // live, locked row — not the figure on screen) and the transaction
+        // (supabase/migration_business_rpc.sql).
+        const recorded = await callBusinessRpc(supabase, 'record_cashbox_movement', {
+          p_movement: {
+            cashbox_id: movement.cashboxId,
+            type: movement.type,
+            amount: movement.amount,
+            category: movement.category,
+            description: movement.description,
+            person_type: movement.personType,
+            person_id: movement.personId,
+            date: movement.date,
+          },
+        })
+        if (recorded === RPC_MISSING) {
+          // Pre-migration fallback.
+          if (settlesDebt) {
+            await settleCustomerDebt({
+              supabase,
+              customerId: txForm.customerId,
+              amount: numAmount,
+              paidAt: txForm.date,
+            })
+          }
+          await commitCashboxMovement({ ...movement, supabase, userId: userId as string })
         }
-        await commitCashboxMovement({ ...movement, supabase, userId: userId as string })
-      }
-
-      await invalidateTransactions()
-      if (personType === 'supplier') await invalidateSuppliers()
-      if (personType === 'employee') await invalidateEmployees()
-      if (personType === 'customer') {
-        await invalidateCustomers()
-        await invalidateInvoices()
       }
 
       toast.success(tCommon('success'))
       setIsTransactionModalOpen(false)
 
       if (!isLocalStorageFallback) {
-        refreshFromServer()
+        // One Server Action for every cache the movement touched, instead of
+        // up to five queued one after another.
+        await invalidateCashboxMovement()
+        router.refresh()
 
         // Telegram (Settings → Integrations), only for money actually collected
         // from a customer — the debt payment the settlement above just applied.
@@ -724,7 +760,11 @@ export function CashboxClient({
         }
       }
     } catch (err: any) {
-      toast.error(err.message || tCommon('error'))
+      toast.error(
+        err instanceof BusinessRpcError
+          ? businessRpcErrorMessage(tRoot, err)
+          : err.message || tCommon('error')
+      )
     } finally {
       setIsLoading(false)
     }
@@ -1036,6 +1076,7 @@ export function CashboxClient({
           lang={lang}
         />
       )}
+      {confirmDialog}
     </div>
   )
 }

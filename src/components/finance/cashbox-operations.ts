@@ -57,7 +57,12 @@ export function balanceAfter(input: Pick<MovementInput, 'currentBalance' | 'type
   return Number(input.currentBalance) + (input.type === 'income' ? input.amount : -input.amount)
 }
 
-// ─── Online ───────────────────────────────────────────────────────────────────
+// ─── Online (pre-migration fallback) ──────────────────────────────────────────
+//
+// The screen records a movement through the `record_cashbox_movement` database
+// function, which does both steps below in one transaction against the locked
+// cashbox row (supabase/migration_business_rpc.sql). These two only run while
+// that migration is not applied; remove them once it is everywhere.
 
 /**
  * Applies `amount` to the customer's unpaid invoices, oldest due date first.

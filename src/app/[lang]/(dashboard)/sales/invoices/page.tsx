@@ -58,6 +58,7 @@ export default async function InvoicesPage({
         pageSize={result.pageSize}
         total={result.total}
         totalPages={result.totalPages}
+        canEdit={canEdit}
       />
     </div>
   )

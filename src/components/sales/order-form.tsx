@@ -10,17 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
-import {
-  invalidateAnalytics,
-  invalidateCashbox,
-  invalidateCustomers,
-  invalidateInvoices,
-  invalidateMovements,
-  invalidateOrderItems,
-  invalidateOrders,
-  invalidateProducts,
-  invalidateTransactions,
-} from '@/lib/data/revalidate'
+import { invalidateOrders, invalidateSale } from '@/lib/data/revalidate'
 import { SaleEditError, saleLineTotal, saleOrderTotal, updateSaleLines, type SaleEditResult } from '@/lib/sale-edits'
 import { SaleLinesEditor, type EditableSaleLine, type SaleLineDraft } from '@/components/sales/sale-lines-editor'
 import { nextOrderStatuses } from '@/lib/statuses'
@@ -182,16 +172,7 @@ export function OrderForm({ initialData, items = [], customers, assignableUsers,
         if (error) throw error
 
         if (lineResult?.changed) {
-          void Promise.all([
-            invalidateOrderItems(),
-            invalidateProducts(),
-            invalidateMovements(),
-            invalidateInvoices(),
-            invalidateTransactions(),
-            invalidateCustomers(),
-            invalidateCashbox(),
-            invalidateAnalytics(),
-          ]).catch(() => {})
+          void invalidateSale().catch(() => {})
           const details = [
             lineResult.cashboxDelta < 0 &&
               t('saleEditRefunded', {
@@ -246,7 +227,11 @@ export function OrderForm({ initialData, items = [], customers, assignableUsers,
               })
             : error.code === 'no_lines_left'
               ? t('noLinesLeft')
-              : t('cancelSaleAlreadyCancelled')
+              : error.code === 'forbidden'
+                ? tCommon('noPermission')
+                : error.code === 'not_found'
+                  ? tCommon('recordNotFound')
+                  : t('cancelSaleAlreadyCancelled')
         )
       } else {
         toast.error(error.message || tCommon('error'))

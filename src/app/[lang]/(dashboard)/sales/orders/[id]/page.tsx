@@ -23,6 +23,7 @@ import {
   Loader2 
 } from 'lucide-react'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { can, dataScope } from '@/lib/permissions'
 
 // sales_orders.notes is free-form text; the only system-generated template written
 // to it (pos-client.tsx) is "POS Sale - Paid via CASH/CARD/TRANSFER/DEBT" — translate
@@ -59,29 +60,39 @@ export default function OrderDetailPage() {
   const [items, setItems] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCancelOpen, setIsCancelOpen] = useState(false)
-  // Bumped after a cancellation so the effect below re-reads the order.
-  const [reloadKey, setReloadKey] = useState(0)
+  // What the caller may do with this sale — the same rules the database
+  // functions enforce, so no button is offered that would only be refused.
+  const [access, setAccess] = useState({ canEdit: false, canCancel: false })
 
   useEffect(() => {
     async function fetchOrderDetails() {
       setIsLoading(true)
       try {
         const supabase = createClient() as any
-        const { data: orderData, error: orderErr } = await supabase
-          .from('sales_orders')
-          .select('*, customers(name)')
-          .eq('id', id)
-          .single()
+        const { data: { session } } = await supabase.auth.getSession()
+        const userId: string | undefined = session?.user?.id
+
+        const [
+          { data: orderData, error: orderErr },
+          { data: itemsData, error: itemsErr },
+          { data: profile },
+        ] = await Promise.all([
+          supabase.from('sales_orders').select('*, customers(name)').eq('id', id).single(),
+          supabase.from('sales_order_items').select('*, products(name)').eq('order_id', id),
+          supabase.from('profiles').select('role, permissions').eq('id', userId ?? '').maybeSingle(),
+        ])
 
         if (orderErr) throw orderErr
-
-        const { data: itemsData, error: itemsErr } = await supabase
-          .from('sales_order_items')
-          .select('*, products(name)')
-          .eq('order_id', id)
-
         if (itemsErr) throw itemsErr
 
+        const role = profile?.role
+        const permissions = profile?.permissions
+        setAccess({
+          canEdit: can(role, permissions, 'sales', 'create') || can(role, permissions, 'sales', 'edit'),
+          canCancel:
+            can(role, permissions, 'sales', 'edit') &&
+            (dataScope(role, permissions, 'sales') === 'all' || orderData.assigned_to === userId),
+        })
         setOrder(orderData)
         setItems(itemsData || [])
       } catch (err: any) {
@@ -95,7 +106,7 @@ export default function OrderDetailPage() {
     if (id) {
       fetchOrderDetails()
     }
-  }, [id, lang, router, reloadKey])
+  }, [id, lang, router])
 
   if (isLoading) {
     return (
@@ -128,7 +139,7 @@ export default function OrderDetailPage() {
           {tCommon('back')}
         </Button>
         <div className="flex w-full md:w-auto flex-col-reverse sm:flex-row gap-2">
-          {order.status !== 'cancelled' && (
+          {order.status !== 'cancelled' && access.canCancel && (
             <Button
               variant="outline"
               onClick={() => setIsCancelOpen(true)}
@@ -138,13 +149,16 @@ export default function OrderDetailPage() {
               {t('cancelSale')}
             </Button>
           )}
-          <Button
-            onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}
-            className="w-full md:w-auto h-9 gap-2 text-xs bg-violet-600 hover:bg-violet-700 text-white"
-          >
-            <Pencil className="h-4 w-4" />
-            {tCommon('edit')}
-          </Button>
+          {/* A cancelled sale is fully reversed — there is nothing left to edit. */}
+          {order.status !== 'cancelled' && access.canEdit && (
+            <Button
+              onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}
+              className="w-full md:w-auto h-9 gap-2 text-xs bg-violet-600 hover:bg-violet-700 text-white"
+            >
+              <Pencil className="h-4 w-4" />
+              {tCommon('edit')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -152,10 +166,10 @@ export default function OrderDetailPage() {
         order={order}
         open={isCancelOpen}
         onOpenChange={setIsCancelOpen}
-        onCancelled={() => {
-          setReloadKey((k) => k + 1)
-          router.refresh()
-        }}
+        // Only the status changes on this page (the lines stay as they were),
+        // so flip it in place instead of re-reading the whole order behind a
+        // full-page spinner.
+        onCancelled={() => setOrder((current: any) => (current ? { ...current, status: 'cancelled' } : current))}
       />
 
       <div className="grid gap-6 md:grid-cols-3">

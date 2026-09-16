@@ -4,15 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { generateDocumentNumber } from '@/lib/utils'
-import {
-  invalidateProducts,
-  invalidateOrders,
-  invalidateOrderItems,
-  invalidateTransactions,
-  invalidateMovements,
-  invalidateCustomers,
-  invalidateInvoices
-} from '@/lib/data/revalidate'
+import { invalidateSale } from '@/lib/data/revalidate'
 import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
 import { toast } from 'sonner'
 import { printReceiptDirect } from '@/lib/printer/print'
@@ -251,6 +243,8 @@ export function POSClient({
           messages: {
             sessionNotFound: tCommon('sessionNotFound'),
             insufficientStock: t('insufficientStock'),
+            forbidden: tCommon('noPermission'),
+            customerRequired: t('selectCustomerForDebt'),
           },
         })
 
@@ -301,15 +295,7 @@ export function POSClient({
 
         // Cache invalidation is for *other* pages (reports, stock lists) on
         // their next visit. Nothing here waits for it.
-        void Promise.all([
-          invalidateProducts(),
-          invalidateOrders(),
-          invalidateOrderItems(),
-          invalidateTransactions(),
-          invalidateMovements(),
-          invalidateCustomers(),
-          invalidateInvoices(),
-        ]).catch(() => {
+        void invalidateSale().catch(() => {
           // A failed revalidation only means another page may show stale
           // numbers until its cache window lapses; the sale is already saved.
         })

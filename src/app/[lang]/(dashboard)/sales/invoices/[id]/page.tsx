@@ -24,7 +24,10 @@ import {
   Loader2,
   CheckCircle2,
 } from "lucide-react";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateTime, isoDate } from "@/lib/utils";
+import { can, dataScope } from "@/lib/permissions";
+import { BusinessRpcError, businessRpcErrorMessage, callBusinessRpc, RPC_MISSING } from "@/lib/business-rpc";
+import { invalidateSale } from "@/lib/data/revalidate";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { effectiveInvoiceStatus, invoiceStatusTone } from "@/lib/statuses";
 
@@ -53,7 +56,20 @@ async function fetchInvoiceData(supabase: any, id: string) {
     }
   }
 
-  return { invoice: invoiceData, items };
+  // What the caller may do with this invoice — the same rule the database
+  // functions apply (sales.edit, and only their own with an 'own' scope).
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId: string | undefined = session?.user?.id;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, permissions")
+    .eq("id", userId ?? "")
+    .maybeSingle();
+  const canEdit =
+    can(profile?.role, profile?.permissions, "sales", "edit") &&
+    (dataScope(profile?.role, profile?.permissions, "sales") === "all" || invoiceData.assigned_to === userId);
+
+  return { invoice: invoiceData, items, canEdit };
 }
 
 export default function InvoiceDetailPage() {
@@ -62,6 +78,7 @@ export default function InvoiceDetailPage() {
   const lang = params.lang;
   const id = params.id;
 
+  const tRoot = useTranslations();
   const t = useTranslations("sales");
   const tCommon = useTranslations("common");
 
@@ -69,15 +86,17 @@ export default function InvoiceDetailPage() {
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
 
   useEffect(() => {
     async function load() {
       if (!id) return;
       try {
         const supabase = createClient() as any;
-        const { invoice: invoiceData, items: itemsData } = await fetchInvoiceData(supabase, id);
+        const { invoice: invoiceData, items: itemsData, canEdit: editable } = await fetchInvoiceData(supabase, id);
         setInvoice(invoiceData);
         setItems(itemsData);
+        setCanEdit(editable);
       } catch (err: any) {
         toast.error(err.message || tCommon("error"));
         router.push(`/${lang}/sales/invoices`);
@@ -93,30 +112,30 @@ export default function InvoiceDetailPage() {
     setIsProcessingPayment(true);
     try {
       const supabase = createClient() as any;
-      const { error } = await supabase
-        .from("invoices")
-        .update({
-          paid_amount: invoice.total_amount,
-          status: "paid",
-          paid_at: new Date().toISOString().split("T")[0],
-        })
-        .eq("id", invoice.id);
+      // One transaction: the invoice is paid, the income recorded, and the
+      // money lands in the main cashbox (supabase/migration_business_rpc.sql).
+      const result = await callBusinessRpc(supabase, "accept_invoice_payment", {
+        p_invoice_id: invoice.id,
+        p_paid_at: isoDate(),
+      });
+      if (result === RPC_MISSING) {
+        // Pre-migration fallback.
+        const { error } = await supabase
+          .from("invoices")
+          .update({ paid_amount: invoice.total_amount, status: "paid", paid_at: isoDate() })
+          .eq("id", invoice.id);
+        if (error) throw error;
 
-      if (error) throw error;
-
-      // Also record an income transaction in finance logs
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      if (userId) {
-        const amountToPay =
-          Number(invoice.total_amount) - Number(invoice.paid_amount);
-        if (amountToPay > 0) {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData?.user?.id;
+        const amountToPay = Number(invoice.total_amount) - Number(invoice.paid_amount);
+        if (userId && amountToPay > 0) {
           await supabase.from("transactions").insert([
             {
               type: "income",
               amount: amountToPay,
               category: "sales",
-              description: `INV-${invoice.invoice_number} uchun tezkor to'lov`,
+              description: `${invoice.invoice_number} uchun tezkor to'lov`,
               reference_type: "invoice",
               reference_id: invoice.id,
               created_by: userId,
@@ -124,13 +143,18 @@ export default function InvoiceDetailPage() {
           ]);
         }
       }
+      void invalidateSale().catch(() => {});
 
       toast.success(tCommon("success"));
       const { invoice: refreshedInvoice, items: refreshedItems } = await fetchInvoiceData(supabase, id);
       setInvoice(refreshedInvoice);
       setItems(refreshedItems);
     } catch (err: any) {
-      toast.error(err.message || tCommon("error"));
+      toast.error(
+        err instanceof BusinessRpcError
+          ? businessRpcErrorMessage(tRoot, err)
+          : err.message || tCommon("error"),
+      );
     } finally {
       setIsProcessingPayment(false);
     }
@@ -169,6 +193,7 @@ export default function InvoiceDetailPage() {
             <ArrowLeft className="h-4 w-4" />
             {tCommon("back")}
           </Button>
+          {canEdit && (
           <Button
             onClick={() =>
               router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)
@@ -178,6 +203,7 @@ export default function InvoiceDetailPage() {
             <Pencil className="h-4 w-4" />
             {tCommon("edit")}
           </Button>
+          )}
         </div>
 
         {isUnpaid && (
@@ -192,6 +218,7 @@ export default function InvoiceDetailPage() {
             >
               {lang === "uz" ? "Kassa orqali to'lash" : "Оплатить через кассу"}
             </Button>
+            {canEdit && (
             <Button
               disabled={isProcessingPayment}
               onClick={handleAcceptPayment}
@@ -206,6 +233,7 @@ export default function InvoiceDetailPage() {
                 ? "To'lovni qabul qilish (Tezkor)"
                 : "Принять оплату (Быстро)"}
             </Button>
+            )}
           </div>
         )}
       </div>

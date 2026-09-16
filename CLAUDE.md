@@ -40,7 +40,7 @@ Required env (`.env.local`, git-ignored): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBL
 
 ### Auth & session caching
 
-- Everyone (tenant users, support agents, super-admins) shares Supabase Auth cookies. Tenant users and agents log in by phone, mapped to a synthetic email `{digits}@tenant.local` (`phoneToSyntheticEmail`). Logins go through rate-limited routes (`api/auth/login`, `api/admin/login`, `api/support/login`; `src/lib/rate-limit.ts`, table `login_attempts`).
+- Everyone (tenant users, support agents, super-admins) shares Supabase Auth cookies. Tenant users and agents log in by phone, mapped to a synthetic email `{digits}@tenant.local` (`phoneToSyntheticEmail`). Logins go through rate-limited routes (`api/auth/login`, `api/admin/login`, `api/support/login`, `api/telegram/link`; `src/lib/rate-limit.ts`, table `login_attempts`). A lock answers `429 { error: 'too_many_attempts', retryAfterSeconds }` (+ `Retry-After`), the real time until the lock lifts; forms turn it into minutes with `lockMinutesFrom` (`src/lib/login-lock.ts`).
 - `src/lib/auth.ts`:
   - `getSessionUser()` reads the JWT cookie (no network call, `cache()`-memoized). Only safe where the middleware ran first.
   - `getVerifiedUser()` calls `getUser()`; `getTenantContext()` builds on it for `/api/**` routes (the middleware never runs there) and takes `tenant_id`/`role` from the DB profile, never from the request. It also rejects deactivated (`is_active = false`) profiles.
@@ -64,14 +64,32 @@ The business write path, consistent across every `*-form.tsx`:
 2. `onSubmit` calls `supabase.from('<table>').insert(...)` / `.update(...)` **directly from the browser** — no API route, Server Action, `.rpc()`, or DB transaction wraps it.
 3. On success: `toast.success(...)` → `await invalidate<Entity>()` → optionally `clearPersistedForm(id)` → `router.push(...)`.
 
+**Exception — anything that moves money or stock** goes through a Postgres function instead (`supabase/migration_business_rpc.sql`), called with `callBusinessRpc(supabase, '<fn>', args)` from `src/lib/business-rpc.ts`. Each function is one transaction, locks the rows it reads, changes balances as `col = col ± x`, and checks the RBAC matrix itself. A refusal comes back as `{ ok: false, code }` and is thrown as `BusinessRpcError`; show it with `businessRpcErrorMessage(t, error)`. `RPC_MISSING` (PostgREST `PGRST202`) means the migration is not applied yet — every caller then falls back to its old browser-side path (`*InBrowser` functions, or a `// Pre-migration fallback.` block); delete those once the migration is everywhere. Invalidate the caches with the combined actions (`invalidateSale`, `invalidatePurchase`, `invalidateCashboxMovement`): Server Actions are dispatched one at a time and each `updateTag` re-renders the route, so a `Promise.all` of per-entity invalidations is N sequential round trips.
+
+| Function | Caller | Permission |
+| --- | --- | --- |
+| `create_sale` | `sale-create.ts` ← POS `checkout.ts`, `sale-form.tsx` | POS: `pos.view`; form: `sales.create`/`edit` |
+| `update_sale_lines` | `sale-edits.ts` ← `order-form.tsx` | `sales.edit`, own |
+| `cancel_sales_order` | `status-actions.ts` ← `cancel-sale-dialog.tsx` | `sales.edit`, own |
+| `set_order_status`, `set_invoice_status` | `status-actions.ts` ← orders/invoices tables | `sales.edit`, own |
+| `accept_invoice_payment` | invoice detail page | `sales.edit`, own |
+| `save_invoice` | `invoice-form.tsx` | `sales.create`/`edit`; existing: `sales.edit`, own |
+| `receive_purchase` | `purchase-order-form.tsx` | `procurement.create`/`edit` |
+| `create_cashbox`, `record_cashbox_movement` | `cashbox-client.tsx` | `finance.create`/`edit` |
+| `save_transaction` | `transaction-form.tsx` | `finance.create`/`edit`; existing: `finance.edit`, own |
+
+"own" = with an `own` data scope only records `assigned_to` the caller. Still plain browser writes: product stock adjustments (`product-form.tsx`), the AI stock scanner, cashbox rename/delete, and the non-money header fields of orders (`order-form.tsx`).
+
 Reads: `src/lib/data/queries/*.ts` (one file per domain, re-exported from `index.ts`, tags in `cache-tags.ts`) — `unstable_cache` with 30–60 s TTLs, service-role client, explicit tenant filter. `src/lib/data/paginate.ts` (`queryPage`) is the uncached server-side paging/search path, including the "own records" scope filter.
 
 API routes (`src/app/api/`) handle everything that needs the service role or a secret: admin/support/tenant management, logins, Telegram, `reports/run`, `ocr`, `inventory/scan`, `build-id`.
 
 ### Sales, POS & inventory costing
 
-- Multi-step sale flows: `src/components/sales/sale-form.tsx` and `src/components/pos/checkout.ts` (`submitPosSale`). Both: re-read stock → insert order → `consumeCostLayers` → items + `stock_movements` + `products.stock` update → `applyCustomerCredit` → invoice → income transaction + `adjustCashboxBalance`. Cancelling (any status, including `delivered`) is `cancelSalesOrder` in `src/lib/status-actions.ts`, opened through `src/components/sales/cancel-sale-dialog.tsx`. It reverses everything: stock + `in` movements + a `sale_cancellation` cost layer; the sale's income transactions are deleted and their sum withdrawn from the cashbox matching the payment method parsed from the order/invoice notes; invoices are cancelled (which removes the debt); anything else paid on the invoice (spent credit, collected debt) goes back to `customers.credit_balance`.
-- Editing a sale's lines (`src/lib/sale-edits.ts` `updateSaleLines`, UI `sale-lines-editor.tsx` inside `order-form.tsx`): a removed line goes back to stock via the same `returnLinesToStock`; a price change rewrites `total_price`; the order total is recomputed (lines − discount + tax) and is read-only in the form; the difference moves the cashbox and the income transaction (cash sales) or the invoice total / debt, with any overpayment turned into customer credit (debt sales).
+- Creating, editing and cancelling a sale are database functions (see the table under "Data layer & mutation pattern").
+- Creating: `create_sale(jsonb)` via `createSaleRpc` (`src/lib/sale-create.ts`), called by `src/components/sales/sale-form.tsx` (`channel: 'form'`, needs `sales.create`/`edit`) and `src/components/pos/checkout.ts` `submitPosSale` (`channel: 'pos'`, needs `pos.view`). It checks stock per product total → inserts the order → `consume_cost_layers` → items + `stock_movements` + `products.stock` → customer credit (debt) or income transaction + cashbox (`pick_cashbox`, creating one of that type if missing) → invoice. Order/invoice numbers and local dates are generated by the caller.
+- Cancelling (any status, including `delivered`) is `cancelSalesOrder` in `src/lib/status-actions.ts` → `cancel_sales_order(uuid)` (needs `sales.edit`; with an `own` scope only sales assigned to the caller), opened through `src/components/sales/cancel-sale-dialog.tsx`; a cancelled sale can no longer be edited. It reverses everything: stock + `in` movements + a `sale_cancellation` cost layer; the sale's income transactions are deleted and their sum withdrawn from the cashbox matching the payment method parsed from the order/invoice notes; invoices are cancelled (which removes the debt); anything else paid on the invoice (spent credit, collected debt) goes back to `customers.credit_balance`.
+- Editing a sale's lines (`src/lib/sale-edits.ts` `updateSaleLines` → `update_sale_lines`, UI `sale-lines-editor.tsx` inside `order-form.tsx`): a removed line goes back to stock (`return_sale_lines_to_stock`, shared with cancelling); a price change rewrites `total_price`; the order total is recomputed (lines − discount + tax) and is read-only in the form; the difference moves the cashbox and the income transaction (cash sales) or the invoice total / debt, with any overpayment turned into customer credit (debt sales).
 - `src/lib/inventory-costing.ts` + `migration_inventory_costing.sql`: FIFO / LIFO / AVECO per tenant (`tenants.costing_method`), `inventory_cost_layers` per stock-in; `products.cost_price` kept as a weighted average.
 - `src/lib/finance-helpers.ts`: `adjustCashboxBalance(...)` (throws `InsufficientFundsError`; falls back to a `localStorage['erp_cashboxes']` mirror if Supabase fails), `applyCustomerCredit(...)`.
 - POS (`src/components/pos/`) shows the receipt immediately and saves in the background. Printing: `src/lib/printer/` builds ESC/POS bytes (58/80 mm, CP866 Cyrillic) and sends over WebUSB or Web Bluetooth, falling back to `window.print()`; config is per-device in `localStorage['erp_printer_config']`.
@@ -126,6 +144,10 @@ Added by migrations:
 | `integration_settings` | `integrations` | Telegram bot credentials |
 | `telegram_links` | `telegram_miniapp` | Telegram user → profile/tenant |
 
+`migration_tenant_costing_lock.sql` makes `tenants.costing_method` immutable after creation (trigger, and revokes the tenant users' column grant). The admin tenant edit page therefore never shows it; the subscription there only moves through "Make payment" (`tenant-payment-dialog.tsx` → `POST /api/admin/tenants/[id]/payments`, which takes the term and seat count).
+
+Functions (`migration_business_rpc.sql`): the money/stock entry points listed under "Data layer & mutation pattern" — SECURITY INVOKER, so the caller's tenant RLS and the `set_tenant_id()` triggers apply — plus their helpers `app_can`, `app_data_scope` (SECURITY DEFINER, read only the caller's own profile), `app_owns`, `consume_cost_layers`, `sync_product_average_cost`, `return_sale_lines_to_stock`, `pick_cashbox`, `credit_cashbox`.
+
 `migration_profile_privilege_lockdown.sql` limits what a user may update on their own `profiles` row to `full_name`, `phone`, `avatar_url`, `department_id`.
 
 ### AI features
@@ -139,6 +161,7 @@ Added by migrations:
 ## Conventions
 
 - Path alias `@/*` → `src/*`.
+- **Every delete asks first**: `const [confirmDelete, confirmDialog] = useConfirmDelete()` from `src/components/shared/confirm-dialog.tsx`, `if (!(await confirmDelete({ name }))) return` at the top of the handler, and `{confirmDialog}` anywhere in the component's JSX. Never `window.confirm`.
 - `src/components/ui/` (shadcn-based) — primitives only. Notably **missing**: `form.tsx`, `pagination.tsx`, `alert-dialog.tsx`, `toast.tsx` — forms use raw `react-hook-form` + manual error `<p>` tags; tables page server-side through `queryPage` + `src/components/shared/table-pagination.tsx` (see `AGENTS.md` § Table Interfaces).
 - Feature components are grouped by domain (`inventory/`, `sales/`, `hr/`, `finance/`, `procurement/`, `customers` pages, `pos/`, `reports/`, `settings/`, `support/`, `admin/`, `support-portal/`, `telegram/`, `dashboard/`, `layout/`), with `shared/` for cross-domain pieces (`PageHeader`, `StatsCard`, `StatusBadge`, `ImportExportMenu`, `AssigneeSelect`, `PeriodFilter`, `ThemeToggle`, …).
 - Theme: `src/components/providers/theme-provider.tsx` (`light`/`dark`/`system`, `localStorage['erp-theme']`) with `ThemeToggle` — already wired into the tenant, admin and support layouts.
@@ -150,8 +173,8 @@ Added by migrations:
 
 ## Gotchas
 
-- **RLS scopes by tenant, not by role**: within a tenant every authenticated member passes RLS. Per-role access is an application-level check only (`permissions-server.ts`), so raw PostgREST calls can reach data the UI hides. Guard new pages with `requireModuleView`/`requireModuleEdit` and new API routes with `canDo`/`requireAction`.
-- **Business writes are not atomic**: sale/POS/cancel flows are sequences of separate browser calls, and stock, cashbox balance, customer credit and cost layers are read-then-written. A mid-flow failure leaves partial rows, and concurrent tills can lose updates. Keep this in mind before adding steps; the real fix is a Postgres function called via `.rpc()`.
+- **RLS scopes by tenant, not by role**: within a tenant every authenticated member passes RLS. Per-role access is an application-level check (`permissions-server.ts`) — only the money/stock RPCs enforce it in the database (`app_can`), so raw PostgREST calls can reach data the UI hides. Guard new pages with `requireModuleView`/`requireModuleEdit` and new API routes with `canDo`/`requireAction`.
+- **Plain browser writes are not atomic**: outside the money/stock RPCs, a multi-step write is a sequence of separate calls, and a value read in the browser and written back can lose a concurrent update. Product stock adjustments and the AI scanner still work that way. Anything new that moves stock, a cashbox, customer credit or cost layers belongs in `migration_business_rpc.sql`.
 - **Service-role fallback**: `getCacheClient()` (`src/lib/supabase/cache-client.ts`) silently uses the anon key when `SUPABASE_SERVICE_ROLE_KEY` is missing — cached reads and staff checks then return empty/unauthorised instead of erroring.
 - **Unsigned cache cookies**: `tg_cache` (tenant gate) and `flc_cache` (force-logout/deactivation check) are plain JSON — fine as short perf caches, not as security boundaries.
 - **Telegram Mini App vs CSP**: `telegram.org/js/telegram-web-app.js` is not in `script-src`, and `frame-ancestors 'none'` blocks Telegram Web's iframe.

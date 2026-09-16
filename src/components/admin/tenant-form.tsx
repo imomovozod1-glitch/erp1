@@ -8,7 +8,8 @@ import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Building2, Globe, Phone, KeyRound, Layers, CalendarDays, Wallet, FileText, ReceiptText, IdCard, Users, Pencil, LifeBuoy } from 'lucide-react'
+import { Loader2, Building2, Globe, Phone, KeyRound, Layers, CalendarDays, Wallet, FileText, ReceiptText, IdCard, Users, LifeBuoy } from 'lucide-react'
+import { addMonths, DURATION_PRESETS, LICENSE_COUNT_PRESETS, PresetPicker } from '@/components/admin/preset-picker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,7 +28,8 @@ import { isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { PhoneInput } from '@/components/ui/phone-input'
-import { cn, formatDate, isoDate } from '@/lib/utils'
+import { TenantPaymentDialog } from '@/components/admin/tenant-payment-dialog'
+import { formatDate, isoDate } from '@/lib/utils'
 
 export interface TenantFormInitialData {
   id: string
@@ -54,93 +56,21 @@ interface TenantFormProps {
   supportAgents: SupportAgentOption[]
 }
 
-const LICENSE_COUNT_PRESETS = [1, 5, 10, 25, 50]
-const DURATION_PRESETS = [1, 3, 6, 12]
-
-function addMonths(dateStr: string, months: number): string {
-  const d = new Date(dateStr)
-  d.setMonth(d.getMonth() + (Number(months) || 1))
-  return isoDate(d)
-}
-
-
-/**
- * Preset-pill selector with a "custom" fallback — the modern equivalent of a
- * plan/seat-count picker (mirrors the status-filter pill pattern already
- * used in tenants-table.tsx) instead of a bare number field. Falls open to
- * a NumericInput automatically when the current value isn't one of the
- * presets (e.g. editing a tenant that already has a non-standard value).
- */
-function PresetPicker({
-  value,
-  options,
-  onSelect,
-  customLabel,
-  suffix,
-}: {
-  value: number | undefined
-  options: number[]
-  onSelect: (n: number) => void
-  customLabel: string
-  suffix?: string
-}) {
-  const [customOpen, setCustomOpen] = useState(value != null && !options.includes(value))
-
-  return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-1.5">
-        {options.map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => {
-              setCustomOpen(false)
-              onSelect(n)
-            }}
-            className={cn(
-              'px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
-              !customOpen && value === n
-                ? 'bg-violet-600 border-violet-600 text-white'
-                : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
-            )}
-          >
-            {n}
-            {suffix ? ` ${suffix}` : ''}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setCustomOpen(true)}
-          className={cn(
-            'flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
-            customOpen
-              ? 'bg-violet-600 border-violet-600 text-white'
-              : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
-          )}
-        >
-          <Pencil className="h-3 w-3" /> {customLabel}
-        </button>
-      </div>
-      {customOpen && (
-        <NumericInput
-          value={value}
-          onChange={(v) => onSelect(typeof v === 'number' ? v : 0)}
-          className="w-32"
-        />
-      )}
-    </div>
-  )
-}
-
 export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps) {
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const tCosting = useTranslations('inventory')
+  const tDetail = useTranslations('admin.tenants.detail')
   const t = useTranslations('admin.form')
   const lang = useLocale()
   const router = useRouter()
   const exitForm = useRouteModalExit('/admin/tenants')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false)
+  // Editing a tenant touches only its identity, support agent and notes. The
+  // subscription moves through a payment (TenantPaymentDialog), and the
+  // costing method is fixed at creation (migration_tenant_costing_lock.sql).
+  const isEdit = mode === 'edit'
 
   const tenantFormSchema = useMemo(
     () =>
@@ -156,21 +86,36 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
           mode === 'create'
             ? newPasswordSchema(tAuth('passwordRequirements'))
             : z.union([newPasswordSchema(tAuth('passwordRequirements')), z.literal('')]).optional(),
+        // The subscription fields are only on the create form; editing moves
+        // the subscription through a payment instead, so they are not checked.
         costing_method: z.enum(['fifo', 'lifo', 'aveco']),
-        license_count: z.number({ message: t('licenseCountRequired') }).int().min(1, t('licenseCountRequired')),
-        license_months: z.number({ message: t('licenseMonthsRequired') }).int().min(1, t('licenseMonthsRequired')),
-        subscription_started_at: z.string().min(1, t('subscriptionStartRequired')),
-        subscription_ends_at: z.string().min(1, t('subscriptionEndRequired')),
+        license_count:
+          mode === 'create'
+            ? z.number({ message: t('licenseCountRequired') }).int().min(1, t('licenseCountRequired'))
+            : z.number().optional(),
+        license_months:
+          mode === 'create'
+            ? z.number({ message: t('licenseMonthsRequired') }).int().min(1, t('licenseMonthsRequired'))
+            : z.number().optional(),
+        subscription_started_at:
+          mode === 'create' ? z.string().min(1, t('subscriptionStartRequired')) : z.string().optional(),
+        subscription_ends_at:
+          mode === 'create' ? z.string().min(1, t('subscriptionEndRequired')) : z.string().optional(),
         price_paid:
           mode === 'create'
             ? z.number({ message: t('pricePaidRequired') }).min(0, t('pricePaidNegative'))
             : z.number().optional(),
         details: z.string().optional(),
         support_agent_id: z.string().uuid().nullable().optional(),
-      }).refine((data) => new Date(data.subscription_ends_at) > new Date(data.subscription_started_at), {
-        message: t('subscriptionEndBeforeStart'),
-        path: ['subscription_ends_at'],
-      }),
+      }).refine(
+        (data) =>
+          mode === 'edit' ||
+          new Date(data.subscription_ends_at ?? '') > new Date(data.subscription_started_at ?? ''),
+        {
+          message: t('subscriptionEndBeforeStart'),
+          path: ['subscription_ends_at'],
+        }
+      ),
     [t, tAuth, mode]
   )
   type TenantFormData = z.infer<typeof tenantFormSchema>
@@ -236,12 +181,21 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
   const onSubmit = async (data: TenantFormData) => {
     setIsSubmitting(true)
     try {
+      const body = isEdit
+        ? {
+            subdomain: data.subdomain,
+            company_name: data.company_name,
+            phone: data.phone,
+            details: data.details,
+            support_agent_id: data.support_agent_id,
+          }
+        : data
       const res = await fetch(
         mode === 'create' ? '/api/admin/tenants' : `/api/admin/tenants/${initialData!.id}`,
         {
           method: mode === 'create' ? 'POST' : 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
+          body: JSON.stringify(body),
         }
       )
       const json = await res.json()
@@ -324,108 +278,130 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
           )}
         </AdminFormSection>
 
-        <AdminFormSection icon={ReceiptText} title={t('sectionSubscription')} description={t('sectionSubscriptionHint')}>
-          <AdminField>
-            <Label className="flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
-            </Label>
-            <Controller
-              control={control}
-              name="costing_method"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue>
-                      {(value: 'fifo' | 'lifo' | 'aveco') => tCosting(value)}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fifo">{tCosting('fifo')}</SelectItem>
-                    <SelectItem value="lifo">{tCosting('lifo')}</SelectItem>
-                    <SelectItem value="aveco">{tCosting('aveco')}</SelectItem>
-                  </SelectContent>
-                </Select>
+        {isEdit && initialData ? (
+          <AdminFormSection icon={ReceiptText} title={t('sectionSubscription')} description={tDetail('paymentDialogDesc')}>
+            <AdminField>
+              <Label className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
+              </Label>
+              <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+                {initialData.subscription_ends_at ? formatDate(initialData.subscription_ends_at) : '—'}
+              </div>
+            </AdminField>
+            <AdminField>
+              <Label className="invisible hidden sm:block">&nbsp;</Label>
+              <Button
+                type="button"
+                onClick={() => setIsPaymentOpen(true)}
+                className="w-full gap-2 bg-violet-600 text-white hover:bg-violet-500 sm:w-auto"
+              >
+                <Wallet className="h-4 w-4" /> {tDetail('makePayment')}
+              </Button>
+            </AdminField>
+          </AdminFormSection>
+        ) : (
+          <AdminFormSection icon={ReceiptText} title={t('sectionSubscription')} description={t('sectionSubscriptionHint')}>
+            <AdminField>
+              <Label className="flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
+              </Label>
+              <Controller
+                control={control}
+                name="costing_method"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue>
+                        {(value: 'fifo' | 'lifo' | 'aveco') => tCosting(value)}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fifo">{tCosting('fifo')}</SelectItem>
+                      <SelectItem value="lifo">{tCosting('lifo')}</SelectItem>
+                      <SelectItem value="aveco">{tCosting('aveco')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <p className="text-xs text-muted-foreground">{tDetail('costingLockedHint')}</p>
+            </AdminField>
+
+            <AdminField wide>
+              <Label className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseCount')}
+              </Label>
+              <Controller
+                control={control}
+                name="license_count"
+                render={({ field: { value } }) => (
+                  <PresetPicker
+                    value={value}
+                    options={LICENSE_COUNT_PRESETS}
+                    onSelect={(v) => setValue('license_count', v, { shouldValidate: true })}
+                    customLabel={t('custom')}
+                  />
+                )}
+              />
+              {errors.license_count && <p className="text-sm text-red-500">{errors.license_count.message}</p>}
+            </AdminField>
+
+            <AdminField wide>
+              <Label className="flex items-center gap-1.5">
+                <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseMonths')}
+              </Label>
+              <Controller
+                control={control}
+                name="license_months"
+                render={({ field: { value } }) => (
+                  <PresetPicker
+                    value={value}
+                    options={DURATION_PRESETS}
+                    onSelect={applyDurationPreset}
+                    customLabel={t('custom')}
+                    suffix={t('months')}
+                  />
+                )}
+              />
+              {errors.license_months && <p className="text-sm text-red-500">{errors.license_months.message}</p>}
+            </AdminField>
+
+            <AdminField>
+              <Label htmlFor="subscription_started_at" className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionStart')}
+              </Label>
+              <Controller
+                control={control}
+                name="subscription_started_at"
+                render={({ field }) => (
+                  <DatePicker
+                    id="subscription_started_at"
+                    value={field.value}
+                    onChange={handleStartDateChange}
+                    lang={lang}
+                    placeholder={t('selectDatePlaceholder')}
+                  />
+                )}
+              />
+              {errors.subscription_started_at && (
+                <p className="text-sm text-red-500">{errors.subscription_started_at.message}</p>
               )}
-            />
-          </AdminField>
+            </AdminField>
 
-          <AdminField wide>
-            <Label className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseCount')}
-            </Label>
-            <Controller
-              control={control}
-              name="license_count"
-              render={({ field: { value } }) => (
-                <PresetPicker
-                  value={value}
-                  options={LICENSE_COUNT_PRESETS}
-                  onSelect={(v) => setValue('license_count', v, { shouldValidate: true })}
-                  customLabel={t('custom')}
-                />
+            <AdminField>
+              <Label className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
+              </Label>
+              {/* Computed from start date + duration preset above — not
+                  directly editable, so it can never drift out of sync with
+                  the chosen duration (see handleStartDateChange/applyDurationPreset). */}
+              <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+                {watchedEndDate ? formatDate(watchedEndDate) : '—'}
+              </div>
+              {errors.subscription_ends_at && (
+                <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
               )}
-            />
-            {errors.license_count && <p className="text-sm text-red-500">{errors.license_count.message}</p>}
-          </AdminField>
+            </AdminField>
 
-          <AdminField wide>
-            <Label className="flex items-center gap-1.5">
-              <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseMonths')}
-            </Label>
-            <Controller
-              control={control}
-              name="license_months"
-              render={({ field: { value } }) => (
-                <PresetPicker
-                  value={value}
-                  options={DURATION_PRESETS}
-                  onSelect={applyDurationPreset}
-                  customLabel={t('custom')}
-                  suffix={t('months')}
-                />
-              )}
-            />
-            {errors.license_months && <p className="text-sm text-red-500">{errors.license_months.message}</p>}
-          </AdminField>
-
-          <AdminField>
-            <Label htmlFor="subscription_started_at" className="flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionStart')}
-            </Label>
-            <Controller
-              control={control}
-              name="subscription_started_at"
-              render={({ field }) => (
-                <DatePicker
-                  id="subscription_started_at"
-                  value={field.value}
-                  onChange={handleStartDateChange}
-                  lang={lang}
-                  placeholder={t('selectDatePlaceholder')}
-                />
-              )}
-            />
-            {errors.subscription_started_at && (
-              <p className="text-sm text-red-500">{errors.subscription_started_at.message}</p>
-            )}
-          </AdminField>
-
-          <AdminField>
-            <Label className="flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
-            </Label>
-            {/* Computed from start date + duration preset above — not
-                directly editable, so it can never drift out of sync with
-                the chosen duration (see handleStartDateChange/applyDurationPreset). */}
-            <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
-              {watchedEndDate ? formatDate(watchedEndDate) : '—'}
-            </div>
-            {errors.subscription_ends_at && (
-              <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
-            )}
-          </AdminField>
-
-          {mode === 'create' && (
             <AdminField>
               <Label htmlFor="price_paid" className="flex items-center gap-1.5">
                 <Wallet className="h-3.5 w-3.5 text-muted-foreground" /> {t('initialPayment')}
@@ -439,8 +415,8 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
               />
               {errors.price_paid && <p className="text-sm text-red-500">{errors.price_paid.message}</p>}
             </AdminField>
-          )}
-        </AdminFormSection>
+          </AdminFormSection>
+        )}
 
         <AdminFormSection icon={LifeBuoy} title={t('sectionSupport')} description={t('sectionSupportHint')} columns={1}>
           <AdminField>
@@ -485,6 +461,13 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
           </Button>
         </AdminFormActions>
       </form>
+      {isEdit && initialData && (
+        <TenantPaymentDialog
+          tenant={initialData}
+          open={isPaymentOpen}
+          onOpenChange={setIsPaymentOpen}
+        />
+      )}
     </AdminFormShell>
   )
 }

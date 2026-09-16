@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { toast } from 'sonner'
 import {
   ArrowDown,
@@ -103,6 +104,7 @@ function isoDaysAgo(days: number, today: string): string {
  */
 export function ReportBuilder({ today }: { today: string }) {
   const tCommon = useTranslations('common')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const t = useTranslations('reports')
 
   const [source, setSource] = useState<ReportSource>('sales')
@@ -450,7 +452,10 @@ export function ReportBuilder({ today }: { today: string }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => persist(saved.filter((item) => item.name !== entry.name))}
+                      onClick={async () => {
+                        if (!(await confirmDelete({ name: entry.name }))) return
+                        persist(saved.filter((item) => item.name !== entry.name))
+                      }}
                       className="rounded p-0.5 text-slate-400 hover:text-rose-600"
                       aria-label={tCommon('delete')}
                     >
@@ -639,6 +644,7 @@ export function ReportBuilder({ today }: { today: string }) {
           )}
         </CardContent>
       </Card>
+      {confirmDialog}
     </div>
   )
 }

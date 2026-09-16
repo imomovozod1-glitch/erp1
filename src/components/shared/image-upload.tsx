@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import Image from 'next/image'
 import { ImagePlus, Loader2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -42,6 +43,7 @@ export function ImageUpload({
   disabled?: boolean
 }) {
   const t = useTranslations('common')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const supabase = createClient() as any
   const inputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -110,6 +112,7 @@ export function ImageUpload({
   }
 
   const handleRemove = async () => {
+    if (!(await confirmDelete({ description: t('removeImageConfirm'), confirmLabel: t('removeImage') }))) return
     const previous = value
     onChange(null)
     await removeStoredObject(previous)
@@ -191,6 +194,7 @@ export function ImageUpload({
           if (file) handleFile(file)
         }}
       />
+      {confirmDialog}
     </div>
   )
 }

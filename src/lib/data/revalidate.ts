@@ -113,3 +113,60 @@ export async function invalidateCashbox() {
   updateTag(CACHE_TAGS.transactions)
   updateTag(CACHE_TAGS.dashboard)
 }
+
+/**
+ * Everything a sale touches — creating one (POS, sale form) or cancelling it:
+ * stock, movements, orders and lines, invoices, transactions, customers,
+ * cashboxes, analytics. One action instead of a `Promise.all` of the per-entity
+ * ones: Next.js dispatches Server Actions one at a time, and each `updateTag`
+ * call re-renders the current route, so nine separate calls meant nine
+ * sequential round trips and nine page renders.
+ */
+export async function invalidateSale() {
+  for (const tag of [
+    CACHE_TAGS.products,
+    CACHE_TAGS.movements,
+    CACHE_TAGS.orders,
+    CACHE_TAGS.orderItems,
+    CACHE_TAGS.invoices,
+    CACHE_TAGS.transactions,
+    CACHE_TAGS.customers,
+    CACHE_TAGS.cashbox,
+    CACHE_TAGS.analytics,
+    CACHE_TAGS.dashboard,
+  ]) {
+    updateTag(tag)
+  }
+}
+
+/** Everything a received purchase touches — one action, see `invalidateSale`. */
+export async function invalidatePurchase() {
+  for (const tag of [
+    CACHE_TAGS.purchaseOrders,
+    CACHE_TAGS.products,
+    CACHE_TAGS.movements,
+    CACHE_TAGS.suppliers,
+    CACHE_TAGS.dashboard,
+  ]) {
+    updateTag(tag)
+  }
+}
+
+/**
+ * Everything a cashbox movement can touch — the cashbox, its transaction, the
+ * person it was for, and (for a customer receipt) the invoices it settled.
+ * One action, see `invalidateSale`.
+ */
+export async function invalidateCashboxMovement() {
+  for (const tag of [
+    CACHE_TAGS.cashbox,
+    CACHE_TAGS.transactions,
+    CACHE_TAGS.suppliers,
+    CACHE_TAGS.employees,
+    CACHE_TAGS.customers,
+    CACHE_TAGS.invoices,
+    CACHE_TAGS.dashboard,
+  ]) {
+    updateTag(tag)
+  }
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { retryAfterMinutes } from '@/lib/login-lock'
 import { toast } from 'sonner'
 import { Loader2, LogIn, ShieldCheck, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -177,7 +178,7 @@ export function TelegramEntry() {
       if (!res.ok) {
         const messages: Record<string, string> = {
           invalid_credentials: 'Telefon yoki parol noto‘g‘ri',
-          too_many_attempts: 'Juda ko‘p urinish. Birozdan so‘ng qayta urining.',
+          too_many_attempts: `Juda ko‘p muvaffaqiyatsiz urinish. ${retryAfterMinutes(json.retryAfterSeconds)} daqiqadan so‘ng qayta urinib ko‘ring.`,
           already_linked: 'Bu hisob boshqa Telegram akkauntiga bog‘langan',
           no_tenant: 'Hisobingiz hech qaysi tashkilotga biriktirilmagan',
         }

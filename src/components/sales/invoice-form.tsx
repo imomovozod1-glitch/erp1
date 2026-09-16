@@ -10,7 +10,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
-import { invalidateInvoices } from '@/lib/data/revalidate'
+import { invalidateCashbox, invalidateInvoices } from '@/lib/data/revalidate'
+import { BusinessRpcError, businessRpcErrorMessage, callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
 import { reconcileInvoiceStatus } from '@/lib/statuses'
 import { toast } from 'sonner'
 import { adjustCashboxBalance } from '@/lib/finance-helpers'
@@ -36,6 +37,7 @@ interface InvoiceFormProps {
 }
 
 export function InvoiceForm({ initialData, customers, orders = [], assignableUsers, lang }: InvoiceFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('sales')
   const exitForm = useRouteModalExit(`/${lang}/sales/invoices`)
@@ -111,46 +113,62 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
       // see reconcileInvoiceStatus.
       payload.status = reconcileInvoiceStatus(data.status, data.total_amount, newPaidAmount)
 
-      let invoiceId = initialData?.id
+      const categoryLabel = lang === 'uz' ? 'Faktura to\'lovi' : lang === 'ru' ? 'Оплата по счету' : 'Invoice Payment'
 
-      if (initialData?.id) {
-        const { error } = await supabase
-          .from('invoices')
-          .update(payload)
-          .eq('id', initialData.id)
-        if (error) throw error
+      // One transaction: the invoice, and — when the paid amount changed — the
+      // cashbox and its transaction (supabase/migration_business_rpc.sql).
+      const saved = await callBusinessRpc(supabase, 'save_invoice', {
+        p_invoice: { ...payload, id: initialData?.id ?? null, payment_label: categoryLabel },
+      })
+      if (saved !== RPC_MISSING) {
         toast.success(tCommon('success'))
       } else {
-        const { data: newInvoice, error } = await supabase
-          .from('invoices')
-          .insert([payload])
-          .select()
-          .single()
-        if (error) throw error
-        invoiceId = newInvoice?.id
-        toast.success(tCommon('success'))
-      }
+        // Pre-migration fallback.
+        let invoiceId = initialData?.id
 
-      if (difference !== 0) {
-        await adjustCashboxBalance(Math.abs(difference), difference > 0 ? 'income' : 'expense', supabase)
-        const categoryLabel = lang === 'uz' ? 'Faktura to\'lovi' : lang === 'ru' ? 'Оплата по счету' : 'Invoice Payment'
-        await supabase.from('transactions').insert({
-          type: difference > 0 ? 'income' : 'expense',
-          amount: Math.abs(difference),
-          category: categoryLabel,
-          description: `${categoryLabel} #${data.invoice_number}`,
-          reference_type: 'invoices',
-          reference_id: invoiceId,
-          transaction_date: data.paid_at || data.issued_at,
-          created_by: initialData?.created_by || userId,
-        })
+        if (initialData?.id) {
+          const { error } = await supabase
+            .from('invoices')
+            .update(payload)
+            .eq('id', initialData.id)
+          if (error) throw error
+          toast.success(tCommon('success'))
+        } else {
+          const { data: newInvoice, error } = await supabase
+            .from('invoices')
+            .insert([payload])
+            .select()
+            .single()
+          if (error) throw error
+          invoiceId = newInvoice?.id
+          toast.success(tCommon('success'))
+        }
+
+        if (difference !== 0) {
+          await adjustCashboxBalance(Math.abs(difference), difference > 0 ? 'income' : 'expense', supabase)
+          await supabase.from('transactions').insert({
+            type: difference > 0 ? 'income' : 'expense',
+            amount: Math.abs(difference),
+            category: categoryLabel,
+            description: `${categoryLabel} #${data.invoice_number}`,
+            reference_type: 'invoices',
+            reference_id: invoiceId,
+            transaction_date: data.paid_at || data.issued_at,
+            created_by: initialData?.created_by || userId,
+          })
+        }
       }
+      if (difference !== 0) void invalidateCashbox().catch(() => {})
 
       await invalidateInvoices()
       clearPersistedForm('invoice-form-v3')
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(
+        error instanceof BusinessRpcError
+          ? businessRpcErrorMessage(tRoot, error)
+          : error.message || tCommon('error')
+      )
     } finally {
       setIsSubmitting(false)
     }

@@ -4,8 +4,9 @@ import { useState, useRef } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import { invalidatePurchaseOrders, invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
+import { invalidatePurchase } from '@/lib/data/revalidate'
 import { recordCostLayer } from '@/lib/inventory-costing'
+import { BusinessRpcError, businessRpcErrorMessage, callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { NumericInput } from '@/components/ui/numeric-input'
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
-import { formatCurrency, generateDocumentNumber } from '@/lib/utils'
+import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { unitAllowsDecimals } from '@/lib/units'
 
@@ -42,6 +43,7 @@ function generatePoNumber() {
 }
 
 export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }: PurchaseOrderFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('procurement')
   const exitForm = useRouteModalExit(`/${lang}/procurement/purchase-orders`)
@@ -179,107 +181,130 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
     setIsSubmitting(true)
     try {
       const supabase = createClient() as any
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      // Generate PO number
       const poNumber = generatePoNumber()
 
-      // Create purchase order
-      const { data: po, error: poError } = await supabase
-        .from('purchase_orders')
-        .insert([{
+      // One transaction: the order, its lines, stock, movements and cost
+      // layers, with the products locked (supabase/migration_business_rpc.sql).
+      const received = await callBusinessRpc(supabase, 'receive_purchase', {
+        p_purchase: {
           po_number: poNumber,
           supplier_id: supplierId,
-          status: 'received' as any,
           total_amount: totalAmount,
           notes,
-          created_by: user.id,
-          // Responsible person, defaulting to whoever raised the order.
-          assigned_to: assignedTo ?? user.id,
-        } as any])
-        .select()
-        .single()
-
-      if (poError) throw poError
-
-      // Create purchase order items
-      const poItems = items.map(item => ({
-        po_id: po.id,
-        product_id: item.productId,
-        quantity: item.quantity,
-        unit_cost: item.unitCost,
-        received_qty: item.quantity,
-        total_cost: item.totalCost,
-      }))
-
-      const { error: itemsError } = await supabase
-        .from('purchase_order_items')
-        .insert(poItems as any)
-
-      if (itemsError) throw itemsError
-
-      // Re-read stock right before writing: `products` is the page-load snapshot,
-      // so adding to it wrote back a stale figure and reverted any sale or
-      // adjustment made in between.
-      const { data: freshProducts, error: freshErr } = await supabase
-        .from('products')
-        .select('id, stock')
-        .in('id', items.map((i) => i.productId))
-      if (freshErr) throw freshErr
-      const stockById = new Map<string, number>((freshProducts || []).map((p: any) => [p.id, Number(p.stock)]))
-
-      // Update product stock (add incoming stock) and create stock movements
-      for (const item of items) {
-        const quantityBefore = stockById.get(item.productId)
-        if (quantityBefore === undefined) continue
-
-        const quantityAfter = quantityBefore + item.quantity
-        // Keep the map current so the same product appearing on two lines of one
-        // PO accumulates instead of the second line overwriting the first.
-        stockById.set(item.productId, quantityAfter)
-
-        // Update stock
-        await supabase
-          .from('products')
-          .update({ stock: quantityAfter } as any)
-          .eq('id', item.productId)
-
-        // Create stock movement
-        await supabase
-          .from('stock_movements')
-          .insert([{
+          assigned_to: assignedTo,
+          order_date: isoDate(),
+          items: items.map((item) => ({
             product_id: item.productId,
-            type: 'in' as any,
             quantity: item.quantity,
-            quantity_before: quantityBefore,
-            quantity_after: quantityAfter,
-            reference_type: 'purchase_order',
-            reference_id: po.id,
-            reason: `Purchase from ${suppliers.find(s => s.id === supplierId)?.name ?? 'supplier'}`,
             unit_cost: item.unitCost,
             total_cost: item.totalCost,
-            created_by: user.id,
-          } as any])
+          })),
+        },
+      })
+      if (received === RPC_MISSING) {
+        // Pre-migration fallback.
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Not authenticated')
 
-        // Record a cost layer at the price actually paid for this receipt, so
-        // FIFO/LIFO/AVECO have real data to consume from on future sales.
-        await recordCostLayer(supabase, {
-          productId: item.productId,
+        // Create purchase order
+        const { data: po, error: poError } = await supabase
+          .from('purchase_orders')
+          .insert([{
+            po_number: poNumber,
+            supplier_id: supplierId,
+            status: 'received' as any,
+            total_amount: totalAmount,
+            notes,
+            created_by: user.id,
+            // Responsible person, defaulting to whoever raised the order.
+            assigned_to: assignedTo ?? user.id,
+          } as any])
+          .select()
+          .single()
+
+        if (poError) throw poError
+
+        // Create purchase order items
+        const poItems = items.map(item => ({
+          po_id: po.id,
+          product_id: item.productId,
           quantity: item.quantity,
-          unitCost: item.unitCost,
-          sourceType: 'purchase_order',
-          sourceId: po.id,
-        })
+          unit_cost: item.unitCost,
+          received_qty: item.quantity,
+          total_cost: item.totalCost,
+        }))
+
+        const { error: itemsError } = await supabase
+          .from('purchase_order_items')
+          .insert(poItems as any)
+
+        if (itemsError) throw itemsError
+
+        // Re-read stock right before writing: `products` is the page-load snapshot,
+        // so adding to it wrote back a stale figure and reverted any sale or
+        // adjustment made in between.
+        const { data: freshProducts, error: freshErr } = await supabase
+          .from('products')
+          .select('id, stock')
+          .in('id', items.map((i) => i.productId))
+        if (freshErr) throw freshErr
+        const stockById = new Map<string, number>((freshProducts || []).map((p: any) => [p.id, Number(p.stock)]))
+
+        // Update product stock (add incoming stock) and create stock movements
+        for (const item of items) {
+          const quantityBefore = stockById.get(item.productId)
+          if (quantityBefore === undefined) continue
+
+          const quantityAfter = quantityBefore + item.quantity
+          // Keep the map current so the same product appearing on two lines of one
+          // PO accumulates instead of the second line overwriting the first.
+          stockById.set(item.productId, quantityAfter)
+
+          // Update stock
+          await supabase
+            .from('products')
+            .update({ stock: quantityAfter } as any)
+            .eq('id', item.productId)
+
+          // Create stock movement
+          await supabase
+            .from('stock_movements')
+            .insert([{
+              product_id: item.productId,
+              type: 'in' as any,
+              quantity: item.quantity,
+              quantity_before: quantityBefore,
+              quantity_after: quantityAfter,
+              reference_type: 'purchase_order',
+              reference_id: po.id,
+              reason: `Purchase from ${suppliers.find(s => s.id === supplierId)?.name ?? 'supplier'}`,
+              unit_cost: item.unitCost,
+              total_cost: item.totalCost,
+              created_by: user.id,
+            } as any])
+
+          // Record a cost layer at the price actually paid for this receipt, so
+          // FIFO/LIFO/AVECO have real data to consume from on future sales.
+          await recordCostLayer(supabase, {
+            productId: item.productId,
+            quantity: item.quantity,
+            unitCost: item.unitCost,
+            sourceType: 'purchase_order',
+            sourceId: po.id,
+          })
+        }
       }
 
-      await Promise.all([invalidatePurchaseOrders(), invalidateProducts(), invalidateMovements()])
+      await invalidatePurchase()
       toast.success(t('purchaseCreated'))
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(
+        error instanceof BusinessRpcError
+          ? businessRpcErrorMessage(tRoot, error)
+          : error.message || tCommon('error')
+      )
     } finally {
       setIsSubmitting(false)
     }

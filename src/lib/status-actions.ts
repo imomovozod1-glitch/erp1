@@ -3,6 +3,7 @@
 import type { OrderStatus, InvoiceStatus } from '@/lib/statuses'
 import { findSaleCashbox, withdrawFromCashbox } from '@/lib/finance-helpers'
 import { recordCostLayer } from '@/lib/inventory-costing'
+import { callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
 
 /**
  * Status transitions that have side effects.
@@ -21,12 +22,19 @@ interface SalesOrderRow {
   status: string
 }
 
-/** Plain status write, for transitions with no stock or money consequences. */
+/**
+ * Plain status move, for transitions with no stock or money consequences.
+ * `set_order_status` checks the transition and the caller's permission and
+ * throws `BusinessRpcError` on a refusal.
+ */
 export async function setOrderStatus(
   supabase: any,
   orderId: string,
   status: Exclude<OrderStatus, 'cancelled'>
 ): Promise<void> {
+  const result = await callBusinessRpc(supabase, 'set_order_status', { p_order_id: orderId, p_status: status })
+  if (result !== RPC_MISSING) return
+  // Pre-migration fallback.
   const { error } = await supabase.from('sales_orders').update({ status }).eq('id', orderId)
   if (error) throw new Error(error.message)
 }
@@ -79,52 +87,65 @@ export async function returnLinesToStock(
     (fresh ?? []).map((p: { id: string; stock: number }) => [p.id, Number(p.stock) || 0])
   )
 
+  // Products are independent of each other, so each one is returned in
+  // parallel; lines of the SAME product run in order so the stock
+  // before/after figures on their movements chain correctly.
+  const linesByProduct = new Map<string, SoldLine[]>()
   for (const line of lines) {
-    const before = stockById.get(line.product_id)
-    if (before === undefined) continue // product deleted since the sale
-    const quantity = Number(line.quantity) || 0
-    const after = before + quantity
-    // Keep the map current so the same product on two lines accumulates
-    // instead of the second line overwriting the first.
-    stockById.set(line.product_id, after)
-
-    const { error: stockError } = await supabase
-      .from('products')
-      .update({ stock: after })
-      .eq('id', line.product_id)
-    if (stockError) throw new Error(stockError.message)
-
-    const unitCost = line.unit_cost == null ? null : Number(line.unit_cost) || 0
-    const { error: movementError } = await supabase.from('stock_movements').insert({
-      product_id: line.product_id,
-      type: 'in',
-      quantity,
-      quantity_before: before,
-      quantity_after: after,
-      reference_type: 'sales_orders',
-      reference_id: orderId,
-      reason,
-      unit_cost: unitCost,
-      total_cost: unitCost == null ? null : unitCost * quantity,
-      created_by: userId,
-    })
-    if (movementError) throw new Error(movementError.message)
-
-    if (unitCost != null) {
-      await recordCostLayer(supabase, {
-        productId: line.product_id,
-        quantity,
-        unitCost,
-        sourceType: 'sale_cancellation',
-        sourceId: orderId,
-      })
-    }
+    const group = linesByProduct.get(line.product_id)
+    if (group) group.push(line)
+    else linesByProduct.set(line.product_id, [line])
   }
+
+  await Promise.all(
+    [...linesByProduct].map(async ([productId, productLines]) => {
+      const initial = stockById.get(productId)
+      if (initial === undefined) return // product deleted since the sale
+
+      let before = initial
+      for (const line of productLines) {
+        const quantity = Number(line.quantity) || 0
+        const after = before + quantity
+        const unitCost = line.unit_cost == null ? null : Number(line.unit_cost) || 0
+
+        // The stock write and its movement row don't depend on each other.
+        const [{ error: stockError }, { error: movementError }] = await Promise.all([
+          supabase.from('products').update({ stock: after }).eq('id', productId),
+          supabase.from('stock_movements').insert({
+            product_id: productId,
+            type: 'in',
+            quantity,
+            quantity_before: before,
+            quantity_after: after,
+            reference_type: 'sales_orders',
+            reference_id: orderId,
+            reason,
+            unit_cost: unitCost,
+            total_cost: unitCost == null ? null : unitCost * quantity,
+            created_by: userId,
+          }),
+        ])
+        if (stockError) throw new Error(stockError.message)
+        if (movementError) throw new Error(movementError.message)
+
+        if (unitCost != null) {
+          await recordCostLayer(supabase, {
+            productId,
+            quantity,
+            unitCost,
+            sourceType: 'sale_cancellation',
+            sourceId: orderId,
+          })
+        }
+        before = after
+      }
+    })
+  )
 }
 
 export class SaleCancelError extends Error {
   constructor(
-    public readonly code: 'already_cancelled' | 'insufficient_cashbox',
+    public readonly code: 'already_cancelled' | 'insufficient_cashbox' | 'forbidden',
     public readonly details: { cashboxName?: string; balance?: number; amount?: number } = {}
   ) {
     super(code)
@@ -156,11 +177,11 @@ export interface SaleCancelResult {
  *     debt collected for it — is returned to their credit balance, because that
  *     money is real and now belongs to them again.
  *
- * Writes go through the browser client like the rest of the app, so this is not
- * one database transaction. The order is chosen to fail safe: what can refuse
- * (the cashbox no longer holding the money) is checked before the first write,
- * and the status flip — guarded so two people cancelling at once cannot both
- * get past it — comes before any reversal, so a retry can never refund twice.
+ * Unlike the rest of the app's writes this is one database transaction — the
+ * `cancel_sales_order` Postgres function — so a failure part-way leaves nothing
+ * half-reversed, and the order and cashbox rows stay locked while it runs.
+ * Refusals (already cancelled, cashbox no longer holds the money) come back as
+ * a `SaleCancelError` with nothing written.
  */
 export async function cancelSalesOrder(
   supabase: any,
@@ -168,6 +189,58 @@ export async function cancelSalesOrder(
   userId: string | null
 ): Promise<SaleCancelResult> {
   if (order.status === 'cancelled') throw new SaleCancelError('already_cancelled')
+
+  // The whole reversal runs in one database transaction
+  // (supabase/migration_business_rpc.sql).
+  const { data, error } = await supabase.rpc('cancel_sales_order', { p_order_id: order.id })
+  if (error) {
+    // PGRST202 = the function does not exist yet: migrations are applied by
+    // hand, so a deploy can land before it. Fall back to the browser path
+    // until it is applied — then this branch and the function below can go.
+    if (error.code === 'PGRST202') return cancelSalesOrderInBrowser(supabase, order, userId)
+    throw new Error(error.message)
+  }
+
+  const result = data as {
+    ok: boolean
+    code?: 'forbidden' | 'not_found' | 'already_cancelled' | 'insufficient_cashbox'
+    refunded?: number
+    cashbox_name?: string | null
+    credit_restored?: number
+    balance?: number
+    amount?: number
+  }
+  if (!result.ok) {
+    if (result.code === 'forbidden') throw new SaleCancelError('forbidden')
+    if (result.code === 'insufficient_cashbox') {
+      throw new SaleCancelError('insufficient_cashbox', {
+        cashboxName: result.cashbox_name ?? undefined,
+        balance: Number(result.balance) || 0,
+        amount: Number(result.amount) || 0,
+      })
+    }
+    // `not_found` only happens when the sale was deleted meanwhile (or is
+    // another tenant's); either way there is nothing left to cancel here.
+    throw new SaleCancelError('already_cancelled')
+  }
+
+  return {
+    refunded: Number(result.refunded) || 0,
+    cashboxName: result.cashbox_name ?? null,
+    creditRestored: Number(result.credit_restored) || 0,
+  }
+}
+
+/**
+ * Pre-migration fallback for `cancelSalesOrder`: the same reversal as separate
+ * browser writes. Remove once migration_business_rpc.sql is applied
+ * everywhere.
+ */
+async function cancelSalesOrderInBrowser(
+  supabase: any,
+  order: SalesOrderRow,
+  userId: string | null
+): Promise<SaleCancelResult> {
 
   const [
     { data: fullOrder, error: orderError },
@@ -244,36 +317,39 @@ export async function cancelSalesOrder(
     if (error) throw new Error(error.message)
   }
 
-  await returnLinesToStock(supabase, {
-    orderId: order.id,
-    lines: (items ?? []) as SoldLine[],
-    reason: `Cancelled order ${orderNumber}`.trim(),
-    userId,
-  })
-
-  if (creditToRestore > 0 && fullOrder.customer_id) {
-    const { data: customer, error: readError } = await supabase
-      .from('customers')
-      .select('credit_balance')
-      .eq('id', fullOrder.customer_id)
-      .single()
-    if (readError) throw new Error(readError.message)
-    const { error: creditError } = await supabase
-      .from('customers')
-      .update({ credit_balance: (Number(customer?.credit_balance) || 0) + creditToRestore })
-      .eq('id', fullOrder.customer_id)
-    if (creditError) throw new Error(creditError.message)
-  }
-
-  // Last: a cancelled invoice drops out of the customer's debt and every
-  // receivables figure.
-  if (liveInvoices.length > 0) {
-    const { error: invoiceError } = await supabase
-      .from('invoices')
-      .update({ status: 'cancelled' })
-      .in('id', liveInvoices.map((inv) => inv.id))
-    if (invoiceError) throw new Error(invoiceError.message)
-  }
+  // The rest don't depend on each other: goods back on the shelf, the
+  // customer's money back on their credit, and the invoice cancelled — which
+  // drops it out of the customer's debt and every receivables figure.
+  await Promise.all([
+    returnLinesToStock(supabase, {
+      orderId: order.id,
+      lines: (items ?? []) as SoldLine[],
+      reason: `Cancelled order ${orderNumber}`.trim(),
+      userId,
+    }),
+    (async () => {
+      if (!(creditToRestore > 0 && fullOrder.customer_id)) return
+      const { data: customer, error: readError } = await supabase
+        .from('customers')
+        .select('credit_balance')
+        .eq('id', fullOrder.customer_id)
+        .single()
+      if (readError) throw new Error(readError.message)
+      const { error: creditError } = await supabase
+        .from('customers')
+        .update({ credit_balance: (Number(customer?.credit_balance) || 0) + creditToRestore })
+        .eq('id', fullOrder.customer_id)
+      if (creditError) throw new Error(creditError.message)
+    })(),
+    (async () => {
+      if (liveInvoices.length === 0) return
+      const { error: invoiceError } = await supabase
+        .from('invoices')
+        .update({ status: 'cancelled' })
+        .in('id', liveInvoices.map((inv) => inv.id))
+      if (invoiceError) throw new Error(invoiceError.message)
+    })(),
+  ])
 
   return { refunded: refund, cashboxName: cashbox?.name ?? null, creditRestored: creditToRestore }
 }
@@ -288,6 +364,9 @@ export async function setInvoiceStatus(
   invoiceId: string,
   status: Exclude<InvoiceStatus, 'paid' | 'overdue'>
 ): Promise<void> {
+  const result = await callBusinessRpc(supabase, 'set_invoice_status', { p_invoice_id: invoiceId, p_status: status })
+  if (result !== RPC_MISSING) return
+  // Pre-migration fallback.
   const { error } = await supabase.from('invoices').update({ status }).eq('id', invoiceId)
   if (error) throw new Error(error.message)
 }

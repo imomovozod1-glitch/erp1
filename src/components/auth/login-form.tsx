@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { lockMinutesFrom } from '@/lib/login-lock'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -71,8 +72,9 @@ export function LoginForm({ lang }: { lang: string }) {
         body: JSON.stringify({ phone: data.phone, password: data.password }),
       })
       if (!res.ok) {
+        const lockMinutes = await lockMinutesFrom(res)
         toast.error(
-          res.status === 429 ? t('tooManyAttempts')
+          lockMinutes !== null ? t('tooManyAttempts', { minutes: lockMinutes })
             : res.status === 403 ? t('accountDisabled')
             : t('invalidCredentials')
         )

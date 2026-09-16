@@ -4,7 +4,10 @@ import { PageHeader } from '@/components/shared/page-header'
 import { TenantForm } from '@/components/admin/tenant-form'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 
-export const metadata: Metadata = { title: 'New tenant' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.tenants.new')
+  return { title: t('title') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function NewTenantPage() {

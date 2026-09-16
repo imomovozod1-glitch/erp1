@@ -2,6 +2,7 @@ import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers
 import { consumeCostLayers, getEffectiveCostingMethod } from '@/lib/inventory-costing'
 import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import type { CartItem } from '@/components/pos/use-pos-cart'
+import { createSaleRpc, SaleCreateError } from '@/lib/sale-create'
 
 /**
  * Committing a POS sale.
@@ -17,17 +18,10 @@ import type { CartItem } from '@/components/pos/use-pos-cart'
  * plain `Error`s built from the `messages` the caller passes in, the same
  * contract `printReceiptDirect` already uses for its labels.
  *
- * The ordering below is not incidental, and it is the reason this reads as one
- * function instead of several:
- *
- *   1. read the session, cashier, CURRENT stock and costing method (one batch)
- *   2. reject the sale if the live stock no longer covers the basket
- *   3. insert the order — everything after it needs its id
- *   4. consume cost layers per line, before anything that needs a unit cost
- *   5. fire the remaining writes together; none of them depends on another
- *
- * Only steps 3 and 4 are genuinely sequential. Everything else is batched, and
- * a POS sale used to pay for one full network round trip per line.
+ * All of it happens in the `create_sale` database function — one request,
+ * one transaction, stock rows locked so two tills cannot sell the same last
+ * unit (src/lib/sale-create.ts). `submitPosSaleInBrowser` below is the old
+ * multi-request path, kept only until that migration is applied everywhere.
  */
 
 export type PosPaymentMethod = 'cash' | 'card' | 'transfer' | 'debt'
@@ -48,6 +42,10 @@ export interface PosSaleInput {
     sessionNotFound: string
     /** Prefix; the offending product's name is appended. */
     insufficientStock: string
+    /** The cashier's role does not allow selling. */
+    forbidden: string
+    /** A debt sale was attempted without a customer. */
+    customerRequired: string
   }
 }
 
@@ -69,15 +67,64 @@ export interface PosSaleResult {
 /** Trade credit term for a debt sale: 14 days before the invoice is overdue. */
 const DEBT_TERM_DAYS = 14
 
-export async function submitPosSale({
-  supabase,
-  orderNumber,
-  items,
-  customer,
-  paymentMethod,
-  totals,
-  messages,
-}: PosSaleInput): Promise<PosSaleResult> {
+export async function submitPosSale(input: PosSaleInput): Promise<PosSaleResult> {
+  const { supabase, orderNumber, items, customer, paymentMethod, totals, messages } = input
+  const invoiceNumber = generateDocumentNumber('INV-POS')
+  const orderDate = isoDate()
+
+  try {
+    const sale = await createSaleRpc(supabase, {
+      channel: 'pos',
+      orderNumber,
+      invoiceNumber,
+      customerId: customer?.id ?? null,
+      paymentMethod,
+      totals,
+      orderDate,
+      dueDate: isoDate(new Date(Date.now() + DEBT_TERM_DAYS * 24 * 60 * 60 * 1000)),
+      items: items.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        unitPrice: item.product.price,
+        discountPercent: item.discountPercent,
+        totalPrice: item.product.price * (1 - item.discountPercent / 100) * item.quantity,
+      })),
+    })
+    if (sale) {
+      return {
+        orderId: sale.orderId,
+        invoiceNumber: sale.invoiceNumber,
+        orderDate,
+        stockBefore: sale.stockBefore,
+        appliedCredit: sale.appliedCredit,
+      }
+    }
+  } catch (error) {
+    if (error instanceof SaleCreateError) {
+      if (error.code === 'insufficient_stock') {
+        const name =
+          items.find((item) => item.product.id === error.details.productId)?.product.name ??
+          error.details.productName ??
+          ''
+        throw new Error(`${messages.insufficientStock}: ${name}`)
+      }
+      throw new Error(error.code === 'forbidden' ? messages.forbidden : messages.customerRequired)
+    }
+    throw error
+  }
+
+  return submitPosSaleInBrowser(input, invoiceNumber, orderDate)
+}
+
+/**
+ * Pre-migration fallback: the same sale as separate browser writes. Remove
+ * once migration_business_rpc.sql is applied everywhere.
+ */
+async function submitPosSaleInBrowser(
+  { supabase, orderNumber, items, customer, paymentMethod, totals, messages }: PosSaleInput,
+  invoiceNumber: string,
+  orderDate: string
+): Promise<PosSaleResult> {
   // getSession() reads the JWT already in memory; getUser() spends a network
   // round trip re-validating it with the auth server before a single row is
   // written. At a till that delay is paid on every sale, and it buys nothing
@@ -116,8 +163,6 @@ export async function submitPosSale({
     }
   }
 
-  const invoiceNumber = generateDocumentNumber('INV-POS')
-  const orderDate = isoDate()
   const isDebtSale = paymentMethod === 'debt'
   const dueDate = isDebtSale
     ? isoDate(new Date(Date.now() + DEBT_TERM_DAYS * 24 * 60 * 60 * 1000))

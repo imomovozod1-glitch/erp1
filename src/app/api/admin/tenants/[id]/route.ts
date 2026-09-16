@@ -14,7 +14,9 @@ const updateTenantSchema = z.object({
     .optional(),
   company_name: z.string().min(1).optional(),
   phone: phoneSchema('Invalid phone number').optional(),
-  costing_method: z.enum(['fifo', 'lifo', 'aveco']).optional(),
+  // costing_method is deliberately absent: it is fixed when the tenant is
+  // created (see supabase/migration_tenant_costing_lock.sql). zod drops the
+  // key if a client still sends it.
   license_count: z.number().int().min(1).optional(),
   license_months: z.number().int().min(1).optional(),
   subscription_started_at: z.string().optional().nullable(),
@@ -53,7 +55,6 @@ export async function PATCH(
   if (input.subdomain !== undefined) update.subdomain = input.subdomain.toLowerCase()
   if (input.company_name !== undefined) update.company_name = input.company_name
   if (input.phone !== undefined) update.phone = input.phone
-  if (input.costing_method !== undefined) update.costing_method = input.costing_method
   if (input.license_count !== undefined) update.license_count = input.license_count
   if (input.license_months !== undefined) update.license_months = input.license_months
   if (input.subscription_started_at !== undefined) update.subscription_started_at = input.subscription_started_at || null

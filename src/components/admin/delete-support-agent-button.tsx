@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Trash2, Loader2 } from 'lucide-react'
@@ -9,11 +10,12 @@ import { Button } from '@/components/ui/button'
 
 export function DeleteSupportAgentButton({ agentId }: { agentId: string }) {
   const t = useTranslations('admin.support.detail')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
-    if (!window.confirm(t('deleteConfirm'))) return
+    if (!(await confirmDelete({ description: t('deleteConfirm'), confirmLabel: t('deleteAgent') }))) return
     setIsDeleting(true)
     try {
       const res = await fetch(`/api/admin/support-agents/${agentId}`, { method: 'DELETE' })
@@ -31,9 +33,12 @@ export function DeleteSupportAgentButton({ agentId }: { agentId: string }) {
   }
 
   return (
-    <Button type="button" variant="outline" onClick={handleDelete} disabled={isDeleting} className="gap-2 text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/30">
-      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-      {t('deleteAgent')}
-    </Button>
+    <>
+      <Button type="button" variant="outline" onClick={handleDelete} disabled={isDeleting} className="gap-2 text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/30">
+        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+        {t('deleteAgent')}
+      </Button>
+      {confirmDialog}
+    </>
   )
 }

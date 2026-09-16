@@ -9,7 +9,8 @@ import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateTransactions } from '@/lib/data/revalidate'
+import { invalidateCashbox, invalidateTransactions } from '@/lib/data/revalidate'
+import { BusinessRpcError, businessRpcErrorMessage, callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
 import { toast } from 'sonner'
 import { adjustCashboxBalance } from '@/lib/finance-helpers'
 import { Button } from '@/components/ui/button'
@@ -94,30 +95,45 @@ export function TransactionForm({ initialData, defaultType = 'income', lang, ass
       const newChange = data.type === 'income' ? Number(data.amount) : -Number(data.amount)
       const difference = newChange - oldChange
 
-      if (initialData?.id) {
-        const { error } = await supabase
-          .from('transactions')
-          .update(payload)
-          .eq('id', initialData.id)
-        if (error) throw error
+      // One transaction: the row and the cashbox it moves — the cashbox it is
+      // recorded against, else the main one (supabase/migration_business_rpc.sql).
+      const saved = await callBusinessRpc(supabase, 'save_transaction', {
+        p_tx: { ...payload, id: initialData?.id ?? null },
+      })
+      if (saved !== RPC_MISSING) {
         toast.success(t('common.success'))
       } else {
-        const { error } = await supabase
-          .from('transactions')
-          .insert([payload])
-        if (error) throw error
-        toast.success(t('common.success'))
-      }
+        // Pre-migration fallback.
+        if (initialData?.id) {
+          const { error } = await supabase
+            .from('transactions')
+            .update(payload)
+            .eq('id', initialData.id)
+          if (error) throw error
+          toast.success(t('common.success'))
+        } else {
+          const { error } = await supabase
+            .from('transactions')
+            .insert([payload])
+          if (error) throw error
+          toast.success(t('common.success'))
+        }
 
-      if (difference !== 0) {
-        await adjustCashboxBalance(Math.abs(difference), difference > 0 ? 'income' : 'expense', supabase)
+        if (difference !== 0) {
+          await adjustCashboxBalance(Math.abs(difference), difference > 0 ? 'income' : 'expense', supabase)
+        }
       }
-      
+      if (difference !== 0) void invalidateCashbox().catch(() => {})
+
       await invalidateTransactions()
       clearPersistedForm('transaction-form-v3')
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || t('common.error'))
+      toast.error(
+        error instanceof BusinessRpcError
+          ? businessRpcErrorMessage(t, error)
+          : error.message || t('common.error')
+      )
     } finally {
       setIsSubmitting(false)
     }

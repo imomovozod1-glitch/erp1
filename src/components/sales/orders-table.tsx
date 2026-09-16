@@ -22,6 +22,7 @@ import { createClient } from '@/lib/supabase/client'
 import { invalidateOrders } from '@/lib/data/revalidate'
 import { nextOrderStatuses, orderStatusTone } from '@/lib/statuses'
 import { setOrderStatus } from '@/lib/status-actions'
+import { BusinessRpcError, businessRpcErrorMessage } from '@/lib/business-rpc'
 import { CancelSaleDialog, type CancelableSale } from '@/components/sales/cancel-sale-dialog'
 
 interface OrdersTableProps {
@@ -33,6 +34,8 @@ interface OrdersTableProps {
   pageSize: number
   total: number
   totalPages: number
+  /** May the caller change orders (status, edit, cancel)? */
+  canEdit: boolean
 }
 
 export function OrdersTable({
@@ -42,7 +45,9 @@ export function OrdersTable({
   pageSize,
   total,
   totalPages,
+  canEdit,
 }: OrdersTableProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('sales')
   const router = useRouter()
@@ -68,7 +73,11 @@ export function OrdersTable({
       toast.success(tCommon('statusUpdated'))
       router.refresh()
     } catch (error: any) {
-      toast.error(error?.message || tCommon('error'))
+      toast.error(
+        error instanceof BusinessRpcError
+          ? businessRpcErrorMessage(tRoot, error)
+          : error?.message || tCommon('error')
+      )
     } finally {
       setPendingId(null)
     }
@@ -139,6 +148,9 @@ export function OrdersTable({
                         {order.creator?.full_name || '—'}
                       </TableCell>
                    <TableCell onClick={(e) => e.stopPropagation()}>
+                     {/* A cancelled sale has nothing left to edit or move on to, and
+                         without edit rights every action here would be refused. */}
+                     {canEdit && order.status !== 'cancelled' && (
                      <DropdownMenu>
                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
                          <MoreHorizontal className="h-4 w-4" />
@@ -166,6 +178,7 @@ export function OrdersTable({
                          ))}
                        </DropdownMenuContent>
                      </DropdownMenu>
+                     )}
                    </TableCell>
                  </TableRow>
               ))
@@ -179,7 +192,6 @@ export function OrdersTable({
       order={cancelTarget}
       open={cancelTarget !== null}
       onOpenChange={(open) => { if (!open) setCancelTarget(null) }}
-      onCancelled={() => router.refresh()}
     />
     </>
   )

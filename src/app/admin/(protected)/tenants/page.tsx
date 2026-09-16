@@ -1,14 +1,14 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { Building2, CheckCircle2, Ban, Wallet } from 'lucide-react'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { PageHeader } from '@/components/shared/page-header'
-import { StatsCard } from '@/components/shared/stats-card'
 import { TenantsTable, type TenantRow } from '@/components/admin/tenants-table'
-import { formatCurrency } from '@/lib/utils'
 import { computeEffectiveStatus } from '@/lib/tenant-status'
 
-export const metadata: Metadata = { title: 'Tenants' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.tenants')
+  return { title: t('title') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function AdminTenantsPage({
@@ -41,20 +41,9 @@ export default async function AdminTenantsPage({
     return tenant
   })
 
-  const active = tenants.filter((tenant) => tenant.status === 'active').length
-  const blocked = tenants.filter((tenant) => tenant.status === 'blocked').length
-  const revenue = tenants.reduce((sum, tenant) => sum + (tenant.price_paid ?? 0), 0)
-
   return (
     <div className="space-y-6">
       <PageHeader title={t('title')} subtitle={t('count', { count: tenants.length })} />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title={t('statTotal')} value={tenants.length} icon={Building2} iconClassName="bg-violet-500" />
-        <StatsCard title={t('statActive')} value={active} icon={CheckCircle2} iconClassName="bg-emerald-500" />
-        <StatsCard title={t('statBlocked')} value={blocked} icon={Ban} iconClassName="bg-rose-500" />
-        <StatsCard title={t('statRevenue')} value={formatCurrency(revenue)} icon={Wallet} iconClassName="bg-amber-500" />
-      </div>
 
       <TenantsTable tenants={tenants} initialStatus={initialStatus} />
     </div>

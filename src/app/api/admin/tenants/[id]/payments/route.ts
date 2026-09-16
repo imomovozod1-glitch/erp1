@@ -7,6 +7,10 @@ import { isoDate } from '@/lib/utils'
 const paymentSchema = z.object({
   amount: z.number().positive(),
   note: z.string().optional().nullable(),
+  /** The term this payment buys; defaults to the tenant's current one. */
+  license_months: z.number().int().min(1).max(120).optional(),
+  /** Seats this payment covers; defaults to the tenant's current count. */
+  license_count: z.number().int().min(1).optional(),
 })
 
 function addMonths(dateStr: string, months: number): string {
@@ -16,8 +20,8 @@ function addMonths(dateStr: string, months: number): string {
 }
 
 /**
- * Records a payment and extends the subscription by the tenant's
- * `license_months` term — from the later of "today" or the current
+ * Records a payment and extends the subscription by the chosen term (or the
+ * tenant's current `license_months`) — from the later of "today" or the current
  * subscription_ends_at, so paying while still active stacks the new term
  * on top instead of shortening it. Always reactivates status to 'active'
  * (see src/lib/tenant-status.ts for the read-time active→blocked direction).
@@ -51,7 +55,8 @@ export async function POST(
     tenant.subscription_ends_at && new Date(tenant.subscription_ends_at).getTime() > Date.now()
       ? tenant.subscription_ends_at
       : today
-  const newEndsAt = addMonths(base, tenant.license_months || 1)
+  const months = input.license_months ?? (tenant.license_months || 1)
+  const newEndsAt = addMonths(base, months)
 
   const { error: paymentError } = await supabase.from('tenant_payments').insert({
     tenant_id: id,
@@ -66,6 +71,8 @@ export async function POST(
     .update({
       price_paid: Number(tenant.price_paid || 0) + input.amount,
       subscription_ends_at: newEndsAt,
+      license_months: months,
+      ...(input.license_count !== undefined ? { license_count: input.license_count } : {}),
       status: 'active',
     })
     .eq('id', id)

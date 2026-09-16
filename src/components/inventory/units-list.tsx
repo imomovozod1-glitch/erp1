@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { Plus, Trash2, Scale, Pencil, Check, X } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -24,6 +25,7 @@ interface UnitRow {
 
 export function UnitsList({ lang, initialUnits }: UnitsListProps) {
   const tCommon = useTranslations('common')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const t = useTranslations('inventory')
   const supabase = createClient() as any
   // The list arrives with the page instead of from a round trip after
@@ -74,6 +76,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
   }
 
   const handleDeleteUnit = async (id: string) => {
+    if (!(await confirmDelete({ name: units.find((u) => u.id === id)?.name }))) return
     const { error } = await supabase.from('measurement_units').delete().eq('id', id)
     if (error) {
       toast.error(error.message || tCommon('error'))
@@ -299,6 +302,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
           </div>
         </CardContent>
       </Card>
+      {confirmDialog}
     </div>
   )
 }

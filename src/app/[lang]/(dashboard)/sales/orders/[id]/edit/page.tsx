@@ -4,7 +4,7 @@ import { OrderForm } from '@/components/sales/order-form'
 import { getCachedOrderById, getCachedCustomersForSelect, getAssignableUsers, getOrderItemsForEdit } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { requireModuleEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -33,6 +33,11 @@ export default async function EditOrderPage({
 
   if (!order) {
     notFound()
+  }
+  // A cancelled sale is fully reversed (stock, cashbox, debt) — editing it
+  // would move stock and money again, so it is read-only.
+  if ((order as { status?: string }).status === 'cancelled') {
+    redirect(`/${lang}/sales/orders/${id}`)
   }
 
   return (

@@ -14,7 +14,14 @@ import { computeEffectiveStatus } from '@/lib/tenant-status'
 import { formatPhoneInput } from '@/lib/tenant-auth'
 import { getInitials } from '@/lib/utils'
 
-export const metadata: Metadata = { title: 'Edit tenant' }
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const [t, { data }] = await Promise.all([
+    getTranslations('admin.tenants'),
+    (getCacheClient() as any).from('tenants').select('company_name').eq('id', id).maybeSingle(),
+  ])
+  return { title: data?.company_name ? `${data.company_name} · ${t('title')}` : t('title') }
+}
 export const dynamic = 'force-dynamic'
 
 const STATUS_TONE: Record<string, StatusTone> = {
@@ -101,7 +108,7 @@ export default async function TenantDetailPage({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <PaymentHistory tenantId={tenant.id} payments={payments ?? []} totalPaid={tenant.price_paid ?? 0} />
+          <PaymentHistory payments={payments ?? []} totalPaid={tenant.price_paid ?? 0} />
         </CardContent>
       </Card>
 

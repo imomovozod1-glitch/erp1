@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { lockMinutesFrom } from '@/lib/login-lock'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -51,7 +52,8 @@ export function AdminLoginForm() {
         body: JSON.stringify({ email: data.email, password: data.password }),
       })
       if (!res.ok) {
-        toast.error(res.status === 429 ? t('tooManyAttempts') : t('invalidCredentials'))
+        const lockMinutes = await lockMinutesFrom(res)
+        toast.error(lockMinutes !== null ? t('tooManyAttempts', { minutes: lockMinutes }) : t('invalidCredentials'))
         setIsLoading(false)
         return
       }

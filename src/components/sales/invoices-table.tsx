@@ -22,6 +22,7 @@ import { createClient } from '@/lib/supabase/client'
 import { invalidateInvoices } from '@/lib/data/revalidate'
 import { effectiveInvoiceStatus, invoiceStatusTone, nextInvoiceStatuses } from '@/lib/statuses'
 import { setInvoiceStatus } from '@/lib/status-actions'
+import { BusinessRpcError, businessRpcErrorMessage } from '@/lib/business-rpc'
 
 interface InvoicesTableProps {
   /** Only the current page's rows — the server applied search and paging. */
@@ -31,6 +32,8 @@ interface InvoicesTableProps {
   pageSize: number
   total: number
   totalPages: number
+  /** May the caller change invoices (edit, status)? */
+  canEdit: boolean
 }
 
 export function InvoicesTable({
@@ -40,7 +43,9 @@ export function InvoicesTable({
   pageSize,
   total,
   totalPages,
+  canEdit,
 }: InvoicesTableProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('sales')
   const router = useRouter()
@@ -61,7 +66,11 @@ export function InvoicesTable({
       toast.success(tCommon('statusUpdated'))
       router.refresh()
     } catch (error: any) {
-      toast.error(error?.message || tCommon('error'))
+      toast.error(
+        error instanceof BusinessRpcError
+          ? businessRpcErrorMessage(tRoot, error)
+          : error?.message || tCommon('error')
+      )
     } finally {
       setPendingId(null)
     }
@@ -175,10 +184,12 @@ export function InvoicesTable({
                           <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">
-                          <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)}>
-                            <Pencil className="h-4 w-4 mr-2 text-slate-500" />
-                            {tCommon('edit')}
-                          </DropdownMenuItem>
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)}>
+                              <Pencil className="h-4 w-4 mr-2 text-slate-500" />
+                              {tCommon('edit')}
+                            </DropdownMenuItem>
+                          )}
                           {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
                             <DropdownMenuItem
                               onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
@@ -189,7 +200,7 @@ export function InvoicesTable({
                             </DropdownMenuItem>
                           )}
                           {nextInvoiceStatuses(effectiveInvoiceStatus(invoice))
-                            .filter((next) => next !== 'paid')
+                            .filter((next) => canEdit && next !== 'paid')
                             .map((next) => (
                               <DropdownMenuItem
                                 key={next}

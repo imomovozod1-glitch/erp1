@@ -6,17 +6,7 @@ import { toast } from 'sonner'
 import { AlertTriangle, Ban, Loader2, PackageCheck, Undo2, Wallet, UserCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cancelSalesOrder, SaleCancelError } from '@/lib/status-actions'
-import {
-  invalidateAnalytics,
-  invalidateCashbox,
-  invalidateCustomers,
-  invalidateInvoices,
-  invalidateMovements,
-  invalidateOrderItems,
-  invalidateOrders,
-  invalidateProducts,
-  invalidateTransactions,
-} from '@/lib/data/revalidate'
+import { invalidateSale } from '@/lib/data/revalidate'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -48,7 +38,8 @@ export function CancelSaleDialog({
   order: CancelableSale | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCancelled: () => void
+  /** The action already re-renders the current route; this is for client-held state. */
+  onCancelled?: () => void
 }) {
   const t = useTranslations()
   const [isCancelling, setIsCancelling] = useState(false)
@@ -68,17 +59,9 @@ export function CancelSaleDialog({
       const { data: { session } } = await supabase.auth.getSession()
       const result = await cancelSalesOrder(supabase, order, session?.user?.id ?? null)
 
-      await Promise.all([
-        invalidateOrders(),
-        invalidateOrderItems(),
-        invalidateProducts(),
-        invalidateMovements(),
-        invalidateInvoices(),
-        invalidateTransactions(),
-        invalidateCustomers(),
-        invalidateCashbox(),
-        invalidateAnalytics(),
-      ]).catch(() => {
+      // One action: its response also carries the re-rendered current route,
+      // so callers need no extra `router.refresh()`.
+      await invalidateSale().catch(() => {
         // Only means another page may show stale numbers until its cache window
         // lapses; the cancellation itself is already written.
       })
@@ -97,7 +80,7 @@ export function CancelSaleDialog({
       })
 
       onOpenChange(false)
-      onCancelled()
+      onCancelled?.()
     } catch (error: any) {
       if (error instanceof SaleCancelError) {
         toast.error(
@@ -107,11 +90,13 @@ export function CancelSaleDialog({
                 balance: formatCurrency(error.details.balance ?? 0),
                 amount: formatCurrency(error.details.amount ?? 0),
               })
-            : t('sales.cancelSaleAlreadyCancelled')
+            : error.code === 'forbidden'
+              ? t('common.noPermission')
+              : t('sales.cancelSaleAlreadyCancelled')
         )
         if (error.code === 'already_cancelled') {
           onOpenChange(false)
-          onCancelled()
+          onCancelled?.()
         }
       } else {
         toast.error(error?.message || t('common.error'))

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2, Plus, Trash2, ShieldCheck } from 'lucide-react'
@@ -31,6 +32,7 @@ export function SuperAdminsTable({
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const t = useTranslations('admin.settings.admins')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
 
   const [showForm, setShowForm] = useState(false)
@@ -73,7 +75,7 @@ export function SuperAdminsTable({
   }
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(t('confirmDelete', { name }))) return
+    if (!(await confirmDelete({ description: t('confirmDelete', { name }) }))) return
     setDeletingId(id)
     try {
       const res = await fetch(`/api/admin/admins/${id}`, { method: 'DELETE' })
@@ -186,6 +188,7 @@ export function SuperAdminsTable({
           </TableBody>
         </Table>
       </CardContent>
+      {confirmDialog}
     </Card>
   )
 }

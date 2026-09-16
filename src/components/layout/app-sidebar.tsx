@@ -113,12 +113,13 @@ const NAV_ITEMS: NavItem[] = [
  * smaller default, so "Ombor" and "Mahsulotlar" are visibly two different
  * levels rather than two identical rows one indent apart.
  *
- * Collapsed to the icon rail nothing changes: the primitive already pins the
- * button to 32px there with an important utility, and the icon is pinned back
- * to 16px to match — a 20px glyph in a 32px square leaves no padding.
+ * The icon keeps its 20px when the sidebar collapses to the icon rail — it used
+ * to shrink to 16px there, so the icons visibly jumped on every toggle. The
+ * primitive pins a collapsed button to 32px with 8px padding (16px of room);
+ * 6px padding leaves exactly the 20px the icon needs.
  */
 const TOP_LEVEL_BUTTON =
-  'h-10 text-[15px] font-semibold [&_svg]:size-5 group-data-[collapsible=icon]:[&_svg]:size-4'
+  'h-10 text-[15px] font-semibold [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!'
 
 /**
  * Deliberately one step down from TOP_LEVEL_BUTTON in both size and weight.

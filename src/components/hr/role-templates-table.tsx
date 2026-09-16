@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -38,6 +39,7 @@ function countEnabledModules(permissions: Permissions | null): number {
 
 export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
   const tCommon = useTranslations('common')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const t = useTranslations('hr')
   const router = useRouter()
   const [search, setSearch] = useState('')
@@ -57,6 +59,7 @@ export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const handleDelete = async (id: string) => {
+    if (!(await confirmDelete({ name: roles.find((r) => r.id === id)?.name }))) return
     setIsDeleting(id)
     try {
       // Server route: deleting a role also has to clear `role_template_id` on
@@ -184,6 +187,7 @@ export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
           </div>
         )}
       </CardContent>
+      {confirmDialog}
     </Card>
   )
 }

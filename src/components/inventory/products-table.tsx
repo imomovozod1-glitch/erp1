@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useConfirmDelete } from "@/components/shared/confirm-dialog";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -67,6 +68,7 @@ export function ProductsTable({
   status,
 }: ProductsTableProps) {
   const t = useTranslations();
+  const [confirmDelete, confirmDialog] = useConfirmDelete();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
@@ -152,6 +154,7 @@ export function ProductsTable({
       toast.error(t('inventory.cannotDeleteWithStock'));
       return;
     }
+    if (!(await confirmDelete({ name: product?.name }))) return;
     
     setIsDeleting(id);
     const supabase = createClient() as any;
@@ -614,6 +617,7 @@ export function ProductsTable({
         onOpenChange={setIsScanModalOpen}
         lang={lang}
       />
+      {confirmDialog}
     </TooltipProvider>
   );
 }

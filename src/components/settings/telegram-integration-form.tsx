@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { toast } from 'sonner'
 import { Send, CheckCircle2, Loader2, Unplug, ExternalLink, RefreshCw, AlertTriangle, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,6 +29,7 @@ import type { TelegramStatus } from '@/lib/integrations/telegram-types'
 export function TelegramIntegrationForm({ initialStatus }: { initialStatus: TelegramStatus }) {
   const tCommon = useTranslations('common')
   const t = useTranslations('settings.integrations')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
 
   // The card's state is rendered by the server and arrives as a prop. It used
   // to fetch it back from our own `/api/integrations/telegram` after hydrating
@@ -161,7 +163,7 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
 
   const handleDisconnect = async () => {
     if (isDisconnecting) return
-    if (!confirm(t('disconnectConfirm'))) return
+    if (!(await confirmDelete({ description: t('disconnectConfirm'), confirmLabel: t('disconnect') }))) return
 
     setIsDisconnecting(true)
     try {
@@ -392,6 +394,7 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
           )}
         </div>
       </CardContent>
+      {confirmDialog}
     </Card>
   )
 }

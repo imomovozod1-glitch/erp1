@@ -20,28 +20,52 @@ export async function checkLoginRateLimit(identifier: string, ip: string): Promi
   const supabase = getCacheClient() as any
   const windowStart = new Date(Date.now() - WINDOW_MINUTES * 60 * 1000).toISOString()
 
+  // The newest failures only: the lock lifts when the MAX-th most recent one
+  // leaves the window, because from then on fewer than MAX remain inside it.
   const [identifierResult, ipResult] = await Promise.all([
     supabase
       .from('login_attempts')
-      .select('id', { count: 'exact', head: true })
+      .select('created_at')
       .eq('identifier', identifier)
       .eq('success', false)
-      .gte('created_at', windowStart),
+      .gte('created_at', windowStart)
+      .order('created_at', { ascending: false })
+      .limit(MAX_ATTEMPTS_PER_IDENTIFIER),
     supabase
       .from('login_attempts')
-      .select('id', { count: 'exact', head: true })
+      .select('created_at')
       .eq('ip', ip)
       .eq('success', false)
-      .gte('created_at', windowStart),
+      .gte('created_at', windowStart)
+      .order('created_at', { ascending: false })
+      .limit(MAX_ATTEMPTS_PER_IP),
   ])
 
-  const identifierCount = identifierResult.count ?? 0
-  const ipCount = ipResult.count ?? 0
+  const unlockAt = (rows: { created_at: string }[] | null, max: number): number => {
+    if (!rows || rows.length < max) return 0
+    return new Date(rows[max - 1].created_at).getTime() + WINDOW_MINUTES * 60 * 1000
+  }
+  const lockedUntil = Math.max(
+    unlockAt(identifierResult.data, MAX_ATTEMPTS_PER_IDENTIFIER),
+    unlockAt(ipResult.data, MAX_ATTEMPTS_PER_IP)
+  )
 
-  if (identifierCount >= MAX_ATTEMPTS_PER_IDENTIFIER || ipCount >= MAX_ATTEMPTS_PER_IP) {
-    return { allowed: false, retryAfterSeconds: WINDOW_MINUTES * 60 }
+  if (lockedUntil > Date.now()) {
+    return { allowed: false, retryAfterSeconds: Math.ceil((lockedUntil - Date.now()) / 1000) }
   }
   return { allowed: true }
+}
+
+/**
+ * The 429 every login route answers a lock with: `retryAfterSeconds` in the
+ * body for the form's message, and the standard `Retry-After` header.
+ */
+export function tooManyAttemptsBody(result: RateLimitResult) {
+  const retryAfterSeconds = result.retryAfterSeconds ?? WINDOW_MINUTES * 60
+  return {
+    body: { error: 'too_many_attempts', retryAfterSeconds },
+    init: { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } },
+  }
 }
 
 export async function recordLoginAttempt(identifier: string, ip: string, success: boolean): Promise<void> {

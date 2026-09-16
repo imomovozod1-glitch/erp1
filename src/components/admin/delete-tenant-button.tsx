@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Trash2, Loader2 } from 'lucide-react'
@@ -40,6 +41,7 @@ export function DeleteTenantButton({
   subscriptionEndsAt: string | null
 }) {
   const t = useTranslations('admin.delete')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const now = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
@@ -68,7 +70,7 @@ export function DeleteTenantButton({
 
   const handleDelete = async () => {
     if (!eligible) return
-    if (!confirm(t('confirm', { name: companyName }))) return
+    if (!(await confirmDelete({ description: t('confirm', { name: companyName }), confirmLabel: t('button') }))) return
 
     setIsDeleting(true)
     try {
@@ -101,6 +103,7 @@ export function DeleteTenantButton({
         {t('button')}
       </Button>
       {!eligible && <p className="text-xs text-slate-400 dark:text-slate-500">{t('enabledAfter', { days: daysRemaining })}</p>}
+      {confirmDialog}
     </div>
   )
 }

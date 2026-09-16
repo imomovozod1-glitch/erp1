@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { checkLoginRateLimit, recordLoginAttempt, getClientIp } from '@/lib/rate-limit'
+import { checkLoginRateLimit, recordLoginAttempt, getClientIp, tooManyAttemptsBody } from '@/lib/rate-limit'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
 
   const rateLimit = await checkLoginRateLimit(email, ip)
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'too_many_attempts' }, { status: 429 })
+    const { body, init } = tooManyAttemptsBody(rateLimit)
+    return NextResponse.json(body, init)
   }
 
   const supabase = await createClient()

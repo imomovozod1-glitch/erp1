@@ -58,6 +58,7 @@ export default async function OrdersPage({
         pageSize={result.pageSize}
         total={result.total}
         totalPages={result.totalPages}
+        canEdit={canEdit}
       />
     </div>
   )

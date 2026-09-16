@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { MoreHorizontal, Pencil, Trash2, Users, MapPin } from 'lucide-react'
@@ -53,6 +54,7 @@ export function CustomersTable({
 }: CustomersTableProps) {
   
   const tCommon = useTranslations('common')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const tSales = useTranslations('sales')
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
@@ -64,6 +66,7 @@ export function CustomersTable({
   const paginated = customers
 
   const handleDelete = async (id: string) => {
+    if (!(await confirmDelete({ name: customers.find((c) => c.id === id)?.name }))) return
     setIsDeleting(id)
     const supabase = createClient()
     const { error } = await supabase.from('customers').delete().eq('id', id)
@@ -213,6 +216,7 @@ export function CustomersTable({
         lang={lang}
       />
     )}
+      {confirmDialog}
     </TooltipProvider>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -27,6 +28,7 @@ interface CustomerCategoriesTableProps {
 
 export function CustomerCategoriesTable({ categories, lang }: CustomerCategoriesTableProps) {
   const tCommon = useTranslations('common')
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
@@ -47,6 +49,7 @@ export function CustomerCategoriesTable({ categories, lang }: CustomerCategories
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const handleDelete = async (id: string) => {
+    if (!(await confirmDelete({ name: categories.find((c) => c.id === id)?.name }))) return
     setIsDeleting(id)
     const supabase = createClient()
     const { error } = await supabase.from('customer_categories').delete().eq('id', id)
@@ -167,6 +170,7 @@ export function CustomerCategoriesTable({ categories, lang }: CustomerCategories
           </div>
         )}
       </CardContent>
+      {confirmDialog}
     </Card>
   )
 }
