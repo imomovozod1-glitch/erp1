@@ -10,6 +10,7 @@
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { CACHE_TAGS } from './cache-tags'
+import { SUPPLIER_ORDER_COLUMNS, totalPayables as sumPayables } from '@/lib/supplier-debt'
 import { orderDiscountFactors } from '@/lib/sales-discounts'
 
 export const getCachedAnalyticsStats = unstable_cache(
@@ -309,8 +310,8 @@ export const getCachedDashboardStats = unstable_cache(
       supabase.from('cashboxes').select('balance').eq('tenant_id', tenantId),
       supabase.from('products').select('stock, cost_price').eq('tenant_id', tenantId).eq('is_active', true),
       supabase.from('invoices').select('total_amount, paid_amount').eq('tenant_id', tenantId).not('status', 'in', '("paid","cancelled")'),
-      supabase.from('purchase_orders').select('total_amount').eq('tenant_id', tenantId).neq('status', 'cancelled'),
-      supabase.from('transactions').select('amount').eq('tenant_id', tenantId).eq('type', 'expense').not('supplier_id', 'is', null),
+      supabase.from('purchase_orders').select(SUPPLIER_ORDER_COLUMNS).eq('tenant_id', tenantId).in('status', ['received', 'partially_received']),
+      supabase.from('transactions').select('supplier_id, amount').eq('tenant_id', tenantId).eq('type', 'expense').not('supplier_id', 'is', null),
       supabase
         .from('sales_order_items')
         .select('order_id, quantity, total_price, unit_cost, products(cost_price), sales_orders(order_date, status, discount_amount)')
@@ -330,12 +331,9 @@ export const getCachedDashboardStats = unstable_cache(
       ? (costLayersRes.data ?? []).reduce((sum: number, l: any) => sum + (Number(l.remaining_qty) || 0) * (Number(l.unit_cost) || 0), 0)
       : (allProductsRes.data ?? []).reduce((sum: number, p: any) => sum + ((Number(p.stock) || 0) * (Number(p.cost_price) || 0)), 0)
     const totalReceivables = (unpaidInvoicesRes.data ?? []).reduce((sum: number, inv: any) => sum + ((Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)), 0)
-    // purchase_orders has no paid_amount column (unlike invoices), so "what we still
-    // owe suppliers" is every non-cancelled PO's total minus every supplier payment
-    // ever made — the same formula used on the supplier detail page.
-    const totalPurchaseOrders = (unpaidPurchaseOrdersRes.data ?? []).reduce((sum: number, po: any) => sum + (Number(po.total_amount) || 0), 0)
-    const totalSupplierPayments = (supplierPaymentsRes.data ?? []).reduce((sum: number, tx: any) => sum + (Number(tx.amount) || 0), 0)
-    const totalPayables = totalPurchaseOrders - totalSupplierPayments
+    // What we owe suppliers for goods received, supplier by supplier — see
+    // src/lib/supplier-debt.ts.
+    const totalPayables = sumPayables(unpaidPurchaseOrdersRes.data ?? [], supplierPaymentsRes.data ?? [])
 
     // Sold items with cost data, used to compute real profit (sales - cost price) per period.
     // Prefers the realized unit_cost charged at sale time (FIFO/LIFO/AVECO); falls back

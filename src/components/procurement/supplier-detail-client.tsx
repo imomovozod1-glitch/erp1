@@ -25,6 +25,7 @@ const LocationPreviewMap = dynamic(
 )
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
+import { orderOwed, supplierBalance } from '@/lib/supplier-debt'
 import {
   Download, Truck, Phone, Mail, Globe, MapPin, DollarSign, Landmark
 } from 'lucide-react'
@@ -54,16 +55,13 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Calculate Metrics — a cancelled PO never owed us anything, and only expense
-  // transactions represent money actually paid out to this supplier (a stray
-  // non-expense transaction tagged with this supplier_id must not net against debt).
-  const totalPurchases = purchaseOrders
-    .filter((po) => po.status !== 'cancelled')
-    .reduce((sum, po) => sum + (po.total_amount || 0), 0)
+  // Only received goods are owed, and only expense rows are payments — see
+  // src/lib/supplier-debt.ts (the dashboard and the cashbox use the same rule).
+  const totalPurchases = purchaseOrders.reduce((sum, po) => sum + orderOwed(po), 0)
   const totalPayments = transactions
     .filter((tx) => tx.type === 'expense')
-    .reduce((sum, tx) => sum + (tx.amount || 0), 0)
-  const outstandingDebt = totalPurchases - totalPayments
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0)
+  const outstandingDebt = supplierBalance(purchaseOrders, transactions)
 
   // Export to Excel function
   const handleExport = async () => {

@@ -77,7 +77,7 @@ export const getCachedSupplierDetails = unstable_cache(
       { data: transactions },
     ] = await Promise.all([
       supabase.from('suppliers').select('*').eq('id', id).eq('tenant_id', tenantId).single(),
-      supabase.from('purchase_orders').select('*').eq('supplier_id', id).eq('tenant_id', tenantId).order('order_date', { ascending: false }),
+      supabase.from('purchase_orders').select('*, purchase_order_items(received_qty, unit_cost)').eq('supplier_id', id).eq('tenant_id', tenantId).order('order_date', { ascending: false }),
       supabase.from('transactions').select('*').eq('supplier_id', id).eq('tenant_id', tenantId).order('transaction_date', { ascending: false }),
     ])
 

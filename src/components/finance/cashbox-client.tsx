@@ -30,6 +30,7 @@ import { createClient } from '@/lib/supabase/client'
 import { invalidateCashbox, invalidateCashboxMovement, invalidateTransactions } from '@/lib/data/revalidate'
 import { BusinessRpcError, businessRpcErrorMessage, callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
+import { SUPPLIER_ORDER_COLUMNS, supplierBalance } from '@/lib/supplier-debt'
 import {
   emptyTransactionForm,
   type CashboxTransactionForm,
@@ -231,27 +232,13 @@ export function CashboxClient({
   }
 
   /**
-   * Outstanding balance owed to a supplier: everything ordered from them,
-   * minus everything already paid out.
-   *
-   * Deliberately the same arithmetic as the supplier detail page's "balance
-   * owed" card (supplier-detail-client.tsx) — cancelled purchase orders never
-   * owed anything, and only `expense` transactions are money that actually
-   * left the till, so a stray income row tagged with the supplier cannot
-   * inflate the debt.
+   * Outstanding balance owed to a supplier: goods received from them minus
+   * what was paid — `supplierBalance` (src/lib/supplier-debt.ts), the same
+   * rule as the supplier page and the dashboard.
    */
   const fetchSupplierDebt = async (supplierId: string, fallback: boolean) => {
     setIsLoadingSupplierDebt(true)
     try {
-      const sumPaid = (rows: any[]) =>
-        rows
-          .filter((tx) => tx.type === 'expense')
-          .reduce((sum: number, tx: any) => sum + (Number(tx.amount) || 0), 0)
-      const sumOrdered = (rows: any[]) =>
-        rows
-          .filter((po) => po.status !== 'cancelled')
-          .reduce((sum: number, po: any) => sum + (Number(po.total_amount) || 0), 0)
-
       if (fallback) {
         const read = (key: string) => {
           try {
@@ -263,13 +250,13 @@ export function CashboxClient({
         }
         const orders = read('erp_purchase_orders').filter((po: any) => po.supplier_id === supplierId)
         const paid = read('erp_transactions').filter((tx: any) => tx.supplier_id === supplierId)
-        setSupplierDebt(sumOrdered(orders) - sumPaid(paid))
+        setSupplierDebt(supplierBalance(orders, paid))
       } else {
         const [{ data: orders, error: ordersError }, { data: paid, error: paidError }] =
           await Promise.all([
             supabase
               .from('purchase_orders')
-              .select('total_amount, status')
+              .select(SUPPLIER_ORDER_COLUMNS)
               .eq('supplier_id', supplierId),
             supabase
               .from('transactions')
@@ -278,7 +265,7 @@ export function CashboxClient({
           ])
         if (ordersError) throw ordersError
         if (paidError) throw paidError
-        setSupplierDebt(sumOrdered(orders || []) - sumPaid(paid || []))
+        setSupplierDebt(supplierBalance(orders || [], paid || []))
       }
     } catch (err: any) {
       console.error('Error fetching supplier debt:', err.message)
