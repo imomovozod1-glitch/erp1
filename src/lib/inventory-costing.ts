@@ -27,6 +27,7 @@ export type CostLayerSourceType =
   | 'adjustment'
   | 'ai_scan'
   | 'opening_balance'
+  | 'sale_cancellation'
 
 interface TenantLike {
   costing_method?: CostingMethod | null

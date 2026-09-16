@@ -331,9 +331,13 @@ export function ProductsTable({
         }
 
         toast.loading(t("inventory.importingData"));
+        // SKUs are unique per tenant (products_tenant_sku_key), not globally —
+        // a bare 'sku' target matches no constraint and Postgres rejects the
+        // upsert. tenant_id isn't in the payload: the set_tenant_id() BEFORE
+        // INSERT trigger fills it in before the conflict check runs.
         const { error } = await supabase
           .from("products")
-          .upsert(newProducts as any, { onConflict: 'sku' });
+          .upsert(newProducts as any, { onConflict: 'tenant_id,sku' });
 
         toast.dismiss();
         if (error) {

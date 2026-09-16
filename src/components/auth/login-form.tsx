@@ -71,7 +71,11 @@ export function LoginForm({ lang }: { lang: string }) {
         body: JSON.stringify({ phone: data.phone, password: data.password }),
       })
       if (!res.ok) {
-        toast.error(res.status === 429 ? t('tooManyAttempts') : t('invalidCredentials'))
+        toast.error(
+          res.status === 429 ? t('tooManyAttempts')
+            : res.status === 403 ? t('accountDisabled')
+            : t('invalidCredentials')
+        )
         setIsLoading(false)
         return
       }

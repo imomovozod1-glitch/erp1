@@ -140,6 +140,67 @@ export async function applyCustomerCredit(supabase: any, customerId: string, amo
   return { appliedCredit, remainingAmount: amount - appliedCredit };
 }
 
+/**
+ * The cashbox a sale paid into, found with the same rule `adjustCashboxBalance`
+ * used to credit it — so cancelling the sale takes the money back out of the
+ * same drawer. Falls back to the primary cashbox when none of that type exists.
+ */
+export async function findSaleCashbox(
+  supabase: any,
+  cashboxType?: 'cash' | 'card' | 'transfer' | 'other'
+): Promise<{ id: string; name: string; balance: number } | null> {
+  const { data: cashboxes, error } = await supabase
+    .from('cashboxes')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const list = cashboxes ?? [];
+  const target = pickTargetCashbox(list, cashboxType) ?? pickTargetCashbox(list);
+  return target ? { id: target.id, name: target.name, balance: Number(target.balance) || 0 } : null;
+}
+
+/**
+ * Takes `amount` out of one cashbox, re-reading its balance first.
+ *
+ * Unlike `adjustCashboxBalance` this never falls back to localStorage: a refund
+ * that only "happened" in one browser would leave the books claiming the money
+ * is still there. Throws `InsufficientFundsError` when the drawer no longer
+ * holds that much.
+ */
+export async function withdrawFromCashbox(supabase: any, cashboxId: string, amount: number): Promise<void> {
+  const { data: cashbox, error } = await supabase
+    .from('cashboxes')
+    .select('balance')
+    .eq('id', cashboxId)
+    .single();
+  if (error) throw error;
+
+  const balance = Number(cashbox?.balance) || 0;
+  if (amount > balance) throw new InsufficientFundsError(balance, amount);
+
+  const { error: updateErr } = await supabase
+    .from('cashboxes')
+    .update({ balance: balance - amount })
+    .eq('id', cashboxId);
+  if (updateErr) throw updateErr;
+}
+
+/** Adds `amount` to one cashbox, re-reading its balance first. No localStorage fallback. */
+export async function depositToCashbox(supabase: any, cashboxId: string, amount: number): Promise<void> {
+  const { data: cashbox, error } = await supabase
+    .from('cashboxes')
+    .select('balance')
+    .eq('id', cashboxId)
+    .single();
+  if (error) throw error;
+
+  const { error: updateErr } = await supabase
+    .from('cashboxes')
+    .update({ balance: (Number(cashbox?.balance) || 0) + amount })
+    .eq('id', cashboxId);
+  if (updateErr) throw updateErr;
+}
+
 export async function adjustCashboxBalance(amount: number, type: 'income' | 'expense', supabaseInput?: any, cashboxType?: 'cash' | 'card' | 'transfer' | 'other') {
   const supabase = supabaseInput || createClient();
   const change = type === 'income' ? amount : -amount;

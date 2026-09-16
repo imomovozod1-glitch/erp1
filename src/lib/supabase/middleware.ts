@@ -167,9 +167,16 @@ export async function updateSession(request: NextRequest) {
       // and src/app/api/admin/tenants/[id]/reset-password/route.ts.
       const { data: profile } = await supabase
         .from('profiles')
-        .select('force_logout_at')
+        .select('force_logout_at, is_active')
         .eq('id', user.id)
         .maybeSingle()
+
+      // A tenant admin deactivating a login (api/tenant/users/[id]/access)
+      // must end that user's session too, not just flip a flag.
+      if ((profile as any)?.is_active === false) {
+        await supabase.auth.signOut()
+        return { supabaseResponse, user: null }
+      }
 
       const forceLogoutAt = (profile as any)?.force_logout_at
       if (

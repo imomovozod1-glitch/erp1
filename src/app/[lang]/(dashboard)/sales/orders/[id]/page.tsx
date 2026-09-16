@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { CancelSaleDialog } from '@/components/sales/cancel-sale-dialog'
 import { 
   ShoppingBag, 
   User, 
@@ -18,6 +19,7 @@ import {
   FileText, 
   ArrowLeft, 
   Pencil,
+  Ban,
   Loader2 
 } from 'lucide-react'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
@@ -56,6 +58,9 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<any>(null)
   const [items, setItems] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isCancelOpen, setIsCancelOpen] = useState(false)
+  // Bumped after a cancellation so the effect below re-reads the order.
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     async function fetchOrderDetails() {
@@ -90,7 +95,7 @@ export default function OrderDetailPage() {
     if (id) {
       fetchOrderDetails()
     }
-  }, [id, lang, router])
+  }, [id, lang, router, reloadKey])
 
   if (isLoading) {
     return (
@@ -122,14 +127,36 @@ export default function OrderDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           {tCommon('back')}
         </Button>
-        <Button
-          onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}
-          className="w-full md:w-auto h-9 gap-2 text-xs bg-violet-600 hover:bg-violet-700 text-white"
-        >
-          <Pencil className="h-4 w-4" />
-          {tCommon('edit')}
-        </Button>
+        <div className="flex w-full md:w-auto flex-col-reverse sm:flex-row gap-2">
+          {order.status !== 'cancelled' && (
+            <Button
+              variant="outline"
+              onClick={() => setIsCancelOpen(true)}
+              className="w-full md:w-auto h-9 gap-2 text-xs border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/40"
+            >
+              <Ban className="h-4 w-4" />
+              {t('cancelSale')}
+            </Button>
+          )}
+          <Button
+            onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}
+            className="w-full md:w-auto h-9 gap-2 text-xs bg-violet-600 hover:bg-violet-700 text-white"
+          >
+            <Pencil className="h-4 w-4" />
+            {tCommon('edit')}
+          </Button>
+        </div>
       </div>
+
+      <CancelSaleDialog
+        order={order}
+        open={isCancelOpen}
+        onOpenChange={setIsCancelOpen}
+        onCancelled={() => {
+          setReloadKey((k) => k + 1)
+          router.refresh()
+        }}
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left column - Info card */}

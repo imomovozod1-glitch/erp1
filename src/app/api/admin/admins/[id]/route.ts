@@ -22,8 +22,11 @@ export async function DELETE(
     return NextResponse.json({ error: 'Cannot remove the last remaining super admin' }, { status: 400 })
   }
 
-  const { error } = await supabase.from('super_admins').delete().eq('id', id)
+  const { data: removed, error } = await supabase.from('super_admins').delete().eq('id', id).select('id')
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  // Only delete the auth user when the id really was a super-admin — without
+  // this, any auth user id (a tenant user, a support agent) would be deleted.
+  if (!removed?.length) return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
 
   await supabase.auth.admin.deleteUser(id)
 

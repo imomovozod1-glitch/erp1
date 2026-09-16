@@ -76,7 +76,7 @@ export function purchaseStatusTone(status: string): StatusTone {
 /**
  * Which statuses a document may move to next.
  *
- * Terminal states (delivered / paid / received / cancelled) list nothing: a
+ * Terminal states (paid / received / cancelled) list nothing: a
  * finished document is corrected by a new one, not by being walked backwards,
  * because the stock and cash effects behind it have already happened.
  */
@@ -85,7 +85,9 @@ export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   pending: ['confirmed', 'cancelled'],
   confirmed: ['shipped', 'cancelled'],
   shipped: ['delivered', 'cancelled'],
-  delivered: [],
+  // A delivered sale can still be cancelled: cancelSalesOrder takes the goods
+  // back and reverses the money, which is what a return at the counter is.
+  delivered: ['cancelled'],
   cancelled: [],
 }
 

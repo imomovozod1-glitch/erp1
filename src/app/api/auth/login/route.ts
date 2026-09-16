@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: auth, error } = await supabase.auth.signInWithPassword({
     email,
     password: parsed.data.password,
   })
@@ -39,6 +39,16 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_active')
+    .eq('id', auth.user.id)
+    .maybeSingle()
+  if (profile?.is_active === false) {
+    await supabase.auth.signOut()
+    return NextResponse.json({ error: 'account_disabled' }, { status: 403 })
   }
 
   return NextResponse.json({ ok: true })

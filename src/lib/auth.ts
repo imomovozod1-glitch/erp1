@@ -103,7 +103,9 @@ export interface TenantContext {
 export async function getTenantContext(): Promise<TenantContext | null> {
   const user = await getVerifiedUser()
   if (!user) return null
-  const profile = (await getCachedProfile(user.id)) as { role?: string; tenant_id?: string } | null
-  if (!profile?.tenant_id) return null
+  const profile = (await getCachedProfile(user.id)) as { role?: string; tenant_id?: string; is_active?: boolean } | null
+  // The middleware never runs for API routes, so a deactivated login has to be
+  // refused here as well. invalidateProfile() on deactivation keeps this fresh.
+  if (!profile?.tenant_id || profile.is_active === false) return null
   return { userId: user.id, tenantId: profile.tenant_id, role: profile.role ?? 'staff' }
 }

@@ -41,6 +41,11 @@ interface CategoryRow {
   person_type: 'employee' | 'supplier' | 'customer' | 'none'
 }
 
+// The shared Select popup has no inner padding, so items sat flush against its
+// edges. Padded here (not in ui/select.tsx) to keep the change to this dialog.
+const SELECT_CONTENT_CLASS = 'rounded-xl p-1.5'
+const SELECT_ITEM_CLASS = 'rounded-lg py-2 pl-2.5 pr-8'
+
 /**
  * Recording money in or out of a cashbox.
  *
@@ -142,13 +147,16 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                   if (cb) onCashboxChange(cb)
                 }}
               >
-                <SelectTrigger className="h-8 w-full border-0 bg-transparent p-0 shadow-none font-bold text-base text-slate-800 dark:text-slate-100 hover:bg-transparent focus:ring-0 [&_svg]:opacity-60">
+                <SelectTrigger className="h-9 w-full rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 pl-3 pr-2.5 font-bold text-base text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                   <SelectValue>{cashbox.name}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent alignItemWithTrigger={false} className={SELECT_CONTENT_CLASS}>
                   {cashboxes.map((cb) => (
-                    <SelectItem key={cb.id} value={cb.id} className="rounded-lg">
-                      {cb.name}
+                    <SelectItem key={cb.id} value={cb.id} className={SELECT_ITEM_CLASS}>
+                      <span className="flex min-w-0 flex-1 items-center justify-between gap-4">
+                        <span className="truncate font-medium">{cb.name}</span>
+                        <span className="text-xs tabular-nums text-muted-foreground">{formatCurrency(cb.balance)}</span>
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -158,7 +166,7 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                 {cashbox.name}
               </h3>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className={`text-xs text-muted-foreground ${cashboxes.length > 1 ? 'mt-1.5 pl-3' : ''}`}>
               {value.type === 'income'
                 ? (lang === 'uz' ? 'Kirim operatsiyasini kiritish' : lang === 'ru' ? 'Внести приходную операцию' : 'Register Income')
                 : (lang === 'uz' ? 'Chiqim operatsiyasini kiritish' : lang === 'ru' ? 'Внести расходную операцию' : 'Register Expense')
@@ -200,12 +208,12 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                   {selectedCategory?.name}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent alignItemWithTrigger={false} className={SELECT_CONTENT_CLASS}>
                 {(value.type === 'income' ? incomeCategories : expenseCategories).length === 0 ? (
                   <div className="px-3 py-4 text-xs text-slate-400 text-center">{tCommon('noData')}</div>
                 ) : (
                   (value.type === 'income' ? incomeCategories : expenseCategories).map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id} className="rounded-lg">
+                    <SelectItem key={cat.id} value={cat.id} className={SELECT_ITEM_CLASS}>
                       {cat.name}
                     </SelectItem>
                   ))
@@ -231,9 +239,9 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                       : (lang === 'uz' ? 'Mijozni tanlang' : lang === 'ru' ? 'Выберите клиента' : 'Select a customer')}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent alignItemWithTrigger={false} className={SELECT_CONTENT_CLASS}>
                   {customers.map((c) => (
-                    <SelectItem key={c.id} value={c.id} className="rounded-lg">
+                    <SelectItem key={c.id} value={c.id} className={SELECT_ITEM_CLASS}>
                       {c.name}
                     </SelectItem>
                   ))}
@@ -267,9 +275,9 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                       : (lang === 'uz' ? 'Xodimni tanlang' : lang === 'ru' ? 'Выберите сотрудника' : 'Select an employee')}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent alignItemWithTrigger={false} className={SELECT_CONTENT_CLASS}>
                   {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id} className="rounded-lg">
+                    <SelectItem key={emp.id} value={emp.id} className={SELECT_ITEM_CLASS}>
                       {emp.name}
                     </SelectItem>
                   ))}
@@ -297,9 +305,9 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                       : (lang === 'uz' ? 'Yetkazib beruvchini tanlang' : lang === 'ru' ? 'Выберите поставщика' : 'Select a supplier')}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent alignItemWithTrigger={false} className={SELECT_CONTENT_CLASS}>
                   {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={s.id} className="rounded-lg">
+                    <SelectItem key={s.id} value={s.id} className={SELECT_ITEM_CLASS}>
                       {s.name}
                     </SelectItem>
                   ))}

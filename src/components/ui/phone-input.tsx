@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { CountryFlag } from '@/components/ui/country-flag'
 import { cn } from '@/lib/utils'
 import {
   DEFAULT_PHONE_COUNTRY,
@@ -77,18 +78,27 @@ export function PhoneInput({
           emit(next, trimmed)
         }}
       >
-        <SelectTrigger className={cn('w-[100px] shrink-0', triggerClassName)}>
+        <SelectTrigger className={cn('w-[112px] shrink-0', triggerClassName)}>
           <SelectValue>
             {(iso: string) => {
               const c = findPhoneCountry(iso)
-              return `${c.flag} +${c.dialCode}`
+              return (
+                <span className="flex items-center gap-1.5">
+                  <CountryFlag iso={c.iso} title={c.name} />
+                  <span className="tabular-nums">+{c.dialCode}</span>
+                </span>
+              )
             }}
           </SelectValue>
         </SelectTrigger>
         <SelectContent className={contentClassName}>
           {PHONE_COUNTRIES.map((c) => (
             <SelectItem key={c.iso} value={c.iso}>
-              {c.flag} {c.name} (+{c.dialCode})
+              <span className="flex items-center gap-2">
+                <CountryFlag iso={c.iso} title={c.name} />
+                <span>{c.name}</span>
+                <span className="text-muted-foreground tabular-nums">+{c.dialCode}</span>
+              </span>
             </SelectItem>
           ))}
         </SelectContent>

@@ -71,6 +71,30 @@ export const getCachedOrderById = unstable_cache(
   { tags: [CACHE_TAGS.orders, CACHE_TAGS.customers], revalidate: 30 }
 )
 
+/**
+ * A sale's lines for the edit form. Deliberately NOT cached: the form writes
+ * back prices and removals against these rows, so a 30-second-old copy could
+ * show a line another user already removed.
+ */
+export async function getOrderItemsForEdit(orderId: string, tenantId: string) {
+  const supabase = getCacheClient() as any
+  const { data } = await supabase
+    .from('sales_order_items')
+    .select('id, product_id, quantity, unit_price, discount_percent, total_price, products(name, unit)')
+    .eq('order_id', orderId)
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: true })
+  return (data ?? []) as {
+    id: string
+    product_id: string
+    quantity: number
+    unit_price: number
+    discount_percent: number | null
+    total_price: number
+    products: { name: string; unit: string | null } | null
+  }[]
+}
+
 export const getCachedInvoiceById = unstable_cache(
   async (id: string, tenantId: string) => {
     const supabase = getCacheClient() as any

@@ -19,9 +19,10 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateOrders, invalidateProducts, invalidateMovements, invalidateInvoices } from '@/lib/data/revalidate'
+import { invalidateOrders } from '@/lib/data/revalidate'
 import { nextOrderStatuses, orderStatusTone } from '@/lib/statuses'
-import { cancelSalesOrder, setOrderStatus } from '@/lib/status-actions'
+import { setOrderStatus } from '@/lib/status-actions'
+import { CancelSaleDialog, type CancelableSale } from '@/components/sales/cancel-sale-dialog'
 
 interface OrdersTableProps {
   /** Only the current page's rows — the server applied search and paging. */
@@ -46,28 +47,25 @@ export function OrdersTable({
   const t = useTranslations('sales')
   const router = useRouter()
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [cancelTarget, setCancelTarget] = useState<CancelableSale | null>(null)
 
   /**
    * Moves an order along its lifecycle. Cancelling is not a plain column
-   * write — the order already took the goods out of stock, so it goes through
-   * `cancelSalesOrder`, which puts them back and logs the movement.
+   * write — the sale already moved stock and money — so it opens
+   * `CancelSaleDialog`, which reverses all of it.
    */
   const changeStatus = async (order: any, next: string) => {
     if (pendingId) return
-    if (next === 'cancelled' && !window.confirm(tCommon('cancelOrderConfirm'))) return
+    if (next === 'cancelled') {
+      setCancelTarget(order)
+      return
+    }
     setPendingId(order.id)
     try {
       const supabase = createClient() as any
-      if (next === 'cancelled') {
-        const { data: userData } = await supabase.auth.getUser()
-        await cancelSalesOrder(supabase, order, userData?.user?.id ?? null)
-        await Promise.all([invalidateOrders(), invalidateProducts(), invalidateMovements(), invalidateInvoices()])
-        toast.success(tCommon('orderCancelled'))
-      } else {
-        await setOrderStatus(supabase, order.id, next as any)
-        await invalidateOrders()
-        toast.success(tCommon('statusUpdated'))
-      }
+      await setOrderStatus(supabase, order.id, next as any)
+      await invalidateOrders()
+      toast.success(tCommon('statusUpdated'))
       router.refresh()
     } catch (error: any) {
       toast.error(error?.message || tCommon('error'))
@@ -163,7 +161,7 @@ export function OrdersTable({
                              ) : (
                                <ArrowRight className="mr-2 h-3.5 w-3.5 text-slate-500" />
                              )}
-                             {tCommon('markAs', { status: t(`status.${next}`) })}
+                             {next === 'cancelled' ? t('cancelSale') : tCommon('markAs', { status: t(`status.${next}`) })}
                            </DropdownMenuItem>
                          ))}
                        </DropdownMenuContent>
@@ -177,6 +175,12 @@ export function OrdersTable({
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
+    <CancelSaleDialog
+      order={cancelTarget}
+      open={cancelTarget !== null}
+      onOpenChange={(open) => { if (!open) setCancelTarget(null) }}
+      onCancelled={() => router.refresh()}
+    />
     </>
   )
 }

@@ -10,7 +10,19 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
-import { invalidateOrders } from '@/lib/data/revalidate'
+import {
+  invalidateAnalytics,
+  invalidateCashbox,
+  invalidateCustomers,
+  invalidateInvoices,
+  invalidateMovements,
+  invalidateOrderItems,
+  invalidateOrders,
+  invalidateProducts,
+  invalidateTransactions,
+} from '@/lib/data/revalidate'
+import { SaleEditError, saleLineTotal, saleOrderTotal, updateSaleLines, type SaleEditResult } from '@/lib/sale-edits'
+import { SaleLinesEditor, type EditableSaleLine, type SaleLineDraft } from '@/components/sales/sale-lines-editor'
 import { nextOrderStatuses } from '@/lib/statuses'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { toast } from 'sonner'
@@ -23,10 +35,12 @@ import {
   Select, SelectContent,
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
-import { isoDate } from '@/lib/utils'
+import { formatCurrency, isoDate } from '@/lib/utils'
 
 interface OrderFormProps {
   initialData?: any
+  /** The sale's lines, when editing an existing order. */
+  items?: EditableSaleLine[]
   customers: any[]
   /** Active tenant members who can be made responsible for the order. */
   assignableUsers: AssignableUser[]
@@ -37,7 +51,7 @@ function getTodayString(): string {
   return isoDate()
 }
 
-export function OrderForm({ initialData, customers, assignableUsers, lang }: OrderFormProps) {
+export function OrderForm({ initialData, items = [], customers, assignableUsers, lang }: OrderFormProps) {
   const tCommon = useTranslations('common')
   const t = useTranslations('sales')
   const exitForm = useRouteModalExit(`/${lang}/sales/orders`)
@@ -45,6 +59,34 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
   const supabase = createClient() as any
   const [userId, setUserId] = useState<string | null>(null)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
+  const [lineDrafts, setLineDrafts] = useState<Record<string, SaleLineDraft>>({})
+
+  // A sale with lines gets its total from them — typing a total by hand used to
+  // let it drift away from what the cashbox and the customer's debt hold.
+  const hasLines = !!initialData?.id && items.length > 0
+  const isCancelledOrder = initialData?.status === 'cancelled'
+  const oldTotal = Number(initialData?.total_amount) || 0
+  const computedTotal = hasLines
+    ? saleOrderTotal(
+        items
+          .filter((line) => !lineDrafts[line.id]?.remove)
+          .map((line) => {
+            const draft = lineDrafts[line.id]
+            const price = draft && draft.unitPrice !== '' ? Number(draft.unitPrice) : Number(line.unit_price)
+            return saleLineTotal(price, Number(line.quantity), line.discount_percent)
+          }),
+        initialData?.discount_amount,
+        initialData?.tax_amount
+      ).total
+    : oldTotal
+
+  const updateLineDraft = (id: string, patch: Partial<SaleLineDraft>) => {
+    setLineDrafts((prev) => {
+      const line = items.find((l) => l.id === id)
+      const current = prev[id] ?? { unitPrice: Number(line?.unit_price) || 0, remove: false }
+      return { ...prev, [id]: { ...current, ...patch } }
+    })
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }: any) => {
@@ -89,6 +131,16 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
       return
     }
 
+    const lineEdits = Object.entries(lineDrafts).map(([id, draft]) => ({
+      id,
+      unitPrice: draft.unitPrice === '' ? NaN : Number(draft.unitPrice),
+      remove: draft.remove,
+    }))
+    if (lineEdits.some((edit) => !edit.remove && !(edit.unitPrice >= 0))) {
+      toast.error(t('priceRequired'))
+      return
+    }
+
     setIsSubmitting(true)
     try {
       // `customer_name` is a form-only field (it actually holds the selected
@@ -111,12 +163,55 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
       }
 
       if (initialData?.id) {
+        // Lines first: that is the step that can refuse (cashbox short of the
+        // refund), and it owns the order total when the sale has lines.
+        let lineResult: SaleEditResult | null = null
+        if (hasLines && lineEdits.length > 0) {
+          const { data: { session } } = await supabase.auth.getSession()
+          lineResult = await updateSaleLines(supabase, initialData.id, lineEdits, session?.user?.id ?? userId)
+        }
+        if (hasLines) {
+          delete (payload as any).total_amount
+          delete (payload as any).discount_amount
+        }
+
         const { error } = await supabase
           .from('sales_orders')
           .update(payload)
           .eq('id', initialData.id)
         if (error) throw error
-        toast.success(tCommon('success'))
+
+        if (lineResult?.changed) {
+          void Promise.all([
+            invalidateOrderItems(),
+            invalidateProducts(),
+            invalidateMovements(),
+            invalidateInvoices(),
+            invalidateTransactions(),
+            invalidateCustomers(),
+            invalidateCashbox(),
+            invalidateAnalytics(),
+          ]).catch(() => {})
+          const details = [
+            lineResult.cashboxDelta < 0 &&
+              t('saleEditRefunded', {
+                amount: formatCurrency(-lineResult.cashboxDelta),
+                cashbox: lineResult.cashboxName ?? '',
+              }),
+            lineResult.cashboxDelta > 0 &&
+              t('saleEditCharged', {
+                amount: formatCurrency(lineResult.cashboxDelta),
+                cashbox: lineResult.cashboxName ?? '',
+              }),
+            lineResult.creditAdded > 0 &&
+              t('cancelSaleCreditRestored', { amount: formatCurrency(lineResult.creditAdded) }),
+          ].filter(Boolean)
+          toast.success(t('saleEditSaved', { total: formatCurrency(lineResult.newTotal) }), {
+            description: details.length > 0 ? details.join('. ') : undefined,
+          })
+        } else {
+          toast.success(tCommon('success'))
+        }
       } else {
         const { error } = await supabase
           .from('sales_orders')
@@ -141,7 +236,21 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
       clearPersistedForm('order-form-v3')
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      if (error instanceof SaleEditError) {
+        toast.error(
+          error.code === 'insufficient_cashbox'
+            ? t('cancelSaleInsufficient', {
+                cashbox: error.details.cashboxName ?? '—',
+                balance: formatCurrency(error.details.balance ?? 0),
+                amount: formatCurrency(error.details.amount ?? 0),
+              })
+            : error.code === 'no_lines_left'
+              ? t('noLinesLeft')
+              : t('cancelSaleAlreadyCancelled')
+        )
+      } else {
+        toast.error(error.message || tCommon('error'))
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -235,13 +344,22 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
 
         <div className="space-y-2">
           <Label htmlFor="total_amount">{tCommon('total')}</Label>
-          <Controller
-            control={control}
-            name="total_amount"
-            render={({ field: { onChange, value } }) => (
-              <NumericInput id="total_amount" value={value} onChange={onChange} />
-            )}
-          />
+          {hasLines ? (
+            <Input
+              id="total_amount"
+              readOnly
+              value={formatCurrency(computedTotal)}
+              className="bg-slate-50 dark:bg-slate-800 font-semibold tabular-nums"
+            />
+          ) : (
+            <Controller
+              control={control}
+              name="total_amount"
+              render={({ field: { onChange, value } }) => (
+                <NumericInput id="total_amount" value={value} onChange={onChange} />
+              )}
+            />
+          )}
         </div>
 
         <div className="space-y-2">
@@ -266,6 +384,17 @@ export function OrderForm({ initialData, customers, assignableUsers, lang }: Ord
           <Textarea id="notes" {...register('notes')} rows={3} />
         </div>
       </div>
+
+      {hasLines && (
+        <SaleLinesEditor
+          lines={items}
+          drafts={lineDrafts}
+          onChange={updateLineDraft}
+          newTotal={computedTotal}
+          oldTotal={oldTotal}
+          disabled={isSubmitting || isCancelledOrder}
+        />
+      )}
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button 

@@ -13,7 +13,6 @@ export interface PhoneCountry {
   iso: string
   name: string
   dialCode: string
-  flag: string
   /** Allowed digit count of the national part (after the dial code), inclusive. */
   nationalLength: [min: number, max: number]
   /** Display grouping of the national part, e.g. [2, 3, 2, 2] → "90 123 45 67". */
@@ -23,20 +22,20 @@ export interface PhoneCountry {
 }
 
 export const PHONE_COUNTRIES: PhoneCountry[] = [
-  { iso: 'UZ', name: "O'zbekiston", dialCode: '998', flag: '🇺🇿', nationalLength: [9, 9], groups: [2, 3, 2, 2], example: '90 123 45 67' },
-  { iso: 'RU', name: 'Rossiya', dialCode: '7', flag: '🇷🇺', nationalLength: [10, 10], groups: [3, 3, 2, 2], example: '912 345 67 89' },
-  { iso: 'KZ', name: "Qozog'iston", dialCode: '7', flag: '🇰🇿', nationalLength: [10, 10], groups: [3, 3, 2, 2], example: '701 234 56 78' },
-  { iso: 'KG', name: "Qirg'iziston", dialCode: '996', flag: '🇰🇬', nationalLength: [9, 9], groups: [3, 3, 3], example: '555 123 456' },
-  { iso: 'TJ', name: 'Tojikiston', dialCode: '992', flag: '🇹🇯', nationalLength: [9, 9], groups: [2, 3, 4], example: '92 123 4567' },
-  { iso: 'TM', name: 'Turkmaniston', dialCode: '993', flag: '🇹🇲', nationalLength: [8, 8], groups: [2, 6], example: '65 123456' },
-  { iso: 'AZ', name: 'Ozarbayjon', dialCode: '994', flag: '🇦🇿', nationalLength: [9, 9], groups: [2, 3, 2, 2], example: '50 123 45 67' },
-  { iso: 'TR', name: 'Turkiya', dialCode: '90', flag: '🇹🇷', nationalLength: [10, 10], groups: [3, 3, 2, 2], example: '532 123 45 67' },
-  { iso: 'AE', name: 'BAA', dialCode: '971', flag: '🇦🇪', nationalLength: [8, 9], groups: [2, 3, 4], example: '50 123 4567' },
-  { iso: 'US', name: 'AQSH', dialCode: '1', flag: '🇺🇸', nationalLength: [10, 10], groups: [3, 3, 4], example: '201 555 0123' },
-  { iso: 'GB', name: 'Buyuk Britaniya', dialCode: '44', flag: '🇬🇧', nationalLength: [9, 10], groups: [4, 6], example: '7911 123456' },
-  { iso: 'DE', name: 'Germaniya', dialCode: '49', flag: '🇩🇪', nationalLength: [6, 11], groups: [3, 4, 4], example: '151 2345678' },
-  { iso: 'CN', name: 'Xitoy', dialCode: '86', flag: '🇨🇳', nationalLength: [11, 11], groups: [3, 4, 4], example: '131 2345 6789' },
-  { iso: 'IN', name: 'Hindiston', dialCode: '91', flag: '🇮🇳', nationalLength: [10, 10], groups: [5, 5], example: '98765 43210' },
+  { iso: 'UZ', name: "O'zbekiston", dialCode: '998', nationalLength: [9, 9], groups: [2, 3, 2, 2], example: '90 123 45 67' },
+  { iso: 'RU', name: 'Rossiya', dialCode: '7', nationalLength: [10, 10], groups: [3, 3, 2, 2], example: '912 345 67 89' },
+  { iso: 'KZ', name: "Qozog'iston", dialCode: '7', nationalLength: [10, 10], groups: [3, 3, 2, 2], example: '701 234 56 78' },
+  { iso: 'KG', name: "Qirg'iziston", dialCode: '996', nationalLength: [9, 9], groups: [3, 3, 3], example: '555 123 456' },
+  { iso: 'TJ', name: 'Tojikiston', dialCode: '992', nationalLength: [9, 9], groups: [2, 3, 4], example: '92 123 4567' },
+  { iso: 'TM', name: 'Turkmaniston', dialCode: '993', nationalLength: [8, 8], groups: [2, 6], example: '65 123456' },
+  { iso: 'AZ', name: 'Ozarbayjon', dialCode: '994', nationalLength: [9, 9], groups: [2, 3, 2, 2], example: '50 123 45 67' },
+  { iso: 'TR', name: 'Turkiya', dialCode: '90', nationalLength: [10, 10], groups: [3, 3, 2, 2], example: '532 123 45 67' },
+  { iso: 'AE', name: 'BAA', dialCode: '971', nationalLength: [8, 9], groups: [2, 3, 4], example: '50 123 4567' },
+  { iso: 'US', name: 'AQSH', dialCode: '1', nationalLength: [10, 10], groups: [3, 3, 4], example: '201 555 0123' },
+  { iso: 'GB', name: 'Buyuk Britaniya', dialCode: '44', nationalLength: [9, 10], groups: [4, 6], example: '7911 123456' },
+  { iso: 'DE', name: 'Germaniya', dialCode: '49', nationalLength: [6, 11], groups: [3, 4, 4], example: '151 2345678' },
+  { iso: 'CN', name: 'Xitoy', dialCode: '86', nationalLength: [11, 11], groups: [3, 4, 4], example: '131 2345 6789' },
+  { iso: 'IN', name: 'Hindiston', dialCode: '91', nationalLength: [10, 10], groups: [5, 5], example: '98765 43210' },
 ]
 
 export const DEFAULT_PHONE_COUNTRY = PHONE_COUNTRIES[0]
