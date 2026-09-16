@@ -2,7 +2,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import {
   Sparkles,
   UploadCloud,
@@ -65,7 +64,6 @@ export function AIStockScannerModal({
   categories = [],
   lang = 'uz',
 }: AIStockScannerModalProps) {
-  const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isScanning, setIsScanning] = useState(false)
@@ -328,7 +326,6 @@ export function AIStockScannerModal({
       toast.success(lang === 'uz' ? `${items.length} ta mahsulot omborga muvaffaqiyatli saqlandi!` : lang === 'ru' ? `${items.length} товаров успешно сохранено на склад!` : `${items.length} products successfully saved to warehouse!`)
       await invalidateProducts()
       await invalidateMovements()
-      router.refresh()
       onOpenChange(false)
       handleReset()
     } catch (error) {

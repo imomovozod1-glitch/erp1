@@ -71,7 +71,6 @@ export function OrdersTable({
       await setOrderStatus(supabase, order.id, next as any)
       await invalidateOrders()
       toast.success(tCommon('statusUpdated'))
-      router.refresh()
     } catch (error: any) {
       toast.error(
         error instanceof BusinessRpcError

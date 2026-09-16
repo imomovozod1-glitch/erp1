@@ -36,7 +36,7 @@ There is one established table convention — do not introduce a table library (
 - **Toolbar**: `<TableSearch>` plus `<TableFilterChips>` plus export/import actions, in a `flex flex-wrap items-center justify-between border-b` bar.
 - **Empty state**: one centered `TableCell colSpan={N}` with a muted icon and `t('common.noData')`.
 - Format money/numbers with `formatCurrency`/`formatNumber` and dates with `formatDate` from `@/lib/utils` — never format inline with ad-hoc string concatenation.
-- Real-time feel: after any mutation, call the matching `invalidate*()` action from `src/lib/data/revalidate.ts` (Next.js cache tags), then `router.refresh()`/`router.push()` — don't hand-roll polling.
+- Real-time feel: after any mutation, call the matching `invalidate*()` action from `src/lib/data/revalidate.ts` (Next.js cache tags) — don't hand-roll polling. Its response already carries the current route re-rendered, so do **not** follow it with `router.refresh()` (that renders the page a second time); only `router.push()` when the flow navigates away. Logout is a full `window.location.replace(...)` to the login page.
 
 ## 4. Logic & Architecture
 

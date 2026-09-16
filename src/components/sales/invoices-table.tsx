@@ -64,7 +64,6 @@ export function InvoicesTable({
       await setInvoiceStatus(supabase, invoiceId, next as any)
       await invalidateInvoices()
       toast.success(tCommon('statusUpdated'))
-      router.refresh()
     } catch (error: any) {
       toast.error(
         error instanceof BusinessRpcError

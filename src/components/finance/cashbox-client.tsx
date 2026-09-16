@@ -278,15 +278,13 @@ export function CashboxClient({
   /**
    * Pulls a fresh copy of the server data after a write.
    *
-   * `invalidateCashbox()` is a Server Action, so it drops both the server-side
-   * cache entry and the client Router Cache; `router.refresh()` then re-renders
-   * this route and the new lists arrive as props. This replaces a hand-rolled
-   * re-fetch that issued its own two queries and left every other screen's
-   * cached copy stale.
+   * `invalidateCashbox()` is a Server Action: it drops the cached data, and its
+   * response already carries this route re-rendered, so the new lists arrive
+   * as props in the same round trip — a `router.refresh()` after it only
+   * rendered the page a second time.
    */
   const refreshFromServer = async () => {
     await invalidateCashbox()
-    router.refresh()
   }
 
   // Offline mirror. Only runs when the server could not read the cashboxes at
@@ -729,9 +727,8 @@ export function CashboxClient({
 
       if (!isLocalStorageFallback) {
         // One Server Action for every cache the movement touched, instead of
-        // up to five queued one after another.
+        // up to five queued one after another; its response re-renders the page.
         await invalidateCashboxMovement()
-        router.refresh()
 
         // Telegram (Settings → Integrations), only for money actually collected
         // from a customer — the debt payment the settlement above just applied.

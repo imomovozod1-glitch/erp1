@@ -1,21 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { LogOut, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 
 export function SupportLogoutButton({ label }: { label: string }) {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleLogout = async () => {
     setIsLoading(true)
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.replace('/support/login')
-    router.refresh()
+    // A full page load rather than router.replace + router.refresh: the refresh
+    // re-rendered the page being left before the login page could show, and
+    // with `staleTimes` the client router could still serve cached pages.
+    window.location.replace('/support/login')
   }
 
   return (

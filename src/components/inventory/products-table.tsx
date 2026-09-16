@@ -141,7 +141,6 @@ export function ProductsTable({
     } else {
       toast.success(t("common.success"));
       await invalidateProducts();
-      router.refresh();
     }
     setIsUpdatingStatus(null);
   };
@@ -171,7 +170,6 @@ export function ProductsTable({
         } else {
           toast.success(t("inventory.productDeactivatedInsteadOfDeleted"));
           await invalidateProducts();
-          router.refresh();
         }
       } else {
         toast.error(error.message || t("common.error"));
@@ -179,7 +177,6 @@ export function ProductsTable({
     } else {
       toast.success(t("common.success"));
       await invalidateProducts();
-      router.refresh();
     }
     setIsDeleting(null);
   };
@@ -348,7 +345,6 @@ export function ProductsTable({
         } else {
           toast.success(t("inventory.productsImported", { count: newProducts.length }));
           await invalidateProducts();
-          router.refresh();
         }
       } catch (err: any) {
         toast.dismiss();

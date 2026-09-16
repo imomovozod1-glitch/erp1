@@ -58,7 +58,6 @@ export function CustomerCategoriesTable({ categories, lang }: CustomerCategories
     } else {
       toast.success(tCommon('success'))
       await invalidateCustomerCategories()
-      router.refresh()
     }
     setIsDeleting(null)
   }

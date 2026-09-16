@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Bell, LogOut, Settings, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
 import {
@@ -215,9 +214,11 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push(`/${lang}/login`)
-    router.refresh()
-    toast.success(lang === 'uz' ? 'Muvaffaqiyatli chiqildi' : lang === 'ru' ? 'Вы успешно вышли' : 'Logged out successfully')
+    // A full page load rather than router.push + router.refresh: the refresh
+    // re-rendered the page being left (on the dashboard, every stats query)
+    // before the login page could show, and with `staleTimes` the client
+    // router could still serve cached signed-in pages afterwards.
+    window.location.replace(`/${lang}/login`)
   }
 
   useEffect(() => {

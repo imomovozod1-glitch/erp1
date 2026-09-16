@@ -79,7 +79,6 @@ export function CustomersTable({
     } else {
       toast.success(tCommon('success'))
       await invalidateCustomers()
-      router.refresh()
     }
     setIsDeleting(null)
   }

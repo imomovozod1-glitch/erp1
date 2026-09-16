@@ -69,7 +69,6 @@ export function TransactionCategoriesTable({ categories, lang }: TransactionCate
     } else {
       toast.success(tCommon('success'))
       await invalidateTransactionCategories()
-      router.refresh()
     }
     setIsDeleting(null)
   }

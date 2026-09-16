@@ -72,7 +72,6 @@ export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
       }
       toast.success(tCommon('success'))
       await invalidateRoleTemplates()
-      router.refresh()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {

@@ -61,7 +61,6 @@ export function CategoriesTable({ categories, lang }: CategoriesTableProps) {
     } else {
       toast.success(tCommon('success'))
       await invalidateCategories()
-      router.refresh()
     }
     setIsDeleting(null)
   }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
@@ -39,7 +39,9 @@ export async function POST(request: NextRequest) {
     password: parsed.data.password,
   })
 
-  await recordLoginAttempt(email, ip, !error)
+  // Logged after the response is sent: the audit row is not something the
+  // person signing in should wait for.
+  after(() => recordLoginAttempt(email, ip, !error))
 
   if (error) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
