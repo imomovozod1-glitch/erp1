@@ -18,6 +18,12 @@ function Card({
         // were rendering with an outline the convention says they shouldn't
         // have. With a border it behaves as documented.
         "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl border border-slate-200/70 bg-card py-(--card-spacing) text-sm text-card-foreground shadow-sm transition-shadow duration-200 dark:border-slate-800 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        // Sectioned cards — a divided header (`border-b`, own padding and
+        // tint) or edge-to-edge content (`CardContent p-0`, i.e. a table) —
+        // pad their own sections. The card's vertical padding and gap would
+        // otherwise open blank strips between the frame, the header band and
+        // the table.
+        "has-[>[data-slot=card-header].border-b]:gap-0 has-[>[data-slot=card-header].border-b]:py-0 has-[>[data-slot=card-content].p-0]:gap-0 has-[>[data-slot=card-content].p-0]:py-0",
         className
       )}
       {...props}
