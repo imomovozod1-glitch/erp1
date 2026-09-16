@@ -305,7 +305,7 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
     return (
       <CommandGroup heading={heading}>
         {hits.map((hit) => (
-          <CommandItem key={hit.id} value={`${heading}-${hit.id}`} onSelect={() => go(hit.href)}>
+          <CommandItem key={hit.id} value={`${heading}-${hit.id}`} onSelect={() => go(hit.href)} className="gap-3 py-2">
             <Icon className="text-muted-foreground" />
             <span className="truncate">{hit.title}</span>
             {hit.subtitle && (
@@ -323,21 +323,21 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center gap-2 h-8 w-56 lg:w-72 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-2.5 text-left text-xs text-slate-500 dark:text-slate-400 transition-colors hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800"
+        className="hidden md:flex items-center gap-2.5 h-10 w-64 lg:w-80 xl:w-96 min-w-0 shrink rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3.5 text-left text-sm text-slate-500 dark:text-slate-400 transition-colors hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800"
       >
-        <Search className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">{tCommon('searchPlaceholder')}</span>
-        <kbd className="ml-auto hidden lg:inline-flex items-center rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-1.5 font-mono text-[10px] text-slate-400">
-          ⌘K
+        <Search className="h-4 w-4 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">{tCommon('searchPlaceholder')}</span>
+        <kbd className="hidden lg:inline-flex h-6 shrink-0 items-center rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 font-mono text-[11px] text-slate-400">
+          Ctrl K
         </kbd>
       </button>
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label={tCommon('search')}
-        className="md:hidden flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+        className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
       >
-        <Search className="h-3.5 w-3.5" />
+        <Search className="h-4 w-4" />
       </button>
 
       <CommandDialog
@@ -357,6 +357,9 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
           value={query}
           onValueChange={handleQueryChange}
           placeholder={tCommon('searchPlaceholder')}
+          wrapperClassName="p-2 pb-1"
+          groupClassName="h-11! text-base"
+          className="text-base sm:text-sm"
         />
         <CommandList>
           {isSearching && (
@@ -375,6 +378,7 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
                   <CommandItem
                     key={target.href}
                     value={`page-${target.href}`}
+                    className="gap-3 py-2"
                     onSelect={() => go(`/${lang}/${target.href}`)}
                   >
                     <Icon className="text-muted-foreground" />
@@ -390,7 +394,7 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
           {renderGroup(tSales('orders'), results.orders, ShoppingCart)}
           {renderGroup(tSales('invoices'), results.invoices, FileText)}
           {query.trim().length < 2 && (
-            <p className="px-3 py-2 text-[11px] text-muted-foreground">{tCommon('searchHint')}</p>
+            <p className="px-3 py-2.5 text-xs text-muted-foreground">{tCommon('searchHint')}</p>
           )}
         </CommandList>
         </Command>

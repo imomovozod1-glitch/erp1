@@ -101,7 +101,22 @@ function patchTenant(tenantId: string, body: Record<string, unknown>) {
  * goes through, so it's the authoritative place for that, not a decorative
  * status computed only in the admin UI (see src/lib/tenant-status.ts).
  */
+// The cookie above only helps a browser that has already been here — the very
+// first request (opening the login page) always missed it and waited on the
+// REST round trip. This per-process cache serves every visitor of a tenant
+// within the same window, the same way the middleware caches the JWKS.
+const tenantGateMemory = new Map<string, { tenant: TenantGateInfo; t: number }>()
+
 async function getTenantBySubdomain(subdomain: string): Promise<TenantGateInfo | null> {
+  const hit = tenantGateMemory.get(subdomain)
+  if (hit && Date.now() - hit.t < TENANT_GATE_TTL_MS) return hit.tenant
+  const tenant = await fetchTenantBySubdomain(subdomain)
+  if (tenant) tenantGateMemory.set(subdomain, { tenant, t: Date.now() })
+  else tenantGateMemory.delete(subdomain)
+  return tenant
+}
+
+async function fetchTenantBySubdomain(subdomain: string): Promise<TenantGateInfo | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!supabaseUrl || !serviceKey) return null
