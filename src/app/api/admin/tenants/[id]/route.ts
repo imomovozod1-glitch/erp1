@@ -4,6 +4,7 @@ import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
+import { resolveTenantOwner } from '@/lib/tenant-owner'
 
 const updateTenantSchema = z.object({
   subdomain: z
@@ -50,6 +51,7 @@ export async function PATCH(
     .eq('id', id)
     .maybeSingle()
   if (!existing) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+  const phoneChanged = input.phone !== undefined && input.phone !== existing.phone
 
   const update: Record<string, unknown> = {}
   if (input.subdomain !== undefined) update.subdomain = input.subdomain.toLowerCase()
@@ -71,20 +73,35 @@ export async function PATCH(
     update.status = new Date(update.subscription_ends_at as string).getTime() >= Date.now() ? 'active' : 'blocked'
   }
 
+  // The owner signs in with a login email derived from the phone. Move that
+  // first: if it fails (e.g. another login already uses the new number), the
+  // tenant keeps its old phone instead of showing one nobody can sign in with.
+  if (phoneChanged) {
+    // The account that signs in with the CURRENT phone (src/lib/tenant-owner.ts).
+    const owner = await resolveTenantOwner(supabase, existing)
+    const email = phoneToSyntheticEmail(input.phone!)
+    const { error: authError } = owner
+      ? await supabase.auth.admin.updateUserById(owner.userId, {
+          email,
+          email_confirm: true,
+        })
+      : { error: null }
+    if (authError) {
+      const message = /already.*registered|already exists|email_exists/i.test(authError.message)
+        ? 'Another login already uses this phone number'
+        : authError.message
+      return NextResponse.json({ error: message }, { status: 409 })
+    }
+    if (owner) {
+      await supabase.from('profiles').update({ phone: input.phone, email }).eq('id', owner.userId)
+      if (owner.userId !== existing.owner_user_id) update.owner_user_id = owner.userId
+    }
+  }
+
   const { data: tenant, error } = await supabase.from('tenants').update(update).eq('id', id).select().single()
   if (error) {
     const message = error.code === '23505' ? 'Subdomain or phone already in use' : error.message
     return NextResponse.json({ error: message }, { status: 409 })
-  }
-
-  // Keep the owner's login — and their profile's displayed phone — in sync
-  // if the phone number (and therefore the synthetic login email, see
-  // src/lib/tenant-auth.ts) changed.
-  if (input.phone !== undefined && input.phone !== existing.phone && existing.owner_user_id) {
-    await supabase.auth.admin.updateUserById(existing.owner_user_id, {
-      email: phoneToSyntheticEmail(input.phone),
-    })
-    await supabase.from('profiles').update({ phone: input.phone }).eq('id', existing.owner_user_id)
   }
 
   return NextResponse.json({ tenant })

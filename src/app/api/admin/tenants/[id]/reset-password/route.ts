@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
+import { resolveTenantOwner } from '@/lib/tenant-owner'
 
 // Same strength policy as every other place a password is SET
 // (src/lib/password-validation.ts) — a 6-digit numeric password used to slip
@@ -26,48 +27,49 @@ export async function POST(
   const supabase = getCacheClient() as any
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('owner_user_id')
+    .select('id, phone, owner_user_id')
     .eq('id', id)
     .maybeSingle()
   if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
 
-  // `tenants.owner_user_id` is only filled in by the provisioning route
-  // (/api/admin/tenants). Tenants that predate that column — or whose owner
-  // row was created some other way — have it NULL, and this endpoint used to
-  // give up with "Tenant has no owner login" even though the account plainly
-  // exists. Fall back to the tenant's admin profile and backfill the link so
-  // it resolves directly next time.
-  let ownerId: string | null = tenant.owner_user_id ?? null
-  if (!ownerId) {
-    const { data: adminProfile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('tenant_id', id)
-      .eq('role', 'admin')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle()
-    ownerId = adminProfile?.id ?? null
-    if (ownerId) {
-      await supabase.from('tenants').update({ owner_user_id: ownerId }).eq('id', id)
-    }
-  }
-
-  if (!ownerId) {
+  // The account the login page signs into for this tenant's phone — see
+  // src/lib/tenant-owner.ts. Resetting the password of any other account (the
+  // old "first admin profile" fallback could pick one) left the owner locked out.
+  const owner = await resolveTenantOwner(supabase, tenant)
+  if (!owner) {
     return NextResponse.json({ error: 'Tenant has no owner login' }, { status: 404 })
   }
 
-  const { error } = await supabase.auth.admin.updateUserById(ownerId, {
+  // If the owner's login email drifted from the tenant's phone, put it back in
+  // the same call, so the phone shown in the admin panel is the one that works.
+  const { data: updated, error } = await supabase.auth.admin.updateUserById(owner.userId, {
     password: parsed.data.password,
+    ...(owner.emailMatches ? {} : { email: owner.loginEmail, email_confirm: true }),
   })
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    const message = /already.*registered|already exists|email_exists/i.test(error.message)
+      ? 'Another login already uses this phone number'
+      : error.message
+    return NextResponse.json({ error: message }, { status: 400 })
+  }
 
-  // Kick any currently-open session for this user immediately — see
-  // supabase/migration_force_logout.sql and src/lib/supabase/middleware.ts.
-  await supabase
-    .from('profiles')
-    .update({ force_logout_at: new Date().toISOString() })
-    .eq('id', ownerId)
+  await Promise.all([
+    tenant.owner_user_id === owner.userId
+      ? Promise.resolve()
+      : supabase.from('tenants').update({ owner_user_id: owner.userId }).eq('id', id),
+    // Kick any currently-open session for this user immediately — see
+    // supabase/migration_force_logout.sql and src/lib/supabase/middleware.ts.
+    // The timestamp comes from the Auth server (the same clock that stamps
+    // `last_sign_in_at`), so a small clock difference with this server can
+    // never make the owner's next, fresh sign-in look older than the reset.
+    supabase
+      .from('profiles')
+      .update({
+        force_logout_at: updated?.user?.updated_at ?? new Date().toISOString(),
+        ...(owner.emailMatches ? {} : { email: owner.loginEmail }),
+      })
+      .eq('id', owner.userId),
+  ])
 
   return NextResponse.json({ success: true })
 }

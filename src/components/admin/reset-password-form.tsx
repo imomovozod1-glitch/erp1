@@ -52,6 +52,9 @@ export function ResetPasswordForm({ tenantId }: { tenantId: string }) {
           <Label htmlFor="reset-password">{t('newPassword')}</Label>
           <PasswordInput
             id="reset-password"
+            // Without this the browser may autofill the super-admin's own saved
+            // password here, and that is what would get set on the tenant.
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
