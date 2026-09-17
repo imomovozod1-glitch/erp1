@@ -117,9 +117,15 @@ const NAV_ITEMS: NavItem[] = [
  * to shrink to 16px there, so the icons visibly jumped on every toggle. The
  * primitive pins a collapsed button to 32px with 8px padding (16px of room);
  * 6px padding leaves exactly the 20px the icon needs.
+ *
+ * `min-h-10` holds the row at its expanded 40px in the rail too. The primitive's
+ * `group-data-[collapsible=icon]:size-8!` would otherwise cut every row to 32px,
+ * and eight rows losing 8px each dragged the whole icon column visibly upwards
+ * on collapse. min-height outranks that height without fighting it for
+ * specificity, and the width still collapses to the 32px rail.
  */
 const TOP_LEVEL_BUTTON =
-  'h-10 text-[15px] font-semibold [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!'
+  'h-10 min-h-10 text-[15px] font-semibold [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!'
 
 /**
  * Deliberately one step down from TOP_LEVEL_BUTTON in both size and weight.
@@ -234,9 +240,13 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 `shrink-0` or the label block squeezes it into an oval, and the
                 label needs hiding or it wins that fight. Both only apply in
                 icon mode; expanded is unchanged. */}
+            {/* Same reason as TOP_LEVEL_BUTTON's min-h-10: a `lg` button is
+                48px expanded but 32px in the rail, and that missing 16px
+                pushed every nav icon below it up on collapse. */}
             <SidebarMenuButton
               size="lg"
               tooltip="ERP System"
+              className="group-data-[collapsible=icon]:min-h-12"
               render={<Link href={`/${lang}/dashboard`} prefetch={true} onClick={closeOnMobile} />}
             >
               <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
@@ -253,7 +263,10 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          {/* The primitive folds this label away with `-mt-8` in the rail,
+              which lifted the entire icon column by another 32px. Keep the
+              space, drop only the text. */}
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:mt-0">Platform</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleNavItems.map((item) => {

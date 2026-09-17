@@ -44,7 +44,14 @@ export function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/admin" prefetch={true} />}>
+            {/* min-h-12 keeps this brand row at its expanded 48px in the icon
+                rail — the primitive shrinks a `lg` button to 32px there, and
+                the nav icons below it slid up by the difference. */}
+            <SidebarMenuButton
+              size="lg"
+              className="group-data-[collapsible=icon]:min-h-12"
+              render={<Link href="/admin" prefetch={true} />}
+            >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-600 text-white">
                 <ShieldCheck className="size-4" />
               </div>
@@ -59,7 +66,10 @@ export function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{t('navGroup')}</SidebarGroupLabel>
+          {/* The primitive folds this label away with `-mt-8` when collapsed,
+              lifting the whole icon column by 32px. Keep the space, fade only
+              the text. */}
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:mt-0">{t('navGroup')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV_ITEMS.map((item) => {

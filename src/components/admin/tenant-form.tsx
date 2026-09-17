@@ -280,6 +280,18 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
 
         {isEdit && initialData ? (
           <AdminFormSection icon={ReceiptText} title={t('sectionSubscription')} description={tDetail('paymentDialogDesc')}>
+            {/* Shown, never editable: the costing method is frozen at creation
+                by migration_tenant_costing_lock.sql, but the operator still
+                needs to see which one a tenant runs on. */}
+            <AdminField>
+              <Label className="flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
+              </Label>
+              <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
+                {tCosting(initialData.costing_method)}
+              </div>
+              <p className="text-xs text-muted-foreground">{tDetail('costingLockedHint')}</p>
+            </AdminField>
             <AdminField>
               <Label className="flex items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
