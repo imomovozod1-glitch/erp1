@@ -6,6 +6,8 @@ import {
   TrendingUp,
   Store,
   Package,
+  Wrench,
+  Factory,
   Tags,
   ArrowLeftRight,
   Ruler,
@@ -14,6 +16,7 @@ import {
   Contact,
   Layers,
   Truck,
+  Route,
   Building2,
   DollarSign,
   Wallet,
@@ -61,9 +64,17 @@ const SECTIONS: GuideSection[] = [
     titleKey: ['nav', 'inventory'],
     items: [
       { key: 'products', icon: Package, labelKey: ['inventory', 'products'], href: 'inventory/products' },
+      { key: 'services', icon: Wrench, labelKey: ['inventory', 'services'], href: 'inventory/services' },
       { key: 'categories', icon: Tags, labelKey: ['inventory', 'categories'], href: 'inventory/categories' },
       { key: 'movements', icon: ArrowLeftRight, labelKey: ['inventory', 'stockMovements'], href: 'inventory/movements' },
       { key: 'units', icon: Ruler, labelKey: ['inventory', 'unit'], href: 'inventory/units' },
+    ],
+  },
+  {
+    titleKey: ['nav', 'production'],
+    items: [
+      { key: 'productionOrders', icon: Factory, labelKey: ['production', 'orders'], href: 'production/orders' },
+      { key: 'boms', icon: Layers, labelKey: ['production', 'boms'], href: 'production/boms' },
     ],
   },
   {
@@ -71,6 +82,13 @@ const SECTIONS: GuideSection[] = [
     items: [
       { key: 'salesOrders', icon: ShoppingCart, labelKey: ['sales', 'orders'], href: 'sales/orders' },
       { key: 'invoices', icon: FileText, labelKey: ['sales', 'invoices'], href: 'sales/invoices' },
+    ],
+  },
+  {
+    titleKey: ['nav', 'distribution'],
+    items: [
+      { key: 'deliveries', icon: Truck, labelKey: ['distribution', 'deliveries'], href: 'distribution/deliveries' },
+      { key: 'routes', icon: Route, labelKey: ['distribution', 'routes'], href: 'distribution/routes' },
     ],
   },
   {
@@ -117,11 +135,13 @@ const SECTION_HEADING =
 
 export default async function GuidePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
-  const [t, tFaq, tNav, tInventory, tSales, tFinance, tHr, tProcurement, tSupport] = await Promise.all([
+  const [t, tFaq, tNav, tInventory, tProduction, tDistribution, tSales, tFinance, tHr, tProcurement, tSupport] = await Promise.all([
     getTranslations('guide'),
     getTranslations('faq'),
     getTranslations('nav'),
     getTranslations('inventory'),
+    getTranslations('production'),
+    getTranslations('distribution'),
     getTranslations('sales'),
     getTranslations('finance'),
     getTranslations('hr'),
@@ -132,6 +152,8 @@ export default async function GuidePage({ params }: { params: Promise<{ lang: st
   const namespaces: Record<string, (key: string) => string> = {
     nav: tNav,
     inventory: tInventory,
+    production: tProduction,
+    distribution: tDistribution,
     sales: tSales,
     finance: tFinance,
     hr: tHr,

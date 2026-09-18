@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatCurrency } from '@/lib/utils'
+import { isService } from '@/lib/product-kind'
 
 /**
  * The catalogue half of the till: search, category filter and the product
@@ -47,6 +48,9 @@ export function PosProductGrid({
   inputRef: React.RefObject<HTMLInputElement | null>
 }) {
   const tCommon = useTranslations('common')
+  const tInventory = useTranslations('inventory')
+  // Declared last of the group so the editor's i18n plugin attributes the bare
+  // `t(...)` calls in this file to `pos` — see AGENTS.md § Translations.
   const t = useTranslations('pos')
 
   return (
@@ -139,8 +143,12 @@ export function PosProductGrid({
              actually running out. */
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
             {products.map((p) => {
-              const isOutOfStock = p.stock <= 0
-              const isLowStock = p.stock > 0 && p.stock <= p.min_stock
+              // A service has no shelf to be empty, so it is never out of
+              // stock and never low — its tile says what it is instead of a
+              // count that would always read zero.
+              const service = isService(p)
+              const isOutOfStock = !service && p.stock <= 0
+              const isLowStock = !service && p.stock > 0 && p.stock <= p.min_stock
               // An out-of-stock tile stays legible rather than being faded
               // to 45%: the cashier still has to read the name and price of
               // the thing they cannot sell, and a wholly dimmed tile reads
@@ -193,7 +201,9 @@ export function PosProductGrid({
                           : 'text-xs text-slate-400 tabular-nums dark:text-slate-500'
                       }
                     >
-                      {isOutOfStock
+                      {service
+                        ? tInventory('service')
+                        : isOutOfStock
                         ? t('outOfStock')
                         : `${p.stock} ${p.unit || tCommon('pieces')}`}
                     </p>

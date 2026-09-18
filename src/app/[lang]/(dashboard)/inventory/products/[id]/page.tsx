@@ -1,4 +1,6 @@
-import { getCachedProductDetails } from '@/lib/data/queries'
+import { getCachedProductDetails, getCachedProductBoms } from '@/lib/data/queries'
+import { ProductBomsCard } from '@/components/production/product-boms-card'
+import { canEditModule, canViewModule } from '@/lib/permissions-server'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { ProductDetailClient } from '@/components/inventory/product-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
@@ -12,8 +14,15 @@ interface ProductDetailPageProps {
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { id, lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const t = await getTranslations('inventory')
-  const { product, movements, sales, purchases, costLayers, effectiveCostingMethod, nextSaleCost } = await getCachedProductDetails(id, tenantId)
+  // The composition card is part of the Sanoat module, so it is shown only to
+  // someone who may see that module — the product page itself is Ombor.
+  const [t, canSeeProduction, canEditProduction, details] = await Promise.all([
+    getTranslations('inventory'),
+    canViewModule('production'),
+    canEditModule('production'),
+    getCachedProductDetails(id, tenantId),
+  ])
+  const { product, movements, sales, purchases, costLayers, effectiveCostingMethod, nextSaleCost } = details
 
   if (!product) {
     notFound()
@@ -40,6 +49,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         effectiveCostingMethod={effectiveCostingMethod}
         nextSaleCost={nextSaleCost}
       />
+
+      {canSeeProduction && (
+        <ProductBomsCard
+          boms={await getCachedProductBoms(id, tenantId)}
+          productId={id}
+          lang={lang}
+          canEdit={canEditProduction}
+        />
+      )}
     </div>
   )
 }

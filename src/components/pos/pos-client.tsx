@@ -16,6 +16,7 @@ import { PosAddCustomerDialog } from '@/components/pos/pos-add-customer-dialog'
 import { PosProductGrid } from '@/components/pos/pos-product-grid'
 import { PosCartPanel } from '@/components/pos/pos-cart-panel'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
+import { isService } from '@/lib/product-kind'
 
 /**
  * The till.
@@ -130,7 +131,10 @@ export function POSClient({
     // "we stock this and it is finished" from "we do not stock this", and the
     // second is what hiding them would say. They sink to the end instead, so
     // they never take a tile the cashier could have tapped.
-    return matches.sort((a, b) => Number(a.stock <= 0) - Number(b.stock <= 0))
+    // Services never sink: they have no stock to be finished.
+    return matches.sort(
+      (a, b) => Number(!isService(a) && a.stock <= 0) - Number(!isService(b) && b.stock <= 0)
+    )
   }, [products, searchQuery, selectedCategory])
 
   /** Empties the basket AND the sale around it — customer and payment method. */
@@ -226,7 +230,9 @@ export function POSClient({
     setProducts(
       products.map((p) => {
         const sold = soldItems.find((ci) => ci.product.id === p.id)
-        return sold ? { ...p, stock: p.stock - sold.quantity } : p
+        // A service's stock stays at zero — decrementing it would print a
+        // negative count on its tile.
+        return sold && !isService(p) ? { ...p, stock: p.stock - sold.quantity } : p
       })
     )
     clearTill()
@@ -256,7 +262,7 @@ export function POSClient({
         setProducts((current) =>
           current.map((p) => {
             const sold = soldItems.find((ci) => ci.product.id === p.id)
-            return sold && sale.stockBefore.has(p.id)
+            return sold && !isService(p) && sale.stockBefore.has(p.id)
               ? { ...p, stock: (sale.stockBefore.get(p.id) as number) - sold.quantity }
               : p
           })
@@ -305,8 +311,8 @@ export function POSClient({
         // Put the optimistic stock back: this sale did not happen.
         setProducts((current) =>
           current.map((p) => {
-            const sold = soldItems.find((ci) => ci.product.id === p.id)
-            return sold ? { ...p, stock: p.stock + sold.quantity } : p
+                const sold = soldItems.find((ci) => ci.product.id === p.id)
+            return sold && !isService(p) ? { ...p, stock: p.stock + sold.quantity } : p
           })
         )
       }

@@ -8,6 +8,8 @@ import {
   Building2,
   LayoutDashboard,
   Package,
+  Factory,
+  Send,
   ShoppingCart,
   DollarSign,
   Users,
@@ -60,9 +62,17 @@ const NAV_ITEMS: NavItem[] = [
     key: 'inventory', icon: Package, href: 'inventory',
     subItems: [
       { key: 'products', href: 'inventory/products' },
+      { key: 'services', href: 'inventory/services' },
       { key: 'categories', href: 'inventory/categories' },
       { key: 'stockMovements', href: 'inventory/movements' },
       { key: 'unit', href: 'inventory/units' },
+    ]
+  },
+  {
+    key: 'production', icon: Factory, href: 'production',
+    subItems: [
+      { key: 'orders', href: 'production/orders' },
+      { key: 'boms', href: 'production/boms' },
     ]
   },
   {
@@ -70,6 +80,13 @@ const NAV_ITEMS: NavItem[] = [
     subItems: [
       { key: 'orders', href: 'sales/orders' },
       { key: 'invoices', href: 'sales/invoices' },
+    ]
+  },
+  {
+    key: 'distribution', icon: Send, href: 'distribution',
+    subItems: [
+      { key: 'deliveries', href: 'distribution/deliveries' },
+      { key: 'routes', href: 'distribution/routes' },
     ]
   },
   {
@@ -142,6 +159,8 @@ interface AppSidebarProps {
 export function AppSidebar({ lang, profile }: AppSidebarProps) {
   const tNav = useTranslations('nav')
   const tInventory = useTranslations('inventory')
+  const tProduction = useTranslations('production')
+  const tDistribution = useTranslations('distribution')
   const tSales = useTranslations('sales')
   const tFinance = useTranslations('finance')
   const tHr = useTranslations('hr')
@@ -189,13 +208,22 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
     const map: Record<string, Record<string, string>> = {
       inventory: {
         products: tInventory('products'),
+        services: tInventory('services'),
         categories: tInventory('categories'),
         stockMovements: tInventory('stockMovements'),
         unit: tInventory('unit'),
       },
+      production: {
+        orders: tProduction('orders'),
+        boms: tProduction('boms'),
+      },
       sales: {
         orders: tSales('orders'),
         invoices: tSales('invoices'),
+      },
+      distribution: {
+        deliveries: tDistribution('deliveries'),
+        routes: tDistribution('routes'),
       },
       customers: {
         list: tSales('customers'),

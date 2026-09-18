@@ -28,6 +28,8 @@
 
 export * from './cache-tags'
 export * from './inventory'
+export * from './production'
+export * from './distribution'
 export * from './sales'
 export * from './customers'
 export * from './finance'

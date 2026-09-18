@@ -9,6 +9,8 @@ import {
   TrendingUp,
   Store,
   Package,
+  Wrench,
+  Factory,
   Tags,
   ArrowLeftRight,
   Ruler,
@@ -17,6 +19,7 @@ import {
   Contact,
   Layers,
   Truck,
+  Route,
   Building2,
   Wallet,
   DollarSign,
@@ -60,11 +63,16 @@ const NAV_TARGETS: NavTarget[] = [
   { href: 'reports', icon: TrendingUp, labelKey: ['nav', 'reports'], module: 'analytics' },
   { href: 'pos', icon: Store, labelKey: ['nav', 'pos'], module: 'pos' },
   { href: 'inventory/products', icon: Package, labelKey: ['inventory', 'products'], module: 'inventory' },
+  { href: 'inventory/services', icon: Wrench, labelKey: ['inventory', 'services'], module: 'inventory' },
   { href: 'inventory/categories', icon: Tags, labelKey: ['inventory', 'categories'], module: 'inventory' },
   { href: 'inventory/movements', icon: ArrowLeftRight, labelKey: ['inventory', 'stockMovements'], module: 'inventory' },
   { href: 'inventory/units', icon: Ruler, labelKey: ['inventory', 'unit'], module: 'inventory' },
+  { href: 'production/orders', icon: Factory, labelKey: ['production', 'orders'], module: 'production' },
+  { href: 'production/boms', icon: Layers, labelKey: ['production', 'boms'], module: 'production' },
   { href: 'sales/orders', icon: ShoppingCart, labelKey: ['sales', 'orders'], module: 'sales' },
   { href: 'sales/invoices', icon: FileText, labelKey: ['sales', 'invoices'], module: 'sales' },
+  { href: 'distribution/deliveries', icon: Truck, labelKey: ['distribution', 'deliveries'], module: 'distribution' },
+  { href: 'distribution/routes', icon: Route, labelKey: ['distribution', 'routes'], module: 'distribution' },
   { href: 'customers', icon: Contact, labelKey: ['nav', 'customers'], module: 'customers' },
   { href: 'customers/categories', icon: Layers, labelKey: ['sales', 'customerCategories'], module: 'customers' },
   { href: 'procurement/purchase-orders', icon: Truck, labelKey: ['procurement', 'purchases'], module: 'procurement' },
@@ -119,6 +127,8 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
   const tFinance = useTranslations('finance')
   const tHr = useTranslations('hr')
   const tProcurement = useTranslations('procurement')
+  const tProduction = useTranslations('production')
+  const tDistribution = useTranslations('distribution')
   const tSupport = useTranslations('support')
 
   const namespaces: Record<string, (key: string) => string> = {
@@ -128,6 +138,8 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
     finance: tFinance,
     hr: tHr,
     procurement: tProcurement,
+    production: tProduction,
+    distribution: tDistribution,
     support: tSupport,
   }
 

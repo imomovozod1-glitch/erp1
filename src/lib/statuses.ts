@@ -27,6 +27,14 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number]
 export const INVOICE_STATUSES = ['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number]
 
+/**
+ * Where a sale physically is. Separate from the order's own status because a
+ * counter sale is handed over on the spot and never gets a delivery at all —
+ * `set_delivery_status` carries the order along when the two do line up.
+ */
+export const DELIVERY_STATUSES = ['pending', 'in_transit', 'delivered', 'cancelled'] as const
+export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number]
+
 export const PURCHASE_STATUSES = [
   'draft',
   'sent',
@@ -41,6 +49,13 @@ export const ORDER_STATUS_TONES: Record<OrderStatus, StatusTone> = {
   pending: 'amber',
   confirmed: 'blue',
   shipped: 'indigo',
+  delivered: 'emerald',
+  cancelled: 'rose',
+}
+
+export const DELIVERY_STATUS_TONES: Record<DeliveryStatus, StatusTone> = {
+  pending: 'amber',
+  in_transit: 'indigo',
   delivered: 'emerald',
   cancelled: 'rose',
 }
@@ -99,6 +114,14 @@ export const INVOICE_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
   cancelled: [],
 }
 
+/** Mirrors the CASE in set_delivery_status() (migration_distribution.sql). */
+export const DELIVERY_TRANSITIONS: Record<DeliveryStatus, DeliveryStatus[]> = {
+  pending: ['in_transit', 'cancelled'],
+  in_transit: ['delivered', 'cancelled'],
+  delivered: [],
+  cancelled: [],
+}
+
 export const PURCHASE_TRANSITIONS: Record<PurchaseStatus, PurchaseStatus[]> = {
   draft: ['sent', 'cancelled'],
   sent: ['partially_received', 'received', 'cancelled'],
@@ -109,6 +132,10 @@ export const PURCHASE_TRANSITIONS: Record<PurchaseStatus, PurchaseStatus[]> = {
 
 export function nextOrderStatuses(status: string): OrderStatus[] {
   return ORDER_TRANSITIONS[status as OrderStatus] ?? []
+}
+
+export function nextDeliveryStatuses(status: string): DeliveryStatus[] {
+  return DELIVERY_TRANSITIONS[status as DeliveryStatus] ?? []
 }
 
 export function nextInvoiceStatuses(status: string): InvoiceStatus[] {

@@ -23,9 +23,10 @@ import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
+import { isService } from '@/lib/product-kind'
 
 interface SaleFormProps {
-  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
+  products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; is_service?: boolean }[]
   customers: { id: string; name: string }[]
   /** Active tenant members who can be made responsible for the sale. */
   assignableUsers: AssignableUser[]
@@ -281,6 +282,7 @@ async function submitSaleInBrowser(
 export function SaleForm({ products, customers, assignableUsers, lang }: SaleFormProps) {
   const tCommon = useTranslations('common')
   const tPos = useTranslations('pos')
+  const tInventory = useTranslations('inventory')
   const t = useTranslations('sales')
   const exitForm = useRouteModalExit(`/${lang}/sales/orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -308,7 +310,8 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
     const product = products.find(p => p.id === selectedProductId)
     if (!product) return
 
-    if (qty > product.stock) {
+    // A service holds no stock, so there is no quantity it can exceed.
+    if (!isService(product) && qty > product.stock) {
       toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
       return
     }
@@ -534,8 +537,11 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
                 </SelectTrigger>
                 <SelectContent>
                   {products.map((p) => (
-                    <SelectItem key={p.id} value={p.id} disabled={p.stock === 0}>
-                      {p.name} — {formatCurrency(p.price)} ({t('availableStock')}: {p.stock} {p.unit})
+                    <SelectItem key={p.id} value={p.id} disabled={!isService(p) && p.stock === 0}>
+                      {p.name} — {formatCurrency(p.price)}
+                      {isService(p)
+                        ? ` (${tInventory('service')})`
+                        : ` (${t('availableStock')}: ${p.stock} ${p.unit})`}
                     </SelectItem>
                   ))}
                 </SelectContent>

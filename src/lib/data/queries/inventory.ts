@@ -1,5 +1,11 @@
 /**
- * Products, categories, stock movements and units.
+ * Products, services, categories, stock movements and units.
+ *
+ * A service (`products.is_service = true`, migration_services.sql) lives in the
+ * `products` table so a sale, invoice or receipt never has to know which of the
+ * two it is holding. Everything here that feeds a PRODUCT screen — the list
+ * page, the purchase-order picker, stock value, low stock — therefore has to
+ * exclude them by hand; only selling includes both.
  *
  * Part of the query layer described in `./index.ts` — every function here is
  * `unstable_cache`-wrapped, tagged for invalidation, and MUST filter by
@@ -127,15 +133,22 @@ export const getCachedCategoriesForSelect = unstable_cache(
 // round-trip is free. Tag-based invalidation of a cached version of this exact query
 // was observed to not reliably pick up a just-created product, so it's simplest and
 // most reliable to just not cache it at all here.
-export async function getCachedProductsForSelect(tenantId: string) {
+export async function getCachedProductsForSelect(
+  tenantId: string,
+  // Services are sellable but not purchasable or countable, so they belong in
+  // the sales picker and nowhere else. Excluded by default: a caller that
+  // forgets to think about it gets goods only, which is always safe.
+  opts: { includeServices?: boolean } = {}
+) {
   const supabase = getCacheClient() as any
-  const { data } = await supabase
+  let query = supabase
     .from('products')
-    .select('id, name, price, cost_price, stock, unit, sku')
+    .select('id, name, price, cost_price, stock, unit, sku, is_service')
     .eq('tenant_id', tenantId)
     .eq('is_active', true)
-    .order('name')
-  return (data ?? []) as { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
+  if (!opts.includeServices) query = query.eq('is_service', false)
+  const { data } = await query.order('name')
+  return (data ?? []) as { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; is_service: boolean }[]
 }
 
 export const getCachedProductDetails = unstable_cache(
@@ -245,7 +258,36 @@ export function getProductsPage(
     pageSize: opts.pageSize,
     search: opts.search,
     searchColumns: ['name', 'sku'],
-    filters: { is_active: opts.status === 'all' || !opts.status ? undefined : opts.status === 'active' },
+    filters: {
+      is_active: opts.status === 'all' || !opts.status ? undefined : opts.status === 'active',
+      is_service: false,
+    },
+    orderBy: { column: 'created_at', ascending: false },
+    ownerId: opts.ownerId,
+  })
+}
+
+/**
+ * The services list (Ombor > Xizmatlar) — the same query as `getProductsPage`
+ * against the other half of the table. Stock columns are left out of the select
+ * only in the sense that nothing reads them: a service's are pinned at zero.
+ */
+export function getServicesPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string; status?: 'all' | 'active' | 'inactive'; ownerId?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'products',
+    tenantId,
+    select: '*, categories(name), creator:profiles!products_created_by_fkey(full_name), assignee:profiles!products_assigned_to_fkey(full_name)',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['name', 'sku'],
+    filters: {
+      is_active: opts.status === 'all' || !opts.status ? undefined : opts.status === 'active',
+      is_service: true,
+    },
     orderBy: { column: 'created_at', ascending: false },
     ownerId: opts.ownerId,
   })

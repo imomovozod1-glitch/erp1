@@ -36,6 +36,38 @@ export async function invalidateMovements() {
   updateTag(CACHE_TAGS.movements)
 }
 
+export async function invalidateRoutes() {
+  updateTag(CACHE_TAGS.routes)
+}
+
+export async function invalidateDeliveries() {
+  updateTag(CACHE_TAGS.deliveries)
+}
+
+/**
+ * A delivery status move — one action, see `invalidateSale`. It carries the
+ * sales order with it (`set_delivery_status`), so the orders list and anything
+ * counting open orders move at the same time.
+ */
+export async function invalidateDelivery() {
+  for (const tag of [
+    CACHE_TAGS.deliveries,
+    CACHE_TAGS.orders,
+    CACHE_TAGS.analytics,
+    CACHE_TAGS.dashboard,
+  ]) {
+    updateTag(tag)
+  }
+}
+
+export async function invalidateBoms() {
+  updateTag(CACHE_TAGS.boms)
+}
+
+export async function invalidateProductionOrders() {
+  updateTag(CACHE_TAGS.productionOrders)
+}
+
 export async function invalidateOrders() {
   updateTag(CACHE_TAGS.orders)
   updateTag(CACHE_TAGS.dashboard)
@@ -132,6 +164,25 @@ export async function invalidateSale() {
     CACHE_TAGS.transactions,
     CACHE_TAGS.customers,
     CACHE_TAGS.cashbox,
+    CACHE_TAGS.analytics,
+    CACHE_TAGS.dashboard,
+  ]) {
+    updateTag(tag)
+  }
+}
+
+/**
+ * Everything completing or cancelling a production run touches — one action,
+ * see `invalidateSale`. Components leave stock and the finished product enters
+ * it, so the product list, movements and every stock figure on the dashboard
+ * move together.
+ */
+export async function invalidateProduction() {
+  for (const tag of [
+    CACHE_TAGS.productionOrders,
+    CACHE_TAGS.boms,
+    CACHE_TAGS.products,
+    CACHE_TAGS.movements,
     CACHE_TAGS.analytics,
     CACHE_TAGS.dashboard,
   ]) {

@@ -37,6 +37,12 @@
 --
 -- Business refusals are returned as { ok: false, code, ... } — nothing is
 -- written in that case. Anything unexpected raises and rolls back.
+--
+-- CAREFUL: migration_services.sql re-emits create_sale, consume_cost_layers and
+-- return_sale_lines_to_stock with the `products.is_service` guards (a service
+-- holds no stock, so it skips the stock check, the decrement, the movement and
+-- the cost layers). Re-running THIS file replaces those three with the versions
+-- below and loses the guards — run migration_services.sql again after it.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------

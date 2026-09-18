@@ -139,7 +139,9 @@
     "customers": "Customers",
     "guide": "Guide",
     "faq": "FAQ",
-    "help": "Help"
+    "help": "Help",
+    "production": "Industry",
+    "distribution": "Distribution"
   },
   "auth": {
     "loading": "Signing in...",
@@ -325,7 +327,138 @@
     "initialStock": "Opening stock",
     "manualAdjustment": "Manual adjustment",
     "value": "Value",
-    "cannotDeleteWithStock": "Products with stock on hand cannot be deleted"
+    "cannotDeleteWithStock": "Products with stock on hand cannot be deleted",
+    "services": "Services",
+    "service": "Service",
+    "addService": "Add service",
+    "editService": "Edit service",
+    "serviceName": "Service name",
+    "serviceCode": "Code",
+    "serviceCostPrice": "Cost price",
+    "serviceCostHint": "What delivering the service costs you — every sale of it is costed at this figure.",
+    "serviceDeactivatedInsteadOfDeleted": "The service is used on sales, so it cannot be deleted outright. It has been deactivated (archived)."
+  },
+  "production": {
+    "title": "Industry",
+    "boms": "Compositions",
+    "bom": "Composition",
+    "orders": "Production",
+    "order": "Production order",
+    "addBom": "Add composition",
+    "editBom": "Edit composition",
+    "bomName": "Composition name",
+    "finishedProduct": "Finished product",
+    "outputQuantity": "Output per batch",
+    "outputHint": "How much finished product one batch yields — write the recipe the way you actually work it.",
+    "extraCost": "Extra cost",
+    "extraCostHint": "Costs other than components: wages, power, packaging. Counted per batch.",
+    "components": "Components",
+    "component": "Component",
+    "addComponent": "Add",
+    "noComponents": "Add at least one component",
+    "componentExists": "That component is already on the list",
+    "batchCost": "Batch cost",
+    "perUnitCost": "Cost per unit",
+    "estimated": "Estimated",
+    "estimatedHint": "An estimate from today's cost prices. The real cost is worked out from the stock layers when the run is completed.",
+    "addOrder": "Produce",
+    "editOrder": "Edit order",
+    "orderNumber": "Order number",
+    "produceQuantity": "Quantity to produce",
+    "plannedDate": "Planned date",
+    "completedAt": "Completed on",
+    "totalCost": "Total cost",
+    "unitCost": "Cost per unit",
+    "required": "Required",
+    "available": "Available",
+    "notEnough": "Not enough",
+    "status_draft": "Draft",
+    "status_completed": "Completed",
+    "status_cancelled": "Cancelled",
+    "complete": "Complete",
+    "completeTitle": "Complete the production run",
+    "completeConfirm": "The components leave stock, the finished product enters it, and its cost is worked out. Continue?",
+    "completed": "Production completed. Cost per unit: {cost}",
+    "cancelTitle": "Cancel the production run",
+    "cancelConfirm": "The finished product leaves stock and the components go back. Continue?",
+    "cancelled": "Production cancelled",
+    "notDraft": "Only a draft order can be changed or completed.",
+    "alreadyCancelled": "This order has already been cancelled.",
+    "insufficientComponent": "Not enough \"{product}\": {available} available, {required} required.",
+    "migrationMissing": "The production database functions are not installed yet (migration_production.sql).",
+    "cannotDeleteCompleted": "A completed production run cannot be deleted — cancel it instead.",
+    "bomInUse": "The composition is used by a production run, so it was not deleted. It has been deactivated.",
+    "selfComponent": "A product cannot be part of its own composition.",
+    "bomNamePlaceholder": "For example: Bread dough",
+    "bomComponentsCount": "{count, plural, one {# component} other {# components}}",
+    "duplicateNumber": "An order with that number already exists. Use a different number.",
+    "selectBomTemplate": "Select a composition",
+    "noBomTemplate": "No composition (enter by hand)",
+    "bomAppliedHint": "Picking a composition fills the component list in, scaled to the quantity. Each line stays editable afterwards.",
+    "productFromBomHint": "The finished product comes from the composition. To produce something else, pick the matching composition or switch to \"No composition\"."
+  },
+  "distribution": {
+    "title": "Distribution",
+    "routes": "Routes",
+    "route": "Route",
+    "deliveries": "Deliveries",
+    "delivery": "Delivery",
+    "addRoute": "Add route",
+    "editRoute": "Edit route",
+    "routeName": "Route name",
+    "routeNamePlaceholder": "For example: Chilonzor — Tuesday",
+    "agent": "Agent",
+    "noAgent": "No agent assigned",
+    "weekday": "Weekday",
+    "noWeekday": "No fixed day",
+    "stops": "Customers",
+    "stop": "Customer",
+    "addStop": "Add",
+    "noStops": "Add at least one customer",
+    "stopExists": "That customer is already on the route",
+    "routeStopsCount": "{count, plural, one {# customer} other {# customers}}",
+    "visitOrder": "Visit order",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "routeInUse": "The route is used by a delivery, so it was not deleted. It has been deactivated.",
+    "addDelivery": "Create delivery",
+    "editDelivery": "Edit delivery",
+    "deliveryNumber": "Delivery number",
+    "order": "Sales order",
+    "selectOrder": "Select an order",
+    "noDeliverableOrders": "No orders are waiting to be delivered. Create a sale first.",
+    "customer": "Customer",
+    "address": "Address",
+    "plannedDate": "Planned date",
+    "deliveredAt": "Delivered on",
+    "courier": "Courier / driver",
+    "status_pending": "Pending",
+    "status_in_transit": "In transit",
+    "status_delivered": "Delivered",
+    "status_cancelled": "Cancelled",
+    "markInTransit": "Send on its way",
+    "markDelivered": "Mark delivered",
+    "cancelDelivery": "Cancel the delivery",
+    "cancelDeliveryConfirm": "The delivery will be cancelled. The sales order and the stock are untouched.",
+    "statusChanged": "Delivery status updated",
+    "orderFollowed": "The sales order moved to \"{status}\" as well",
+    "orderUnchanged": "The sales order's status was left as it was",
+    "orderStatus": "Order status",
+    "openOrders": "Open deliveries",
+    "agentBreakdown": "By agent",
+    "inHand": "In hand",
+    "handedOver": "Handed over",
+    "noOrderLink": "No order",
+    "duplicateNumber": "A delivery with that number already exists. Use a different number.",
+    "migrationMissing": "The distribution database function is not installed yet (migration_distribution.sql).",
+    "cannotDeleteDelivered": "A delivered delivery cannot be deleted — cancel it instead.",
+    "mon": "Monday",
+    "tue": "Tuesday",
+    "wed": "Wednesday",
+    "thu": "Thursday",
+    "fri": "Friday",
+    "sat": "Saturday",
+    "sun": "Sunday"
   },
   "sales": {
     "title": "Sales",
@@ -1181,6 +1314,11 @@
     "analytics": "Reports — detailed reports on sales, profit and products for the chosen period. Under \"Custom report\" you pick the source, period, columns and grouping yourself and export the result to Excel.",
     "pos": "POS (checkout) — for quick in-store sales to customers. Pick a product, enter the quantity, choose a payment method, and complete the sale.",
     "products": "Products — a list of all your goods, their prices, and stock levels. Add new products, edit them, or import/export via Excel.",
+    "services": "Services — the services you sell: price, cost and margin. A service holds no stock, so it never runs out and never appears in stock movements.",
+    "boms": "Compositions — you record which components a finished product is made from, and in what quantities. This is only the recipe: saving one moves no stock.",
+    "productionOrders": "Production — you create a run from a composition. Completing it takes the components out of stock, brings the finished product in, and works its cost out from the real stock layers.",
+    "routes": "Routes — each agent's round: which customers, in what order, and on which weekday. This is only a plan: saving one touches neither stock nor money.",
+    "deliveries": "Deliveries — tracks where a sale physically is on its way to the customer. No stock and no money move here: the goods left the shelf when the sale was rung up. When a delivery goes in transit or delivered, the sales order follows.",
     "categories": "Categories — group your products for tidy organization and quick lookup.",
     "movements": "Stock movements — a history of every stock in, out, and adjustment, each recorded with its reason.",
     "units": "Measurement units — manage the list of units (piece, kg, liter, etc.) used for products.",
@@ -1392,6 +1530,20 @@
           "If a unit of measurement is missing, add it first under Inventory → Units."
         ]
       },
+      "services": {
+        "purpose": "Services — the services you sell: delivery, installation, repair, consulting. Unlike a product, a service holds no stock — it never runs out and never appears in stock movements.",
+        "steps": [
+          "Press \"Add service\" and enter a name, a code and a unit (an hour, a visit, a square metre).",
+          "Enter the cost price — what delivering the service costs you. Every sale of it is costed at this figure.",
+          "Enter the selling price; the form shows the profit, margin and markup straight away.",
+          "The service appears in sales and at the POS till in the same list as goods — sell it exactly the same way."
+        ],
+        "tips": [
+          "Service codes share one sequence with products: both are numbered from the same counter.",
+          "A service that has been sold cannot be deleted — it is deactivated instead, so the history survives.",
+          "Leaving the cost price empty makes the profit report treat the service as pure income, which is rarely right."
+        ]
+      },
       "categories": {
         "purpose": "Categories group your products. A well-built category tree speeds up searching and makes reports easier to read.",
         "steps": [
@@ -1428,6 +1580,68 @@
         "tips": [
           "Keep unit names short and consistent (\"kg\", \"pcs\") — Excel import then matches them automatically.",
           "Use kg or litre for goods sold by weight so fractional quantities can be entered."
+        ]
+      },
+      "productionOrders": {
+        "purpose": "Production — you create a run from a composition and then complete it. Completing is the only step where stock actually moves: the components are taken out, the finished product is brought in, and its cost is worked out.",
+        "steps": [
+          "Press \"Produce\" and pick a composition — the component lines fill in, scaled to the quantity.",
+          "Enter the quantity; the lines stay editable, because a real batch rarely takes exactly what the recipe says.",
+          "Enter the extra costs (wages, power, packaging) — they go into the finished product's cost.",
+          "Save: this is still a draft and moves no stock. Each component shows whether there is enough of it.",
+          "When the work is done, press \"Complete\" — only then does stock move and the cost get written.",
+          "If something was wrong, cancel the run: the finished product leaves stock and the components go back."
+        ],
+        "tips": [
+          "A completed run cannot be edited — it is the record of what happened. It can only be cancelled.",
+          "If the finished product has already been sold, cancelling is refused: you cannot put back what is gone.",
+          "The cost comes from the real stock layers (FIFO/LIFO/AVECO), not from today's list prices."
+        ]
+      },
+      "boms": {
+        "purpose": "Compositions — you record which components a finished product is made from, and in what quantities. This is only the recipe: saving one moves no stock, and a production run is filled in from it.",
+        "steps": [
+          "Press \"Add composition\", give it a name and pick the finished product.",
+          "Enter what one batch yields — the way you actually work it (\"this mix makes 40 loaves\").",
+          "Add the components one by one and give each a quantity.",
+          "Enter the extra cost: wages, power, packaging — counted per batch.",
+          "The estimated batch and per-unit cost appear underneath."
+        ],
+        "tips": [
+          "The cost here is an estimate from today's prices. The real one is worked out when a run is completed.",
+          "One component cannot appear twice in a composition — that is a mistake; put the quantity on one line.",
+          "Editing a composition later does not change production runs that are already completed."
+        ]
+      },
+      "deliveries": {
+        "purpose": "Deliveries — tracks where a sale physically is on its way to the customer. Neither stock nor money moves here: the goods left the shelf when the sale was rung up, and the payment or debt was recorded then too.",
+        "steps": [
+          "Press \"Create delivery\" and pick the sales order — the customer and their address fill in by themselves.",
+          "Picking a route suggests that route's agent as the courier.",
+          "Set the planned date and save. The delivery sits in \"Pending\".",
+          "When the courier sets off, press \"Send on its way\" — the sales order moves to \"Shipped\" as well.",
+          "Once the customer has it, press \"Mark delivered\" — the order becomes \"Delivered\".",
+          "The cards above show how much each agent is carrying and how much they have handed over."
+        ],
+        "tips": [
+          "The sales order follows the delivery's status on its own — there is no need to change the order separately.",
+          "If the order was cancelled or already delivered it is left alone, and the message says so.",
+          "A delivered delivery cannot be deleted: it is the record that the goods arrived. Cancel it if you must."
+        ]
+      },
+      "routes": {
+        "purpose": "Routes — each agent's round: which customers, in what order, and on which weekday. This is only a plan: saving one touches neither stock nor money.",
+        "steps": [
+          "Press \"Add route\" and give it a name (for example \"Chilonzor — Tuesday\").",
+          "Pick the agent and the weekday. The day is optional — a route can have no fixed day.",
+          "Add the customers one by one.",
+          "Use the arrows to set the visit order — the agent works the round in exactly that sequence.",
+          "When you create a delivery, picking the route suggests its agent as the courier."
+        ],
+        "tips": [
+          "A customer can appear on a route only once.",
+          "A route used by a delivery cannot be deleted — it is deactivated, and the history survives.",
+          "Do not delete a route you are not using for a while: make it inactive instead."
         ]
       },
       "salesOrders": {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { isService } from '@/lib/product-kind'
 
 export interface CartItem {
   product: any
@@ -119,7 +120,9 @@ export function usePosCart({
   const [taxActive, setTaxActive] = useState(false)
 
   const add = (product: any) => {
-    if (product.stock <= 0) {
+    // A service is never sold out and never runs low, so none of the stock
+    // rules below apply to it — see src/lib/product-kind.ts.
+    if (!isService(product) && product.stock <= 0) {
       onStockExceeded()
       return
     }
@@ -128,7 +131,7 @@ export function usePosCart({
       setItems([...items, { product, quantity: 1, discountPercent: 0 }])
       return
     }
-    if (existing.quantity >= product.stock) {
+    if (!isService(product) && existing.quantity >= product.stock) {
       onStockExceeded()
       return
     }
@@ -145,7 +148,7 @@ export function usePosCart({
   const setQuantity = (productId: string, quantity: number) => {
     const item = items.find((i) => i.product.id === productId)
     if (!item) return
-    if (quantity > item.product.stock) {
+    if (!isService(item.product) && quantity > item.product.stock) {
       onStockExceeded()
       return
     }
@@ -172,7 +175,7 @@ export function usePosCart({
   const setTypedQuantity = (productId: string, quantity: number) => {
     const item = items.find((i) => i.product.id === productId)
     if (!item) return
-    if (quantity > item.product.stock) {
+    if (!isService(item.product) && quantity > item.product.stock) {
       onStockExceeded()
       return
     }

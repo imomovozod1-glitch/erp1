@@ -288,7 +288,9 @@ export const getCachedDashboardStats = unstable_cache(
     ] = await Promise.all([
       // Cancelled orders are not sales, so they don't belong in the order count.
       supabase.from('sales_orders').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).neq('status', 'cancelled'),
-      supabase.from('products').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
+      // Goods only: a service holds no stock, so it belongs in neither the
+      // inventory headcount nor the two stock figures below (migration_services.sql).
+      supabase.from('products').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true).eq('is_service', false),
       supabase.from('customers').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
       supabase.from('employees').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
       supabase.from('suppliers').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
@@ -305,10 +307,10 @@ export const getCachedDashboardStats = unstable_cache(
         .gte('transaction_date', sixMonthsAgo)
         .order('transaction_date', { ascending: true }),
       supabase.from('transactions').select('amount, type, transaction_date').eq('tenant_id', tenantId),
-      supabase.from('products').select('id, name, sku, stock, min_stock').eq('tenant_id', tenantId).order('stock', { ascending: true }).limit(10),
+      supabase.from('products').select('id, name, sku, stock, min_stock').eq('tenant_id', tenantId).eq('is_service', false).order('stock', { ascending: true }).limit(10),
       supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['sent', 'overdue']),
       supabase.from('cashboxes').select('balance').eq('tenant_id', tenantId),
-      supabase.from('products').select('stock, cost_price').eq('tenant_id', tenantId).eq('is_active', true),
+      supabase.from('products').select('stock, cost_price').eq('tenant_id', tenantId).eq('is_active', true).eq('is_service', false),
       supabase.from('invoices').select('total_amount, paid_amount').eq('tenant_id', tenantId).not('status', 'in', '("paid","cancelled")'),
       supabase.from('purchase_orders').select(SUPPLIER_ORDER_COLUMNS).eq('tenant_id', tenantId).in('status', ['received', 'partially_received']),
       supabase.from('transactions').select('supplier_id, amount').eq('tenant_id', tenantId).eq('type', 'expense').not('supplier_id', 'is', null),

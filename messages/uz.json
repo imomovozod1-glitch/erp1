@@ -139,7 +139,9 @@
     "customers": "Mijozlar",
     "guide": "Qo'llanma",
     "faq": "Savol-javob",
-    "help": "Yordam"
+    "help": "Yordam",
+    "production": "Sanoat",
+    "distribution": "Distributsiya"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -325,7 +327,138 @@
     "initialStock": "Boshlang'ich zaxira",
     "manualAdjustment": "Qo'lda tuzatish",
     "value": "Qiymati",
-    "cannotDeleteWithStock": "Zaxirasi mavjud mahsulotlarni o'chirib bo'lmaydi"
+    "cannotDeleteWithStock": "Zaxirasi mavjud mahsulotlarni o'chirib bo'lmaydi",
+    "services": "Xizmatlar",
+    "service": "Xizmat",
+    "addService": "Xizmat qo'shish",
+    "editService": "Xizmatni tahrirlash",
+    "serviceName": "Xizmat nomi",
+    "serviceCode": "Kodi",
+    "serviceCostPrice": "Tannarx",
+    "serviceCostHint": "Xizmatni ko'rsatish o'zingizga qancha turadi — har bir sotuv shu tannarx bo'yicha hisoblanadi.",
+    "serviceDeactivatedInsteadOfDeleted": "Xizmat sotuvlarda ishlatilgani uchun butunlay o'chirilmaydi. U faolsizlantirildi (arxivlandi)."
+  },
+  "production": {
+    "title": "Sanoat",
+    "boms": "Tarkiblar",
+    "bom": "Tarkib",
+    "orders": "Ishlab chiqarish",
+    "order": "Ishlab chiqarish buyurtmasi",
+    "addBom": "Tarkib qo'shish",
+    "editBom": "Tarkibni tahrirlash",
+    "bomName": "Tarkib nomi",
+    "finishedProduct": "Tayyor mahsulot",
+    "outputQuantity": "Bir partiyada chiqadigan miqdor",
+    "outputHint": "Bitta partiya necha dona tayyor mahsulot beradi — retseptni o'zingiz ishlaydigan holicha yozing.",
+    "extraCost": "Qo'shimcha xarajat",
+    "extraCostHint": "Xomashyodan tashqari xarajatlar: ish haqi, elektr, qadoq. Partiyaga hisoblanadi.",
+    "components": "Tarkibiy qismlar",
+    "component": "Xomashyo",
+    "addComponent": "Qo'shish",
+    "noComponents": "Kamida bitta xomashyo qo'shing",
+    "componentExists": "Bu xomashyo allaqachon ro'yxatda",
+    "batchCost": "Partiya tannarxi",
+    "perUnitCost": "Bir dona tannarxi",
+    "estimated": "Taxminiy",
+    "estimatedHint": "Joriy tannarxlar bo'yicha taxmin. Haqiqiy tannarx ishlab chiqarish yakunlanganda, zaxira qatlamlaridan hisoblanadi.",
+    "addOrder": "Ishlab chiqarish",
+    "editOrder": "Buyurtmani tahrirlash",
+    "orderNumber": "Buyurtma raqami",
+    "produceQuantity": "Ishlab chiqariladigan miqdor",
+    "plannedDate": "Rejalashtirilgan sana",
+    "completedAt": "Yakunlangan sana",
+    "totalCost": "Umumiy tannarx",
+    "unitCost": "Bir dona tannarxi",
+    "required": "Kerak",
+    "available": "Mavjud",
+    "notEnough": "Yetarli emas",
+    "status_draft": "Qoralama",
+    "status_completed": "Yakunlangan",
+    "status_cancelled": "Bekor qilingan",
+    "complete": "Yakunlash",
+    "completeTitle": "Ishlab chiqarishni yakunlash",
+    "completeConfirm": "Xomashyo zaxiradan yechiladi, tayyor mahsulot omborga kiritiladi va tannarxi hisoblanadi. Davom etamizmi?",
+    "completed": "Ishlab chiqarish yakunlandi. Bir dona tannarxi: {cost}",
+    "cancelTitle": "Ishlab chiqarishni bekor qilish",
+    "cancelConfirm": "Tayyor mahsulot ombordan chiqariladi, xomashyo esa qaytariladi. Davom etamizmi?",
+    "cancelled": "Ishlab chiqarish bekor qilindi",
+    "notDraft": "Faqat qoralama holatidagi buyurtmani o'zgartirish yoki yakunlash mumkin.",
+    "alreadyCancelled": "Bu buyurtma allaqachon bekor qilingan.",
+    "insufficientComponent": "\"{product}\" yetarli emas: {available} bor, {required} kerak.",
+    "migrationMissing": "Ishlab chiqarish bazaviy funksiyalari hali o'rnatilmagan (migration_production.sql).",
+    "cannotDeleteCompleted": "Yakunlangan ishlab chiqarishni o'chirib bo'lmaydi — uni bekor qiling.",
+    "bomInUse": "Bu tarkib ishlab chiqarishda ishlatilgan, shuning uchun o'chirilmadi. U nofaol qilindi.",
+    "selfComponent": "Mahsulot o'z tarkibiga kira olmaydi.",
+    "bomNamePlaceholder": "Masalan: Non xamiri",
+    "bomComponentsCount": "{count, plural, other {# ta xomashyo}}",
+    "duplicateNumber": "Bu raqamdagi buyurtma allaqachon mavjud. Boshqa raqam kiriting.",
+    "selectBomTemplate": "Tarkibni tanlang",
+    "noBomTemplate": "Tarkibsiz (qo'lda kiritish)",
+    "bomAppliedHint": "Tarkib tanlanganda xomashyo ro'yxati miqdorga moslab to'ldiriladi. Keyin har bir qatorni qo'lda o'zgartirishingiz mumkin.",
+    "productFromBomHint": "Tayyor mahsulot tarkibdan olinadi. Boshqasini ishlab chiqarish uchun mos tarkibni tanlang yoki \"Tarkibsiz\" rejimiga o'ting."
+  },
+  "distribution": {
+    "title": "Distributsiya",
+    "routes": "Marshrutlar",
+    "route": "Marshrut",
+    "deliveries": "Yetkazib berish",
+    "delivery": "Yetkazma",
+    "addRoute": "Marshrut qo'shish",
+    "editRoute": "Marshrutni tahrirlash",
+    "routeName": "Marshrut nomi",
+    "routeNamePlaceholder": "Masalan: Chilonzor — seshanba",
+    "agent": "Agent",
+    "noAgent": "Agent biriktirilmagan",
+    "weekday": "Hafta kuni",
+    "noWeekday": "Belgilangan kun yo'q",
+    "stops": "Mijozlar",
+    "stop": "Mijoz",
+    "addStop": "Qo'shish",
+    "noStops": "Kamida bitta mijoz qo'shing",
+    "stopExists": "Bu mijoz marshrutda allaqachon bor",
+    "routeStopsCount": "{count, plural, other {# ta mijoz}}",
+    "visitOrder": "Tashrif tartibi",
+    "moveUp": "Yuqoriga",
+    "moveDown": "Pastga",
+    "routeInUse": "Bu marshrut yetkazmalarda ishlatilgan, shuning uchun o'chirilmadi. U nofaol qilindi.",
+    "addDelivery": "Yetkazma yaratish",
+    "editDelivery": "Yetkazmani tahrirlash",
+    "deliveryNumber": "Yetkazma raqami",
+    "order": "Sotuv buyurtmasi",
+    "selectOrder": "Buyurtmani tanlang",
+    "noDeliverableOrders": "Yetkazishga tayyor buyurtma yo'q. Avval sotuv yarating.",
+    "customer": "Mijoz",
+    "address": "Manzil",
+    "plannedDate": "Rejalashtirilgan sana",
+    "deliveredAt": "Yetkazilgan sana",
+    "courier": "Kuryer / haydovchi",
+    "status_pending": "Kutilmoqda",
+    "status_in_transit": "Yo'lda",
+    "status_delivered": "Yetkazildi",
+    "status_cancelled": "Bekor qilingan",
+    "markInTransit": "Yo'lga chiqdi",
+    "markDelivered": "Yetkazildi deb belgilash",
+    "cancelDelivery": "Yetkazmani bekor qilish",
+    "cancelDeliveryConfirm": "Yetkazma bekor qilinadi. Sotuv buyurtmasi va zaxira o'zgarmaydi.",
+    "statusChanged": "Yetkazma holati yangilandi",
+    "orderFollowed": "Sotuv buyurtmasi ham \"{status}\" holatiga o'tdi",
+    "orderUnchanged": "Sotuv buyurtmasi holati o'zgarmadi",
+    "orderStatus": "Buyurtma holati",
+    "openOrders": "Ochiq yetkazmalar",
+    "agentBreakdown": "Agentlar kesimi",
+    "inHand": "Qo'lida",
+    "handedOver": "Yetkazgan",
+    "noOrderLink": "Buyurtmasiz",
+    "duplicateNumber": "Bu raqamdagi yetkazma allaqachon mavjud. Boshqa raqam kiriting.",
+    "migrationMissing": "Distributsiya bazaviy funksiyalari hali o'rnatilmagan (migration_distribution.sql).",
+    "cannotDeleteDelivered": "Yetkazilgan yetkazmani o'chirib bo'lmaydi — uni bekor qiling.",
+    "mon": "Dushanba",
+    "tue": "Seshanba",
+    "wed": "Chorshanba",
+    "thu": "Payshanba",
+    "fri": "Juma",
+    "sat": "Shanba",
+    "sun": "Yakshanba"
   },
   "sales": {
     "title": "Sotuv",
@@ -1181,6 +1314,11 @@
     "analytics": "Hisobotlar — tanlangan davr bo'yicha savdo, foyda va mahsulotlar bo'yicha batafsil hisobotlarni ko'rsatadi. \"Maxsus hisobot\" bo'limida esa o'zingizga kerakli manba, davr, ustunlar va guruhlashni tanlab, hisobotni o'zingiz yig'asiz va Excelga yuklab olasiz.",
     "pos": "Kassa (POS) — do'kon peshtaxtasida mijozga tezkor sotuv qilish uchun. Mahsulot tanlang, miqdorni kiriting, to'lov turini tanlab, chekni yakunlang.",
     "products": "Mahsulotlar — barcha tovarlaringiz ro'yxati, narxi va qoldig'i shu yerda. Yangi mahsulot qo'shing, tahrirlang yoki Excel orqali import/eksport qiling.",
+    "services": "Xizmatlar — sotiladigan xizmatlaringiz ro'yxati: narxi, tannarxi va marjasi. Xizmatda zaxira bo'lmaydi, shuning uchun u hech qachon tugamaydi va ombor harakatlariga tushmaydi.",
+    "boms": "Tarkiblar — tayyor mahsulot qaysi xomashyolardan va qanday miqdorda tayyorlanishini yozib qo'yasiz. Bu faqat retsept: uni saqlash zaxiraga tegmaydi.",
+    "productionOrders": "Ishlab chiqarish — tarkib asosida buyurtma yaratasiz. Yakunlaganingizda xomashyo zaxiradan yechiladi, tayyor mahsulot omborga kiradi va tannarxi haqiqiy zaxira qatlamlaridan hisoblanadi.",
+    "routes": "Marshrutlar — har bir agentning aylanmasi: qaysi mijozlarga, qanday tartibda va hafta qaysi kuni boradi. Bu faqat reja: uni saqlash zaxiraga ham, pulga ham tegmaydi.",
+    "deliveries": "Yetkazib berish — sotuv buyurtmasi mijozga qayerdaligini kuzatadi. Zaxira va pul bu yerda harakatlanmaydi: mahsulot sotuv yaratilganda allaqachon ombordan yechilgan. Yetkazma \"Yo'lda\" yoki \"Yetkazildi\" bo'lganda sotuv buyurtmasi ham shunga mos holatga o'tadi.",
     "categories": "Kategoriyalar — mahsulotlaringizni guruhlarga ajratish uchun. Bu tovarlarni tartibli saqlash va tez topishga yordam beradi.",
     "movements": "Ombor harakatlari — mahsulotlarning kirim, chiqim va tuzatishlar tarixini ko'rsatadi. Har bir o'zgarish sababi bilan birga qayd etiladi.",
     "units": "O'lchov birliklari — mahsulotlar uchun ishlatiladigan birliklar (dona, kg, litr va h.k.) ro'yxatini shu yerdan boshqaring.",
@@ -1392,6 +1530,20 @@
           "O'lchov birligi ro'yxatda bo'lmasa, avval Ombor → O'lchov birliklari bo'limida qo'shing."
         ]
       },
+      "services": {
+        "purpose": "Xizmatlar — siz sotadigan xizmatlar ro'yxati: yetkazib berish, o'rnatish, ta'mirlash, konsultatsiya. Mahsulotdan farqi shuki, xizmatda ombor qoldig'i bo'lmaydi — u hech qachon tugamaydi va zaxira harakatlariga tushmaydi.",
+        "steps": [
+          "\"Xizmat qo'shish\" tugmasini bosib, nomi, kodi va o'lchov birligini kiriting (soat, tashrif, kvadrat metr).",
+          "Tannarxni kiriting — xizmatni ko'rsatish sizga qancha turadi. Har bir sotuv shu tannarx bo'yicha hisoblanadi.",
+          "Sotuv narxini kiriting; forma foyda, marja va ustamani darhol ko'rsatadi.",
+          "Xizmat sotuvda va POS kassasida mahsulotlar bilan bir ro'yxatda chiqadi — uni xuddi tovardek soting."
+        ],
+        "tips": [
+          "Xizmat kodi mahsulotlar bilan umumiy: bitta tartib raqami ikkalasiga ham beriladi.",
+          "Sotilgan xizmatni o'chirib bo'lmaydi — u nofaol holatga o'tadi va tarix saqlanadi.",
+          "Tannarxni bo'sh qoldirsangiz foyda hisoboti xizmatni sof daromad deb ko'rsatadi — bu odatda noto'g'ri."
+        ]
+      },
       "categories": {
         "purpose": "Kategoriyalar — mahsulotlarni guruhlarga ajratish uchun. To'g'ri tuzilgan kategoriya daraxti qidiruvni tezlashtiradi va hisobotlarni tushunarli qiladi.",
         "steps": [
@@ -1428,6 +1580,68 @@
         "tips": [
           "Birliklarni qisqa va bir xil yozing (\"kg\", \"dona\") — Excel importida mos birlik avtomatik topiladi.",
           "Vaznli tovar sotsangiz, kasrli miqdor kiritish uchun kg yoki litr birligini ishlating."
+        ]
+      },
+      "productionOrders": {
+        "purpose": "Ishlab chiqarish — tarkib (retsept) asosida buyurtma yaratasiz va uni yakunlaysiz. Yakunlash — bu zaxira haqiqatan harakatlanadigan yagona qadam: xomashyo ombordan yechiladi, tayyor mahsulot kiritiladi, tannarxi hisoblanadi.",
+        "steps": [
+          "\"Ishlab chiqarish\" tugmasini bosing, tarkibni tanlang — xomashyo qatorlari miqdorga moslab avtomatik to'ldiriladi.",
+          "Miqdorni kiriting; qatorlarni qo'lda o'zgartirsangiz ham bo'ladi — haqiqiy partiya retseptdan biroz farq qilishi mumkin.",
+          "Qo'shimcha xarajatni (ish haqi, elektr, qadoq) kiriting — u tayyor mahsulot tannarxiga qo'shiladi.",
+          "Saqlang: bu hali qoralama, zaxiraga tegmaydi. Har bir xomashyo yetarli yoki yetarsizligi ko'rinib turadi.",
+          "Ish bitgach \"Yakunlash\" tugmasini bosing — shundagina zaxira harakatlanadi va tannarx yoziladi.",
+          "Xato bo'lsa buyurtmani bekor qiling: tayyor mahsulot ombordan chiqariladi, xomashyo qaytariladi."
+        ],
+        "tips": [
+          "Yakunlangan buyurtmani tahrirlab bo'lmaydi — u sodir bo'lgan voqeaning hujjati. Faqat bekor qilinadi.",
+          "Tayyor mahsulot sotilib ketgan bo'lsa bekor qilish rad etiladi: yo'q mahsulotni qaytarib bo'lmaydi.",
+          "Tannarx joriy narxlardan emas, ombordagi haqiqiy zaxira qatlamlaridan (FIFO/LIFO/AVECO) olinadi."
+        ]
+      },
+      "boms": {
+        "purpose": "Tarkib — tayyor mahsulot qaysi xomashyolardan va qanday miqdorda tayyorlanishini yozib qo'yasiz. Bu faqat retsept: uni saqlash zaxiraga tegmaydi, ishlab chiqarish buyurtmasi esa shundan to'ldiriladi.",
+        "steps": [
+          "\"Tarkib qo'shish\" tugmasini bosib, nom va tayyor mahsulotni tanlang.",
+          "Bir partiyada nechta chiqishini yozing — retseptni o'zingiz ishlaydigan holicha (masalan \"bu xamir 40 ta non beradi\").",
+          "Xomashyolarni birma-bir qo'shing va har biriga miqdor kiriting.",
+          "Qo'shimcha xarajatni kiriting: ish haqi, elektr, qadoq — partiyaga hisoblanadi.",
+          "Pastda partiya va bir dona taxminiy tannarxi ko'rinadi."
+        ],
+        "tips": [
+          "Bu yerdagi tannarx — joriy narxlar bo'yicha taxmin. Haqiqiysi ishlab chiqarish yakunlanganda hisoblanadi.",
+          "Bitta xomashyo bir tarkibda ikki marta turolmaydi — bu xatolik, miqdorni bitta qatorda yozing.",
+          "Tarkibni keyin o'zgartirsangiz, allaqachon yakunlangan ishlab chiqarishlar o'zgarmaydi."
+        ]
+      },
+      "deliveries": {
+        "purpose": "Yetkazib berish — sotuv buyurtmasi mijozga qayerdaligini kuzatadi. Bu yerda zaxira ham, pul ham harakatlanmaydi: mahsulot sotuv yaratilganda allaqachon ombordan yechilgan, to'lov yoki qarz ham o'shanda yozilgan.",
+        "steps": [
+          "\"Yetkazma yaratish\" tugmasini bosib, sotuv buyurtmasini tanlang — mijoz va manzili o'zi to'ldiriladi.",
+          "Marshrutni tanlasangiz, o'sha marshrut agenti kuryer sifatida taklif qilinadi.",
+          "Rejalashtirilgan sanani belgilang va saqlang. Yetkazma \"Kutilmoqda\" holatida turadi.",
+          "Kuryer yo'lga chiqqanda \"Yo'lga chiqdi\" tugmasini bosing — sotuv buyurtmasi ham \"Jo'natilgan\" holatiga o'tadi.",
+          "Mijoz qabul qilgach \"Yetkazildi\" tugmasini bosing — buyurtma ham \"Yetkazilgan\" bo'ladi.",
+          "Yuqoridagi kartochkalardan qaysi agent qancha yuk ko'tarib yurganini ko'rasiz."
+        ],
+        "tips": [
+          "Yetkazma holati o'zgarganda sotuv buyurtmasi o'zi ergashadi — buyurtmani alohida o'zgartirish shart emas.",
+          "Buyurtma bekor qilingan yoki allaqachon yetkazilgan bo'lsa, u tegilmaydi va bu haqda xabar chiqadi.",
+          "Yetkazilgan yetkazmani o'chirib bo'lmaydi: u kelib tushganining hujjati. Kerak bo'lsa bekor qiling."
+        ]
+      },
+      "routes": {
+        "purpose": "Marshrutlar — har bir agentning aylanmasi: qaysi mijozlarga, qanday tartibda va hafta qaysi kuni boradi. Bu faqat reja: uni saqlash zaxiraga ham, pulga ham tegmaydi.",
+        "steps": [
+          "\"Marshrut qo'shish\" tugmasini bosib, nom bering (masalan \"Chilonzor — seshanba\").",
+          "Agentni va hafta kunini tanlang. Kun majburiy emas — belgilanmagan marshrut ham bo'ladi.",
+          "Mijozlarni birma-bir qo'shing.",
+          "Strelkalar bilan tashrif tartibini joylashtiring — agent shu ketma-ketlikda aylanadi.",
+          "Yetkazma yaratganingizda marshrutni tanlasangiz, uning agenti kuryer sifatida taklif qilinadi."
+        ],
+        "tips": [
+          "Bitta mijoz bitta marshrutda faqat bir marta tura oladi.",
+          "Yetkazmalarda ishlatilgan marshrutni o'chirib bo'lmaydi — u nofaol qilinadi va tarix saqlanadi.",
+          "Vaqtincha ishlatilmaydigan marshrutni o'chirmang: holatini nofaol qiling."
         ]
       },
       "salesOrders": {

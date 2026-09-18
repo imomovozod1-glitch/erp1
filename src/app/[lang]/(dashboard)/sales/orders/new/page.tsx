@@ -21,7 +21,8 @@ export default async function NewSalePage({ params }: { params: Promise<{ lang: 
   const tenantId = await getCurrentTenantId() as string
   const [t, products, customers, assignableUsers] = await Promise.all([
     getTranslations('sales'),
-    getCachedProductsForSelect(tenantId),
+    // Services sell exactly like goods, so the sales picker offers both.
+    getCachedProductsForSelect(tenantId, { includeServices: true }),
     getCachedCustomersForSelect(tenantId),
     getAssignableUsers(tenantId),
   ])
