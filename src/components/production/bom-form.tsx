@@ -218,6 +218,9 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
   const availableComponents = products.filter(
     (p) => p.id !== productId && !lines.some((l) => l.componentId === p.id)
   )
+  // The output of a recipe is stocked when a run completes, so it cannot be a
+  // service — but a service may well be one of its components.
+  const producibleProducts = products.filter((p) => !p.is_service)
 
   return (
     <Card className="border-0 shadow-sm">
@@ -246,7 +249,7 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map((p) => (
+                  {producibleProducts.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
                 </SelectContent>

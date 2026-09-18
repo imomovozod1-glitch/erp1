@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
@@ -39,6 +39,11 @@ export default async function EditProductPage({
 
   if (!productRes.data) {
     notFound()
+  }
+  // Same as the detail page: a service belongs in the services form, which has
+  // no stock fields for the database to reject.
+  if (productRes.data.is_service) {
+    redirect(`/${lang}/inventory/services/${id}/edit`)
   }
 
   return (

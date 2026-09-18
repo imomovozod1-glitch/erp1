@@ -216,6 +216,47 @@ BEGIN
     RAISE EXCEPTION 'save_production_order: the produced quantity must be positive';
   END IF;
 
+  -- A product made out of itself would have complete_production_order consume
+  -- and produce the same row in one pass, and the cost would fold back into
+  -- its own average. The form blocks it; so does this, because the form is not
+  -- the only thing that can call here.
+  IF EXISTS (
+    SELECT 1
+      FROM jsonb_array_elements(p_order -> 'items') l
+     WHERE (l ->> 'component_id')::uuid = (p_order ->> 'product_id')::uuid
+  ) THEN
+    RAISE EXCEPTION 'save_production_order: a product cannot be a component of itself';
+  END IF;
+
+  -- A run puts its output on the shelf (complete_production_order does an
+  -- unconditional `stock = stock + quantity`), and a service is pinned at zero
+  -- by migration_services.sql. The form no longer offers one; this makes it a
+  -- rule rather than a convention. Services stay legal as COMPONENTS.
+  IF EXISTS (
+    SELECT 1 FROM products
+     WHERE id = (p_order ->> 'product_id')::uuid
+       AND COALESCE(is_service, false)
+  ) THEN
+    RAISE EXCEPTION 'save_production_order: a service cannot be produced — it holds no stock';
+  END IF;
+
+  -- Foreign keys are checked with RLS bypassed, so a crafted call could point a
+  -- run at another tenant's product even though it could never be read back.
+  -- Refuse it here instead of storing a row nobody can use.
+  IF EXISTS (
+    SELECT 1
+      FROM (
+        SELECT (p_order ->> 'product_id')::uuid AS id
+        UNION
+        SELECT (l ->> 'component_id')::uuid FROM jsonb_array_elements(p_order -> 'items') l
+      ) referenced
+     WHERE NOT EXISTS (
+       SELECT 1 FROM products p WHERE p.id = referenced.id AND p.tenant_id = get_my_tenant_id()
+     )
+  ) THEN
+    RAISE EXCEPTION 'save_production_order: a referenced product does not belong to this tenant';
+  END IF;
+
   v_assigned := COALESCE(v_assigned, v_uid);
   IF NOT EXISTS (SELECT 1 FROM profiles WHERE id = v_assigned AND tenant_id = get_my_tenant_id()) THEN
     RAISE EXCEPTION 'save_production_order: assignee % is not a member of this tenant', v_assigned;
@@ -412,7 +453,7 @@ BEGIN
       ) VALUES (
         v_line.component_id, 'out', v_line.quantity, v_before, v_after,
         'production_orders', p_order_id,
-        'Ishlab chiqarish ' || COALESCE(v_order.order_number, ''),
+        'Production ' || COALESCE(v_order.order_number, ''),
         round(v_unit_cost, 2), round(v_unit_cost * v_line.quantity, 2), v_uid
       );
     END IF;
@@ -436,7 +477,7 @@ BEGIN
   ) VALUES (
     v_order.product_id, 'in', v_order.quantity, v_before, v_after,
     'production_orders', p_order_id,
-    'Ishlab chiqarish ' || COALESCE(v_order.order_number, ''),
+    'Production ' || COALESCE(v_order.order_number, ''),
     round(v_per_unit, 2), round(v_total, 2), v_uid
   );
 
@@ -550,7 +591,7 @@ BEGIN
   ) VALUES (
     v_order.product_id, 'out', v_order.quantity, v_before, v_after,
     'production_orders', p_order_id,
-    'Ishlab chiqarish bekor qilindi ' || COALESCE(v_order.order_number, ''),
+    'Production cancelled ' || COALESCE(v_order.order_number, ''),
     round(v_cost, 2), round(v_cost * v_order.quantity, 2), v_uid
   );
 
@@ -579,7 +620,7 @@ BEGIN
     ) VALUES (
       v_line.component_id, 'in', v_line.quantity, v_before, v_after,
       'production_orders', p_order_id,
-      'Ishlab chiqarish bekor qilindi ' || COALESCE(v_order.order_number, ''),
+      'Production cancelled ' || COALESCE(v_order.order_number, ''),
       v_line.unit_cost, v_line.unit_cost * v_line.quantity, v_uid
     );
 

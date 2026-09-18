@@ -145,11 +145,17 @@ const TOP_LEVEL_BUTTON =
   'h-10 min-h-10 text-[15px] font-semibold [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!'
 
 /**
- * Deliberately one step down from TOP_LEVEL_BUTTON in both size and weight.
+ * Deliberately one step down from TOP_LEVEL_BUTTON in both size and weight —
+ * but only one step. At 13px/28px the sub-items read as fine print rather than
+ * as navigation, and they are where most of the work actually starts: nobody
+ * clicks "Ombor", they click "Mahsulotlar". 14px on a 32px row keeps the two
+ * levels clearly distinct (15px/40px/semibold above) while staying comfortably
+ * clickable.
+ *
  * The size is marked important because the primitive sets its own font size
  * through a `data-[size=md]:` variant, which outranks a plain utility class.
  */
-const SUB_ITEM_BUTTON = 'h-7 text-[13px]! font-normal'
+const SUB_ITEM_BUTTON = 'h-8 min-h-8 text-[14px]! font-normal'
 
 interface AppSidebarProps {
   lang: string

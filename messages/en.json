@@ -458,7 +458,8 @@
     "thu": "Thursday",
     "fri": "Friday",
     "sat": "Saturday",
-    "sun": "Sunday"
+    "sun": "Sunday",
+    "orderAlreadyHasDelivery": "That sales order already has a live delivery. Cancel it first, or pick another order."
   },
   "sales": {
     "title": "Sales",
@@ -583,7 +584,9 @@
     "priceRequired": "Enter a price for every product",
     "saleEditSaved": "Sale updated. New total: {total}",
     "saleEditRefunded": "{amount} taken back out of {cashbox}",
-    "saleEditCharged": "{amount} added to {cashbox}"
+    "saleEditCharged": "{amount} added to {cashbox}",
+    "noProductsFound": "No products found",
+    "clickToAddHint": "Click a product and it goes straight into the list. Adjust quantity and price in the table below."
   },
   "finance": {
     "title": "Finance",

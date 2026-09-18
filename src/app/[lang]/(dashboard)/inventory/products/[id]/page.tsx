@@ -5,7 +5,7 @@ import { getCurrentTenantId } from '@/lib/tenant'
 import { ProductDetailClient } from '@/components/inventory/product-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { getTranslations } from 'next-intl/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string; lang: string }>
@@ -26,6 +26,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   if (!product) {
     notFound()
+  }
+  // A service is a `products` row too, but it has its own screens — this page
+  // is all stock, movements and cost layers, none of which it has.
+  if (product.is_service) {
+    redirect(`/${lang}/inventory/services/${id}/edit`)
   }
 
   return (

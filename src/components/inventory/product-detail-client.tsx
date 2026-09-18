@@ -12,7 +12,7 @@ import { formatCurrency, formatNumber, formatDateTime } from '@/lib/utils'
 import { translateMovementReason } from '@/lib/movement-reason'
 import { useTranslations } from 'next-intl'
 import {
-  TrendingUp, Download, Package, RefreshCw, ShoppingCart, Truck, Layers
+  TrendingUp, Download, Package, RefreshCw, ShoppingCart, Truck, Layers, Factory
 } from 'lucide-react'
 // `xlsx` is ~7MB and only needed when the user actually exports or imports.
 // Loading it on demand keeps it out of this page's initial bundle.
@@ -34,6 +34,13 @@ const SOURCE_TYPE_LABELS: Record<string, { uz: string; ru: string; en: string }>
   adjustment: { uz: "Qo'lda tuzatish", ru: 'Ручная корректировка', en: 'Adjustment' },
   ai_scan: { uz: 'AI skaner', ru: 'AI-сканер', en: 'AI scan' },
   opening_balance: { uz: 'Boshlang\'ich qoldiq', ru: 'Начальный остаток', en: 'Opening balance' },
+  production: { uz: 'Ishlab chiqarish', ru: 'Производство', en: 'Production' },
+  production_cancellation: {
+    uz: 'Ishlab chiqarish bekor qilindi',
+    ru: 'Производство отменено',
+    en: 'Production cancelled',
+  },
+  sale_cancellation: { uz: 'Sotuv bekor qilindi', ru: 'Продажа отменена', en: 'Sale cancelled' },
 }
 
 function translateSourceType(sourceType: string, lang: string): string {
@@ -285,6 +292,11 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                           </span>
                         ) : m.source?.type === 'initial_stock' ? (
                           <span className="text-slate-500 dark:text-slate-400">{t('initialStock')}</span>
+                        ) : m.source?.type === 'production_orders' ? (
+                          <span className="inline-flex items-center gap-1.5 text-indigo-700 dark:text-indigo-400">
+                            <Factory className="h-3.5 w-3.5 shrink-0" />
+                            <span className="font-medium">{m.source.label}</span>
+                          </span>
                         ) : m.source?.type === 'product_adjustment' ? (
                           <span className="text-slate-500 dark:text-slate-400">{t('manualAdjustment')}</span>
                         ) : (

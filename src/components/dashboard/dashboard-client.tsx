@@ -15,6 +15,8 @@ import {
   Zap,
   Layers,
   Truck,
+  Factory,
+  Send,
   AlertTriangle,
   Contact,
   Building2,
@@ -148,6 +150,8 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
   const tSales = useTranslations('sales')
   const tInventory = useTranslations('inventory')
   const tProcurement = useTranslations('procurement')
+  const tProduction = useTranslations('production')
+  const tDistribution = useTranslations('distribution')
   const tHr = useTranslations('hr')
 
   const {
@@ -321,7 +325,7 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
           {t.quickActions}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {/* One tone for all eight. They were previously indigo / emerald /
+          {/* One tone for all of them. They were previously indigo / emerald /
               rose / blue / amber / slate at random — a colour per button with
               no meaning behind any of it, which is the single loudest thing on
               the page. These are all just "create something". */}
@@ -333,6 +337,8 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
             { href: 'inventory/products/new', label: tInventory('addProduct'), icon: Package },
             { href: 'procurement/purchase-orders/new', label: tProcurement('addPurchase'), icon: Truck },
             { href: 'procurement/suppliers/new', label: tProcurement('addSupplier'), icon: Building2 },
+            { href: 'production/orders/new', label: tProduction('addOrder'), icon: Factory },
+            { href: 'distribution/deliveries/new', label: tDistribution('addDelivery'), icon: Send },
             { href: 'hr/employees/new', label: tHr('addEmployee'), icon: UserPlus },
           ].map((action) => {
             const Icon = action.icon

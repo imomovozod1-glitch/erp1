@@ -113,6 +113,37 @@ export const getCachedDeliveryDetails = unstable_cache(
 )
 
 /**
+ * The rounds a customer is on and the deliveries headed their way — the
+ * distribution strip on the customer's own page.
+ */
+export const getCachedCustomerDistribution = unstable_cache(
+  async (customerId: string, tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const [{ data: stops }, { data: deliveries }] = await Promise.all([
+      supabase
+        .from('distribution_route_stops')
+        .select(
+          'id, position, route:distribution_routes(id, name, weekday, is_active, ' +
+            'agent:profiles!distribution_routes_agent_id_fkey(full_name))'
+        )
+        .eq('customer_id', customerId)
+        .eq('tenant_id', tenantId)
+        .order('position'),
+      supabase
+        .from('deliveries')
+        .select('id, delivery_number, status, planned_date, agent:profiles!deliveries_agent_id_fkey(full_name)')
+        .eq('customer_id', customerId)
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+        .limit(10),
+    ])
+    return { stops: stops ?? [], deliveries: deliveries ?? [] }
+  },
+  ['customer-distribution-by-id'],
+  { tags: [CACHE_TAGS.routes, CACHE_TAGS.deliveries, CACHE_TAGS.customers], revalidate: 30 }
+)
+
+/**
  * Sales orders that could still use a delivery, for the "new delivery" picker:
  * not cancelled, not already delivered, and not already on a delivery of their
  * own. Uncached — a sale rung up seconds ago is exactly the one being sent out.

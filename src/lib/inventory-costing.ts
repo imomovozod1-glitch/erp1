@@ -28,6 +28,10 @@ export type CostLayerSourceType =
   | 'ai_scan'
   | 'opening_balance'
   | 'sale_cancellation'
+  // Written by complete_production_order / cancel_production_order
+  // (supabase/migration_production.sql).
+  | 'production'
+  | 'production_cancellation'
 
 interface TenantLike {
   costing_method?: CostingMethod | null

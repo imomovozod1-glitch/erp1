@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
@@ -12,13 +12,12 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
+import { Search, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
@@ -292,52 +291,73 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [assignedTo, setAssignedTo] = useState<string | null>(null)
 
-  // Temp selection
-  const [selectedProductId, setSelectedProductId] = useState('')
-  const [tempQty, setTempQty] = useState<number | ''>(1)
+  const [productSearch, setProductSearch] = useState('')
 
-  const handleProductChange = (productId: string) => {
-    setSelectedProductId(productId)
-    const product = products.find(p => p.id === productId)
-    if (product) {
-      setTempQty(1)
-    }
-  }
+  /**
+   * The pickable list. Capped at 50 rows: `products` is every active product
+   * the tenant has, and rendering thousands of buttons to find one is slower
+   * than typing three letters.
+   */
+  const pickable = useMemo(() => {
+    const needle = productSearch.trim().toLowerCase()
+    const matches = needle
+      ? products.filter(
+          (p) => p.name.toLowerCase().includes(needle) || (p.sku ?? '').toLowerCase().includes(needle)
+        )
+      : products
+    return matches.slice(0, 50)
+  }, [products, productSearch])
 
-  const addItem = () => {
-    const qty = Number(tempQty) || 0
-    if (!selectedProductId || qty <= 0) return
-    const product = products.find(p => p.id === selectedProductId)
-    if (!product) return
+  /**
+   * One click adds the product — the same gesture as the POS grid, instead of
+   * select → type a quantity → press Add for every line. Clicking one that is
+   * already on the order bumps its quantity, which is what a second click
+   * means; quantity and price are then edited in the table itself.
+   */
+  const addProduct = (product: (typeof products)[number]) => {
+    const service = isService(product)
+    const existing = items.findIndex((i) => i.productId === product.id)
 
-    // A service holds no stock, so there is no quantity it can exceed.
-    if (!isService(product) && qty > product.stock) {
-      toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
+    if (existing >= 0) {
+      const next = items[existing].quantity + 1
+      if (!service && next > product.stock) {
+        toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
+        return
+      }
+      setItems((prev) =>
+        prev.map((item, idx) =>
+          idx === existing ? { ...item, quantity: next, totalPrice: next * item.unitPrice } : item
+        )
+      )
       return
     }
 
-    // Check if already added
-    const existing = items.findIndex(i => i.productId === product.id)
-    if (existing >= 0) {
-      setItems(prev => prev.map((item, idx) => {
-        if (idx === existing) {
-          const newQty = item.quantity + qty
-          return { ...item, quantity: newQty, totalPrice: newQty * item.unitPrice }
-        }
-        return item
-      }))
-    } else {
-      setItems(prev => [...prev, {
+    if (!service && product.stock < 1) {
+      toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
+      return
+    }
+    setItems((prev) => [
+      ...prev,
+      {
         productId: product.id,
         productName: product.name,
         unitPrice: product.price,
-        quantity: qty,
+        quantity: 1,
         stock: product.stock,
-        totalPrice: qty * product.price,
-      }])
-    }
-    setSelectedProductId('')
-    setTempQty(1)
+        totalPrice: product.price,
+      },
+    ])
+  }
+
+  /** Quantity and price are edited on the line; the row total follows both. */
+  const updateItem = (index: number, patch: Partial<Pick<SaleItem, 'quantity' | 'unitPrice'>>) => {
+    setItems((prev) =>
+      prev.map((item, idx) => {
+        if (idx !== index) return item
+        const next = { ...item, ...patch }
+        return { ...next, totalPrice: next.quantity * next.unitPrice }
+      })
+    )
   }
 
   const removeItem = (index: number) => {
@@ -525,57 +545,60 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
         <CardHeader className="pb-3">
           <CardTitle className="text-base">{t('addItem')}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-50 space-y-1">
-              <Label className="text-xs">{t('selectProduct')}</Label>
-              <Select value={selectedProductId} onValueChange={(val) => handleProductChange(val || '')}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={tCommon('select')}>
-                    {selectedProductId ? products.find((p) => p.id === selectedProductId)?.name : tCommon('select')}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((p) => (
-                    <SelectItem key={p.id} value={p.id} disabled={!isService(p) && p.stock === 0}>
-                      {p.name} — {formatCurrency(p.price)}
-                      {isService(p)
-                        ? ` (${tInventory('service')})`
-                        : ` (${t('availableStock')}: ${p.stock} ${p.unit})`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-24 space-y-1">
-              <Label className="text-xs">{t('quantity')}</Label>
-              <NumericInput
-                value={tempQty}
-                onChange={(val) => setTempQty(val)}
-                allowDecimals={unitAllowsDecimals(products.find(p => p.id === selectedProductId)?.unit)}
-                className="h-9"
-              />
-            </div>
-            <div className="w-32 space-y-1">
-              <Label className="text-xs">{t('unitPrice')}</Label>
-              <Input
-                type="text"
-                readOnly
-                value={selectedProductId ? formatCurrency(products.find(p => p.id === selectedProductId)?.price ?? 0) : '—'}
-                className="h-9 bg-slate-50 dark:bg-slate-800"
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addItem}
-              size="sm"
-              className="h-9 bg-white text-violet-600 border-violet-300 hover:bg-violet-50 dark:bg-slate-900 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-950/30"
-              disabled={!selectedProductId}
-            >
-              <Plus className="h-4 w-4 mr-1" /> {t('addItem')}
-            </Button>
+        <CardContent className="space-y-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder={`${t('selectProduct')}...`}
+              className="h-9 pl-9"
+            />
           </div>
+
+          <div className="max-h-64 overflow-y-auto rounded-lg border">
+            {pickable.length === 0 ? (
+              <p className="p-6 text-center text-sm text-muted-foreground">{t('noProductsFound')}</p>
+            ) : (
+              <ul className="divide-y">
+                {pickable.map((p) => {
+                  const service = isService(p)
+                  const soldOut = !service && p.stock <= 0
+                  const inCart = items.find((i) => i.productId === p.id)
+                  return (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => addProduct(p)}
+                        disabled={soldOut}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent dark:hover:bg-violet-950/20"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-200">
+                            {p.name}
+                            {inCart && (
+                              <span className="ml-2 rounded bg-violet-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
+                                {inCart.quantity}
+                              </span>
+                            )}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            {service
+                              ? tInventory('service')
+                              : `${t('availableStock')}: ${p.stock} ${p.unit}`}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                          {formatCurrency(p.price)}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+          <p className="text-[11px] leading-snug text-muted-foreground">{t('clickToAddHint')}</p>
         </CardContent>
       </Card>
 
@@ -599,8 +622,39 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
                   <TableRow key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                     <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                     <TableCell className="font-medium">{item.productName}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
+                    <TableCell className="text-right">
+                      {/* Editable: a negotiated price is the normal case on a
+                          sales order, and retyping the whole line to change it
+                          was the only way before. */}
+                      <div className="ml-auto w-32">
+                        <NumericInput
+                          value={item.unitPrice}
+                          onChange={(val) => updateItem(idx, { unitPrice: Number(val) || 0 })}
+                          className="h-8 text-right"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="ml-auto w-24">
+                        <NumericInput
+                          value={item.quantity}
+                          onChange={(val) => {
+                            const next = Number(val) || 0
+                            const product = products.find((p) => p.id === item.productId)
+                            // The shelf is still the limit; a service has none.
+                            if (product && !isService(product) && next > product.stock) {
+                              toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
+                              return
+                            }
+                            updateItem(idx, { quantity: next })
+                          }}
+                          allowDecimals={unitAllowsDecimals(
+                            products.find((p) => p.id === item.productId)?.unit
+                          )}
+                          className="h-8 text-right"
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(item.totalPrice)}</TableCell>
                     <TableCell>
                       <Button

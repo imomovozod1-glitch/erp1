@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { DeliveriesTable } from '@/components/distribution/deliveries-table'
-import { DeliveryStats } from '@/components/distribution/delivery-stats'
+import { DeliveryStats, DeliveryAgentBreakdown } from '@/components/distribution/delivery-stats'
 import { getDeliveriesPage, getCachedDeliveryStats } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
@@ -68,6 +68,7 @@ export default async function DeliveriesPage({
         status={status}
         canEdit={canEdit}
       />
+      <DeliveryAgentBreakdown stats={stats} />
     </div>
   )
 }

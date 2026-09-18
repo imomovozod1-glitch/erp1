@@ -406,6 +406,9 @@ async function runInventory(ctx: EngineContext, req: ReportRequest): Promise<Rep
     .from('products')
     .select('name, sku, stock, min_stock, cost_price, price, is_active, assigned_to, categories(name)')
     .eq('tenant_id', ctx.tenantId)
+    // A stock snapshot, so goods only: a service holds none and would show as a
+    // zero-stock, zero-value row inflating every category's item count.
+    .eq('is_service', false)
   if (ctx.ownerId) query = query.or(`assigned_to.eq.${ctx.ownerId},assigned_to.is.null`)
 
   const { data, error } = await query.limit(REPORT_ROW_LIMIT + 1)

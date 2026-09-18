@@ -144,6 +144,15 @@ CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(tenant_id, status
 CREATE INDEX IF NOT EXISTS idx_deliveries_agent ON deliveries(tenant_id, agent_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_deliveries_order ON deliveries(order_id);
 
+-- One sale, one live delivery. The "new delivery" picker already hides orders
+-- that have one, but a picker is a convenience, not a rule: an edit that
+-- re-points a delivery, or any direct write, could still put the same sale on
+-- two rounds and have two couriers turn up. Cancelled deliveries are excluded
+-- so a mistake can be cancelled and redone.
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_deliveries_live_order
+  ON deliveries(order_id)
+  WHERE order_id IS NOT NULL AND status <> 'cancelled';
+
 DROP TRIGGER IF EXISTS update_distribution_routes_updated_at ON distribution_routes;
 CREATE TRIGGER update_distribution_routes_updated_at
   BEFORE UPDATE ON distribution_routes FOR EACH ROW EXECUTE FUNCTION update_updated_at();

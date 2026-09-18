@@ -458,7 +458,8 @@
     "thu": "Payshanba",
     "fri": "Juma",
     "sat": "Shanba",
-    "sun": "Yakshanba"
+    "sun": "Yakshanba",
+    "orderAlreadyHasDelivery": "Bu sotuv buyurtmasiga ochiq yetkazma allaqachon mavjud. Avval uni bekor qiling yoki boshqa buyurtmani tanlang."
   },
   "sales": {
     "title": "Sotuv",
@@ -583,7 +584,9 @@
     "priceRequired": "Har bir mahsulot uchun narx kiriting",
     "saleEditSaved": "Savdo yangilandi. Yangi summa: {total}",
     "saleEditRefunded": "{cashbox} kassasidan {amount} qaytarib olindi",
-    "saleEditCharged": "{cashbox} kassasiga {amount} qo'shildi"
+    "saleEditCharged": "{cashbox} kassasiga {amount} qo'shildi",
+    "noProductsFound": "Mahsulot topilmadi",
+    "clickToAddHint": "Mahsulot ustiga bosing — u darhol ro'yxatga qo'shiladi. Miqdor va narxni quyidagi jadvalda o'zgartirasiz."
   },
   "finance": {
     "title": "Moliya",

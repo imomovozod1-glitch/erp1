@@ -119,6 +119,10 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           .select('id, name, stock, min_stock, updated_at')
           .eq('is_active', true)
           .eq('is_low_stock', true)
+          // A service is pinned at stock 0 / min_stock 0, and `is_low_stock` is
+          // a generated `stock <= min_stock` — so every service matches it
+          // forever. Goods only (migration_services.sql).
+          .eq('is_service', false)
           .order('stock', { ascending: true })
           .limit(20),
         supabase

@@ -1,4 +1,6 @@
-import { getCachedCustomerDetails } from '@/lib/data/queries'
+import { getCachedCustomerDetails, getCachedCustomerDistribution } from '@/lib/data/queries'
+import { CustomerRoutesCard } from '@/components/distribution/customer-routes-card'
+import { canViewModule } from '@/lib/permissions-server'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { CustomerDetailClient } from '@/components/sales/customer-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
@@ -12,9 +14,11 @@ interface CustomerDetailPageProps {
 export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
   const { id, lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const [t, tNav, details] = await Promise.all([
+  const [t, tNav, canSeeDistribution, details] = await Promise.all([
     getTranslations('sales'),
     getTranslations('nav'),
+    // The rounds strip belongs to the Distribution module; this page is Sales.
+    canViewModule('distribution'),
     getCachedCustomerDetails(id, tenantId),
   ])
 
@@ -43,6 +47,10 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         invoices={invoices}
         transactions={transactions}
       />
+
+      {canSeeDistribution && (
+        <CustomerRoutesCard {...(await getCachedCustomerDistribution(id, tenantId))} lang={lang} />
+      )}
     </div>
   )
 }

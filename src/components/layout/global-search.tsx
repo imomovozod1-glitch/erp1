@@ -200,7 +200,7 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
       const [products, customers, suppliers, orders, invoices] = await Promise.all([
         canView('inventory')
           ? scoped(
-              supabase.from('products').select('id, name, sku, price').or(`name.ilike.${like},sku.ilike.${like}`),
+              supabase.from('products').select('id, name, sku, price, is_service').or(`name.ilike.${like},sku.ilike.${like}`),
               'inventory'
             ).limit(5)
           : Promise.resolve({ data: [] }),
@@ -238,9 +238,13 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
 
       if (cancelled) return
       setResults({
+        // A service lives in `products` but has its own screens: sending one to
+        // the product editor would offer stock fields the database forbids it.
         products: (products.data ?? []).map((p: any) => ({
           id: p.id,
-          href: `/${lang}/inventory/products/${p.id}`,
+          href: p.is_service
+            ? `/${lang}/inventory/services/${p.id}/edit`
+            : `/${lang}/inventory/products/${p.id}`,
           title: p.name,
           subtitle: [p.sku, formatCurrency(p.price)].filter(Boolean).join(' · '),
         })),

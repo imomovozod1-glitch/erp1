@@ -11,7 +11,8 @@ import { invalidateProductionOrders } from '@/lib/data/revalidate'
 import { saveProductionOrder, productionErrorMessage } from '@/lib/production-actions'
 import { businessRpcErrorMessage } from '@/lib/business-rpc'
 import { toast } from 'sonner'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, Loader2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -230,9 +231,18 @@ export function ProductionOrderForm({
   const availableComponents = products.filter(
     (p) => p.id !== productId && !lines.some((l) => l.componentId === p.id)
   )
+  // A run puts its output ON the shelf, and a service has no shelf — the RPC
+  // would write stock onto a row the services constraint pins at zero. Services
+  // stay available as COMPONENTS (subcontracted work), just not as the output.
+  const producibleProducts = products.filter((p) => !isService(p))
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6 rounded-xl border bg-white p-6 shadow-sm dark:bg-slate-900">
+    <Card className="border-0 shadow-sm">
+      <CardHeader>
+        <CardTitle>{initialData ? t('editOrder') : t('addOrder')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={onSubmit} className="space-y-6">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="order_number">{t('orderNumber')} *</Label>
@@ -277,7 +287,7 @@ export function ProductionOrderForm({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {products.map((p) => (
+                {producibleProducts.map((p) => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -458,14 +468,17 @@ export function ProductionOrderForm({
         <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
       </div>
 
-      <div className="flex gap-4 border-t pt-4">
+      <div className="flex justify-end gap-2 border-t pt-4">
         <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
           {tCommon('cancel')}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? tCommon('loading') : tCommon('save')}
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {tCommon('save')}
         </Button>
       </div>
-    </form>
+        </form>
+      </CardContent>
+    </Card>
   )
 }

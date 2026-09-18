@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { orderStatusTone } from '@/lib/statuses'
+import { orderStatusTone, DELIVERY_STATUS_TONES, type DeliveryStatus } from '@/lib/statuses'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ import {
   ArrowLeft, 
   Pencil,
   Ban,
+  Truck,
   Loader2 
 } from 'lucide-react'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
@@ -54,10 +56,12 @@ export default function OrderDetailPage() {
   const id = params.id
 
   const tCommon = useTranslations('common')
+  const tDistribution = useTranslations('distribution')
   const t = useTranslations('sales')
 
   const [order, setOrder] = useState<any>(null)
   const [items, setItems] = useState<any[]>([])
+  const [delivery, setDelivery] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isCancelOpen, setIsCancelOpen] = useState(false)
   // What the caller may do with this sale — the same rules the database
@@ -95,6 +99,20 @@ export default function OrderDetailPage() {
         })
         setOrder(orderData)
         setItems(itemsData || [])
+        // The delivery, if this sale is out on a round. Fetched separately and
+        // tolerantly: the distribution tables are a later migration, and a
+        // tenant that has not applied it must still be able to open a sale.
+        try {
+          const { data: deliveryData } = await supabase
+            .from('deliveries')
+            .select('id, delivery_number, status, planned_date, agent:profiles!deliveries_agent_id_fkey(full_name)')
+            .eq('order_id', id)
+            .neq('status', 'cancelled')
+            .maybeSingle()
+          setDelivery(deliveryData ?? null)
+        } catch {
+          setDelivery(null)
+        }
       } catch (err: any) {
         toast.error(err.message || tCommon('error'))
         router.push(`/${lang}/sales/orders`)
@@ -207,6 +225,32 @@ export default function OrderDetailPage() {
                 <StatusBadge tone={orderStatusTone(order.status)} label={t(`status.${order.status}`)} />
               </div>
             </div>
+            {delivery && (
+              /* `set_delivery_status` moves this order's status when the parcel
+                 moves, so without this the status above changes with nothing on
+                 the page to explain it. */
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Truck className="h-3.5 w-3.5" />
+                  {tDistribution('delivery')}
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/${lang}/distribution/deliveries/${delivery.id}`}
+                    className="font-semibold text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
+                  >
+                    {delivery.delivery_number}
+                  </Link>
+                  <StatusBadge
+                    tone={DELIVERY_STATUS_TONES[delivery.status as DeliveryStatus] ?? 'slate'}
+                    label={tDistribution(`status_${delivery.status}`)}
+                  />
+                </div>
+                {delivery.agent?.full_name && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{delivery.agent.full_name}</p>
+                )}
+              </div>
+            )}
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 {tCommon('totalAmount')}

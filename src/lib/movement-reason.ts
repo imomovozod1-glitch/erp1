@@ -1,7 +1,8 @@
 /**
  * Stock movement `reason` is free-form English text written at insert time
  * (see product-form.tsx, sale-form.tsx, pos-client.tsx, purchase-order-form.tsx,
- * ai-stock-scanner-modal.tsx), not a fixed enum — so translation has to
+ * ai-stock-scanner-modal.tsx, and complete_production_order/cancel_production_order
+ * in supabase/migration_production.sql), not a fixed enum — so translation has to
  * pattern-match the known templates and localize them, preserving any
  * interpolated order number/supplier name. Shared between product-detail-client.tsx
  * and movements-table.tsx so both stay in sync with the same mapping.
@@ -23,6 +24,24 @@ export function translateMovementReason(reason: string | null | undefined, lang:
   if (reason.startsWith('Sale ')) {
     const orderNumber = reason.slice('Sale '.length)
     return lang === 'uz' ? `Sotuv ${orderNumber}` : lang === 'ru' ? `Продажа ${orderNumber}` : reason
+  }
+  // Written by cancel_production_order — checked before the 'Production '
+  // prefix below, which it also starts with.
+  if (reason.startsWith('Production cancelled ')) {
+    const orderNumber = reason.slice('Production cancelled '.length)
+    return lang === 'uz'
+      ? `Ishlab chiqarish bekor qilindi ${orderNumber}`
+      : lang === 'ru'
+      ? `Производство отменено ${orderNumber}`
+      : reason
+  }
+  if (reason.startsWith('Production ')) {
+    const orderNumber = reason.slice('Production '.length)
+    return lang === 'uz'
+      ? `Ishlab chiqarish ${orderNumber}`
+      : lang === 'ru'
+      ? `Производство ${orderNumber}`
+      : reason
   }
   if (reason.startsWith('Purchase from ')) {
     const supplier = reason.slice('Purchase from '.length)

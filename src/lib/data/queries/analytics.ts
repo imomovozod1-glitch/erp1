@@ -175,7 +175,9 @@ export const getCachedSalesReportData = unstable_cache(
       // products report's whole point is the ones that DIDN'T.
       supabase
         .from('products')
-        .select('id, name, sku, stock, price, cost_price, is_active')
+        // `is_service` comes along so the reports that are about STOCK can drop
+        // them; the revenue reports keep them, because a sold service is a sale.
+        .select('id, name, sku, stock, price, cost_price, is_active, is_service')
         .eq('tenant_id', tenantId),
     ])
 

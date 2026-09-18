@@ -43,6 +43,8 @@ export interface CatalogProductRow {
   price: number
   cost_price: number
   is_active: boolean
+  /** True for a service (migration_services.sql) — no stock, so no shelf. */
+  is_service?: boolean
 }
 
 export interface DateRange {
@@ -448,6 +450,10 @@ export function slowMovers(
 
   return products
     .filter((p) => p.is_active)
+    // A slow mover is capital sitting on a shelf. A service has no shelf, so it
+    // is never one — it was only hidden here by having stock 0, and reappeared
+    // the moment "include out of stock" was ticked.
+    .filter((p) => !p.is_service)
     .filter((p) => includeOutOfStock || p.stock > 0)
     .map((p) => {
       const sold = soldInPeriod.get(p.id) ?? { quantity: 0, revenue: 0 }

@@ -164,9 +164,16 @@ export function DeliveryForm({
         router.push(`/${lang}/distribution/deliveries/${created.id}`)
       }
     } catch (error: any) {
-      // deliveries_tenant_number_key
-      const message =
-        error?.code === '23505' ? t('duplicateNumber') : error?.message || tCommon('error')
+      // Two different unique rules land here as 23505, and telling the user the
+      // number is taken when the real problem is that the sale is already out
+      // for delivery would send them chasing the wrong thing.
+      let message: string = error?.message || tCommon('error')
+      if (error?.code === '23505') {
+        const constraint = `${error.message ?? ''}${error.details ?? ''}`
+        message = constraint.includes('uniq_deliveries_live_order')
+          ? t('orderAlreadyHasDelivery')
+          : t('duplicateNumber')
+      }
       toast.error(message)
     } finally {
       setIsSubmitting(false)
