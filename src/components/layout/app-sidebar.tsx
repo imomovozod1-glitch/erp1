@@ -69,24 +69,10 @@ const NAV_ITEMS: NavItem[] = [
     ]
   },
   {
-    key: 'production', icon: Factory, href: 'production',
-    subItems: [
-      { key: 'orders', href: 'production/orders' },
-      { key: 'boms', href: 'production/boms' },
-    ]
-  },
-  {
     key: 'sales', icon: ShoppingCart, href: 'sales',
     subItems: [
       { key: 'orders', href: 'sales/orders' },
       { key: 'invoices', href: 'sales/invoices' },
-    ]
-  },
-  {
-    key: 'distribution', icon: Send, href: 'distribution',
-    subItems: [
-      { key: 'deliveries', href: 'distribution/deliveries' },
-      { key: 'routes', href: 'distribution/routes' },
     ]
   },
   {
@@ -116,6 +102,20 @@ const NAV_ITEMS: NavItem[] = [
     subItems: [
       { key: 'employees', href: 'hr/employees' },
       { key: 'roles', href: 'hr/roles' },
+    ]
+  },
+  {
+    key: 'production', icon: Factory, href: 'production',
+    subItems: [
+      { key: 'orders', href: 'production/orders' },
+      { key: 'boms', href: 'production/boms' },
+    ]
+  },
+  {
+    key: 'distribution', icon: Send, href: 'distribution',
+    subItems: [
+      { key: 'deliveries', href: 'distribution/deliveries' },
+      { key: 'routes', href: 'distribution/routes' },
     ]
   },
   { key: 'settings', icon: Settings, href: 'settings' },

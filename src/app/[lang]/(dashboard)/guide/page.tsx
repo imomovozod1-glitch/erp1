@@ -71,24 +71,10 @@ const SECTIONS: GuideSection[] = [
     ],
   },
   {
-    titleKey: ['nav', 'production'],
-    items: [
-      { key: 'productionOrders', icon: Factory, labelKey: ['production', 'orders'], href: 'production/orders' },
-      { key: 'boms', icon: Layers, labelKey: ['production', 'boms'], href: 'production/boms' },
-    ],
-  },
-  {
     titleKey: ['nav', 'sales'],
     items: [
       { key: 'salesOrders', icon: ShoppingCart, labelKey: ['sales', 'orders'], href: 'sales/orders' },
       { key: 'invoices', icon: FileText, labelKey: ['sales', 'invoices'], href: 'sales/invoices' },
-    ],
-  },
-  {
-    titleKey: ['nav', 'distribution'],
-    items: [
-      { key: 'deliveries', icon: Truck, labelKey: ['distribution', 'deliveries'], href: 'distribution/deliveries' },
-      { key: 'routes', icon: Route, labelKey: ['distribution', 'routes'], href: 'distribution/routes' },
     ],
   },
   {
@@ -118,6 +104,20 @@ const SECTIONS: GuideSection[] = [
     items: [
       { key: 'employees', icon: Users, labelKey: ['hr', 'employees'], href: 'hr/employees' },
       { key: 'roles', icon: ShieldCheck, labelKey: ['hr', 'roles'], href: 'hr/roles' },
+    ],
+  },
+  {
+    titleKey: ['nav', 'production'],
+    items: [
+      { key: 'productionOrders', icon: Factory, labelKey: ['production', 'orders'], href: 'production/orders' },
+      { key: 'boms', icon: Layers, labelKey: ['production', 'boms'], href: 'production/boms' },
+    ],
+  },
+  {
+    titleKey: ['nav', 'distribution'],
+    items: [
+      { key: 'deliveries', icon: Truck, labelKey: ['distribution', 'deliveries'], href: 'distribution/deliveries' },
+      { key: 'routes', icon: Route, labelKey: ['distribution', 'routes'], href: 'distribution/routes' },
     ],
   },
   {
