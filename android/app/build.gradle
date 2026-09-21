@@ -1,10 +1,17 @@
 apply plugin: 'com.android.application'
 
+// Without this the packaged file is Gradle's default `app-<variant>.apk`,
+// named after the module. The product is Falco, so the APK is
+// Falco-debug.apk / Falco-release.apk.
+base {
+    archivesName = "Falco"
+}
+
 android {
-    namespace = "com.uzlider.erp"
+    namespace = "com.falco.erp"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.uzlider.erp"
+        applicationId "com.falco.erp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

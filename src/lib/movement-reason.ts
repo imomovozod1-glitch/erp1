@@ -1,7 +1,8 @@
 /**
  * Stock movement `reason` is free-form English text written at insert time
  * (see product-form.tsx, sale-form.tsx, pos-client.tsx, purchase-order-form.tsx,
- * ai-stock-scanner-modal.tsx, and complete_production_order/cancel_production_order
+ * products-table.tsx (Excel import), ai-stock-scanner-modal.tsx, and
+ * complete_production_order/cancel_production_order
  * in supabase/migration_production.sql), not a fixed enum — so translation has to
  * pattern-match the known templates and localize them, preserving any
  * interpolated order number/supplier name. Shared between product-detail-client.tsx
@@ -17,6 +18,9 @@ export function translateMovementReason(reason: string | null | undefined, lang:
   }
   if (reason === 'POS Sale') {
     return lang === 'uz' ? 'POS sotuvi' : lang === 'ru' ? 'Продажа через POS' : reason
+  }
+  if (reason === 'Excel import') {
+    return lang === 'uz' ? 'Exceldan yuklandi' : lang === 'ru' ? 'Импорт из Excel' : reason
   }
   if (reason === 'AI stock scanner — new product') {
     return lang === 'uz' ? 'AI skaner — yangi mahsulot' : lang === 'ru' ? 'AI-сканер — новый товар' : reason

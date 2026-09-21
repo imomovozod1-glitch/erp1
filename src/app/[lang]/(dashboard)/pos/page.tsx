@@ -45,7 +45,7 @@ export default async function POSPage({
       initialCategories={categories}
       initialCustomers={customers}
       company={{
-        name: (tenant as any)?.company_name || 'ERP System',
+        name: (tenant as any)?.company_name || 'Falco ERP',
         phone: (tenant as any)?.phone || undefined,
       }}
       cashierName={(profile as any)?.full_name || 'Cashier'}

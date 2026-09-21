@@ -253,8 +253,10 @@ async function submitSaleInBrowser(
     }),
     // Only record cash-basis income when money actually changed hands — a
     // debt sale creates its income transaction later, when the debt is
-    // collected through the cashbox, or the revenue is counted twice.
-    isCashSale
+    // collected through the cashbox, or the revenue is counted twice. A sale
+    // that came to zero moved no money either, and a 0 so'm row in the ledger
+    // records nothing.
+    isCashSale && totalAmount > 0
       ? supabase
           .from('transactions')
           .insert({
@@ -271,7 +273,7 @@ async function submitSaleInBrowser(
             if (error) throw error
           })
       : Promise.resolve(),
-    isCashSale
+    isCashSale && totalAmount > 0
       ? adjustCashboxBalance(totalAmount, 'income', supabase, paymentMethod as 'cash' | 'card' | 'transfer')
       : Promise.resolve(),
   ])

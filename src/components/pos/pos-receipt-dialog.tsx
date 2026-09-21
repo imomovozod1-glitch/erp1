@@ -208,7 +208,7 @@ export function PosReceiptDialog({
               )}
               <p className="text-[10px] text-slate-400">{config.footerText || t('thankYou')}</p>
               {config.showPoweredBy && (
-                <p className="text-[9px] text-slate-400 font-bold">powered by ERP System</p>
+                <p className="text-[9px] text-slate-400 font-bold">powered by Falco ERP</p>
               )}
             </div>
           </div>

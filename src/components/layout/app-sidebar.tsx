@@ -279,7 +279,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 pushed every nav icon below it up on collapse. */}
             <SidebarMenuButton
               size="lg"
-              tooltip="ERP System"
+              tooltip="Falco ERP"
               className="group-data-[collapsible=icon]:min-h-12"
               render={<Link href={`/${lang}/dashboard`} prefetch={true} onClick={closeOnMobile} />}
             >
@@ -287,7 +287,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 <Building2 className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-semibold">ERP System</span>
+                <span className="truncate font-semibold">Falco ERP</span>
                 <span className="truncate text-xs text-muted-foreground">Enterprise</span>
               </div>
             </SidebarMenuButton>

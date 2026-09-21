@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.uzlider.erp',
-  appName: 'UzLider',
+  appId: 'com.falco.erp',
+  appName: 'Falco',
   webDir: 'public',
   server: {
     // Points the native shell at the live Next.js deployment instead of a

@@ -14,10 +14,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Support · ERP',
-    template: '%s | Support · ERP',
+    default: 'Support · Falco ERP',
+    template: '%s | Support · Falco ERP',
   },
-  description: 'ERP support-agent portal',
+  description: 'Falco ERP support-agent portal',
 }
 
 export default async function SupportRootLayout({

@@ -1,4 +1,4 @@
-package com.uzlider.erp;
+package com.falco.erp;
 
 import com.getcapacitor.BridgeActivity;
 

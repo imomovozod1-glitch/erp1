@@ -93,7 +93,7 @@ export function LoginForm({ lang }: { lang: string }) {
   return (
     <AuthCard
       icon={Building2}
-      brandTitle="ERP System"
+      brandTitle="Falco ERP"
       brandSubtitle="Enterprise Management"
       heading={t('loginTitle')}
       subheading={t('loginSubtitle')}

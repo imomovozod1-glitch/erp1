@@ -9,6 +9,7 @@ import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
 import { toast } from 'sonner'
 import { printReceiptDirect } from '@/lib/printer/print'
 import { getPrinterConfig, DEFAULT_PRINTER_CONFIG, type PrinterConfig } from '@/lib/printer/storage'
+import { DEFAULT_CUSTOM_COLUMNS } from '@/lib/printer/receipt'
 import { usePosCart } from '@/components/pos/use-pos-cart'
 import { submitPosSale } from '@/components/pos/checkout'
 import { PosReceiptDialog, type ReceiptOrder } from '@/components/pos/pos-receipt-dialog'
@@ -95,6 +96,16 @@ export function POSClient({
     return () => clearTimeout(timer)
   }, [])
   
+  /* Width of the roll the browser Print dialog has to lay the slip out on. The
+     printer settings hold it as a paper size, and 'custom' as character
+     columns — 48 columns is what 80mm holds, so the ratio converts back. */
+  const receiptWidthMm =
+    receiptConfig.paperWidth === '58mm'
+      ? 58
+      : receiptConfig.paperWidth === 'custom'
+        ? Math.round((receiptConfig.customColumns || DEFAULT_CUSTOM_COLUMNS) * (80 / 48))
+        : 80
+
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false)
 
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -351,25 +362,79 @@ export function POSClient({
       {/* Print & Scrollbar Style Injection */}
       <style jsx global>{`
         @media print {
+          /* The roll the shop actually prints on, with no browser margin
+             around it — the default A4 sheet is what put the slip in the
+             middle of a page of white. */
+          @page {
+            size: ${receiptWidthMm}mm auto;
+            margin: 0;
+          }
+          html,
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          /* Everything but the branch carrying the receipt leaves the sheet.
+             Hiding the page with visibility alone (what this did before)
+             keeps every box where it was, so the till, the header and the
+             sidebar still reserved their full height and pushed the slip down
+             the paper and onto a second page. The visibility pair below stays
+             as the fallback for browsers without :has(). */
+          body > *:not(:has(#pos-thermal-receipt)) {
+            display: none !important;
+          }
           body * {
             visibility: hidden;
+          }
+          /* The dialog popup is position:fixed and translated, which makes
+             it the containing block for anything positioned inside it: the
+             receipt's absolute/top:0/left:0 resolved against the centred
+             popup rather than the page, and the popup's own width, padding and
+             max-height then cropped it. Flattened, the receipt is simply the
+             first thing on the sheet and may run over as many pages as it
+             needs. */
+          [data-slot='dialog-content'] {
+            position: static !important;
+            transform: none !important;
+            display: block !important;
+            width: auto !important;
+            max-width: none !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 0 !important;
+            background: #fff !important;
+            box-shadow: none !important;
+          }
+          /* The backdrop, the close button, the till behind them — and Base
+             UI's own invisible fixed-position press-catcher, which a paged
+             medium would otherwise repeat on every sheet. */
+          [data-slot='dialog-overlay'],
+          [data-slot='dialog-close'],
+          [data-base-ui-inert],
+          .no-print {
+            display: none !important;
           }
           #pos-thermal-receipt, #pos-thermal-receipt * {
             visibility: visible;
           }
           #pos-thermal-receipt {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 80mm;
-            padding: 4mm;
-            background: white;
-            color: black;
+            position: static;
+            width: ${receiptWidthMm}mm;
+            max-width: ${receiptWidthMm}mm;
+            margin: 0;
+            padding: 3mm;
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: #fff;
+            color: #000;
             font-family: 'Courier New', Courier, monospace;
             font-size: 12px;
-          }
-          .no-print {
-            display: none !important;
           }
         }
         .scrollbar-none::-webkit-scrollbar {

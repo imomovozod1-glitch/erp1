@@ -588,9 +588,11 @@ BEGIN
     IF v_applied > 0 THEN
       UPDATE customers SET credit_balance = credit_balance - v_applied WHERE id = v_customer_id;
     END IF;
-  ELSE
+  ELSIF v_total > 0 THEN
     -- Cash-basis income only when money changed hands; a debt sale's income is
-    -- recorded when the debt is collected.
+    -- recorded when the debt is collected. A zero-total sale (every line priced
+    -- at 0, or a 100% discount) moved none: it writes no transaction and no
+    -- cashbox entry, because a 0 so'm row in the ledger is noise, not a record.
     INSERT INTO transactions (
       type, amount, category, description, reference_type, reference_id,
       transaction_date, created_by
@@ -996,7 +998,10 @@ BEGIN
     IF v_delta <> 0 THEN
       UPDATE cashboxes SET balance = balance + v_delta WHERE id = v_cashbox_id;
       -- The sale's income is the sum of its transactions; correct the first.
+      -- An edit that empties the sale leaves nothing to record, so the row is
+      -- removed rather than left behind as a 0 so'm entry in the ledger.
       UPDATE transactions SET amount = round(amount + v_delta, 2) WHERE id = v_tx_id;
+      DELETE FROM transactions WHERE id = v_tx_id AND amount <= 0;
     END IF;
     IF v_invoice.id IS NOT NULL THEN
       UPDATE invoices SET total_amount = v_new_total, paid_amount = v_new_total WHERE id = v_invoice.id;
@@ -1625,8 +1630,10 @@ BEGIN
   IF v_type IS NULL OR v_type NOT IN ('income', 'expense') THEN
     RAISE EXCEPTION 'save_transaction: unknown type %', v_type;
   END IF;
-  IF v_amount < 0 THEN
-    RAISE EXCEPTION 'save_transaction: the amount cannot be negative';
+  -- Zero is refused along with negatives: a 0 so'm transaction moves no money
+  -- and only clutters the ledger (the form already asks for at least 0.01).
+  IF v_amount <= 0 THEN
+    RAISE EXCEPTION 'save_transaction: the amount must be positive';
   END IF;
 
   IF v_id IS NULL THEN

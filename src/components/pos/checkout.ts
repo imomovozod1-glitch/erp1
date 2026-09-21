@@ -276,8 +276,9 @@ async function submitPosSaleInBrowser(
     // Only record cash-basis income when money actually changed hands. A debt
     // sale creates no income transaction here — that happens when the debt is
     // collected (see the cashbox debt_collection flow), otherwise the revenue
-    // would be counted twice for the same sale.
-    isDebtSale
+    // would be counted twice for the same sale. Neither does a sale that came
+    // to zero: a 0 so'm row is noise in the ledger, not a record of anything.
+    isDebtSale || totals.total <= 0
       ? Promise.resolve()
       : supabase
           .from('transactions')
@@ -320,7 +321,7 @@ async function submitPosSaleInBrowser(
       .then(({ error }: any) => {
         if (error) throw error
       }),
-    isDebtSale
+    isDebtSale || totals.total <= 0
       ? Promise.resolve()
       : adjustCashboxBalance(
           totals.total,

@@ -262,10 +262,13 @@ async function updateSaleLinesInBrowser(
     if (delta !== 0) {
       // The sale's income is the sum of its transactions; correct the first one
       // by the difference so reports count exactly what is now in the drawer.
-      const { error } = await supabase
-        .from('transactions')
-        .update({ amount: round2((Number(txs[0].amount) || 0) + delta) })
-        .eq('id', txs[0].id)
+      // An edit that empties the sale leaves nothing to record — the row goes
+      // rather than staying behind as a 0 so'm entry in the ledger.
+      const corrected = round2((Number(txs[0].amount) || 0) + delta)
+      const { error } =
+        corrected > 0
+          ? await supabase.from('transactions').update({ amount: corrected }).eq('id', txs[0].id)
+          : await supabase.from('transactions').delete().eq('id', txs[0].id)
       if (error) throw new Error(error.message)
     }
     if (invoice) {

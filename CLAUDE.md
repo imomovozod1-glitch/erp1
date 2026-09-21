@@ -2,7 +2,7 @@
 
 # Project Overview
 
-`erp` (shipped as **UzLider**) is a multi-tenant SaaS ERP on Next.js 16 / React 19 covering inventory, sales, procurement, finance, HR, customers, POS, reports/analytics, and support, with Uzbek/Russian/English localization. Backend is Supabase (Postgres + Auth + Realtime). AI-assisted OCR and stock-count scanning run on Gemini.
+`falco` (shipped as **Falco**) is a multi-tenant SaaS ERP on Next.js 16 / React 19 covering inventory, sales, procurement, finance, HR, customers, POS, reports/analytics, and support, with Uzbek/Russian/English localization. Backend is Supabase (Postgres + Auth + Realtime). AI-assisted OCR and stock-count scanning run on Gemini.
 
 One codebase serves four front-ends:
 

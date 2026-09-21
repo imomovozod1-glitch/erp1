@@ -14,10 +14,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Admin · ERP',
-    template: '%s | Admin · ERP',
+    default: 'Admin · Falco ERP',
+    template: '%s | Admin · Falco ERP',
   },
-  description: 'ERP super-admin console — tenant account management',
+  description: 'Falco ERP super-admin console — tenant account management',
 }
 
 export default async function AdminRootLayout({

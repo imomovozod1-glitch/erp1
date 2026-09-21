@@ -869,7 +869,7 @@
       "testPrintFailed": "Не удалось напечатать — проверьте подключение",
       "testPrintSystemHint": "Выбрано \"Через систему\" — для теста завершите реальную продажу в POS",
       "testItemName": "Тестовый товар",
-      "testCompanyName": "ERP System",
+      "testCompanyName": "Falco ERP",
       "testThankYou": "Это тестовый чек",
       "labelReceipt": "Чек",
       "labelCashier": "Кассир",

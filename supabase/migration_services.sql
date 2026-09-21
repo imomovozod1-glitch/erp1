@@ -382,9 +382,11 @@ BEGIN
     IF v_applied > 0 THEN
       UPDATE customers SET credit_balance = credit_balance - v_applied WHERE id = v_customer_id;
     END IF;
-  ELSE
+  ELSIF v_total > 0 THEN
     -- Cash-basis income only when money changed hands; a debt sale's income is
-    -- recorded when the debt is collected.
+    -- recorded when the debt is collected. A zero-total sale (every line priced
+    -- at 0, or a 100% discount) moved none: it writes no transaction and no
+    -- cashbox entry, because a 0 so'm row in the ledger is noise, not a record.
     INSERT INTO transactions (
       type, amount, category, description, reference_type, reference_id,
       transaction_date, created_by

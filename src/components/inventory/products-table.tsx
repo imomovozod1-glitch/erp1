@@ -19,7 +19,13 @@ import {
   Download,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { invalidateProducts } from "@/lib/data/revalidate";
+import { invalidateProducts, invalidateMovements } from "@/lib/data/revalidate";
+import {
+  consumeCostLayers,
+  getEffectiveCostingMethod,
+  recordCostLayer,
+  type CostingMethod,
+} from "@/lib/inventory-costing";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -56,6 +62,121 @@ interface ProductsTableProps {
   total: number;
   totalPages: number;
   status: 'all' | 'active' | 'inactive';
+}
+
+/**
+ * Column headers an imported Excel file may carry, per product field.
+ *
+ * Shops do not use the template's wording: the quantity column comes in as
+ * "Soni", "Miqdor", "Qoldiq", "Кол-во" as often as "Zaxira", and a header the
+ * import did not recognise was read as 0 — the products landed, their stock
+ * did not. Every alias is lowercased and apostrophe-normalised here because
+ * that is the shape `normaliseHeaders` puts the file's own headers into.
+ */
+const HEADER_ALIASES = {
+  name: ["nomi", "nomlanishi", "mahsulot", "mahsulot nomi", "tovar", "name", "product", "наименование", "название", "товар"],
+  sku: ["sku", "artikul", "kod", "kodi", "article", "code", "артикул", "код"],
+  price: ["sotuv narxi", "sotish narxi", "narxi", "narx", "chiqim", "price", "sale price", "цена продажи", "цена", "продажа"],
+  costPrice: ["tannarx", "tannarxi", "cost", "cost price", "cost_price", "себестоимость"],
+  incomingCost: ["kirim narxi", "kirim cost", "kirim", "incoming_cost", "incoming price", "входящая цена", "приход"],
+  stock: ["zaxira", "zaxirasi", "soni", "son", "miqdor", "miqdori", "qoldiq", "qoldig'i", "stock", "quantity", "qty", "amount", "запас", "количество", "кол-во", "остаток"],
+  minStock: ["minimal zaxira", "min zaxira", "minimal qoldiq", "min_stock", "min stock", "minimum stock", "мин. запас", "минимальный запас", "мин запас"],
+  unit: ["o'lchov birligi", "o'lchov", "birligi", "birlik", "unit", "uom", "ед. изм.", "ед изм", "единица измерения", "единица"],
+  description: ["tavsif", "izoh", "description", "comment", "описание", "примечание"],
+} as const;
+
+/** Uzbek Latin writes the same apostrophe four ways; a header must match whichever the file used. */
+const HEADER_APOSTROPHES = /[\u02bb\u02bc\u2018\u2019`\u00b4]/g;
+
+/** The row keyed by its headers lowercased, de-spaced and apostrophe-normalised. */
+function normaliseHeaders(row: Record<string, any>): Map<string, any> {
+  const cells = new Map<string, any>();
+  for (const [header, value] of Object.entries(row)) {
+    const key = String(header)
+      .replace(HEADER_APOSTROPHES, "'")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!cells.has(key)) cells.set(key, value);
+  }
+  return cells;
+}
+
+/** First alias the row actually carries a value for, or undefined. */
+function cell(cells: Map<string, any>, aliases: readonly string[]): any {
+  for (const alias of aliases) {
+    const value = cells.get(alias);
+    if (value !== undefined && value !== null && String(value).trim() !== "") return value;
+  }
+  return undefined;
+}
+
+/**
+ * The stock an Excel import brought in, written to the ledger.
+ *
+ * The import upserts `products.stock` outright, which moved the number without
+ * recording why: Ombor > Zaxira harakatlari stayed empty for every unit a file
+ * carried in, and FIFO/LIFO/AVECO had no layer to charge the next sale against.
+ * This files the same movement and cost layer a manual stock edit does
+ * (product-form.tsx), for each product whose stock the file actually changed.
+ *
+ * A failed movement is logged, not thrown: the products themselves are already
+ * saved by this point, and losing the whole import over a ledger row would be
+ * the worse outcome.
+ */
+async function recordImportStockMovements(
+  supabase: any,
+  saved: any[],
+  stockBySku: Map<string, number>,
+  costingMethod: CostingMethod,
+  userId: string | null,
+): Promise<void> {
+  await Promise.all(
+    saved.map(async (product: any) => {
+      const before = stockBySku.get(String(product.sku)) ?? 0;
+      const after = Number(product.stock) || 0;
+      const diff = after - before;
+      if (diff === 0) return;
+
+      // An increase opens a layer at the cost the file carried; a decrease
+      // draws existing layers down under whichever method the tenant uses.
+      const isIncrease = diff > 0;
+      let unitCost = Number(product.cost_price) || 0;
+      let totalCost = Math.abs(diff) * unitCost;
+
+      if (isIncrease) {
+        await recordCostLayer(supabase, {
+          productId: product.id,
+          quantity: diff,
+          unitCost,
+          sourceType: before === 0 ? "initial_stock" : "adjustment",
+        });
+      } else {
+        const consumed = await consumeCostLayers(
+          supabase,
+          product.id,
+          Math.abs(diff),
+          costingMethod,
+        );
+        unitCost = consumed.unitCost;
+        totalCost = consumed.totalCost;
+      }
+
+      const { error } = await supabase.from("stock_movements").insert({
+        product_id: product.id,
+        type: isIncrease ? "in" : "out",
+        quantity: Math.abs(diff),
+        quantity_before: before,
+        quantity_after: after,
+        reference_type: "excel_import",
+        reason: "Excel import",
+        unit_cost: unitCost,
+        total_cost: totalCost,
+        created_by: userId,
+      });
+      if (error) console.error("Error inserting import stock movement:", error);
+    }),
+  );
 }
 
 export function ProductsTable({
@@ -230,8 +351,8 @@ export function ProductsTable({
 
         const newProducts = data
           .map((row: any) => {
-            const name =
-              row.Nomi || row.name || row.Name || row["Наименование"] || "";
+            const cells = normaliseHeaders(row);
+            const name = String(cell(cells, HEADER_ALIASES.name) ?? "");
 
             const lowerName = String(name).toLowerCase().trim();
             if (!name || lowerName === "jami" || lowerName === "jami:" || lowerName === "total" || lowerName === "итого" || lowerName === "итого:") {
@@ -239,58 +360,22 @@ export function ProductsTable({
             }
 
             const sku =
-              row.SKU ||
-              row.sku ||
-              row.Artikul ||
-              row["Артикул"] ||
+              String(cell(cells, HEADER_ALIASES.sku) ?? "").trim() ||
               `SKU-${Math.random().toString().slice(-6)}`;
-            const price = parseNumber(
-              row["Sotuv narxi"] ||
-                row["Chiqim"] ||
-                row.price ||
-                row.Price ||
-                row["Цена продажи"] ||
-                0,
-            );
-            const cost_price = parseNumber(
-              row["Tannarx"] ||
-                row["Cost"] ||
-                row.cost_price ||
-                row.cost ||
-                row["Себестоимость"] ||
-                0,
-            );
+            const price = parseNumber(cell(cells, HEADER_ALIASES.price) ?? 0);
+            const cost_price = parseNumber(cell(cells, HEADER_ALIASES.costPrice) ?? 0);
             const incoming_cost = parseNumber(
-              row["Kirim narxi"] ||
-                row["Kirim cost"] ||
-                row.incoming_cost ||
-                row["Входящая цена"] ||
-                cost_price,
+              cell(cells, HEADER_ALIASES.incomingCost) ?? cost_price,
             );
-            const stock = parseNumber(
-              row["Zaxira"] || row.stock || row.Stock || row["Запас"] || 0,
-            );
-            const min_stock = parseNumber(
-              row["Minimal zaxira"] || row.min_stock || row["Мин. запас"] || 0,
-            );
-            const rawUnit = String(
-              row["O'lchov birligi"] ||
-              row.unit ||
-              row.Unit ||
-              row["Ед. изм."] ||
-              "",
-            ).trim();
+            const stock = parseNumber(cell(cells, HEADER_ALIASES.stock) ?? 0);
+            const min_stock = parseNumber(cell(cells, HEADER_ALIASES.minStock) ?? 0);
+            const rawUnit = String(cell(cells, HEADER_ALIASES.unit) ?? "").trim();
             const unit = rawUnit ? resolveMeasurementUnit(rawUnit, systemUnits) : null;
             if (!unit) {
               invalidUnitRows.push({ name: String(name), unit: rawUnit });
               return null;
             }
-            const description =
-              row.Tavsif ||
-              row.description ||
-              row.Description ||
-              row["Описание"] ||
-              "";
+            const description = String(cell(cells, HEADER_ALIASES.description) ?? "");
 
             return {
               name,
@@ -331,20 +416,54 @@ export function ProductsTable({
         }
 
         toast.loading(t("inventory.importingData"));
+
+        // What the rows the file is about to overwrite hold right now. Read
+        // before the upsert, because after it the old stock is gone and the
+        // movement below would have nothing to measure the change against.
+        // RLS scopes this to the caller's own tenant, where the SKU is unique.
+        const skus = newProducts.map((p) => p!.sku);
+        // PostgREST reads are GET requests, so a few hundred SKUs in one `in`
+        // list would outgrow the URL — read them a chunk at a time.
+        const skuChunks: string[][] = [];
+        for (let i = 0; i < skus.length; i += 200) skuChunks.push(skus.slice(i, i + 200));
+        const [existingChunks, { data: tenant }, { data: { session } }] = await Promise.all([
+          Promise.all(
+            skuChunks.map((chunk) =>
+              supabase.from("products").select("sku, stock").in("sku", chunk),
+            ),
+          ),
+          supabase.from("tenants").select("costing_method").limit(1).single(),
+          supabase.auth.getSession(),
+        ]);
+        const stockBySku = new Map<string, number>(
+          existingChunks
+            .flatMap(({ data }: any) => data || [])
+            .map((p: any) => [String(p.sku), Number(p.stock) || 0]),
+        );
+
         // SKUs are unique per tenant (products_tenant_sku_key), not globally —
         // a bare 'sku' target matches no constraint and Postgres rejects the
         // upsert. tenant_id isn't in the payload: the set_tenant_id() BEFORE
         // INSERT trigger fills it in before the conflict check runs.
-        const { error } = await supabase
+        const { data: saved, error } = await supabase
           .from("products")
-          .upsert(newProducts as any, { onConflict: 'tenant_id,sku' });
+          .upsert(newProducts as any, { onConflict: 'tenant_id,sku' })
+          .select("id, sku, stock, cost_price");
 
         toast.dismiss();
         if (error) {
           toast.error(`${t("common.error")}: ${error.message}`);
         } else {
+          await recordImportStockMovements(
+            supabase,
+            saved || [],
+            stockBySku,
+            getEffectiveCostingMethod(tenant),
+            session?.user?.id ?? null,
+          );
           toast.success(t("inventory.productsImported", { count: newProducts.length }));
           await invalidateProducts();
+          await invalidateMovements();
         }
       } catch (err: any) {
         toast.dismiss();

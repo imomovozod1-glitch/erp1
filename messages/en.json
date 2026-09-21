@@ -869,7 +869,7 @@
       "testPrintFailed": "Print failed — check the connection",
       "testPrintSystemHint": "\"Via system\" is selected — complete a real POS sale to test printing",
       "testItemName": "Test item",
-      "testCompanyName": "ERP System",
+      "testCompanyName": "Falco ERP",
       "testThankYou": "This is a test receipt",
       "labelReceipt": "Receipt",
       "labelCashier": "Cashier",
