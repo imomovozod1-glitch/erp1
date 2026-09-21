@@ -1043,7 +1043,7 @@
       "domainsAdded": "{count, plural, other {Зарегистрировано доменов: #}}",
       "domainsUpToDate": "{count, plural, other {Все # доменов на месте}}",
       "domainsPartial": "Добавлено: {added}, с ошибкой: {failed}",
-      "domainsNotConfigured": "Автодобавление доменов не настроено: не задан DOMAIN_API_TOKEN",
+      "domainsNotConfigured": "Автодобавление доменов не настроено: не заданы {vars}",
       "domainsFailed": "Не удалось синхронизировать домены",
       "colCompany": "Компания",
       "colSubdomain": "Субдомен",

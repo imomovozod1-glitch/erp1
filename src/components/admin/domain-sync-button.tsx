@@ -28,7 +28,12 @@ export function DomainSyncButton() {
       if (!response.ok) {
         toast.error(data?.error || t('domainsFailed'))
       } else if (data?.configured === false) {
-        toast.error(t('domainsNotConfigured'), { duration: 8000 })
+        // Names the settings that are actually missing — "the token" was the
+        // wrong answer whenever it was the project id that had not arrived.
+        toast.error(
+          t('domainsNotConfigured', { vars: (data.missing ?? ['DOMAIN_API_TOKEN']).join(', ') }),
+          { duration: 10000 }
+        )
       } else if (data?.failed?.length) {
         toast.error(
           `${t('domainsPartial', { added: data.added, failed: data.failed.length })}: ${data.failed

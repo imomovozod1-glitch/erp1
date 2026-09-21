@@ -6,6 +6,7 @@ import {
   ROOT_DOMAIN,
   isDomainAutomationConfigured,
   listProjectDomains,
+  missingDomainConfig,
   registerTenantDomain,
   tenantHost,
 } from '@/lib/vercel-domains'
@@ -46,7 +47,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!isDomainAutomationConfigured()) {
-    return NextResponse.json({ configured: false, rootDomain: ROOT_DOMAIN, hosts: [] })
+    return NextResponse.json({ configured: false, missing: missingDomainConfig(), rootDomain: ROOT_DOMAIN, hosts: [] })
   }
 
   const [required, registered] = await Promise.all([requiredSubdomains(), listProjectDomains()])
@@ -71,7 +72,7 @@ export async function POST() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!isDomainAutomationConfigured()) {
-    return NextResponse.json({ configured: false, added: 0, failed: [] })
+    return NextResponse.json({ configured: false, missing: missingDomainConfig(), added: 0, failed: [] })
   }
 
   const [required, registered] = await Promise.all([requiredSubdomains(), listProjectDomains()])

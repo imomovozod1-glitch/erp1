@@ -87,6 +87,28 @@ function readConfig(): VercelConfig | null {
   return { token, projectId, teamId: teamId || undefined }
 }
 
+/**
+ * Which of the two required settings this deployment is missing, by the name
+ * an operator has to type into the dashboard.
+ *
+ * Named individually because they fail for completely different reasons and
+ * the fix is different: the token is always set by hand, while the project id
+ * normally arrives on its own as VERCEL_PROJECT_ID — but only when "Enable
+ * access to System Environment Variables" is ticked in the project's settings.
+ * A message that blamed the token for a missing project id sent the reader to
+ * the wrong page entirely.
+ */
+export function missingDomainConfig(): string[] {
+  const missing: string[] = []
+  if (!(process.env.DOMAIN_API_TOKEN || process.env.VERCEL_API_TOKEN)?.trim()) {
+    missing.push('DOMAIN_API_TOKEN')
+  }
+  if (!(process.env.DOMAIN_PROJECT_ID || process.env.VERCEL_PROJECT_ID)?.trim()) {
+    missing.push('DOMAIN_PROJECT_ID')
+  }
+  return missing
+}
+
 /** Whether tenant hosts can be registered at all in this deployment. */
 export function isDomainAutomationConfigured(): boolean {
   return readConfig() !== null

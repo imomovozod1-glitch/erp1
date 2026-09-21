@@ -1043,7 +1043,7 @@
       "domainsAdded": "{count, plural, other {# ta domen ro'yxatdan o'tkazildi}}",
       "domainsUpToDate": "{count, plural, other {Barcha # ta domen joyida}}",
       "domainsPartial": "{added} ta qo'shildi, {failed} tasi muvaffaqiyatsiz",
-      "domainsNotConfigured": "Domenlarni avtomatik qo'shish sozlanmagan: DOMAIN_API_TOKEN kiritilmagan",
+      "domainsNotConfigured": "Domenlarni avtomatik qo'shish sozlanmagan: {vars} kiritilmagan",
       "domainsFailed": "Domenlarni sinxronlab bo'lmadi",
       "colCompany": "Kompaniya",
       "colSubdomain": "Subdomen",

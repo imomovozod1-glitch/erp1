@@ -1043,7 +1043,7 @@
       "domainsAdded": "{count, plural, other {# domain(s) registered}}",
       "domainsUpToDate": "{count, plural, other {All # domains are in place}}",
       "domainsPartial": "{added} added, {failed} failed",
-      "domainsNotConfigured": "Domain automation is not configured: DOMAIN_API_TOKEN is unset",
+      "domainsNotConfigured": "Domain automation is not configured: {vars} unset",
       "domainsFailed": "Could not sync the domains",
       "colCompany": "Company",
       "colSubdomain": "Subdomain",
