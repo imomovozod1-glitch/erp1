@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import {
+  CONSOLE_SUBDOMAINS,
   ROOT_DOMAIN,
   isDomainAutomationConfigured,
   listProjectDomains,
@@ -15,18 +16,29 @@ import {
  * Provisioning registers a tenant's host as it creates the account
  * (src/lib/vercel-domains.ts), but that call can fail — the API was down, the
  * token had expired, or the tenant predates this mechanism entirely. This is
- * the repair: GET says which tenants the platform does not serve yet, POST
- * registers them.
+ * the repair: GET says which hosts the platform does not serve yet — the two
+ * consoles included — and POST registers them.
  *
  * Super-admin only, like every other route under /api/admin.
  */
 
 export const dynamic = 'force-dynamic'
 
-async function tenantSubdomains(): Promise<string[]> {
+/**
+ * Every host this deployment needs the platform to serve: the two consoles
+ * first — they are the ones an operator locks themselves out of — then one per
+ * tenant.
+ */
+async function requiredSubdomains(): Promise<{ subdomain: string; kind: 'console' | 'tenant' }[]> {
   const supabase = getCacheClient() as any
   const { data } = await supabase.from('tenants').select('subdomain').order('created_at')
-  return (data ?? []).map((row: any) => String(row.subdomain).toLowerCase()).filter(Boolean)
+  return [
+    ...CONSOLE_SUBDOMAINS.map((subdomain) => ({ subdomain, kind: 'console' as const })),
+    ...(data ?? [])
+      .map((row: any) => String(row.subdomain || '').toLowerCase())
+      .filter(Boolean)
+      .map((subdomain: string) => ({ subdomain, kind: 'tenant' as const })),
+  ]
 }
 
 export async function GET() {
@@ -34,10 +46,10 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!isDomainAutomationConfigured()) {
-    return NextResponse.json({ configured: false, rootDomain: ROOT_DOMAIN, tenants: [] })
+    return NextResponse.json({ configured: false, rootDomain: ROOT_DOMAIN, hosts: [] })
   }
 
-  const [subdomains, registered] = await Promise.all([tenantSubdomains(), listProjectDomains()])
+  const [required, registered] = await Promise.all([requiredSubdomains(), listProjectDomains()])
   if (!registered) {
     return NextResponse.json({ error: 'Could not read the project domains' }, { status: 502 })
   }
@@ -45,8 +57,9 @@ export async function GET() {
   return NextResponse.json({
     configured: true,
     rootDomain: ROOT_DOMAIN,
-    tenants: subdomains.map((subdomain) => ({
+    hosts: required.map(({ subdomain, kind }) => ({
       subdomain,
+      kind,
       host: tenantHost(subdomain),
       registered: registered.has(tenantHost(subdomain)),
     })),
@@ -61,7 +74,7 @@ export async function POST() {
     return NextResponse.json({ configured: false, added: 0, failed: [] })
   }
 
-  const [subdomains, registered] = await Promise.all([tenantSubdomains(), listProjectDomains()])
+  const [required, registered] = await Promise.all([requiredSubdomains(), listProjectDomains()])
   if (!registered) {
     return NextResponse.json({ error: 'Could not read the project domains' }, { status: 502 })
   }
@@ -69,11 +82,11 @@ export async function POST() {
   // Only the ones actually missing. Re-adding an existing host is harmless
   // but costs a round trip each, and a platform with a hundred tenants would
   // spend a hundred of them on every click.
-  const missing = subdomains.filter((subdomain) => !registered.has(tenantHost(subdomain)))
+  const missing = required.filter(({ subdomain }) => !registered.has(tenantHost(subdomain)))
 
   const failed: { host: string; error: string }[] = []
   let added = 0
-  for (const subdomain of missing) {
+  for (const { subdomain } of missing) {
     const result = await registerTenantDomain(subdomain)
     if (result.ok) added++
     else failed.push({ host: result.host, error: result.error || 'unknown error' })
@@ -82,7 +95,7 @@ export async function POST() {
   return NextResponse.json({
     configured: true,
     rootDomain: ROOT_DOMAIN,
-    checked: subdomains.length,
+    checked: required.length,
     added,
     failed,
   })

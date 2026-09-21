@@ -94,13 +94,18 @@ export function TelegramEntry() {
     // The app is tenant-per-subdomain, so the Mini App has to jump to the
     // tenant's own host — a relative push would land on the marketing host
     // with no tenant context.
-    // The Mini App is only ever served on the BARE host (/tg, see src/proxy.ts),
-    // so the tenant's host is this host with the subdomain put in front of it.
-    // Stripping the first label first — what this used to do — assumed the page
-    // itself already sat on a subdomain: on falco.business it turned tenant
-    // "acme" into acme.business, a different domain altogether.
+    // Tenants hang off the APEX (acme.falco.business), while the Mini App is
+    // served from the site's own host — which is www.falco.business, since www
+    // is the canonical host and the apex 308s to it. So the apex is this host
+    // with a leading "www." taken off, and the tenant's host is the subdomain
+    // in front of that. Two wrong ways to get here, both previously shipped:
+    // stripping the FIRST label whatever it is turns "acme" into acme.business
+    // on the apex, and using the host as-is turns it into acme.www.falco.business
+    // on www. Stripping only "www." is right on the apex, on www and on
+    // tenant.localhost alike.
+    const apex = window.location.host.replace(/^www\./, '')
     const target = subdomain
-      ? `${window.location.protocol}//${subdomain}.${window.location.host}/uz/dashboard`
+      ? `${window.location.protocol}//${subdomain}.${apex}/uz/dashboard`
       : '/uz/dashboard'
     window.location.replace(target)
   }, [])

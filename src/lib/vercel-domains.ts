@@ -47,6 +47,20 @@ export function tenantHost(subdomain: string): string {
   return `${subdomain.toLowerCase()}.${ROOT_DOMAIN}`
 }
 
+/**
+ * The platform's own hosts, which need registering for exactly the same reason
+ * the tenants do but belong to no tenant: src/proxy.ts rewrites admin.<root>
+ * to the super-admin console and support.<root> to the agent portal, and
+ * without a wildcard domain neither host has a certificate until it is added
+ * to the project by name. They are reserved subdomains (RESERVED_SUBDOMAINS in
+ * src/lib/tenant-auth.ts), so no tenant can ever claim them.
+ *
+ * The apex and www are deliberately absent: those two are added by hand once,
+ * as one grouped row with a redirect between them, and re-adding either
+ * through the API fights that grouping.
+ */
+export const CONSOLE_SUBDOMAINS = ['admin', 'support'] as const
+
 export interface DomainResult {
   host: string
   /** The platform now serves this host (including "it already did"). */
