@@ -23,7 +23,7 @@ A Capacitor shell (`capacitor.config.ts`, `android/`, `ios/`) wraps the **live V
 - `npm run lint` — ESLint, includes React Compiler purity rules (see Gotchas)
 - `npm run apk` / `npm run apk:release` — Android build via `scripts/build-apk.sh` (macOS-only paths: Homebrew JDK, `~/Library/Android/sdk`)
 
-Required env (`.env.local`, git-ignored): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `TELEGRAM_MINIAPP_BOT_TOKEN`. `lint-results.txt` in the repo root is a stale snapshot from another machine — don't treat it as current.
+Required env (`.env.local`, git-ignored, documented in `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `TELEGRAM_MINIAPP_BOT_TOKEN`. Optional: `NEXT_PUBLIC_ROOT_DOMAIN` (default `falco.business`) plus `DOMAIN_API_TOKEN` / `DOMAIN_PROJECT_ID` / `DOMAIN_TEAM_ID`, which let provisioning register each tenant's host with Vercel (`src/lib/vercel-domains.ts`) — the Hobby plan has no wildcard domain, so a tenant subdomain is only served once it is added to the project by name. `lint-results.txt` in the repo root is a stale snapshot from another machine — don't treat it as current.
 
 ## Architecture
 
@@ -31,7 +31,7 @@ Required env (`.env.local`, git-ignored): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBL
 
 - Tenant app lives under `src/app/[lang]/`, locale-prefixed (`uz` default, `ru`, `en` — `src/i18n/routing.ts`). Route groups: `(auth)` for `/login`, `(dashboard)` for the authenticated shell. `(dashboard)/@modal` holds intercepted-route "create" dialogs (`src/components/shared/route-modal.tsx`, `use-route-modal`). `[lang]/tenant-status` is the public "blocked / inactive / not-found / wrong-tenant" page.
 - `src/proxy.ts` (the middleware entrypoint), in order:
-  1. Parses the subdomain (`tenant.urlerp.com` / `tenant.localhost`; raw IPs and `*.vercel.app` are never tenants). `admin` and `support` are rewritten to their consoles (reserved in `RESERVED_SUBDOMAINS`, `src/lib/tenant-auth.ts`).
+  1. Parses the subdomain (`tenant.falco.business` / `tenant.localhost`; raw IPs and `*.vercel.app` are never tenants). `admin` and `support` are rewritten to their consoles (reserved in `RESERVED_SUBDOMAINS`, `src/lib/tenant-auth.ts`).
   2. Returns early — no locale, tenant gate, or auth — for `/api/**`, `/admin/**`, `/tg/**`, `/support/**`. Those areas authenticate themselves.
   3. **Tenant status gate**: looks the tenant up with the service-role REST API, cached 30 s in the unsigned `tg_cache` cookie, and flips a lapsed subscription to `blocked` (`computeEffectiveStatus`, `src/lib/tenant-status.ts`). Non-active tenants are redirected to `/tenant-status`.
   4. `updateSession()` (`src/lib/supabase/middleware.ts`), then `next-intl`'s middleware. Throttled `last_active_at` ping (`la_ping` cookie, 5 min).

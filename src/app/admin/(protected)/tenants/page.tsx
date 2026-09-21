@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { TenantsTable, type TenantRow } from '@/components/admin/tenants-table'
+import { DomainSyncButton } from '@/components/admin/domain-sync-button'
 import { computeEffectiveStatus } from '@/lib/tenant-status'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -43,7 +44,9 @@ export default async function AdminTenantsPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('title')} subtitle={t('count', { count: tenants.length })} />
+      <PageHeader title={t('title')} subtitle={t('count', { count: tenants.length })}>
+        <DomainSyncButton />
+      </PageHeader>
 
       <TenantsTable tenants={tenants} initialStatus={initialStatus} />
     </div>

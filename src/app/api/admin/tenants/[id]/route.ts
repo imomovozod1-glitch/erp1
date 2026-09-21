@@ -5,6 +5,7 @@ import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { resolveTenantOwner } from '@/lib/tenant-owner'
+import { registerTenantDomain, unregisterTenantDomain } from '@/lib/vercel-domains'
 
 const updateTenantSchema = z.object({
   subdomain: z
@@ -47,7 +48,7 @@ export async function PATCH(
 
   const { data: existing } = await supabase
     .from('tenants')
-    .select('id, phone, owner_user_id')
+    .select('id, phone, owner_user_id, subdomain')
     .eq('id', id)
     .maybeSingle()
   if (!existing) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
@@ -55,6 +56,8 @@ export async function PATCH(
 
   const update: Record<string, unknown> = {}
   if (input.subdomain !== undefined) update.subdomain = input.subdomain.toLowerCase()
+  const newSubdomain = update.subdomain as string | undefined
+  const subdomainChanged = newSubdomain !== undefined && newSubdomain !== existing.subdomain
   if (input.company_name !== undefined) update.company_name = input.company_name
   if (input.phone !== undefined) update.phone = input.phone
   if (input.license_count !== undefined) update.license_count = input.license_count
@@ -104,7 +107,16 @@ export async function PATCH(
     return NextResponse.json({ error: message }, { status: 409 })
   }
 
-  return NextResponse.json({ tenant })
+  // Moving a tenant to another subdomain moves its host with it: the new one
+  // is registered first, so a failure there leaves the company reachable at
+  // the old address rather than at neither (src/lib/vercel-domains.ts).
+  let domain
+  if (subdomainChanged) {
+    domain = await registerTenantDomain(newSubdomain!)
+    if (domain.ok) await unregisterTenantDomain(existing.subdomain)
+  }
+
+  return NextResponse.json({ tenant, domain })
 }
 
 export async function DELETE(
@@ -119,7 +131,7 @@ export async function DELETE(
 
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, status, last_active_at, created_at, subscription_ends_at, owner_user_id')
+    .select('id, subdomain, status, last_active_at, created_at, subscription_ends_at, owner_user_id')
     .eq('id', id)
     .maybeSingle()
   if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
@@ -152,6 +164,10 @@ export async function DELETE(
   if (tenant.owner_user_id) {
     await supabase.auth.admin.deleteUser(tenant.owner_user_id)
   }
+
+  // Free the host again — the platform counts every registered domain against
+  // the project, and a deleted company must not keep holding one.
+  if (tenant.subdomain) await unregisterTenantDomain(tenant.subdomain)
 
   return NextResponse.json({ success: true })
 }

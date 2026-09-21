@@ -5,6 +5,7 @@ import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
+import { registerTenantDomain } from '@/lib/vercel-domains'
 
 const createTenantSchema = z.object({
   subdomain: z
@@ -105,5 +106,12 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  return NextResponse.json({ tenant }, { status: 201 })
+  // The tenant's own host has to exist on the platform before anyone can
+  // reach it — there is no wildcard domain to fall back on (see
+  // src/lib/vercel-domains.ts). It never throws and never blocks the account:
+  // a failure is reported alongside the created tenant so the console can say
+  // so, and Kompaniyalar → "Domenlarni sinxronlash" registers it later.
+  const domain = await registerTenantDomain(tenant.subdomain)
+
+  return NextResponse.json({ tenant, domain }, { status: 201 })
 }

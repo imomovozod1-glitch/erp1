@@ -11,7 +11,7 @@ const config: CapacitorConfig = {
     // (src/proxy.ts), and cached server queries that a static export can't
     // reproduce. Trade-off: the app needs network connectivity to load,
     // same as the web app today.
-    url: 'https://erp1-livid.vercel.app',
+    url: 'https://falco.business',
     cleartext: false,
     // Shown when the WebView cannot reach the URL above. Without it the app
     // falls back to Android's raw net::ERR_INTERNET_DISCONNECTED page, which

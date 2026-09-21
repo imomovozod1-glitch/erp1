@@ -94,8 +94,13 @@ export function TelegramEntry() {
     // The app is tenant-per-subdomain, so the Mini App has to jump to the
     // tenant's own host — a relative push would land on the marketing host
     // with no tenant context.
+    // The Mini App is only ever served on the BARE host (/tg, see src/proxy.ts),
+    // so the tenant's host is this host with the subdomain put in front of it.
+    // Stripping the first label first — what this used to do — assumed the page
+    // itself already sat on a subdomain: on falco.business it turned tenant
+    // "acme" into acme.business, a different domain altogether.
     const target = subdomain
-      ? `${window.location.protocol}//${subdomain}.${window.location.host.replace(/^[^.]+\./, '')}/uz/dashboard`
+      ? `${window.location.protocol}//${subdomain}.${window.location.host}/uz/dashboard`
       : '/uz/dashboard'
     window.location.replace(target)
   }, [])
