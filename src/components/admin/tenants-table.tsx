@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Search, Plus } from 'lucide-react'
+import { Search, Plus, AlertTriangle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
@@ -41,12 +41,21 @@ const ITEMS_PER_PAGE = 10
 export function TenantsTable({
   tenants,
   initialStatus = 'all',
+  unregisteredSubdomains = [],
 }: {
   tenants: TenantRow[]
   initialStatus?: 'all' | TenantRow['status']
+  /**
+   * Companies whose host the platform does not serve — they exist in the
+   * database and their address does not open. Empty when the platform cannot
+   * be asked, and empty once a wildcard domain covers every host, so the
+   * warning never becomes background noise (see /api/admin/domains).
+   */
+  unregisteredSubdomains?: string[]
 }) {
   const t = useTranslations('admin.tenants')
   const router = useRouter()
+  const unregistered = new Set(unregisteredSubdomains)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | TenantRow['status']>(initialStatus)
   const [currentPage, setCurrentPage] = useState(1)
@@ -155,7 +164,17 @@ export function TenantsTable({
                   {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                 </TableCell>
                 <TableCell className="font-medium">{tenant.company_name}</TableCell>
-                <TableCell className="text-slate-500 dark:text-slate-400">{tenant.subdomain}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    {tenant.subdomain}
+                    {unregistered.has(tenant.subdomain) && (
+                      <AlertTriangle
+                        className="h-3.5 w-3.5 text-amber-500"
+                        aria-label={t('domainNotServed')}
+                      />
+                    )}
+                  </span>
+                </TableCell>
                 <TableCell className="text-slate-500 dark:text-slate-400 tabular-nums">{formatPhoneInput(tenant.phone)}</TableCell>
                 <TableCell>
                   <StatusBadge label={t(`status${capitalize(tenant.status)}`)} tone={STATUS_TONE[tenant.status]} />

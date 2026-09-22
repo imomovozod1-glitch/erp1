@@ -17,6 +17,14 @@
 
 const IPV4_PATTERN = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/
 
+/**
+ * The apex every tenant host hangs off. Defined here rather than next to the
+ * hosting-platform code because this is the module both the middleware and the
+ * auth routes already depend on; src/lib/vercel-domains.ts re-exports it so
+ * there is still exactly one value.
+ */
+export const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN?.trim() || 'falco.business'
+
 export function getTenantSubdomain(host: string): string | null {
   const hostname = host.split(':')[0]
 
@@ -56,4 +64,41 @@ export function getTenantSubdomain(host: string): string | null {
   }
 
   return null
+}
+
+function splitHost(host: string): { hostname: string; port: string } {
+  const [hostname, port] = host.split(':')
+  return { hostname: hostname.toLowerCase(), port: port ? `:${port}` : '' }
+}
+
+/**
+ * The host a given tenant is served on, as seen from the host being served
+ * right now — `null` when this deployment has no tenant hosts at all.
+ *
+ * The caller's host is what decides, not a hard-coded apex: on
+ * `www.falco.business` and on the apex itself the answer is
+ * `<tenant>.falco.business`, and on `localhost:3000` it is
+ * `<tenant>.localhost:3000`, which is what makes the whole sign-in handoff
+ * testable in development.
+ *
+ * `null` for a preview deployment (`*.vercel.app`) or a raw IP: nothing has
+ * ever been registered under those, so sending anyone there would strand
+ * them. Callers treat it as "stay where you are" rather than as an error.
+ */
+export function tenantHostFor(subdomain: string, requestHost: string): string | null {
+  const { hostname, port } = splitHost(requestHost)
+  const tenant = subdomain.toLowerCase()
+
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+    return `${tenant}.localhost${port}`
+  }
+  if (hostname === ROOT_DOMAIN || hostname.endsWith(`.${ROOT_DOMAIN}`)) {
+    return `${tenant}.${ROOT_DOMAIN}${port}`
+  }
+  return null
+}
+
+/** Whether tenant hosts exist for the host being served (see tenantHostFor). */
+export function servesTenantHosts(requestHost: string): boolean {
+  return tenantHostFor('t', requestHost) !== null
 }

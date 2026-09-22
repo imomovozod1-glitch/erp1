@@ -3,6 +3,8 @@ import { cookies, headers } from 'next/headers'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { getCurrentTenantId, getCachedTenant } from '@/lib/tenant'
 import { getStaffIdentity } from '@/lib/admin-auth'
+import { servesTenantHosts } from '@/lib/tenant-host'
+import { HANDOFF_SKIP_COOKIE } from '@/lib/tenant-handoff'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
@@ -35,12 +37,14 @@ export default async function DashboardLayout({
   // the tenant, then the profile — so the page could not start rendering until
   // four sequential Supabase round trips had completed, one after another,
   // even though none of them depends on the result of the others.
-  const requestedSubdomain = (await headers()).get('x-tenant-subdomain')
+  const requestHeaders = await headers()
+  const requestedSubdomain = requestHeaders.get('x-tenant-subdomain')
   // SidebarProvider writes `sidebar_state` whenever the sidebar is toggled, but
   // nothing ever read it back — so every navigation re-mounted the provider at
   // its `defaultOpen = true` and the sidebar sprang open again a moment after
   // being closed. Seeding it from the cookie is what makes "closed" stick.
-  const sidebarOpen = (await cookies()).get('sidebar_state')?.value !== 'false'
+  const cookieStore = await cookies()
+  const sidebarOpen = cookieStore.get('sidebar_state')?.value !== 'false'
   const [staffIdentity, profile, tenant] = await Promise.all([
     // Super-admin and support-agent sessions share the same auth cookies as
     // tenant users, so a staff session must never render the tenant dashboard
@@ -70,6 +74,20 @@ export default async function DashboardLayout({
     if (!tenant || (tenant as { subdomain?: string }).subdomain !== requestedSubdomain) {
       redirect(`/${lang}/tenant-status?reason=wrong-tenant`)
     }
+  } else if (servesTenantHosts(requestHeaders.get('host') || '') && !cookieStore.get(HANDOFF_SKIP_COOKIE)) {
+    // A session on a host that serves no company — the apex, or the bare host
+    // the Capacitor shell and the Telegram Mini App open. The workspace is not
+    // rendered here: the subscription gate in src/proxy.ts only runs on a
+    // company host, so rendering here is how a lapsed company kept working.
+    // The session is moved to the company's own address instead
+    // (src/lib/tenant-handoff.ts), which is also where the gate lives.
+    //
+    // Staff never reach this line — they were redirected to their own consoles
+    // above — and a deployment with no company hosts at all (a preview build)
+    // falls through and renders as before, rather than looping on a redirect
+    // to an address that does not exist. HANDOFF_SKIP_COOKIE is the same
+    // protection for the case where the handoff itself cannot be minted.
+    redirect('/api/auth/handoff')
   }
 
   return (

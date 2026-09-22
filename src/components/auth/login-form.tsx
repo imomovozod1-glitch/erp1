@@ -5,7 +5,7 @@ import { lockMinutesFrom } from '@/lib/login-lock'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2 } from 'lucide-react'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -23,6 +23,7 @@ import {
   authPhoneInputClasses,
 } from '@/components/auth/auth-card'
 import { phoneSchema } from '@/lib/phone-validation'
+import { getTenantSubdomain } from '@/lib/tenant-host'
 import { cn } from '@/lib/utils'
 
 /**
@@ -72,6 +73,8 @@ async function describeFailure(
   switch (body?.error) {
     case 'account_disabled':
       return { message: t('accountDisabled') }
+    case 'tenant_blocked':
+      return { message: t('tenantBlocked') }
     case 'staff_account':
       return {
         message: body.portal === 'admin' ? t('staffAccountAdmin') : t('staffAccountSupport'),
@@ -101,6 +104,40 @@ async function describeFailure(
   }
 }
 
+/**
+ * The company host this device last signed in to.
+ *
+ * The Capacitor shell always opens the bare app host (`server.url` in
+ * capacitor.config.ts) and the session does not live there — it lives on the
+ * company's own host, where the handoff put it (src/lib/tenant-handoff.ts).
+ * Without this the app would ask for a password on every single launch, so
+ * the address is remembered and the bare host simply steps aside.
+ *
+ * Per-device and per-browser; it holds an address, nothing else. `?switch=1`
+ * turns it off for one visit, which is how a second company gets signed in
+ * on a shared device.
+ */
+const LAST_HOST_KEY = 'erp_last_tenant_host'
+
+function rememberTenantHost(host: string) {
+  try {
+    localStorage.setItem(LAST_HOST_KEY, host)
+  } catch {
+    // Private mode, or storage blocked. Costs one extra sign-in, nothing more.
+  }
+}
+
+function rememberedTenantHost(): string | null {
+  try {
+    const host = localStorage.getItem(LAST_HOST_KEY)
+    // Only ever a host, never a URL — a stored value with a scheme or a path
+    // in it would be someone else's redirect.
+    return host && /^[a-z0-9.-]+(:\d+)?$/i.test(host) ? host : null
+  } catch {
+    return null
+  }
+}
+
 export function LoginForm({ lang }: { lang: string }) {
   const t = useTranslations('auth')
   const router = useRouter()
@@ -108,6 +145,28 @@ export function LoginForm({ lang }: { lang: string }) {
   // Kept on the page rather than in a toast: a refusal here often has an
   // address to follow, and a toast takes it away before it can be read.
   const [failure, setFailure] = useState<LoginFailure | null>(null)
+
+  // On a host that serves no company there is nothing to sign in to, so a
+  // device that has been here before is sent straight back to its own company
+  // address — where its session already is.
+  //
+  // Only ever on such a host: landing on a company's address is a deliberate
+  // act (someone typed it, or was handed the link), and redirecting away from
+  // it would make signing in to a second company impossible.
+  useEffect(() => {
+    if (getTenantSubdomain(window.location.host)) return
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('switch') || params.has('redirectTo')) return
+    const host = rememberedTenantHost()
+    if (!host || host === window.location.host) return
+    // Straight to the workspace, not to that host's login: the session very
+    // likely still lives there (this is a relaunch of the app, not a new
+    // sign-in), and /login is served even to a signed-in visitor, so aiming
+    // at the form would ask for a password that is not needed. If the session
+    // has in fact expired, the middleware bounces to the login form on that
+    // host — the right place to type it.
+    window.location.replace(`${window.location.protocol}//${host}/${lang}/dashboard`)
+  }, [lang])
 
   const loginSchema = useMemo(
     () =>
@@ -137,8 +196,20 @@ export function LoginForm({ lang }: { lang: string }) {
         setIsLoading(false)
         return
       }
+      // Signed in on a host that serves no company: the session has already
+      // been moved to the company's own address and dropped here, so follow
+      // it (src/lib/tenant-handoff.ts). A full navigation, not router.replace
+      // — it is a different origin.
+      const json = await res.json().catch(() => null)
+      if (json?.handoff?.url) {
+        rememberTenantHost(json.handoff.host)
+        window.location.replace(json.handoff.url)
+        return
+      }
+
       // Use replace so login isn't in the back-stack.
       // No router.refresh() needed — middleware re-validates on every request.
+      rememberTenantHost(window.location.host)
       router.replace(safeRedirectTo(`/${lang}/dashboard`))
     } catch {
       setFailure({ message: t('invalidCredentials') })

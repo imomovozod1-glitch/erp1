@@ -37,10 +37,12 @@
  * local development and preview deployments behave exactly as before.
  */
 
+import { ROOT_DOMAIN } from '@/lib/tenant-host'
+
 const VERCEL_API = 'https://api.vercel.com'
 
-/** The apex the tenant subdomains hang off. */
-export const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN?.trim() || 'falco.business'
+/** The apex the tenant subdomains hang off — defined in src/lib/tenant-host.ts. */
+export { ROOT_DOMAIN }
 
 /** The full host a tenant is served on. */
 export function tenantHost(subdomain: string): string {
@@ -268,5 +270,75 @@ export async function isHostServing(host: string): Promise<boolean> {
     return response.status > 0
   } catch {
     return false
+  }
+}
+
+/** The one project domain that covers every tenant host at once. */
+export const WILDCARD_DOMAIN = `*.${ROOT_DOMAIN}`
+
+export interface TenantDomainStatus {
+  host: string
+  /** Whether this deployment can register hosts at all. */
+  configured: boolean
+  /** The host is on the project, by name or through the wildcard domain. */
+  registered: boolean
+  /** Covered by `*.<root>` rather than by a record of its own. */
+  wildcard: boolean
+  /** The platform considers its DNS verified. */
+  verified: boolean
+  /** It answers over HTTPS right now — the only state the operator can see. */
+  serving: boolean
+  /** Settings the deployment is missing, when `configured` is false. */
+  missing: string[]
+}
+
+/**
+ * Everything the console needs to say about one company's address.
+ *
+ * `serving` is asked directly rather than inferred, because the three
+ * questions have three different answers and only the last one matches what a
+ * customer experiences: a host can be registered and still be minutes away
+ * from its certificate, and — once a wildcard domain exists on the project —
+ * it can serve perfectly while being registered nowhere by name. Reporting
+ * "registered" as though it meant "works" is what made a freshly created
+ * company look broken.
+ */
+export async function getTenantDomainStatus(subdomain: string): Promise<TenantDomainStatus> {
+  const host = tenantHost(subdomain)
+  const config = readConfig()
+
+  // Both questions at once: the platform's record, and the address itself.
+  const [record, serving] = await Promise.all([
+    config
+      ? call(config, 'GET', `/v9/projects/${config.projectId}/domains/${host}`).catch(() => null)
+      : Promise.resolve(null),
+    isHostServing(host),
+  ])
+
+  const named = Boolean(record && record.status >= 200 && record.status < 300)
+
+  // No record of its own does not mean uncovered: one `*.<root>` domain on the
+  // project serves every tenant host there will ever be, and certificates are
+  // issued for each of them on the fly. Without this check every company would
+  // be reported as missing the moment the wildcard made per-host registration
+  // unnecessary.
+  let wildcard = false
+  if (!named && config) {
+    const covering = await call(
+      config,
+      'GET',
+      `/v9/projects/${config.projectId}/domains/${encodeURIComponent(WILDCARD_DOMAIN)}`
+    ).catch(() => null)
+    wildcard = Boolean(covering && covering.status >= 200 && covering.status < 300)
+  }
+
+  return {
+    host,
+    configured: config !== null,
+    registered: named || wildcard,
+    wildcard,
+    verified: named ? record?.data?.verified !== false : wildcard,
+    serving,
+    missing: missingDomainConfig(),
   }
 }

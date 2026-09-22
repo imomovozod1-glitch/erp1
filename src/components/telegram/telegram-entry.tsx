@@ -89,7 +89,17 @@ export function TelegramEntry() {
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const goToApp = useCallback((subdomain: string | null) => {
+  const goToApp = useCallback((subdomain: string | null, handoffUrl?: string | null) => {
+    // A handed-over session (src/lib/tenant-handoff.ts): the URL already
+    // carries the one-time token that signs the user in on the company host,
+    // so it is followed as-is. Only /link can produce one — it is the flow
+    // that just proved a password.
+    if (handoffUrl) {
+      setStage('redirecting')
+      window.location.replace(handoffUrl)
+      return
+    }
+
     setStage('redirecting')
     // The app is tenant-per-subdomain, so the Mini App has to jump to the
     // tenant's own host — a relative push would land on the marketing host
@@ -191,11 +201,12 @@ export function TelegramEntry() {
           too_many_attempts: `Juda ko‘p muvaffaqiyatsiz urinish. ${retryAfterMinutes(json.retryAfterSeconds)} daqiqadan so‘ng qayta urinib ko‘ring.`,
           already_linked: 'Bu hisob boshqa Telegram akkauntiga bog‘langan',
           no_tenant: 'Hisobingiz hech qaysi tashkilotga biriktirilmagan',
+          tenant_blocked: 'Tashkilot hisobi faol emas. Administrator bilan bog‘laning.',
         }
         toast.error(messages[json.error] ?? 'Xatolik yuz berdi')
         return
       }
-      goToApp(json.subdomain)
+      goToApp(json.subdomain, json.url)
     } catch {
       toast.error('Serverga ulanib bo‘lmadi')
     } finally {

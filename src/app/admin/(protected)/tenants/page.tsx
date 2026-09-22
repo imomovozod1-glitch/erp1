@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { TenantsTable, type TenantRow } from '@/components/admin/tenants-table'
 import { DomainSyncButton } from '@/components/admin/domain-sync-button'
 import { computeEffectiveStatus } from '@/lib/tenant-status'
+import { WILDCARD_DOMAIN, listProjectDomains, tenantHost } from '@/lib/vercel-domains'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin.tenants')
@@ -22,10 +23,19 @@ export default async function AdminTenantsPage({
   const initialStatus = status === 'active' || status === 'blocked' || status === 'inactive' ? status : 'all'
 
   const supabase = getCacheClient() as any
-  const { data } = await supabase
-    .from('tenants')
-    .select('id, subdomain, company_name, phone, status, costing_method, subscription_ends_at, price_paid')
-    .order('created_at', { ascending: false })
+  // Both at once: the platform's domain list has nothing to do with the tenant
+  // rows, and waiting for one before starting the other would put a second
+  // network round trip in front of this page for no reason.
+  const [{ data }, projectDomains] = await Promise.all([
+    supabase
+      .from('tenants')
+      .select('id, subdomain, company_name, phone, status, costing_method, subscription_ends_at, price_paid')
+      .order('created_at', { ascending: false }),
+    // `null` means the platform could not be asked at all (no credentials, or
+    // its API failed) — which is not the same as "nothing is registered", so
+    // nothing is flagged.
+    listProjectDomains(),
+  ])
 
   const rawTenants: TenantRow[] = data ?? []
 
@@ -42,13 +52,22 @@ export default async function AdminTenantsPage({
     return tenant
   })
 
+  const unregisteredSubdomains =
+    projectDomains && !projectDomains.has(WILDCARD_DOMAIN)
+      ? tenants.map((tenant) => tenant.subdomain).filter((sub) => !projectDomains.has(tenantHost(sub)))
+      : []
+
   return (
     <div className="space-y-6">
       <PageHeader title={t('title')} subtitle={t('count', { count: tenants.length })}>
         <DomainSyncButton />
       </PageHeader>
 
-      <TenantsTable tenants={tenants} initialStatus={initialStatus} />
+      <TenantsTable
+        tenants={tenants}
+        initialStatus={initialStatus}
+        unregisteredSubdomains={unregisteredSubdomains}
+      />
     </div>
   )
 }

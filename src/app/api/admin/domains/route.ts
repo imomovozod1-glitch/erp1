@@ -4,6 +4,7 @@ import { getCacheClient } from '@/lib/supabase/cache-client'
 import {
   CONSOLE_SUBDOMAINS,
   ROOT_DOMAIN,
+  WILDCARD_DOMAIN,
   isDomainAutomationConfigured,
   isHostServing,
   listProjectDomains,
@@ -56,17 +57,23 @@ export async function GET() {
     return NextResponse.json({ error: 'Could not read the project domains' }, { status: 502 })
   }
 
+  // One wildcard domain covers every tenant host at once, so nothing is
+  // missing and nothing needs adding — reporting per-host state then would be
+  // a page full of false alarms.
+  const wildcard = registered.has(WILDCARD_DOMAIN)
+
   return NextResponse.json({
     configured: true,
     rootDomain: ROOT_DOMAIN,
+    wildcard,
     hosts: required.map(({ subdomain, kind }) => ({
       subdomain,
       kind,
       host: tenantHost(subdomain),
-      registered: registered.has(tenantHost(subdomain)),
+      registered: wildcard || registered.has(tenantHost(subdomain)),
       // Registered but unverified means the host is on the project and still
       // cannot be opened — see listProjectDomains in src/lib/vercel-domains.ts.
-      verified: registered.get(tenantHost(subdomain)) ?? false,
+      verified: wildcard || (registered.get(tenantHost(subdomain)) ?? false),
     })),
   })
 }
@@ -84,10 +91,14 @@ export async function POST() {
     return NextResponse.json({ error: 'Could not read the project domains' }, { status: 502 })
   }
 
+  // A wildcard domain already serves every tenant host; adding them one by one
+  // would be a hundred pointless round trips.
+  const wildcard = registered.has(WILDCARD_DOMAIN)
+
   // Only the ones actually missing. Re-adding an existing host is harmless
   // but costs a round trip each, and a platform with a hundred tenants would
   // spend a hundred of them on every click.
-  const missing = required.filter(({ subdomain }) => !registered.has(tenantHost(subdomain)))
+  const missing = wildcard ? [] : required.filter(({ subdomain }) => !registered.has(tenantHost(subdomain)))
 
   const failed: { host: string; error: string }[] = []
   const added: string[] = []
@@ -106,9 +117,11 @@ export async function POST() {
   // already had but has not verified — are asked directly.
   const suspect = [
     ...added,
-    ...required
-      .map(({ subdomain }) => tenantHost(subdomain))
-      .filter((host) => registered.get(host) === false),
+    ...(wildcard
+      ? []
+      : required
+          .map(({ subdomain }) => tenantHost(subdomain))
+          .filter((host) => registered.get(host) === false)),
   ]
   const probes = Array.from(new Set(suspect)).slice(0, 12)
   const pending = (
@@ -119,6 +132,7 @@ export async function POST() {
     configured: true,
     rootDomain: ROOT_DOMAIN,
     checked: required.length,
+    wildcard,
     added: added.length,
     addedHosts: added,
     /** Registered, but not answering on HTTPS yet — the certificate is still coming. */

@@ -5,6 +5,8 @@ import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
 import { checkLoginRateLimit, recordLoginAttempt, getClientIp, tooManyAttemptsBody } from '@/lib/rate-limit'
 import { verifyTelegramInitData, telegramDisplayName } from '@/lib/telegram-miniapp'
+import { createTenantHandoff, requestOrigin } from '@/lib/tenant-handoff'
+import { routing } from '@/i18n/routing'
 
 const schema = z.object({
   initData: z.string().min(1).max(4096),
@@ -38,8 +40,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(body, init)
   }
 
-  // Signing in here also establishes the normal Supabase session cookies, so
-  // the Mini App lands in the app already authenticated.
+  // Signing in here proves the password. The session it establishes belongs to
+  // THIS host, though — Telegram opens the Mini App on the bare app host — and
+  // the workspace lives on the company's own host, where these cookies are not
+  // sent. So the session is handed over below rather than navigated away from:
+  // jumping straight to the company host used to land the user on its login
+  // form, one screen after they had just typed their password.
   const supabase = await createClient()
   const { data: auth, error } = await supabase.auth.signInWithPassword({
     email,
@@ -88,9 +94,32 @@ export async function POST(request: NextRequest) {
     .eq('id', profile.tenant_id)
     .maybeSingle()
 
+  const { host, protocol } = requestOrigin(request.headers)
+  const handoff = await createTenantHandoff({
+    userId: auth.user.id,
+    email,
+    requestHost: host,
+    protocol,
+    next: `/${routing.defaultLocale}/dashboard`,
+  })
+
+  if (!handoff.ok && handoff.reason === 'tenant_blocked') {
+    await supabase.auth.signOut({ scope: 'local' })
+    return NextResponse.json({ error: 'tenant_blocked' }, { status: 403 })
+  }
+
+  if (handoff.ok) {
+    // Local scope only: this drops the cookies on the bare host, where they
+    // are of no use to anyone, and leaves the user's other sessions alone.
+    await supabase.auth.signOut({ scope: 'local' })
+  }
+
   return NextResponse.json({
     linked: true,
     subdomain: tenant?.subdomain ?? null,
     companyName: tenant?.company_name ?? null,
+    // Absent when this deployment has no company hosts (a preview build): the
+    // Mini App then falls back to navigating by subdomain, as it always did.
+    url: handoff.ok ? handoff.target.url : null,
   })
 }
