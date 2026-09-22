@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
@@ -54,6 +55,12 @@ export async function POST(request: NextRequest) {
     await supabase.auth.admin.deleteUser(authData.user.id)
     return NextResponse.json({ error: adminError.message }, { status: 400 })
   }
+
+  // getStaffIdentity() caches who is staff for five minutes (src/lib/admin-auth.ts)
+  // and the login routes now refuse a sign-in on it, so the cache has to be
+  // dropped the moment the answer changes — otherwise a just-created account
+  // is told it is not staff, and a just-deleted one still passes the gate.
+  revalidateTag(`staff-identity:${authData.user.id}`, { expire: 0 })
 
   return NextResponse.json({ admin }, { status: 201 })
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 
@@ -29,6 +30,7 @@ export async function DELETE(
   if (!removed?.length) return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
 
   await supabase.auth.admin.deleteUser(id)
+  revalidateTag(`staff-identity:${id}`, { expire: 0 })
 
   return NextResponse.json({ success: true })
 }

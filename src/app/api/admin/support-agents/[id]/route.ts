@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
+import { newPasswordSchema } from '@/lib/password-validation'
 
 const updateSupportAgentSchema = z.object({
   full_name: z.string().min(1).optional(),
   phone: phoneSchema('Invalid phone number').optional(),
+  // The edit form always sends this field and sends it EMPTY when the password
+  // is being left alone (support-agent-form.tsx) — so an empty string has to be
+  // accepted here and understood as "no change". It used to be missing from
+  // this schema entirely, and zod strips what it does not declare: a new
+  // password was dropped in silence, the console reported success, and the
+  // agent was then locked out of a password that had never been set.
+  password: z.union([newPasswordSchema('Password does not meet strength requirements'), z.literal('')]).optional(),
 })
 
 export async function PATCH(
@@ -44,10 +53,24 @@ export async function PATCH(
     return NextResponse.json({ error: message }, { status: 409 })
   }
 
-  // Keep the agent's login in sync with a changed phone number, same as
-  // tenant owners (see src/app/api/admin/tenants/[id]/route.ts).
+  // Everything that lives on the auth user rather than on the support_agents
+  // row: the synthetic login email, which has to follow a changed phone number
+  // (same as tenant owners — src/app/api/admin/tenants/[id]/route.ts), and the
+  // password. One call, and its failure is reported: a silently ignored error
+  // here reads as "saved" in the console and as "wrong password" at the portal.
+  const authUpdate: { email?: string; password?: string } = {}
   if (input.phone !== undefined && input.phone !== existing.phone) {
-    await supabase.auth.admin.updateUserById(id, { email: phoneToSyntheticEmail(input.phone) })
+    authUpdate.email = phoneToSyntheticEmail(input.phone)
+  }
+  if (input.password) {
+    authUpdate.password = input.password
+  }
+
+  if (Object.keys(authUpdate).length > 0) {
+    const { error: authError } = await supabase.auth.admin.updateUserById(id, authUpdate)
+    if (authError) {
+      return NextResponse.json({ error: authError.message || 'Failed to update the login' }, { status: 400 })
+    }
   }
 
   return NextResponse.json({ agent })
@@ -72,6 +95,7 @@ export async function DELETE(
   if (error) return NextResponse.json({ error: error.message }, { status: 409 })
 
   await supabase.auth.admin.deleteUser(id)
+  revalidateTag(`staff-identity:${id}`, { expire: 0 })
 
   return NextResponse.json({ success: true })
 }

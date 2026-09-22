@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { getStaffIdentity } from '@/lib/admin-auth'
+import { getCacheClient } from '@/lib/supabase/cache-client'
 import { checkLoginRateLimit, recordLoginAttempt, getClientIp, tooManyAttemptsBody } from '@/lib/rate-limit'
 
 const loginSchema = z.object({
@@ -52,7 +52,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
   }
 
-  if ((await getStaffIdentity(auth.user.id)) !== 'super_admin') {
+  // Read uncached, with the service role: getStaffIdentity() keeps its answer
+  // for five minutes, and a sign-in must not be decided on a five-minute-old
+  // view of who is staff — an account created a minute ago would be turned
+  // away, and one deleted a minute ago would still be let in.
+  const { data: admin } = await (getCacheClient() as any)
+    .from('super_admins')
+    .select('id')
+    .eq('id', auth.user.id)
+    .maybeSingle()
+  if (!admin) {
     await supabase.auth.signOut()
     return NextResponse.json({ error: 'not_admin' }, { status: 403 })
   }
