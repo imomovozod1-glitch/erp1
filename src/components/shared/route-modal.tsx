@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { RouteModalContext } from '@/lib/hooks/use-route-modal'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 
 /**
  * Shell for the "create" routes that are intercepted into a dialog
@@ -18,7 +19,26 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
  * click on the backdrop or an Escape keypress must NOT discard a half-filled
  * form.
  */
-export function RouteModal({ children }: { children: React.ReactNode }) {
+export function RouteModal({
+  children,
+  flushFooter = false,
+}: {
+  children: React.ReactNode
+  /**
+   * The wrapped form ends in its own action bar pinned to the bottom of its
+   * card (AdminFormActions — the super-admin forms). Drops the dialog's bottom
+   * padding so that bar lands on the dialog's own border.
+   *
+   * With the padding in place it cannot: a sticky element is confined to its
+   * containing block, so the bar stops at the end of its card, and the card
+   * stops 24px short of the dialog edge. That gap is what it looked like — an
+   * action bar floating above the bottom border instead of sitting on it.
+   *
+   * Off by default, because every other form here ends in ordinary buttons
+   * that need that padding as breathing room.
+   */
+  flushFooter?: boolean
+}) {
   const router = useRouter()
   const pathname = usePathname()
 
@@ -47,7 +67,16 @@ export function RouteModal({ children }: { children: React.ReactNode }) {
           router.back()
         }}
       >
-        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto p-6 pt-10 gap-0">
+        <DialogContent
+          className={cn(
+            'sm:max-w-5xl max-h-[90vh] overflow-y-auto pt-10 gap-0',
+            // Same surface colour as the card it now sits flush against
+            // (AdminFormShell): light mode already matches (--popover is
+            // white), dark mode does not — #171520 against slate-900 — and the
+            // difference would show through the card's rounded bottom corners.
+            flushFooter ? 'px-6 pb-0 bg-white dark:bg-slate-900' : 'p-6'
+          )}
+        >
           {children}
         </DialogContent>
       </Dialog>
