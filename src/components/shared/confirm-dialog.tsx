@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { AlertTriangle, Trash2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -19,6 +20,8 @@ export interface ConfirmOptions {
   title?: string
   description?: string
   confirmLabel?: string
+  /** Icon on the confirm button. Defaults to the bin, for the delete case. */
+  confirmIcon?: LucideIcon
 }
 
 interface PendingConfirm {
@@ -27,24 +30,28 @@ interface PendingConfirm {
 }
 
 /**
- * Asks before anything is deleted — the one confirmation every delete button
- * in the app goes through, instead of `window.confirm` in some places and
- * nothing at all in others.
+ * Asks before something irreversible happens — the one confirmation the app
+ * uses, instead of `window.confirm` in some places and nothing at all in
+ * others.
  *
- *   const [confirmDelete, confirmDialog] = useConfirmDelete()
- *   const handleDelete = async (id) => {
- *     if (!(await confirmDelete({ name: row.name }))) return
+ *   const [confirm, confirmDialog] = useConfirm()
+ *   const handleLogout = async () => {
+ *     if (!(await confirm({ title, description, confirmLabel, confirmIcon: LogOut }))) return
  *     ...
  *   }
  *   return <>{...}{confirmDialog}</>
  *
  * Resolves `true` only when the user presses the red button; closing the
  * dialog any other way (Cancel, Esc, clicking outside) resolves `false`.
+ *
+ * Safe to open from inside a dropdown menu item — the dialog is rendered by
+ * the component that owns the handler, not by the menu, so it outlives the
+ * menu closing (every table's row-actions delete already works this way).
  */
-export function useConfirmDelete() {
+export function useConfirm() {
   const [pending, setPending] = useState<PendingConfirm | null>(null)
 
-  const confirmDelete = useCallback(
+  const confirmAction = useCallback(
     (options: ConfirmOptions = {}) =>
       new Promise<boolean>((resolve) => {
         setPending({ options, resolve })
@@ -58,7 +65,7 @@ export function useConfirmDelete() {
   }
 
   const dialog = (
-    <ConfirmDeleteDialog
+    <ConfirmDialog
       open={pending !== null}
       options={pending?.options ?? {}}
       onConfirm={() => settle(true)}
@@ -66,10 +73,18 @@ export function useConfirmDelete() {
     />
   )
 
-  return [confirmDelete, dialog] as const
+  return [confirmAction, dialog] as const
 }
 
-function ConfirmDeleteDialog({
+/**
+ * The delete preset: identical behaviour, a name that reads correctly at the
+ * dozens of call sites that are deleting something.
+ */
+export function useConfirmDelete() {
+  return useConfirm()
+}
+
+function ConfirmDialog({
   open,
   options,
   onConfirm,
@@ -81,6 +96,8 @@ function ConfirmDeleteDialog({
   onCancel: () => void
 }) {
   const t = useTranslations('common')
+
+  const ConfirmIcon = options.confirmIcon ?? Trash2
 
   const description =
     options.description ??
@@ -106,7 +123,7 @@ function ConfirmDeleteDialog({
             {t('cancel')}
           </Button>
           <Button onClick={onConfirm} className="gap-2 bg-rose-600 text-white hover:bg-rose-700" autoFocus>
-            <Trash2 className="h-4 w-4" />
+            <ConfirmIcon className="h-4 w-4" />
             {options.confirmLabel ?? t('delete')}
           </Button>
         </DialogFooter>

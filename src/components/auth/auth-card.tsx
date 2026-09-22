@@ -16,11 +16,15 @@ import { cn } from '@/lib/utils'
  * | Super-admin    | `admin.<domain>/login`     | `super_admins` (email + password) |
  * | Support agents | `support.<domain>/login`   | `support_agents` (phone + password) |
  *
- * A tenant sign-in can only be resolved on its own subdomain, and folding the
- * super-admin console into a public role picker would advertise it to every
- * tenant user — so the separation stays. What is shared is everything below:
- * the layout, the field styling and the submit/loading behaviour, so the three
- * forms can't drift apart again.
+ * The address decides which form is served — src/proxy.ts rewrites
+ * admin.<domain> and support.<domain> to their own consoles, and every other
+ * subdomain is a tenant — so no page offers a choice between them. The links
+ * that used to sit behind the card, pointing at the other two sign-ins, are
+ * gone with the slot that held them: they advertised the operator console to
+ * every tenant user, and the domain already answers the question they asked.
+ *
+ * What is shared is everything below: the layout, the field styling and the
+ * submit/loading behaviour, so the three forms can't drift apart again.
  */
 
 /** Full-screen backdrop; centres a single card. */
@@ -39,7 +43,6 @@ export function AuthCard({
   heading,
   subheading,
   action,
-  behind,
   children,
 }: {
   icon: LucideIcon
@@ -49,13 +52,6 @@ export function AuthCard({
   subheading?: string
   /** Slot at the top-right of the card — the language switcher. */
   action?: ReactNode
-  /**
-   * Secondary panel tucked *behind* the card and peeking out below it — the
-   * cross-portal links. Kept out of the card body on purpose: they are an
-   * escape hatch to a different sign-in, not part of signing in here, and
-   * sitting behind the card is what says so before any label is read.
-   */
-  behind?: ReactNode
   children: ReactNode
 }) {
   return (
@@ -81,17 +77,6 @@ export function AuthCard({
 
         {children}
       </div>
-
-      {behind && (
-        // Negative margin slides the panel's top edge under the card, and the
-        // narrower width lets it show at the sides — so it reads as one object
-        // behind another rather than a second card stacked below. The top
-        // padding compensates for the hidden strip so the content still clears
-        // the card's bottom edge.
-        <div className="relative z-0  pl-[25%] pt-5 pb-5 ">
-          {behind}
-        </div>
-      )}
 
       {/* Background glow. Must be the real `bg-linear-to-r` utility: the
           three sign-in cards previously wrapped the same value in Tailwind's

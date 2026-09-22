@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
+import { useConfirm } from '@/components/shared/confirm-dialog'
 import { GlobalSearch } from '@/components/layout/global-search'
 import { formatDate, getInitials, isoDate } from '@/lib/utils'
 import type { Profile } from '@/types/database.types'
@@ -49,6 +50,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   const router = useRouter()
   const tSettings = useTranslations('settings')
   const tNav = useTranslations('nav')
+  const tCommon = useTranslations('common')
   const t = useTranslations('auth')
   const sidebarOffset = useSidebarOffset()
 
@@ -215,7 +217,19 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
   const initials = getInitials(profile?.full_name) || 'U'
 
+  // Signing out is one click away in the avatar menu, right under Settings,
+  // and it throws away whatever half-filled form is open behind it — so it
+  // asks first, through the same dialog every delete in the app uses.
+  const [confirm, confirmDialog] = useConfirm()
+
   const handleLogout = async () => {
+    const confirmed = await confirm({
+      title: tCommon('confirmLogoutTitle'),
+      description: tCommon('confirmLogoutDescription'),
+      confirmLabel: t('logout'),
+      confirmIcon: LogOut,
+    })
+    if (!confirmed) return
     const supabase = createClient()
     await supabase.auth.signOut()
     // A full page load rather than router.push + router.refresh: the refresh
@@ -521,6 +535,8 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {confirmDialog}
     </header>
   )
 }

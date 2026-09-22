@@ -93,8 +93,13 @@ export async function POST(request: NextRequest) {
   const staff = await getStaffIdentity(auth.user.id)
   if (staff) {
     await supabase.auth.signOut()
+    // Named by address, the same way the wrong-company case is: each console
+    // has its own host (src/proxy.ts rewrites admin.<domain> and
+    // support.<domain>), and that is where this account signs in.
+    const portal = staff === 'super_admin' ? 'admin' : 'support'
+    const host = request.headers.get('host') || ''
     return NextResponse.json(
-      { error: 'staff_account', portal: staff === 'super_admin' ? 'admin' : 'support' },
+      { error: 'staff_account', portal, host: host.replace(/^[^.]+/, portal) },
       { status: 403 }
     )
   }

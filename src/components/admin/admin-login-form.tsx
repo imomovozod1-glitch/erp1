@@ -12,7 +12,6 @@ import { ShieldCheck, Mail } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
-import { AuthPortalLinks } from '@/components/auth/auth-portal-links'
 import {
   AuthAlert,
   AuthCard,
@@ -86,7 +85,6 @@ export function AdminLoginForm() {
       subheading={t('subheading')}
       // Cookie mode: the console is fast-pathed past next-intl's middleware in
       // src/proxy.ts, so it has no `[lang]` URL segment to rewrite.
-      behind={<AuthPortalLinks current="admin" />}
       action={<LocaleSwitcher mode="cookie" variant="glass" />}
     >
       {failure && <AuthAlert>{failure}</AuthAlert>}

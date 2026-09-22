@@ -12,7 +12,6 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
-import { AuthPortalLinks } from '@/components/auth/auth-portal-links'
 import {
   AuthAlert,
   AuthAlertLink,
@@ -73,16 +72,18 @@ async function describeFailure(
   switch (body?.error) {
     case 'account_disabled':
       return { message: t('accountDisabled') }
-    case 'staff_account': {
-      const isAdmin = body.portal === 'admin'
+    case 'staff_account':
       return {
-        message: isAdmin ? t('staffAccountAdmin') : t('staffAccountSupport'),
-        link: {
-          href: isAdmin ? '/admin/login' : '/support/login',
-          label: isAdmin ? t('adminPortal') : t('supportPortal'),
-        },
+        message: body.portal === 'admin' ? t('staffAccountAdmin') : t('staffAccountSupport'),
+        ...(body.host
+          ? {
+              hint: t('staffAccountGoTo'),
+              // `/login` on those hosts, not `/admin/login`: src/proxy.ts
+              // rewrites the console's own address to its path tree.
+              link: { href: `${window.location.protocol}//${body.host}/login`, label: body.host },
+            }
+          : {}),
       }
-    }
     case 'wrong_tenant':
       return {
         message: t('wrongTenant'),
@@ -152,7 +153,6 @@ export function LoginForm({ lang }: { lang: string }) {
       brandSubtitle="Enterprise Management"
       heading={t('loginTitle')}
       subheading={t('loginSubtitle')}
-      behind={<AuthPortalLinks current="tenant" lang={lang} />}
       action={<LocaleSwitcher mode="path" variant="glass" />}
     >
       {failure && (
