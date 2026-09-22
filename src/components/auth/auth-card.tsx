@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -103,6 +103,42 @@ export function AuthCard({
           the dead rule.) */}
       <div className="absolute -inset-1 bg-linear-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl -z-10" />
     </div>
+  )
+}
+
+/**
+ * Whole-form error, shown in the card above the fields.
+ *
+ * Sign-in has refusals that belong to the account rather than to a field —
+ * wrong company subdomain, a staff account at the tenant form, a disabled
+ * profile — and each one has somewhere else to go. A toast is the wrong shape
+ * for that: it disappears on its own, cannot be re-read, and has nowhere to
+ * put the link. This stays on the page until the next attempt.
+ */
+export function AuthAlert({ children }: { children: ReactNode }) {
+  return (
+    <div
+      role="alert"
+      className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-3"
+    >
+      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
+      <div className="text-sm text-red-100 space-y-1.5 min-w-0">{children}</div>
+    </div>
+  )
+}
+
+/** The "go here instead" line inside an AuthAlert — a host or a portal. */
+export function AuthAlertLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      // A different origin (the other company's host) or a different root
+      // layout (/admin, /support) — neither survives a soft navigation.
+      className="inline-flex items-center gap-1 font-medium text-white/90 hover:text-white transition-colors break-all"
+    >
+      {children}
+      <span aria-hidden>→</span>
+    </a>
   )
 }
 

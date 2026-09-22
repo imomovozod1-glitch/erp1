@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { getStaffIdentity } from '@/lib/admin-auth'
 import { checkLoginRateLimit, recordLoginAttempt, getClientIp, tooManyAttemptsBody } from '@/lib/rate-limit'
 
 const loginSchema = z.object({
@@ -13,6 +14,13 @@ const loginSchema = z.object({
  * calling signInWithPassword directly) so failed attempts can be
  * rate-limited server-side — this account has the widest blast radius in
  * the system (every tenant), so it's the highest-priority target to guard.
+ *
+ * Authenticating is not the same as belonging here: these are the same auth
+ * cookies every tenant user and support agent signs in with, so a correct
+ * password for some other kind of account used to be accepted at this form
+ * and only turned back by getSuperAdminSession() on the next page — which
+ * redirects to /admin/login, i.e. the same empty form again, saying nothing.
+ * Membership of `super_admins` is checked right here instead.
  */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
@@ -31,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: auth, error } = await supabase.auth.signInWithPassword({
     email,
     password: parsed.data.password,
   })
@@ -42,6 +50,11 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
+  }
+
+  if ((await getStaffIdentity(auth.user.id)) !== 'super_admin') {
+    await supabase.auth.signOut()
+    return NextResponse.json({ error: 'not_admin' }, { status: 403 })
   }
 
   return NextResponse.json({ ok: true })

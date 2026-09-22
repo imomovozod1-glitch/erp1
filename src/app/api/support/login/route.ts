@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { getStaffIdentity } from '@/lib/admin-auth'
 import { checkLoginRateLimit, recordLoginAttempt, getClientIp, tooManyAttemptsBody } from '@/lib/rate-limit'
 
 const loginSchema = z.object({
@@ -12,10 +13,12 @@ const loginSchema = z.object({
 /**
  * Support-agent phone-login — same shape as the tenant login route
  * (src/app/api/auth/login/route.ts), reusing the same synthetic-email
- * convention (src/lib/tenant-auth.ts). Whether the resulting session
- * actually belongs to a support agent is checked afterward by
- * getSupportAgentSession() (src/lib/admin-auth.ts) against support_agents —
- * this route only authenticates, it doesn't authorize.
+ * convention (src/lib/tenant-auth.ts). Membership of `support_agents` is
+ * checked here as well as by getSupportAgentSession() (src/lib/admin-auth.ts)
+ * on the pages themselves: authenticating only proves the password, and these
+ * are the same auth cookies tenant users sign in with, so accepting the
+ * sign-in and letting the portal bounce the session back to this same form
+ * left the person with no idea why their correct password did nothing.
  */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: auth, error } = await supabase.auth.signInWithPassword({
     email,
     password: parsed.data.password,
   })
@@ -45,6 +48,11 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
+  }
+
+  if ((await getStaffIdentity(auth.user.id)) !== 'support_agent') {
+    await supabase.auth.signOut()
+    return NextResponse.json({ error: 'not_agent' }, { status: 403 })
   }
 
   return NextResponse.json({ ok: true })

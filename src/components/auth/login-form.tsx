@@ -5,7 +5,6 @@ import { lockMinutesFrom } from '@/lib/login-lock'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { toast } from 'sonner'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Building2 } from 'lucide-react'
@@ -15,6 +14,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
 import { AuthPortalLinks } from '@/components/auth/auth-portal-links'
 import {
+  AuthAlert,
+  AuthAlertLink,
   AuthCard,
   AuthField,
   AuthSubmitButton,
@@ -44,10 +45,68 @@ function safeRedirectTo(fallback: string): string {
   return target
 }
 
+/** What the card shows when a sign-in is refused, and where to go instead. */
+interface LoginFailure {
+  message: string
+  hint?: string
+  link?: { href: string; label: string }
+}
+
+/**
+ * Turns a refused sign-in into something the person can act on.
+ *
+ * The interesting cases are the ones the subdomains created: the credentials
+ * are correct but belong to another company, or to a staff account that signs
+ * in at its own portal (src/app/api/auth/login/route.ts). Both used to end as
+ * "phone or password is wrong", which is the one thing they are not — so each
+ * is named, and carries the address that would have worked.
+ */
+async function describeFailure(
+  res: Response,
+  t: (key: string, values?: Record<string, string | number | Date>) => string,
+  lang: string
+): Promise<LoginFailure> {
+  const lockMinutes = await lockMinutesFrom(res)
+  if (lockMinutes !== null) return { message: t('tooManyAttempts', { minutes: lockMinutes }) }
+
+  const body = await res.json().catch(() => null)
+  switch (body?.error) {
+    case 'account_disabled':
+      return { message: t('accountDisabled') }
+    case 'staff_account': {
+      const isAdmin = body.portal === 'admin'
+      return {
+        message: isAdmin ? t('staffAccountAdmin') : t('staffAccountSupport'),
+        link: {
+          href: isAdmin ? '/admin/login' : '/support/login',
+          label: isAdmin ? t('adminPortal') : t('supportPortal'),
+        },
+      }
+    }
+    case 'wrong_tenant':
+      return {
+        message: t('wrongTenant'),
+        ...(body.host
+          ? {
+              hint: t('wrongTenantGoTo'),
+              // Same scheme as the page being viewed, so this still works on
+              // http://tenant.localhost:3000 in development.
+              link: { href: `${window.location.protocol}//${body.host}/${lang}/login`, label: body.host },
+            }
+          : {}),
+      }
+    default:
+      return { message: t('invalidCredentials') }
+  }
+}
+
 export function LoginForm({ lang }: { lang: string }) {
   const t = useTranslations('auth')
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  // Kept on the page rather than in a toast: a refusal here often has an
+  // address to follow, and a toast takes it away before it can be read.
+  const [failure, setFailure] = useState<LoginFailure | null>(null)
 
   const loginSchema = useMemo(
     () =>
@@ -65,6 +124,7 @@ export function LoginForm({ lang }: { lang: string }) {
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
+    setFailure(null)
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -72,12 +132,7 @@ export function LoginForm({ lang }: { lang: string }) {
         body: JSON.stringify({ phone: data.phone, password: data.password }),
       })
       if (!res.ok) {
-        const lockMinutes = await lockMinutesFrom(res)
-        toast.error(
-          lockMinutes !== null ? t('tooManyAttempts', { minutes: lockMinutes })
-            : res.status === 403 ? t('accountDisabled')
-            : t('invalidCredentials')
-        )
+        setFailure(await describeFailure(res, t, lang))
         setIsLoading(false)
         return
       }
@@ -85,7 +140,7 @@ export function LoginForm({ lang }: { lang: string }) {
       // No router.refresh() needed — middleware re-validates on every request.
       router.replace(safeRedirectTo(`/${lang}/dashboard`))
     } catch {
-      toast.error(t('invalidCredentials'))
+      setFailure({ message: t('invalidCredentials') })
       setIsLoading(false)
     }
   }
@@ -100,6 +155,14 @@ export function LoginForm({ lang }: { lang: string }) {
       behind={<AuthPortalLinks current="tenant" lang={lang} />}
       action={<LocaleSwitcher mode="path" variant="glass" />}
     >
+      {failure && (
+        <AuthAlert>
+          <p>{failure.message}</p>
+          {failure.hint && <p className="text-red-200/70 text-xs">{failure.hint}</p>}
+          {failure.link && <AuthAlertLink href={failure.link.href}>{failure.link.label}</AuthAlertLink>}
+        </AuthAlert>
+      )}
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <AuthField id="phone" label={t('phone')} error={errors.phone?.message}>
           <Controller

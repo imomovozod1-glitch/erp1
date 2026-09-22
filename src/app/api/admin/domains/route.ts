@@ -5,6 +5,7 @@ import {
   CONSOLE_SUBDOMAINS,
   ROOT_DOMAIN,
   isDomainAutomationConfigured,
+  isHostServing,
   listProjectDomains,
   missingDomainConfig,
   registerTenantDomain,
@@ -63,6 +64,9 @@ export async function GET() {
       kind,
       host: tenantHost(subdomain),
       registered: registered.has(tenantHost(subdomain)),
+      // Registered but unverified means the host is on the project and still
+      // cannot be opened — see listProjectDomains in src/lib/vercel-domains.ts.
+      verified: registered.get(tenantHost(subdomain)) ?? false,
     })),
   })
 }
@@ -86,18 +90,39 @@ export async function POST() {
   const missing = required.filter(({ subdomain }) => !registered.has(tenantHost(subdomain)))
 
   const failed: { host: string; error: string }[] = []
-  let added = 0
+  const added: string[] = []
   for (const { subdomain } of missing) {
     const result = await registerTenantDomain(subdomain)
-    if (result.ok) added++
+    if (result.ok) added.push(result.host)
     else failed.push({ host: result.host, error: result.error || 'unknown error' })
   }
+
+  // Adding a host to the project and the host opening in a browser are minutes
+  // apart: the TLS certificate is issued afterwards, and until it exists the
+  // address fails the handshake outright. Reporting "done" at this point sent
+  // the operator straight to an address that would not load for another minute
+  // or two, which looked like the sync had silently failed. So the hosts that
+  // might not be serving yet — the ones just added, plus any the platform
+  // already had but has not verified — are asked directly.
+  const suspect = [
+    ...added,
+    ...required
+      .map(({ subdomain }) => tenantHost(subdomain))
+      .filter((host) => registered.get(host) === false),
+  ]
+  const probes = Array.from(new Set(suspect)).slice(0, 12)
+  const pending = (
+    await Promise.all(probes.map(async (host) => ((await isHostServing(host)) ? null : host)))
+  ).filter((host): host is string => host !== null)
 
   return NextResponse.json({
     configured: true,
     rootDomain: ROOT_DOMAIN,
     checked: required.length,
-    added,
+    added: added.length,
+    addedHosts: added,
+    /** Registered, but not answering on HTTPS yet — the certificate is still coming. */
+    pending,
     failed,
   })
 }

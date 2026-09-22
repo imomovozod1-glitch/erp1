@@ -6,7 +6,6 @@ import { lockMinutesFrom } from '@/lib/login-lock'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ShieldCheck, Mail } from 'lucide-react'
@@ -15,6 +14,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
 import { AuthPortalLinks } from '@/components/auth/auth-portal-links'
 import {
+  AuthAlert,
   AuthCard,
   AuthField,
   AuthSubmitButton,
@@ -28,6 +28,10 @@ export function AdminLoginForm() {
   const t = useTranslations('admin.login')
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  // On the page, not in a toast: "this account is not a super-admin" is the
+  // answer to a correct password, and it has to stay readable while the
+  // person works out which portal they meant (see /api/admin/login).
+  const [failure, setFailure] = useState<string | null>(null)
 
   const loginSchema = useMemo(
     () =>
@@ -45,6 +49,7 @@ export function AdminLoginForm() {
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
+    setFailure(null)
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
@@ -53,14 +58,21 @@ export function AdminLoginForm() {
       })
       if (!res.ok) {
         const lockMinutes = await lockMinutesFrom(res)
-        toast.error(lockMinutes !== null ? t('tooManyAttempts', { minutes: lockMinutes }) : t('invalidCredentials'))
+        const body = lockMinutes === null ? await res.json().catch(() => null) : null
+        setFailure(
+          lockMinutes !== null
+            ? t('tooManyAttempts', { minutes: lockMinutes })
+            : body?.error === 'not_admin'
+              ? t('notAdmin')
+              : t('invalidCredentials')
+        )
         setIsLoading(false)
         return
       }
       router.replace('/admin/tenants')
       router.refresh()
     } catch {
-      toast.error(t('invalidCredentials'))
+      setFailure(t('invalidCredentials'))
       setIsLoading(false)
     }
   }
@@ -77,6 +89,8 @@ export function AdminLoginForm() {
       behind={<AuthPortalLinks current="admin" />}
       action={<LocaleSwitcher mode="cookie" variant="glass" />}
     >
+      {failure && <AuthAlert>{failure}</AuthAlert>}
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <AuthField id="email" label={t('email')} error={errors.email?.message}>
           <div className="relative">

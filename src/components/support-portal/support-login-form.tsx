@@ -6,7 +6,6 @@ import { lockMinutesFrom } from '@/lib/login-lock'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { LifeBuoy } from 'lucide-react'
 import { PhoneInput } from '@/components/ui/phone-input'
@@ -14,6 +13,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
 import { AuthPortalLinks } from '@/components/auth/auth-portal-links'
 import {
+  AuthAlert,
   AuthCard,
   AuthField,
   AuthSubmitButton,
@@ -29,6 +29,9 @@ export function SupportLoginForm() {
   const t = useTranslations('supportPortal')
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  // Same reasoning as the other two sign-in forms: a refusal that names the
+  // wrong kind of account has to stay on screen to be acted on.
+  const [failure, setFailure] = useState<string | null>(null)
 
   const loginSchema = useMemo(
     () =>
@@ -46,6 +49,7 @@ export function SupportLoginForm() {
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true)
+    setFailure(null)
     try {
       const res = await fetch('/api/support/login', {
         method: 'POST',
@@ -54,14 +58,21 @@ export function SupportLoginForm() {
       })
       if (!res.ok) {
         const lockMinutes = await lockMinutesFrom(res)
-        toast.error(lockMinutes !== null ? t('tooManyAttempts', { minutes: lockMinutes }) : t('invalidCredentials'))
+        const body = lockMinutes === null ? await res.json().catch(() => null) : null
+        setFailure(
+          lockMinutes !== null
+            ? t('tooManyAttempts', { minutes: lockMinutes })
+            : body?.error === 'not_agent'
+              ? t('notAgent')
+              : t('invalidCredentials')
+        )
         setIsLoading(false)
         return
       }
       router.replace('/support')
       router.refresh()
     } catch {
-      toast.error(t('invalidCredentials'))
+      setFailure(t('invalidCredentials'))
       setIsLoading(false)
     }
   }
@@ -78,6 +89,8 @@ export function SupportLoginForm() {
       behind={<AuthPortalLinks current="support" />}
       action={<LocaleSwitcher mode="cookie" variant="glass" />}
     >
+      {failure && <AuthAlert>{failure}</AuthAlert>}
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <AuthField id="phone" label={t('phone')} error={errors.phone?.message}>
           <Controller

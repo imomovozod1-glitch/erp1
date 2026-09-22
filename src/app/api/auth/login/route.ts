@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { isReservedSubdomain, phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { getTenantSubdomain } from '@/lib/tenant-host'
+import { getStaffIdentity } from '@/lib/admin-auth'
 import { checkLoginRateLimit, recordLoginAttempt, getClientIp, tooManyAttemptsBody } from '@/lib/rate-limit'
 
 const loginSchema = z.object({
@@ -13,6 +15,21 @@ const loginSchema = z.object({
  * Tenant phone-login goes through this route (instead of the browser client
  * calling signInWithPassword directly) so failed attempts can be rate-limited
  * server-side before they ever reach Supabase Auth — see src/lib/rate-limit.ts.
+ *
+ * It is also where an account meets the subdomain it is signing in on. Every
+ * tenant has its own host now (`<tenant>.<domain>`), and the credentials are
+ * global — the same phone and password authenticate anywhere. Without the
+ * check below, signing in on the wrong company's address succeeded here and
+ * only fell over one navigation later, in (dashboard)/layout.tsx, which
+ * bounces the session to /tenant-status?reason=wrong-tenant: a redirect to a
+ * page about a company the person does not work for, with the login form gone
+ * and no hint of what went wrong. The mismatch is answered here instead, on
+ * the form they are looking at, and the half-session is signed out rather
+ * than left behind.
+ *
+ * Staff get the same treatment: super-admins and support agents share these
+ * auth cookies but have no `profiles` row, so their sign-in is refused with a
+ * pointer to their own portal (src/components/auth/auth-portal-links.tsx).
  */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
@@ -44,14 +61,78 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
   }
 
-  const { data: profile } = await supabase
+  // Cast: `tenant_id` is added to profiles by migration_multi_tenant.sql and
+  // is not in the generated types, the same reason getCurrentTenantId()
+  // (src/lib/tenant.ts) reaches for one.
+  const { data: profile } = (await supabase
     .from('profiles')
-    .select('is_active')
+    .select('is_active, tenant_id')
     .eq('id', auth.user.id)
-    .maybeSingle()
+    .maybeSingle()) as { data: { is_active: boolean | null; tenant_id: string | null } | null }
   if (profile?.is_active === false) {
     await supabase.auth.signOut()
     return NextResponse.json({ error: 'account_disabled' }, { status: 403 })
+  }
+
+  // Which company's address this sign-in arrived on. `null` is not a failure:
+  // the bare app host (where the Capacitor shell opens), a preview deployment
+  // and plain localhost all have no tenant in the hostname, and sign-in there
+  // stays open exactly as before. The reserved hosts are skipped because they
+  // are not tenants at all — src/proxy.ts rewrites them to the two consoles.
+  const subdomain = getTenantSubdomain(request.headers.get('host') || '')
+  if (!subdomain || isReservedSubdomain(subdomain)) {
+    return NextResponse.json({ ok: true })
+  }
+
+  // Staff first, and regardless of what profile row they carry: handle_new_user()
+  // gives every auth user a `profiles` row, super-admins and support agents
+  // included, so "has a profile" says nothing about who this is. A staff
+  // session can never render a company workspace anyway — (dashboard)/layout.tsx
+  // redirects it to its own console — so it is turned back here, at the form,
+  // pointed at the portal that will actually take it.
+  const staff = await getStaffIdentity(auth.user.id)
+  if (staff) {
+    await supabase.auth.signOut()
+    return NextResponse.json(
+      { error: 'staff_account', portal: staff === 'super_admin' ? 'admin' : 'support' },
+      { status: 403 }
+    )
+  }
+
+  // A tenant user with no tenant: the profile row is there but unassigned, so
+  // there is no company for this sign-in to belong to.
+  if (!profile?.tenant_id) {
+    await supabase.auth.signOut()
+    return NextResponse.json({ error: 'wrong_tenant' }, { status: 403 })
+  }
+
+  // Read through the user's own client, not the service role: `tenant_read_own`
+  // (migration_multi_tenant.sql) already limits this to the caller's tenant.
+  const { data: ownTenant } = await supabase
+    .from('tenants')
+    .select('subdomain')
+    .eq('id', profile.tenant_id)
+    .maybeSingle()
+
+  // Only a POSITIVE mismatch refuses. If the tenant row cannot be read at all
+  // — the RLS policy missing on some deployment, a Supabase blip — the answer
+  // is unknown, not "wrong", and failing closed here would turn that into
+  // every tenant login on the platform being rejected. The hard check stays
+  // where it always was, in (dashboard)/layout.tsx, which resolves the tenant
+  // with the service role and cannot be blocked this way; this route only
+  // decides whether the person is told about it on the form or one page later.
+  const ownSubdomain = String((ownTenant as { subdomain?: string } | null)?.subdomain || '').toLowerCase()
+  if (ownSubdomain && ownSubdomain !== subdomain.toLowerCase()) {
+    await supabase.auth.signOut()
+    // The address that would have worked. Built by swapping the first label of
+    // the host actually used, so it stays correct on `tenant.localhost:3000`
+    // and on a preview domain instead of hard-coding the production apex.
+    // Naming it leaks nothing: the password just proved this is their account.
+    const host = request.headers.get('host') || ''
+    return NextResponse.json(
+      { error: 'wrong_tenant', host: host.replace(/^[^.]+/, ownSubdomain) },
+      { status: 403 }
+    )
   }
 
   return NextResponse.json({ ok: true })

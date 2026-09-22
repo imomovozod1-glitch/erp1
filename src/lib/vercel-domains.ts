@@ -201,17 +201,26 @@ export async function unregisterTenantDomain(subdomain: string): Promise<DomainR
 }
 
 /**
- * Every host the project currently serves, lowercased.
+ * Every host the project currently serves, lowercased, mapped to whether the
+ * platform considers it verified.
  *
  * `null` means the question could not be answered (no credentials, or the API
  * failed) — which is different from "the project serves nothing", and the
  * caller must not read it as a reason to re-register everything.
+ *
+ * The verified flag matters because "added to the project" and "answers on
+ * HTTPS" are not the same moment: a freshly added host is in this list
+ * immediately, while its TLS certificate is issued a minute or two later, and
+ * until then the browser cannot open it at all (the apex sends
+ * `Strict-Transport-Security: includeSubDomains; preload`, so there is not
+ * even a "continue anyway" to click). Reporting only membership made the sync
+ * button claim success on a host nobody could reach yet.
  */
-export async function listProjectDomains(): Promise<Set<string> | null> {
+export async function listProjectDomains(): Promise<Map<string, boolean> | null> {
   const config = readConfig()
   if (!config) return null
 
-  const hosts = new Set<string>()
+  const hosts = new Map<string, boolean>()
   try {
     // The project's domain list is paginated; a tenant per page boundary
     // would otherwise look unregistered and be re-added on every sync.
@@ -225,7 +234,7 @@ export async function listProjectDomains(): Promise<Set<string> | null> {
       )
       if (status < 200 || status >= 300) return null
       for (const domain of data?.domains ?? []) {
-        if (domain?.name) hosts.add(String(domain.name).toLowerCase())
+        if (domain?.name) hosts.set(String(domain.name).toLowerCase(), domain.verified !== false)
       }
       const next = data?.pagination?.next
       if (!next) break
@@ -234,5 +243,30 @@ export async function listProjectDomains(): Promise<Set<string> | null> {
     return hosts
   } catch {
     return null
+  }
+}
+
+/**
+ * Whether the host actually answers over HTTPS yet — the only question the
+ * operator cares about, and one the platform's own domain list cannot answer
+ * (see above).
+ *
+ * A host whose certificate has not been issued fails the TLS handshake, which
+ * `fetch` reports as a thrown error; ANY HTTP status back means the
+ * certificate is live and the address opens in a browser. /api/build-id is
+ * used because it is the one route that needs no session and returns a few
+ * bytes.
+ */
+export async function isHostServing(host: string): Promise<boolean> {
+  try {
+    const response = await fetch(`https://${host}/api/build-id`, {
+      method: 'HEAD',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(6_000),
+      cache: 'no-store',
+    })
+    return response.status > 0
+  } catch {
+    return false
   }
 }

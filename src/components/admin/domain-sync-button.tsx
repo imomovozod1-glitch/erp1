@@ -14,6 +14,10 @@ import { Button } from '@/components/ui/button'
  * the ones whose registration failed because the platform API was briefly
  * unreachable. Safe to press at any time — hosts already registered are
  * skipped, not re-added.
+ *
+ * A host is only reported as done once it actually answers on HTTPS: the
+ * certificate arrives a minute or two after the host is added, and the
+ * addresses simply do not open until it does (see POST /api/admin/domains).
  */
 export function DomainSyncButton() {
   const t = useTranslations('admin.tenants')
@@ -39,6 +43,14 @@ export function DomainSyncButton() {
           `${t('domainsPartial', { added: data.added, failed: data.failed.length })}: ${data.failed
             .map((f: { host: string; error: string }) => `${f.host} — ${f.error}`)
             .join('; ')}`,
+          { duration: 10000 }
+        )
+      } else if (data?.pending?.length) {
+        // Registered, but the certificate has not been issued yet, so the
+        // address still does not open — the one thing the operator is about
+        // to try. Saying "done" here is what made the sync look broken.
+        toast.warning(
+          `${t('domainsPending', { count: data.pending.length })}: ${data.pending.join(', ')}`,
           { duration: 10000 }
         )
       } else if (data?.added > 0) {
