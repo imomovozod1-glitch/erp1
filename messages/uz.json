@@ -198,7 +198,11 @@
     "inactiveMessage": "Hisobingiz hozircha faol emas. Faollashtirish uchun administrator bilan bog'laning.",
     "contactSupport": "Administrator bilan bog'lanish",
     "wrongTenantTitle": "Boshqa tashkilotga kirgansiz",
-    "wrongTenantMessage": "Sizning hisobingiz boshqa tashkilotga tegishli. Ushbu manzilga kirish uchun avval tizimdan chiqing va shu tashkilot hisobi bilan qayta kiring."
+    "wrongTenantMessage": "Sizning hisobingiz boshqa tashkilotga tegishli. Ushbu manzilga kirish uchun avval tizimdan chiqing va shu tashkilot hisobi bilan qayta kiring.",
+    "expiringToday": "Obuna bugun tugaydi",
+    "expiringInDays": "{days, plural, one {Obuna # kundan keyin tugaydi} other {Obuna # kundan keyin tugaydi}}",
+    "expiringOn": "Tugash sanasi: {date}",
+    "expiringAction": "Xizmat to'xtab qolmasligi uchun to'lovni o'z vaqtida amalga oshiring."
   },
   "dashboard": {
     "title": "Boshqaruv paneli",
@@ -1099,6 +1103,8 @@
         "addPayment": "To'lov qo'shish",
         "amount": "Summa",
         "note": "Izoh (ixtiyoriy)",
+        "colTerm": "Muddat",
+        "termMonths": "{months, plural, other {# oy}}",
         "noPayments": "Hali to'lovlar yo'q",
         "paymentAdded": "To'lov qo'shildi",
         "paymentError": "To'lovni qo'shib bo'lmadi",

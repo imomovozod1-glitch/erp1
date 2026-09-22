@@ -11,3 +11,18 @@
 export const TELEGRAM_EVENTS = ['sale', 'low_stock', 'new_order', 'debt_payment'] as const
 
 export type TelegramEvent = (typeof TELEGRAM_EVENTS)[number]
+
+/**
+ * Messages the platform itself sends to a company, as opposed to the business
+ * events above.
+ *
+ * Deliberately NOT in TELEGRAM_EVENTS: that list is rendered as a checkbox per
+ * event and is opt-in — `telegram_events[event] !== true` means off — so a
+ * subscription warning added there would be silently disabled for every
+ * company that already exists, which is every company that could need it. It
+ * is still gated by `telegram_enabled`: a company that has not connected a bot
+ * at all gets nothing, and switching the integration off switches this off too.
+ */
+export const TELEGRAM_SYSTEM_EVENTS = ['subscription_expiring'] as const
+
+export type TelegramSystemEvent = (typeof TELEGRAM_SYSTEM_EVENTS)[number]

@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
 import { getCachedTenant } from '@/lib/tenant'
-import { escapeHtml, notifyTelegram } from '@/lib/integrations/telegram'
-import { formatCurrency } from '@/lib/utils'
+import { getCacheClient } from '@/lib/supabase/cache-client'
+import { escapeHtml, notifyTelegram, notifySystemTelegram } from '@/lib/integrations/telegram'
+import { formatCurrency, formatDate, isoDate } from '@/lib/utils'
+import { SUBSCRIPTION_WARNING_DAYS, daysUntil } from '@/lib/subscription'
 
 /**
  * Fires a Telegram notification for a business event.
@@ -51,6 +53,10 @@ const bodySchema = z.discriminatedUnion('event', [
   z.object({ event: z.literal('new_order'), data: newOrderSchema }),
   z.object({ event: z.literal('low_stock'), data: lowStockSchema }),
   z.object({ event: z.literal('debt_payment'), data: debtPaymentSchema }),
+  // Carries no data at all: what it says is recomputed here from the tenant
+  // row. A client-supplied "days left" would be a number the browser could
+  // choose, in a message the company's own bot then posts as fact.
+  z.object({ event: z.literal('subscription_expiring') }),
 ])
 
 const PAYMENT_LABEL: Record<string, string> = {
@@ -70,8 +76,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
 
-  const tenant = (await getCachedTenant(ctx.tenantId)) as { company_name?: string } | null
+  const tenant = (await getCachedTenant(ctx.tenantId)) as
+    | { company_name?: string; subscription_ends_at?: string | null }
+    | null
   const header = `<b>${escapeHtml(tenant?.company_name || 'ERP')}</b>`
+
+  if (parsed.data.event === 'subscription_expiring') {
+    return NextResponse.json(await warnAboutSubscription(ctx.tenantId, header, tenant?.subscription_ends_at ?? null))
+  }
 
   let text: string
   switch (parsed.data.event) {
@@ -124,4 +136,56 @@ export async function POST(request: NextRequest) {
   // Always 200: the caller's business write already succeeded, and a failed
   // notification must not read as a failed sale.
   return NextResponse.json(result)
+}
+
+/**
+ * The subscription warning, sent at most once a day per company.
+ *
+ * Fired by the banner in the dashboard (src/components/shared/subscription-banner.tsx)
+ * rather than by a scheduler, which is the same lazy pattern the subscription
+ * gate itself uses (src/lib/tenant-status.ts) — this deployment has no cron.
+ * Every staff member opening the dashboard therefore asks for it, so the day
+ * is CLAIMED before the message is sent: the update only matches a row that
+ * has not been stamped with today's date yet, and a second request finds no
+ * row to claim. That is also what makes two people opening the app at the same
+ * moment produce one message rather than two.
+ */
+async function warnAboutSubscription(
+  tenantId: string,
+  header: string,
+  endsAt: string | null
+): Promise<{ sent: boolean; reason?: string }> {
+  const daysLeft = daysUntil(endsAt)
+  if (endsAt === null || daysLeft === null || daysLeft < 0 || daysLeft > SUBSCRIPTION_WARNING_DAYS) {
+    return { sent: false, reason: 'not_due' }
+  }
+
+  const today = isoDate()
+  const service = getCacheClient() as any
+  const { data: claimed, error } = await service
+    .from('tenants')
+    .update({ subscription_notified_on: today })
+    .eq('id', tenantId)
+    .or(`subscription_notified_on.is.null,subscription_notified_on.neq.${today}`)
+    .select('id')
+
+  if (error) {
+    // PGRST204: supabase/migration_subscription_payments.sql has not been
+    // applied here yet, so there is nowhere to record that today's message was
+    // sent. Sending without that record would mean one message per person per
+    // page load, so it waits for the column. The in-app banner still shows.
+    return { sent: false, reason: error.code === 'PGRST204' ? 'not_available' : 'claim_failed' }
+  }
+  if (!claimed?.length) return { sent: false, reason: 'already_notified' }
+
+  const text = [
+    `⏳ ${header}`,
+    daysLeft === 0
+      ? 'Obuna <b>bugun</b> tugaydi.'
+      : `Obuna tugashiga <b>${daysLeft} kun</b> qoldi.`,
+    `Tugash sanasi: <b>${escapeHtml(formatDate(endsAt.slice(0, 10)))}</b>`,
+    "To'lov qilinmasa, tizimdan foydalanish to'xtatiladi.",
+  ].join('\n')
+
+  return notifySystemTelegram(tenantId, 'subscription_expiring', text)
 }

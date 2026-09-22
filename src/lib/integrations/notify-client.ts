@@ -5,6 +5,9 @@ type NotifyPayload =
   | { event: 'new_order'; data: { orderNumber: string; total: number; customerName?: string | null } }
   | { event: 'low_stock'; data: { productName: string; sku: string; stock: number; minStock: number } }
   | { event: 'debt_payment'; data: { customerName: string; amount: number } }
+  // No data: the subscription warning is composed server-side from the tenant
+  // row, so the browser cannot choose what the company's bot announces.
+  | { event: 'subscription_expiring' }
 
 /**
  * Fires a Telegram notification from a client component, after the business

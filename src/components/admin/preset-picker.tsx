@@ -3,17 +3,17 @@
 import { useState } from 'react'
 import { Pencil } from 'lucide-react'
 import { NumericInput } from '@/components/ui/numeric-input'
-import { cn, isoDate } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 export const LICENSE_COUNT_PRESETS = [1, 5, 10, 25, 50]
 export const DURATION_PRESETS = [1, 3, 6, 12]
 
 /** `YYYY-MM-DD` plus `months` calendar months. */
-export function addMonths(dateStr: string, months: number): string {
-  const d = new Date(dateStr)
-  d.setMonth(d.getMonth() + (Number(months) || 1))
-  return isoDate(d)
-}
+// Calendar arithmetic lives in src/lib/subscription.ts — the console's preview
+// and the API that stores the date have to agree to the day, and the copy that
+// used to live here disagreed with itself at every month end.
+export { addMonths } from '@/lib/subscription'
+
 
 /**
  * Preset-pill selector with a "custom" fallback — the modern equivalent of a

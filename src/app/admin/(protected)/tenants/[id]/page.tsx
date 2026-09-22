@@ -47,7 +47,10 @@ export default async function TenantDetailPage({
     supabase.from('tenants').select('*').eq('id', id).maybeSingle(),
     supabase
       .from('tenant_payments')
-      .select('id, amount, paid_at, created_at, note')
+      // `*` rather than a column list: the term columns arrive with
+      // supabase/migration_subscription_payments.sql, and naming them before
+      // it is applied would fail the whole query.
+      .select('*')
       .eq('tenant_id', id)
       .order('paid_at', { ascending: false }),
     supabase.from('support_agents').select('id, full_name').order('full_name'),

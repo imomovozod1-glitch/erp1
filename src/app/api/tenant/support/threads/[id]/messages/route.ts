@@ -15,7 +15,9 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ctx = await getTenantContext()
+  // allowInactive: a blocked company must still be able to reach support — that
+  // conversation is usually how the block gets resolved (src/lib/auth.ts).
+  const ctx = await getTenantContext({ allowInactive: true })
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
@@ -34,7 +36,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ctx = await getTenantContext()
+  // allowInactive: a blocked company must still be able to reach support — that
+  // conversation is usually how the block gets resolved (src/lib/auth.ts).
+  const ctx = await getTenantContext({ allowInactive: true })
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params

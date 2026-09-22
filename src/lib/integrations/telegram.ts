@@ -17,10 +17,10 @@ const TELEGRAM_API = 'https://api.telegram.org'
 
 // Re-exported from the client-safe module so server code has one import site
 // while the settings UI can still reach the list without pulling in `server-only`.
-export { TELEGRAM_EVENTS } from '@/lib/integrations/telegram-events'
-export type { TelegramEvent } from '@/lib/integrations/telegram-events'
+export { TELEGRAM_EVENTS, TELEGRAM_SYSTEM_EVENTS } from '@/lib/integrations/telegram-events'
+export type { TelegramEvent, TelegramSystemEvent } from '@/lib/integrations/telegram-events'
 
-import type { TelegramEvent } from '@/lib/integrations/telegram-events'
+import type { TelegramEvent, TelegramSystemEvent } from '@/lib/integrations/telegram-events'
 
 export interface TelegramSettings {
   telegram_bot_token: string | null
@@ -243,16 +243,20 @@ export async function getTelegramStatus(tenantId: string): Promise<TelegramStatu
  * Failures are logged and swallowed; the return value says what happened for
  * callers that want to report it (the "send test message" route does).
  */
-export async function notifyTelegram(
+async function sendToTenant(
   tenantId: string,
-  event: TelegramEvent,
-  text: string
+  event: TelegramEvent | TelegramSystemEvent,
+  text: string,
+  /** Business events are opt-in per company; platform messages are not. */
+  checkEventToggle: boolean
 ): Promise<{ sent: boolean; reason?: string }> {
   try {
     const settings = await getTelegramSettings(tenantId)
     if (!settings?.telegram_enabled) return { sent: false, reason: 'disabled' }
     if (!settings.telegram_bot_token) return { sent: false, reason: 'not_configured' }
-    if (settings.telegram_events?.[event] !== true) return { sent: false, reason: 'event_off' }
+    if (checkEventToggle && settings.telegram_events?.[event as TelegramEvent] !== true) {
+      return { sent: false, reason: 'event_off' }
+    }
 
     // Connected with a token but no chat yet: the admin has since pressed Start
     // (or added the bot to a group), so resolve it now and remember it. This is
@@ -275,4 +279,26 @@ export async function notifyTelegram(
     console.warn(`[telegram] ${event} notification threw for tenant ${tenantId}:`, err)
     return { sent: false, reason: 'unexpected_error' }
   }
+}
+
+export async function notifyTelegram(
+  tenantId: string,
+  event: TelegramEvent,
+  text: string
+): Promise<{ sent: boolean; reason?: string }> {
+  return sendToTenant(tenantId, event, text, true)
+}
+
+/**
+ * A message from the platform to the company — currently only the
+ * subscription warning. Skips the per-event opt-in for the reason spelled out
+ * next to TELEGRAM_SYSTEM_EVENTS, and nothing else: a company with no bot
+ * connected, or with the integration switched off, still gets nothing.
+ */
+export async function notifySystemTelegram(
+  tenantId: string,
+  event: TelegramSystemEvent,
+  text: string
+): Promise<{ sent: boolean; reason?: string }> {
+  return sendToTenant(tenantId, event, text, false)
 }

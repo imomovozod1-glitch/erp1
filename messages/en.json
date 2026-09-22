@@ -198,7 +198,11 @@
     "inactiveMessage": "Your account is not currently active. Contact your administrator to activate it.",
     "contactSupport": "Contact administrator",
     "wrongTenantTitle": "Signed in to a different organization",
-    "wrongTenantMessage": "Your account belongs to another organization. Sign out and sign back in with an account for this one."
+    "wrongTenantMessage": "Your account belongs to another organization. Sign out and sign back in with an account for this one.",
+    "expiringToday": "The subscription ends today",
+    "expiringInDays": "{days, plural, one {The subscription ends in # day} other {The subscription ends in # days}}",
+    "expiringOn": "End date: {date}",
+    "expiringAction": "Pay in time to keep access uninterrupted."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1099,6 +1103,8 @@
         "addPayment": "Add payment",
         "amount": "Amount",
         "note": "Note (optional)",
+        "colTerm": "Term",
+        "termMonths": "{months, plural, one {# month} other {# months}}",
         "noPayments": "No payments yet",
         "paymentAdded": "Payment added",
         "paymentError": "Failed to add payment",

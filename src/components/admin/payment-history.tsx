@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Wallet } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 
 export interface PaymentRow {
   id: string
@@ -11,6 +11,11 @@ export interface PaymentRow {
   paid_at: string
   created_at: string
   note: string | null
+  /** What the payment bought. Null on rows recorded before
+   *  supabase/migration_subscription_payments.sql was applied. */
+  license_months?: number | null
+  period_start?: string | null
+  period_end?: string | null
 }
 
 /**
@@ -39,6 +44,7 @@ export function PaymentHistory({
           <TableRow>
             <TableHead className="w-10 text-center">#</TableHead>
             <TableHead>{t('amount')}</TableHead>
+            <TableHead>{t('colTerm')}</TableHead>
             <TableHead>{t('note')}</TableHead>
             <TableHead className="text-right">{tCommon('date')}</TableHead>
           </TableRow>
@@ -46,7 +52,7 @@ export function PaymentHistory({
         <TableBody>
           {payments.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="h-20 text-center text-slate-400 dark:text-slate-500">
+              <TableCell colSpan={5} className="h-20 text-center text-slate-400 dark:text-slate-500">
                 {t('noPayments')}
               </TableCell>
             </TableRow>
@@ -55,6 +61,22 @@ export function PaymentHistory({
               <TableRow key={p.id}>
                 <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{index + 1}</TableCell>
                 <TableCell className="font-medium tabular-nums">{formatCurrency(p.amount)}</TableCell>
+                <TableCell className="text-slate-500 dark:text-slate-400">
+                  {p.license_months ? (
+                    <div className="leading-tight">
+                      <div className="font-medium text-slate-700 dark:text-slate-300">
+                        {t('termMonths', { months: p.license_months })}
+                      </div>
+                      {p.period_start && p.period_end && (
+                        <div className="text-xs">
+                          {formatDate(p.period_start)} – {formatDate(p.period_end)}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    '—'
+                  )}
+                </TableCell>
                 <TableCell className="text-slate-500 dark:text-slate-400">{p.note || '—'}</TableCell>
                 <TableCell className="text-right text-slate-500 dark:text-slate-400">{formatDateTime(p.created_at)}</TableCell>
               </TableRow>

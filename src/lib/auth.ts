@@ -27,6 +27,7 @@ import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { isTenantActive } from '@/lib/tenant-active'
 
 /**
  * Returns the current session from the local JWT cookie.
@@ -100,12 +101,28 @@ export interface TenantContext {
  * tenant always comes from the DB-backed profile row, never from the request
  * body or the subdomain header, so one tenant can't act inside another.
  */
-export async function getTenantContext(): Promise<TenantContext | null> {
+export async function getTenantContext(
+  options?: {
+    /**
+     * Answer even when the company's subscription has run out. For the one
+     * thing a blocked company must still be able to do: talk to support about
+     * being blocked. Everything else is refused — see isTenantActive.
+     */
+    allowInactive?: boolean
+  }
+): Promise<TenantContext | null> {
   const user = await getVerifiedUser()
   if (!user) return null
   const profile = (await getCachedProfile(user.id)) as { role?: string; tenant_id?: string; is_active?: boolean } | null
   // The middleware never runs for API routes, so a deactivated login has to be
   // refused here as well. invalidateProfile() on deactivation keeps this fresh.
   if (!profile?.tenant_id || profile.is_active === false) return null
+
+  // And neither does the subscription gate, which is why this is refused here
+  // rather than only at the page level: every /api/** route is a second way
+  // into the same data. Refusing by default means a route added tomorrow is
+  // covered without anyone remembering to add a check.
+  if (!options?.allowInactive && !(await isTenantActive(profile.tenant_id))) return null
+
   return { userId: user.id, tenantId: profile.tenant_id, role: profile.role ?? 'staff' }
 }

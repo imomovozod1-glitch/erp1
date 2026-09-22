@@ -11,7 +11,9 @@ const createSchema = z.object({
 
 /** The tenant's own tickets, newest activity first, with an unread count. */
 export async function GET() {
-  const ctx = await getTenantContext()
+  // allowInactive: a blocked company must still be able to reach support — that
+  // conversation is usually how the block gets resolved (src/lib/auth.ts).
+  const ctx = await getTenantContext({ allowInactive: true })
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabase = getCacheClient() as any
@@ -47,7 +49,9 @@ export async function GET() {
  * the caller.
  */
 export async function POST(request: NextRequest) {
-  const ctx = await getTenantContext()
+  // allowInactive: a blocked company must still be able to reach support — that
+  // conversation is usually how the block gets resolved (src/lib/auth.ts).
+  const ctx = await getTenantContext({ allowInactive: true })
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const parsed = createSchema.safeParse(await request.json().catch(() => null))

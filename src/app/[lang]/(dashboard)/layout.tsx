@@ -9,6 +9,8 @@ import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { OfflineBanner } from '@/components/shared/offline-banner'
+import { SubscriptionBanner } from '@/components/shared/subscription-banner'
+import { SUBSCRIPTION_WARNING_DAYS, daysUntil } from '@/lib/subscription'
 
 export default async function DashboardLayout({
   children,
@@ -90,6 +92,14 @@ export default async function DashboardLayout({
     redirect('/api/auth/handoff')
   }
 
+  // Counted here, not in the banner: reading the clock during a client render
+  // is impure under the React Compiler rules. `null` when the company has no
+  // end date at all, which is a company that is never warned and never blocked.
+  const endsAt = (tenant as { subscription_ends_at?: string | null } | null)?.subscription_ends_at ?? null
+  const daysLeft = daysUntil(endsAt)
+  const showSubscriptionWarning =
+    endsAt !== null && daysLeft !== null && daysLeft >= 0 && daysLeft <= SUBSCRIPTION_WARNING_DAYS
+
   return (
     <SidebarProvider defaultOpen={sidebarOpen}>
       <AppSidebar lang={lang} profile={profile} />
@@ -97,6 +107,9 @@ export default async function DashboardLayout({
         <AppHeader profile={profile} lang={lang} />
         <main className="flex-1 p-6 pt-[calc(5.5rem+env(safe-area-inset-top))] bg-slate-50/50 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
           <OfflineBanner />
+          {showSubscriptionWarning && (
+            <SubscriptionBanner daysLeft={daysLeft} endsAt={endsAt.slice(0, 10)} />
+          )}
           {children}
           {modal}
         </main>
