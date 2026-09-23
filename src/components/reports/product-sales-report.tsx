@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Boxes, Coins, Package, PiggyBank, TrendingDown } from 'lucide-react'
+import { Boxes, Coins, Package, TrendingDown } from 'lucide-react'
 import { ReportLayout, type ReportPeriod } from '@/components/reports/report-layout'
 import { ReportKpis } from '@/components/reports/report-kpis'
 import { DailySalesChart } from '@/components/reports/daily-sales-chart'
@@ -122,7 +122,7 @@ function Body({
       <ReportKpis
         items={[
           { label: t('metric.revenue'), value: formatCurrency(totals.revenue), hint: periodLabel, icon: Coins },
-          { label: t('metric.profit'), value: formatCurrency(totals.profit), hint: `${totals.margin.toFixed(1)}%`, icon: PiggyBank },
+          { label: t('metric.profit'), value: formatCurrency(totals.profit), hint: `${totals.margin.toFixed(1)}%` },
           { label: t('metric.soldQty'), value: formatNumber(Math.round(totals.soldQty * 100) / 100), hint: periodLabel, icon: Package },
           { label: t('metric.productTypes'), value: formatNumber(sold.length), hint: periodLabel, icon: Boxes },
           {

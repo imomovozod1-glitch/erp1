@@ -6,7 +6,6 @@ import {
   Coins,
   Layers,
   Package,
-  PiggyBank,
   Receipt,
   ShoppingBag,
   Wallet,
@@ -99,7 +98,7 @@ function Body({
       <ReportKpis
         items={[
           { label: t('metric.revenue'), value: formatCurrency(totals.revenue), hint: periodLabel, icon: Coins },
-          { label: t('metric.profit'), value: formatCurrency(totals.profit), hint: `${totals.margin.toFixed(1)}%`, icon: PiggyBank },
+          { label: t('metric.profit'), value: formatCurrency(totals.profit), hint: `${totals.margin.toFixed(1)}%` },
           { label: t('metric.cost'), value: formatCurrency(totals.cost), hint: periodLabel, icon: Receipt },
           { label: t('metric.orders'), value: formatNumber(totals.orders), hint: periodLabel, icon: ShoppingBag },
           // The two "per receipt" figures the shop floor actually asks for:

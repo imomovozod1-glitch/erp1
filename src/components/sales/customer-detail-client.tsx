@@ -154,7 +154,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : lang === 'ru' ? 'Всего покупок' : 'Total purchases'}</span>
             <h3 className="mt-1 text-xl font-bold tracking-tight break-words tabular-nums text-slate-900 dark:text-slate-100">{formatCurrency(totalPurchases)}</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{salesOrders.length} {lang === 'uz' ? 'ta buyurtma' : lang === 'ru' ? 'заказов' : 'orders'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{salesOrders.length} {lang === 'uz' ? 'ta sotuv' : lang === 'ru' ? 'продаж' : 'sales'}</span>
           </CardContent>
         </Card>
 
@@ -287,7 +287,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                 }`}
               >
                 <ShoppingCart className="h-4 w-4" />
-                {lang === 'uz' ? 'Buyurtmalar' : lang === 'ru' ? 'Заказы' : 'Orders'}
+                {lang === 'uz' ? 'Sotuvlar' : lang === 'ru' ? 'Продажи' : 'Sales'}
               </button>
               <button
                 onClick={() => setActiveTab('invoices')}

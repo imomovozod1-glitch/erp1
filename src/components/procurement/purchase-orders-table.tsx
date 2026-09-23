@@ -2,20 +2,34 @@
 
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { ShoppingCart } from 'lucide-react'
+import { useState } from 'react'
+import { ShoppingCart, MoreHorizontal, Ban } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { CancelPurchaseDialog, type CancelablePurchase } from '@/components/procurement/cancel-purchase-dialog'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
+import { TableSearch, TablePagination, useUrlState } from '@/components/shared/table-pagination'
+import { PeriodFilter, type Period } from '@/components/shared/period-filter'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { purchaseStatusTone } from '@/lib/statuses'
 
 interface PurchaseOrdersTableProps {
-  /** Only the current page's rows — the server applied search and paging. */
+  /** Only the current page's rows — the server applied search, period and paging. */
   orders: any[]
+  /** Active period key; the range itself is resolved server-side. */
+  period: Period
+  customStart: string
+  customEnd: string
   lang: string
   page: number
   pageSize: number
@@ -25,6 +39,9 @@ interface PurchaseOrdersTableProps {
 
 export function PurchaseOrdersTable({
   orders,
+  period,
+  customStart,
+  customEnd,
   lang,
   page,
   pageSize,
@@ -34,6 +51,8 @@ export function PurchaseOrdersTable({
   const tCommon = useTranslations('common')
   const t = useTranslations('procurement')
   const router = useRouter()
+  const { setParams } = useUrlState()
+  const [cancelling, setCancelling] = useState<CancelablePurchase | null>(null)
 
 
 
@@ -45,7 +64,23 @@ export function PurchaseOrdersTable({
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
-            <TableSearch />
+            <div className="flex flex-wrap items-center gap-3">
+              <TableSearch />
+              {/* Server-side like the search beside it: changing the period
+                  rewrites the query string and Postgres does the filtering. */}
+              <PeriodFilter
+                period={period}
+                onPeriodChange={(next) =>
+                  setParams({ period: next === 'all' ? null : next, page: null, from: null, to: null })
+                }
+                customStart={customStart}
+                customEnd={customEnd}
+                onApplyCustomRange={(start, end) =>
+                  setParams({ period: 'custom', from: start || null, to: end || null, page: null })
+                }
+                lang={lang}
+              />
+            </div>
             <span className="text-xs text-muted-foreground">{total} {tCommon('rows')}</span>
           </div>
           <Table>
@@ -59,12 +94,13 @@ export function PurchaseOrdersTable({
                 <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
                 <TableHead className="hidden xl:table-cell">{tCommon('createdBy')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
+                <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
+                  <TableCell colSpan={9} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <ShoppingCart className="h-8 w-8 opacity-40" />
                       <p className="text-sm">{tCommon('noData')}</p>
@@ -98,6 +134,37 @@ export function PurchaseOrdersTable({
                     <TableCell>
                       <StatusBadge tone={purchaseStatusTone(order.status)} label={t(`status.${order.status}`)} />
                     </TableCell>
+                    <TableCell className="w-12">
+                      {order.status !== 'cancelled' && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                // The row navigates on click; the menu must not
+                                // also open the purchase behind it.
+                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                              />
+                            }
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation()
+                                setCancelling({ id: order.id, po_number: order.po_number, status: order.status })
+                              }}
+                              className="text-rose-600 focus:text-rose-600 dark:text-rose-400"
+                            >
+                              <Ban className="mr-2 h-4 w-4" />
+                              {t('cancel.action')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -106,6 +173,12 @@ export function PurchaseOrdersTable({
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>
+
+    <CancelPurchaseDialog
+      purchase={cancelling}
+      open={cancelling !== null}
+      onOpenChange={(open) => !open && setCancelling(null)}
+    />
     </>
   )
 }

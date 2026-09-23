@@ -64,18 +64,39 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
   }
 
+  // One round trip for both answers. This used to be two — the profile, then
+  // the tenant it points at — and every extra Supabase call on this path is
+  // several hundred milliseconds the person spends watching a spinner. The
+  // embedded select resolves the foreign key server-side; RLS still applies to
+  // both tables, and `tenant_read_own` (migration_multi_tenant.sql) already
+  // limits the embedded row to the caller's own company.
+  //
   // Cast: `tenant_id` is added to profiles by migration_multi_tenant.sql and
   // is not in the generated types, the same reason getCurrentTenantId()
   // (src/lib/tenant.ts) reaches for one.
   const { data: profile } = (await supabase
     .from('profiles')
-    .select('is_active, tenant_id')
+    .select('is_active, tenant_id, tenants(subdomain, status, subscription_ends_at)')
     .eq('id', auth.user.id)
-    .maybeSingle()) as { data: { is_active: boolean | null; tenant_id: string | null } | null }
+    .maybeSingle()) as {
+    data: {
+      is_active: boolean | null
+      tenant_id: string | null
+      tenants: { subdomain: string | null; status: string | null; subscription_ends_at: string | null } | null
+    } | null
+  }
+
   if (profile?.is_active === false) {
     await supabase.auth.signOut({ scope: 'local' })
     return NextResponse.json({ error: 'account_disabled' }, { status: 403 })
   }
+
+  const own = profile?.tenants ?? null
+  const ownSubdomain = String(own?.subdomain || '').toLowerCase()
+
+  /** Blocked or lapsed — checked the same way wherever the answer is needed. */
+  const tenantBlocked =
+    Boolean(own?.status) && computeEffectiveStatus(own!.status!, own?.subscription_ends_at ?? null) !== 'active'
 
   // Which company's address this sign-in arrived on. The reserved hosts are
   // skipped because they are not companies at all — src/proxy.ts rewrites them
@@ -84,69 +105,51 @@ export async function POST(request: NextRequest) {
   const onTenantHost = Boolean(subdomain && !isReservedSubdomain(subdomain))
 
   if (onTenantHost) {
-    // Staff first, and regardless of what profile row they carry:
-    // handle_new_user() gives every auth user a `profiles` row, super-admins
-    // and support agents included, so "has a profile" says nothing about who
-    // this is. A staff session can never render a company workspace anyway —
-    // (dashboard)/layout.tsx redirects it to its own console — so it is turned
-    // back here, at the form, pointed at the portal that will actually take it.
-    const staff = await getStaffIdentity(auth.user.id)
-    if (staff) {
-      await supabase.auth.signOut({ scope: 'local' })
-      // Named by address, the same way the wrong-company case is: each console
-      // has its own host (src/proxy.ts rewrites admin.<domain> and
-      // support.<domain>), and that is where this account signs in.
-      const portal = staff === 'super_admin' ? 'admin' : 'support'
-      const host = request.headers.get('host') || ''
-      return NextResponse.json(
-        { error: 'staff_account', portal, host: host.replace(/^[^.]+/, portal) },
-        { status: 403 }
-      )
-    }
-
-    // A tenant user with no tenant: the profile row is there but unassigned,
-    // so there is no company for this sign-in to belong to.
+    // No company on the profile. Either a staff account — handle_new_user()
+    // gives every auth user a `profiles` row, super-admins and support agents
+    // included — or an unassigned one. The staff lookup costs a round trip, so
+    // it happens HERE and not on the way in: a normal sign-in never pays for
+    // it, and this branch is only reached by the handful of people who have no
+    // company at all.
     if (!profile?.tenant_id) {
+      const staff = await getStaffIdentity(auth.user.id)
       await supabase.auth.signOut({ scope: 'local' })
-      return NextResponse.json({ error: 'wrong_tenant' }, { status: 403 })
+      if (staff) {
+        // Named by address: each console has its own host (src/proxy.ts
+        // rewrites admin.<domain> and support.<domain>), and that is where
+        // this account signs in.
+        const portal = staff === 'super_admin' ? 'admin' : 'support'
+        const host = request.headers.get('host') || ''
+        return NextResponse.json(
+          { error: 'staff_account', portal, host: host.replace(/^[^.]+/, portal) },
+          { status: 403 }
+        )
+      }
+      return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
     }
 
-    // Read through the user's own client, not the service role:
-    // `tenant_read_own` (migration_multi_tenant.sql) already limits this to
-    // the caller's tenant.
-    const { data: ownTenant } = await supabase
-      .from('tenants')
-      .select('subdomain, status, subscription_ends_at')
-      .eq('id', profile.tenant_id)
-      .maybeSingle()
-    const own = ownTenant as { subdomain?: string; status?: string; subscription_ends_at?: string | null } | null
-
-    // Only a POSITIVE mismatch refuses. If the tenant row cannot be read at all
-    // — the RLS policy missing on some deployment, a Supabase blip — the answer
-    // is unknown, not "wrong", and failing closed here would turn that into
-    // every tenant login on the platform being rejected. The hard check stays
-    // where it always was, in (dashboard)/layout.tsx, which resolves the tenant
-    // with the service role and cannot be blocked this way; this route only
-    // decides whether the person is told about it on the form or one page later.
-    const ownSubdomain = String(own?.subdomain || '').toLowerCase()
+    // Someone else's company. Answered exactly like a wrong password — same
+    // status, same message, nothing about who the account belongs to. Naming
+    // the right address was friendlier, but it also confirmed that the phone
+    // and password are a real, working pair and said which company they open,
+    // to anyone who can reach any tenant's login page.
+    //
+    // Only a POSITIVE mismatch refuses: if the tenant row cannot be read at all
+    // — an RLS policy missing on some deployment, a Supabase blip — the answer
+    // is unknown, not "wrong", and failing closed here would reject every
+    // tenant login on the platform. The hard check stays where it always was,
+    // in (dashboard)/layout.tsx, which resolves the tenant with the service
+    // role and cannot be blocked this way.
     if (ownSubdomain && ownSubdomain !== subdomain!.toLowerCase()) {
       await supabase.auth.signOut({ scope: 'local' })
-      // The address that would have worked. Built by swapping the first label of
-      // the host actually used, so it stays correct on `tenant.localhost:3000`
-      // and on a preview domain instead of hard-coding the production apex.
-      // Naming it leaks nothing: the password just proved this is their account.
-      const host = request.headers.get('host') || ''
-      return NextResponse.json(
-        { error: 'wrong_tenant', host: host.replace(/^[^.]+/, ownSubdomain) },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
     }
 
     // The subscription gate, on the way in. src/proxy.ts already refuses every
     // page on a lapsed company, but it does so by bouncing to /tenant-status
     // one navigation later; saying it here means the person is told before
     // they are handed a session they cannot use.
-    if (own?.status && computeEffectiveStatus(own.status, own.subscription_ends_at ?? null) !== 'active') {
+    if (tenantBlocked) {
       await supabase.auth.signOut({ scope: 'local' })
       return NextResponse.json({ error: 'tenant_blocked' }, { status: 403 })
     }
@@ -166,6 +169,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (tenantBlocked) {
+    await supabase.auth.signOut({ scope: 'local' })
+    return NextResponse.json({ error: 'tenant_blocked' }, { status: 403 })
+  }
+
   const { host, protocol } = requestOrigin(request.headers)
   const handoff = await createTenantHandoff({
     userId: auth.user.id,
@@ -173,6 +181,12 @@ export async function POST(request: NextRequest) {
     requestHost: host,
     protocol,
     next: `/${routing.defaultLocale}/dashboard`,
+    // Already read above — without this the handoff would fetch the same
+    // profile and the same tenant all over again, two more round trips on the
+    // slowest path in the app.
+    tenant: ownSubdomain
+      ? { subdomain: ownSubdomain, status: own?.status ?? null, subscriptionEndsAt: own?.subscription_ends_at ?? null }
+      : null,
   })
 
   if (!handoff.ok) {

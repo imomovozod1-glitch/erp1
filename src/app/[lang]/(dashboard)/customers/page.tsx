@@ -22,6 +22,11 @@ export default async function CustomersPage({
 }) {
   const [{ lang }, sp] = await Promise.all([params, searchParams])
   const { page, pageSize, search } = readPageParams(sp)
+  const balanceParam = typeof sp.balance === 'string' ? sp.balance : undefined
+  const balance =
+    balanceParam === 'debtor' || balanceParam === 'creditor' || balanceParam === 'zero'
+      ? balanceParam
+      : undefined
   // With the `own` data scope this list is limited to the records this user
   // is responsible for (plus unassigned ones) — applied in the query.
   const [scope, permCtx] = await Promise.all([getDataScope('customers'), getPermissionContext()])
@@ -37,7 +42,7 @@ export default async function CustomersPage({
     getTranslations('sales'),
     getTranslations('nav'),
     getTranslations('pageInfo'),
-    getCustomersPage(tenantId, { page, pageSize, search, ownerId }),
+    getCustomersPage(tenantId, { page, pageSize, search, ownerId, balance }),
     // The map plots every customer with coordinates that this user is allowed
     // to see; only the LIST is paged. Same `ownerId` as the list — otherwise
     // the map tab would leak rows the list deliberately hides.
@@ -65,7 +70,9 @@ export default async function CustomersPage({
         {canExport && <CustomerImportExport customers={result.rows} lang={lang} />}
       </PageHeader>
 
-      <div className="grid grid-cols-1 mb-6">
+      {/* One figure, so one tile's worth of width — full-bleed it stretched a
+          single number across the whole page. */}
+      <div className="grid grid-cols-1 mb-6 sm:max-w-xs">
         <StatsCard
           title={lang === 'uz' ? 'Balans qoldig\'i' : lang === 'ru' ? 'Остаток баланса' : 'Balance'}
           value={`${totalBalance > 0 ? '+' : totalBalance < 0 ? '-' : ''}${formatCurrency(Math.abs(totalBalance))}`}
@@ -83,6 +90,7 @@ export default async function CustomersPage({
       </div>
 
       <CustomersViewTabs
+        balance={balance ?? 'all'}
         customers={result.rows}
         mapCustomers={mapPoints}
         currentUserId={permCtx?.userId ?? null}

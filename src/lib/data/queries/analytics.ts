@@ -323,8 +323,15 @@ export const getCachedDashboardStats = unstable_cache(
       supabase.from('inventory_cost_layers').select('remaining_qty, unit_cost').eq('tenant_id', tenantId).gt('remaining_qty', 0),
     ])
 
-    const incomeRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'income')
-    const expenseRows = (allTxAmounts ?? []).filter((tx: any) => tx.type === 'expense')
+    // Summed here rather than shipped. These rows used to travel to the browser
+    // in full — every transaction the company has ever recorded, serialized into
+    // the dashboard's payload on every visit — so that the client could add up
+    // one number from them, and so that a second array (income) could be sent
+    // and never read at all.
+    const allTimeExpense = (allTxAmounts ?? []).reduce(
+      (sum: number, tx: any) => (tx.type === 'expense' ? sum + (Number(tx.amount) || 0) : sum),
+      0
+    )
 
     const totalCashboxBalance = (cashboxesRes.data ?? []).reduce((sum: number, cb: any) => sum + (Number(cb.balance) || 0), 0)
     // FIFO/LIFO-correct valuation: sum what's actually left in each cost layer, not
@@ -353,15 +360,33 @@ export const getCachedDashboardStats = unstable_cache(
         discount_amount: item.sales_orders?.discount_amount,
       }))
     )
-    const soldItems = soldRows
-      .map((item: any) => ({
-        order_id: item.order_id as string,
-        order_date: item.sales_orders?.order_date ?? null,
-        // Net of the order's general discount — see orderDiscountFactors.
-        revenue: (Number(item.total_price) || 0) * (soldDiscountFactors.get(item.order_id) ?? 1),
-        cost: (Number(item.unit_cost ?? item.products?.cost_price) || 0) * (Number(item.quantity) || 0),
-      }))
-      .filter((item: any) => item.order_date)
+    // Rolled up per day before it leaves the server. The dashboard only ever
+    // filters these by date and sums them, so one row per day carries exactly
+    // the same answers as one row per line item — while the payload stops
+    // growing with the number of things the company has ever sold. A company
+    // with a year of trading was sending its entire sales-item history to the
+    // browser to render six numbers.
+    //
+    // Order counts survive the rollup because an order belongs to exactly one
+    // date: the per-day distinct counts add up to the distinct count for any
+    // span of days.
+    const soldByDay = new Map<string, { revenue: number; cost: number; orders: Set<string> }>()
+    for (const item of soldRows) {
+      const orderDate: string | null = item.sales_orders?.order_date ?? null
+      if (!orderDate) continue
+      const day = soldByDay.get(orderDate) ?? { revenue: 0, cost: 0, orders: new Set<string>() }
+      // Net of the order's general discount — see orderDiscountFactors.
+      day.revenue += (Number(item.total_price) || 0) * (soldDiscountFactors.get(item.order_id) ?? 1)
+      day.cost += (Number(item.unit_cost ?? item.products?.cost_price) || 0) * (Number(item.quantity) || 0)
+      if (item.order_id) day.orders.add(item.order_id)
+      soldByDay.set(orderDate, day)
+    }
+    const soldDays = Array.from(soldByDay, ([order_date, day]) => ({
+      order_date,
+      revenue: day.revenue,
+      cost: day.cost,
+      orderCount: day.orders.size,
+    }))
 
     return {
       totalOrders,
@@ -371,15 +396,14 @@ export const getCachedDashboardStats = unstable_cache(
       totalSuppliers,
       recentOrders: recentOrders ?? [],
       chartTxData: chartTxData ?? [],
-      incomeRows,
-      expenseRows,
+      allTimeExpense,
       lowStockRows: lowStockRows ?? [],
       pendingInvoices,
       totalCashboxBalance,
       warehouseValue,
       totalReceivables,
       totalPayables,
-      soldItems,
+      soldDays,
     }
   },
   ['dashboard-stats'],

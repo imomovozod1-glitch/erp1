@@ -62,6 +62,16 @@ export interface HandoffRequest {
   protocol: string
   /** Where to land on the tenant host. Must be an absolute path. */
   next: string
+  /**
+   * The caller's company, when it has just read it anyway.
+   *
+   * The sign-in route reads the profile and its tenant in one embedded query
+   * before it gets here; without this the handoff would fetch both again —
+   * two more Supabase round trips on the path where someone is watching a
+   * spinner. The subscription is still checked here either way, so passing
+   * this is a shortcut, not a way past the gate.
+   */
+  tenant?: { subdomain: string; status: string | null; subscriptionEndsAt: string | null } | null
 }
 
 /**
@@ -74,19 +84,30 @@ export interface HandoffRequest {
 export async function createTenantHandoff(request: HandoffRequest): Promise<HandoffResult> {
   const service = getCacheClient() as any
 
-  const { data: profile } = await service
-    .from('profiles')
-    .select('tenant_id')
-    .eq('id', request.userId)
-    .maybeSingle()
+  let tenant = request.tenant
+    ? {
+        subdomain: request.tenant.subdomain,
+        status: request.tenant.status,
+        subscription_ends_at: request.tenant.subscriptionEndsAt,
+      }
+    : null
 
-  if (!profile?.tenant_id) return { ok: false, reason: 'no_tenant' }
+  if (!tenant) {
+    const { data: profile } = await service
+      .from('profiles')
+      .select('tenant_id')
+      .eq('id', request.userId)
+      .maybeSingle()
 
-  const { data: tenant } = await service
-    .from('tenants')
-    .select('subdomain, status, subscription_ends_at')
-    .eq('id', profile.tenant_id)
-    .maybeSingle()
+    if (!profile?.tenant_id) return { ok: false, reason: 'no_tenant' }
+
+    const { data: row } = await service
+      .from('tenants')
+      .select('subdomain, status, subscription_ends_at')
+      .eq('id', profile.tenant_id)
+      .maybeSingle()
+    tenant = row ?? null
+  }
 
   const subdomain = String(tenant?.subdomain || '').toLowerCase()
   if (!subdomain) return { ok: false, reason: 'no_tenant' }

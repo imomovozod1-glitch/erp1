@@ -176,8 +176,6 @@
     "tooManyAttempts": "Too many failed attempts. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
     "accountDisabled": "Your account has been disabled. Contact your administrator.",
     "tenantBlocked": "The company account is blocked or its subscription has ended. Contact your administrator.",
-    "wrongTenant": "This account does not belong to this company.",
-    "wrongTenantGoTo": "Sign in at your own company's address:",
     "staffAccountAdmin": "This is a super-admin account — it does not sign in to a company workspace.",
     "staffAccountSupport": "This is a support-agent account — it does not sign in to a company workspace.",
     "staffAccountGoTo": "Sign in at your own portal's address:",
@@ -470,6 +468,9 @@
     "orderAlreadyHasDelivery": "That sales order already has a live delivery. Cancel it first, or pick another order."
   },
   "sales": {
+    "balanceDebtors": "Debtors",
+    "balanceCreditors": "In credit",
+    "balanceZero": "Zero balance",
     "title": "Sales",
     "editOrder": "Edit Order",
     "editCustomer": "Edit Customer",
@@ -702,6 +703,33 @@
     "selectAccountRequired": "Select an account"
   },
   "procurement": {
+    "payment": {
+      "title": "Payment",
+      "onAccount": "On account",
+      "onAccountHint": "Nothing is paid now — the amount goes on the supplier's account.",
+      "paidHint": "{amount} will be taken from the cashbox as an expense.",
+      "migrationRequired": "A paid purchase needs the database migration applied (migration_purchase_payment.sql). You can still save this purchase on account."
+    },
+    "cancel": {
+      "action": "Cancel purchase",
+      "title": "Cancel purchase",
+      "description": "Purchase {number} will be cancelled. This cannot be undone.",
+      "effectStock": "The goods received come off the shelf",
+      "effectMoney": "Whatever was paid goes back to the cashbox",
+      "confirm": "Cancel purchase",
+      "done": "Purchase cancelled",
+      "doneRefunded": "Purchase cancelled. {amount} returned to the \"{cashbox}\" cashbox.",
+      "forbidden": "You do not have permission for this",
+      "not_found": "Purchase not found",
+      "already_cancelled": "This purchase is already cancelled",
+      "already_sold": "\"{product}\" has already been sold — this purchase cannot be cancelled. Use a stock adjustment or a supplier return instead.",
+      "insufficient_stock": "There is not enough \"{product}\" in stock — this purchase cannot be cancelled",
+      "rpc_missing": "The database migration has not been applied (migration_purchase_payment.sql)"
+    },
+    "advancePaid": "Paid in advance",
+    "advancePaidHint": "Overpaid — credited against the next purchase",
+    "balanceOwedHint": "Unpaid balance for goods received",
+    "settled": "Account settled",
     "title": "Procurement",
     "purchaseOrders": "Purchase Orders",
     "purchases": "Purchases",

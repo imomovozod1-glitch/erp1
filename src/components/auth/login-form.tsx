@@ -55,16 +55,16 @@ interface LoginFailure {
 /**
  * Turns a refused sign-in into something the person can act on.
  *
- * The interesting cases are the ones the subdomains created: the credentials
- * are correct but belong to another company, or to a staff account that signs
- * in at its own portal (src/app/api/auth/login/route.ts). Both used to end as
- * "phone or password is wrong", which is the one thing they are not — so each
- * is named, and carries the address that would have worked.
+ * Most refusals are deliberately indistinguishable from a wrong password —
+ * an account that belongs to another company included, so that a working
+ * phone/password pair cannot be confirmed from a login page that is not the
+ * right one. What is named is what the person can act on: a disabled account,
+ * a company whose subscription has ended, and a staff account, which belongs
+ * at its own portal and is the vendor's own people rather than a stranger.
  */
 async function describeFailure(
   res: Response,
-  t: (key: string, values?: Record<string, string | number | Date>) => string,
-  lang: string
+  t: (key: string, values?: Record<string, string | number | Date>) => string
 ): Promise<LoginFailure> {
   const lockMinutes = await lockMinutesFrom(res)
   if (lockMinutes !== null) return { message: t('tooManyAttempts', { minutes: lockMinutes }) }
@@ -84,18 +84,6 @@ async function describeFailure(
               // `/login` on those hosts, not `/admin/login`: src/proxy.ts
               // rewrites the console's own address to its path tree.
               link: { href: `${window.location.protocol}//${body.host}/login`, label: body.host },
-            }
-          : {}),
-      }
-    case 'wrong_tenant':
-      return {
-        message: t('wrongTenant'),
-        ...(body.host
-          ? {
-              hint: t('wrongTenantGoTo'),
-              // Same scheme as the page being viewed, so this still works on
-              // http://tenant.localhost:3000 in development.
-              link: { href: `${window.location.protocol}//${body.host}/${lang}/login`, label: body.host },
             }
           : {}),
       }
@@ -192,7 +180,7 @@ export function LoginForm({ lang }: { lang: string }) {
         body: JSON.stringify({ phone: data.phone, password: data.password }),
       })
       if (!res.ok) {
-        setFailure(await describeFailure(res, t, lang))
+        setFailure(await describeFailure(res, t))
         setIsLoading(false)
         return
       }

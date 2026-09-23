@@ -2,7 +2,14 @@
 
 import { useTranslations } from 'next-intl'
 import { subDays, startOfMonth, endOfMonth, subMonths, startOfWeek } from 'date-fns'
+import { CalendarRange, Check, ChevronDown } from 'lucide-react'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
 export type Period = string
@@ -31,17 +38,28 @@ interface PeriodFilterProps {
 }
 
 /**
- * Preset pills plus the shared custom-range popover — the period filter used
- * across the app. Purely controlled (no internal state or persistence) so each
- * page keeps owning its own filtering logic; this only holds the markup, and
- * is meant to be dropped into PageHeader's `children` slot so the filter sits
- * on the page-title row.
+ * The period filter used across the app: one small control that names the
+ * period in force, plus the shared custom-range popover.
+ *
+ * It used to lay every preset out as a pill. Five or six of them on the
+ * page-title row is a strip wider than most page titles — and on a phone it
+ * wrapped onto two lines above the content it filtered, which is a lot of
+ * furniture for a setting that is read far more often than it is changed. The
+ * presets moved into a menu; what stayed on screen is the answer ("Oy"), not
+ * the question.
+ *
+ * Purely controlled (no internal state or persistence) so each page keeps
+ * owning its own filtering logic; this only holds the markup, and is meant to
+ * be dropped into PageHeader's `children` slot.
  */
 export function PeriodFilter({
   period, onPeriodChange, customStart, customEnd, onApplyCustomRange,
   presets, lang, className,
 }: PeriodFilterProps) {
   const tDash = useTranslations('dashboard')
+  // The picker beside it already labels the custom case from this namespace —
+  // same word, one source (analytics.presets.custom).
+  const tPresets = useTranslations('analytics.presets')
 
   const items: PeriodPreset[] =
     presets ??
@@ -50,25 +68,40 @@ export function PeriodFilter({
       label: tDash(value),
     }))
 
+  const active = items.find((item) => item.value === period)
+  // 'custom' is not one of the presets: while a range is in force the trigger
+  // says so, and the range itself is spelled out on the picker beside it.
+  const activeLabel = active?.label ?? tPresets('custom')
+
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
-      <div className="flex rounded-lg border bg-slate-100 p-0.5 shadow-inner dark:bg-slate-800">
-        {items.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            onClick={() => onPeriodChange(item.value)}
-            className={cn(
-              'rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200',
-              period === item.value
-                ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-700 dark:text-violet-400'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
-            )}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <button
+              type="button"
+              className="flex h-[38px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 shadow-xs transition-all duration-200 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            />
+          }
+        >
+          <CalendarRange className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+          {activeLabel}
+          <ChevronDown className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="min-w-40">
+          {items.map((item) => (
+            <DropdownMenuItem key={item.value} onClick={() => onPeriodChange(item.value)}>
+              <Check
+                className={cn(
+                  'mr-2 h-3.5 w-3.5',
+                  period === item.value ? 'text-violet-600 dark:text-violet-400' : 'opacity-0'
+                )}
+              />
+              {item.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
       <CustomDateRangePicker
         isActive={period === 'custom'}
         start={customStart}

@@ -17,9 +17,12 @@ interface CustomersViewTabsProps {
   total: number
   totalPages: number
   lang: string
+  /** Which balance filter is active, for the chips above the list. */
+  balance: string
 }
 
 export function CustomersViewTabs({
+  balance,
   customers,
   mapCustomers,
   currentUserId,
@@ -62,6 +65,7 @@ export function CustomersViewTabs({
 
       {activeTab === 'list' ? (
         <CustomersTable
+          balance={balance}
           customers={customers}
           lang={lang}
           page={page}

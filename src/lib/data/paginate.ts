@@ -92,6 +92,16 @@ interface QueryPageOptions {
    * that belongs to a salesperson's book.
    */
   ownerId?: string
+  /**
+   * Date column the `from`/`to` bounds apply to. Every list that filters by
+   * period needs this, and each page that needed it used to hand-roll its own
+   * query to get it — the range belongs here, next to page and search.
+   */
+  dateColumn?: string
+  /** Inclusive lower bound on `dateColumn`. */
+  from?: string
+  /** Inclusive upper bound on `dateColumn`. */
+  to?: string
   /** Column holding the responsible person; defaults to `assigned_to`. */
   ownerColumn?: string
 }
@@ -128,6 +138,10 @@ export async function queryPage<T = Record<string, unknown>>(
     // `= me` would show a salesperson an empty customer list on day one.
     // Admins are never filtered at all, so they always see the full set.
     query = query.or(`${column}.eq.${options.ownerId},${column}.is.null`)
+  }
+  if (options.dateColumn) {
+    if (options.from) query = query.gte(options.dateColumn, options.from)
+    if (options.to) query = query.lte(options.dateColumn, options.to)
   }
   if (options.search && options.searchColumns?.length) {
     query = query.or(ilikeAny(options.searchColumns, options.search))

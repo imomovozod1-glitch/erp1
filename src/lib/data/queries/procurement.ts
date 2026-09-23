@@ -110,10 +110,15 @@ export function getSuppliersPage(
 
 export function getPurchaseOrdersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: string; from?: string; to?: string }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'purchase_orders',
+    // Filtered on the day the purchase was made, not the day the row was
+    // written: a purchase entered late still belongs to its own date.
+    dateColumn: 'order_date',
+    from: opts.from,
+    to: opts.to,
     tenantId,
     select: '*, suppliers(name), creator:profiles!purchase_orders_created_by_fkey(full_name), assignee:profiles!purchase_orders_assigned_to_fkey(full_name)',
     page: opts.page,

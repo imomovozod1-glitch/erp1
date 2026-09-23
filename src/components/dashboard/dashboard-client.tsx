@@ -45,15 +45,15 @@ interface DashboardClientProps {
     totalSuppliers: number | null
     recentOrders: any[]
     chartTxData: any[]
-    incomeRows: any[]
-    expenseRows: any[]
+    allTimeExpense: number
     lowStockRows: any[]
     pendingInvoices: number | null
     totalCashboxBalance?: number
     warehouseValue?: number
     totalReceivables?: number
     totalPayables?: number
-    soldItems?: { order_id: string; order_date: string; revenue: number; cost: number }[]
+    /** One row per day the company sold anything — see getCachedDashboardStats. */
+    soldDays?: { order_date: string; revenue: number; cost: number; orderCount: number }[]
   }
 }
 
@@ -160,13 +160,13 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     totalEmployees,
     totalSuppliers,
     chartTxData,
-    expenseRows,
+    allTimeExpense,
     lowStockRows,
     totalCashboxBalance = 0,
     warehouseValue = 0,
     totalReceivables = 0,
     totalPayables = 0,
-    soldItems = [],
+    soldDays = [],
   } = stats
 
   // The money tiles show what the server computed (getCachedDashboardStats in
@@ -214,7 +214,7 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     let exp = 0
 
     if (period === 'all') {
-      exp = expenseRows.reduce((sum, r) => sum + (r.amount || 0), 0)
+      exp = allTimeExpense
     } else {
       filteredTx.forEach((tx) => {
         if (tx.type === 'expense') exp += tx.amount
@@ -222,17 +222,17 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     }
 
     // Profit = total sales revenue - cost price (COGS) of sold goods, filtered to the same period
-    let filteredSoldItems = soldItems
+    let filteredSoldDays = soldDays
     if (period === 'today') {
-      filteredSoldItems = soldItems.filter((si) => si.order_date?.split('T')[0] === todayStr)
+      filteredSoldDays = soldDays.filter((si) => si.order_date?.split('T')[0] === todayStr)
     } else if (period === 'yesterday') {
-      filteredSoldItems = soldItems.filter((si) => si.order_date?.split('T')[0] === yesterdayStr)
+      filteredSoldDays = soldDays.filter((si) => si.order_date?.split('T')[0] === yesterdayStr)
     } else if (period === 'week') {
-      filteredSoldItems = soldItems.filter((si) => new Date(si.order_date) >= weekAgo)
+      filteredSoldDays = soldDays.filter((si) => new Date(si.order_date) >= weekAgo)
     } else if (period === 'month') {
-      filteredSoldItems = soldItems.filter((si) => new Date(si.order_date) >= monthAgo)
+      filteredSoldDays = soldDays.filter((si) => new Date(si.order_date) >= monthAgo)
     } else if (period === 'custom') {
-      filteredSoldItems = soldItems.filter((si) => {
+      filteredSoldDays = soldDays.filter((si) => {
         if (!si.order_date) return false
         const d = new Date(si.order_date)
         return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
@@ -241,11 +241,12 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     // "Total sales" is the sum of what was actually sold (sales_order_items), NOT the
     // sum of `income` transactions — the latter also contains manual cashbox top-ups,
     // customer debt repayments and other non-sale income.
-    const salesRevenue = filteredSoldItems.reduce((sum, si) => sum + si.revenue, 0)
-    const costOfGoods = filteredSoldItems.reduce((sum, si) => sum + si.cost, 0)
+    const salesRevenue = filteredSoldDays.reduce((sum, si) => sum + si.revenue, 0)
+    const costOfGoods = filteredSoldDays.reduce((sum, si) => sum + si.cost, 0)
     const profit = salesRevenue - costOfGoods
-    // Line items belong to orders, so the order count is the number of distinct orders.
-    const saleCount = new Set(filteredSoldItems.map((si) => si.order_id).filter(Boolean)).size
+    // Distinct orders, added up per day: an order belongs to exactly one date,
+    // so the per-day counts never double-count across a span.
+    const saleCount = filteredSoldDays.reduce((sum, si) => sum + si.orderCount, 0)
     const avgCheck = saleCount > 0 ? salesRevenue / saleCount : 0
 
     return {

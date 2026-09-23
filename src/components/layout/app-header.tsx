@@ -513,10 +513,11 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">{profile?.full_name}</p>
-              <p className="text-xs text-muted-foreground">{profile?.email}</p>
-            </div>
+            {/* Name only. The second line held the synthetic login address
+                (`<digits>@tenant.local`, see src/lib/tenant-auth.ts) — an
+                internal artefact of phone sign-in that means nothing to the
+                person reading it. */}
+            <p className="text-sm font-medium">{profile?.full_name}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {/* router.push, not window.location: a full document reload here

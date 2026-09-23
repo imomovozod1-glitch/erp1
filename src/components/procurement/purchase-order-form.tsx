@@ -17,8 +17,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
-import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
+import { Plus, Trash2, Sparkles, Upload, Loader2, Wallet } from 'lucide-react'
+import { cn, formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { unitAllowsDecimals } from '@/lib/units'
 
@@ -46,6 +46,9 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
   const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('procurement')
+  // The payment methods are already named in the POS namespace; naming them a
+  // second time here would be two words for one thing.
+  const tFinance = useTranslations('pos')
   const exitForm = useRouteModalExit(`/${lang}/procurement/purchase-orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
@@ -54,6 +57,12 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
   const [supplierId, setSupplierId] = useState('')
   const [notes, setNotes] = useState('')
   const [assignedTo, setAssignedTo] = useState<string | null>(null)
+  /**
+   * How this purchase is being settled. `null` is "on account" — the default,
+   * and the only thing that used to happen: every purchase became a debt to
+   * the supplier because nothing here ever recorded a payment.
+   */
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | null>(null)
   const [items, setItems] = useState<LineItem[]>([])
 
   // Temp item state
@@ -193,6 +202,10 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
           notes,
           assigned_to: assignedTo,
           order_date: isoDate(),
+          // null → on account. Paying here debits the chosen cashbox and
+          // writes the expense that settles the supplier's balance
+          // (supabase/migration_purchase_payment.sql).
+          payment_method: paymentMethod,
           items: items.map((item) => ({
             product_id: item.productId,
             quantity: item.quantity,
@@ -201,6 +214,14 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
           })),
         },
       })
+      if (received === RPC_MISSING && paymentMethod !== null) {
+        // The browser fallback below can create the purchase, but it cannot
+        // move money. Rather than record a paid purchase as a debt and let the
+        // supplier's balance lie, it says so.
+        toast.error(t('payment.migrationRequired'), { duration: 10000 })
+        setIsSubmitting(false)
+        return
+      }
       if (received === RPC_MISSING) {
         // Pre-migration fallback.
         // Get current user
@@ -514,6 +535,40 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
                 </TableRow>
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* How it is being paid for. Sits after the lines because the amount is
+          what the question is about. */}
+      {items.length > 0 && (
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-5 space-y-3">
+            <Label className="flex items-center gap-1.5">
+              <Wallet className="h-3.5 w-3.5 text-muted-foreground" /> {t('payment.title')}
+            </Label>
+            <div className="flex flex-wrap gap-1.5 rounded-lg bg-slate-100 p-1 w-fit dark:bg-slate-800">
+              {([null, 'cash', 'card', 'transfer'] as const).map((method) => (
+                <button
+                  key={method ?? 'debt'}
+                  type="button"
+                  onClick={() => setPaymentMethod(method)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
+                    paymentMethod === method
+                      ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-700 dark:text-violet-400'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                  )}
+                >
+                  {method === null ? t('payment.onAccount') : tFinance(method)}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {paymentMethod === null
+                ? t('payment.onAccountHint')
+                : t('payment.paidHint', { amount: formatCurrency(totalAmount) })}
+            </p>
           </CardContent>
         </Card>
       )}

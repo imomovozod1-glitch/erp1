@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getCachedDashboardStats } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
+import { getAssignedSupportAgent } from '@/lib/support-agent'
 import { DashboardClient } from '@/components/dashboard/dashboard-client'
 import { AssignedAgentCard } from '@/components/support/assigned-agent-card'
 
@@ -15,7 +16,14 @@ export default async function DashboardPage({
   const { lang } = await params
   const tenantId = await getCurrentTenantId() as string
 
-  const stats = await getCachedDashboardStats(tenantId)
+  // Both at once. AssignedAgentCard does its own lookup while it renders, and
+  // rendering only starts after this await — so the two used to be chained,
+  // one network latency after another. Asking for it here warms the same
+  // cached lookup the card then reads, turning the second wait into nothing.
+  const [stats] = await Promise.all([
+    getCachedDashboardStats(tenantId),
+    getAssignedSupportAgent(tenantId),
+  ])
 
   return (
     <DashboardClient

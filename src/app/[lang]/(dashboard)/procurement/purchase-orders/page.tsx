@@ -4,9 +4,11 @@ import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { PurchaseOrdersTable } from '@/components/procurement/purchase-orders-table'
 import { getPurchaseOrdersPage } from '@/lib/data/queries'
-import { readPageParams } from '@/lib/data/paginate'
+import { readPageParams, resolvePeriodDays, type PeriodKey } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+
+const PERIODS: PeriodKey[] = ['today', 'yesterday', 'week', 'month', 'custom', 'all']
 
 export const revalidate = 30
 
@@ -23,6 +25,14 @@ export default async function PurchaseOrdersPage({
   // Paging and search live in the URL and are applied by Postgres; this page
   // used to fetch every row in the tenant and slice ten out in the browser.
   const { page, pageSize, search } = readPageParams(sp)
+  // The period lives in the URL alongside page and search, and Postgres
+  // applies it — the same shape the transactions list uses.
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
+  const periodParam = one(sp.period) as PeriodKey | undefined
+  const period: PeriodKey = PERIODS.includes(periodParam as PeriodKey) ? (periodParam as PeriodKey) : 'all'
+  const customStart = one(sp.from) ?? ''
+  const customEnd = one(sp.to) ?? ''
+  const range = resolvePeriodDays(period, customStart, customEnd)
   // A user whose data scope for this module is 'own' only ever sees the
   // records they created — applied in the query, not by hiding rows after the
   // fact.
@@ -35,7 +45,7 @@ export default async function PurchaseOrdersPage({
   const [t, tInfo, result] = await Promise.all([
     getTranslations('procurement'),
     getTranslations('pageInfo'),
-    getPurchaseOrdersPage(tenantId, { page, pageSize, search, ownerId }),
+    getPurchaseOrdersPage(tenantId, { page, pageSize, search, ownerId, ...range }),
   ])
 
   return (
@@ -53,6 +63,9 @@ export default async function PurchaseOrdersPage({
       />
       <PurchaseOrdersTable
         orders={result.rows}
+        period={period}
+        customStart={customStart}
+        customEnd={customEnd}
         lang={lang}
         page={result.page}
         pageSize={result.pageSize}

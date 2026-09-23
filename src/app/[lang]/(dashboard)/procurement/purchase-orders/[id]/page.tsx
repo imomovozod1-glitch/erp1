@@ -17,8 +17,10 @@ import {
   Calendar, 
   FileText, 
   ArrowLeft, 
-  Loader2 
+  Loader2,
+  Ban
 } from 'lucide-react'
+import { CancelPurchaseDialog } from '@/components/procurement/cancel-purchase-dialog'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 
 export default function PurchaseOrderDetailPage() {
@@ -33,6 +35,7 @@ export default function PurchaseOrderDetailPage() {
   const [order, setOrder] = useState<any>(null)
   const [items, setItems] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isCancelOpen, setIsCancelOpen] = useState(false)
 
   useEffect(() => {
     async function fetchOrderDetails() {
@@ -90,7 +93,7 @@ export default function PurchaseOrderDetailPage() {
         ]}
       />
 
-      <div>
+      <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
           onClick={() => router.push(`/${lang}/procurement/purchase-orders`)}
@@ -99,7 +102,25 @@ export default function PurchaseOrderDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           {tCommon('back')}
         </Button>
+        {/* Same dialog the list uses, so a purchase is reversed one way. */}
+        {order.status !== 'cancelled' && (
+          <Button
+            variant="outline"
+            onClick={() => setIsCancelOpen(true)}
+            className="w-full md:w-auto h-9 gap-2 text-xs border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-950/30"
+          >
+            <Ban className="h-4 w-4" />
+            {t('cancel.action')}
+          </Button>
+        )}
       </div>
+
+      <CancelPurchaseDialog
+        purchase={order ? { id: order.id, po_number: order.po_number, status: order.status } : null}
+        open={isCancelOpen}
+        onOpenChange={setIsCancelOpen}
+        onCancelled={() => router.push(`/${lang}/procurement/purchase-orders`)}
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left column - Info card */}

@@ -18,7 +18,15 @@ import { Input } from '@/components/ui/input'
  * which the previous in-memory `useState(currentPage)` could do.
  */
 
-function useUrlState() {
+/**
+ * Reads and writes the list's URL state (page, search, filters).
+ *
+ * Exported because a list's own toolbar sometimes owns a filter this file does
+ * not know about — the purchase list's period, for one — and that filter has
+ * to end up in the same query string, with the same transition, as the search
+ * box beside it.
+ */
+export function useUrlState() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()

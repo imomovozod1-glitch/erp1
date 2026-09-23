@@ -176,8 +176,6 @@
     "tooManyAttempts": "Juda ko'p muvaffaqiyatsiz urinish. {minutes} daqiqadan so'ng qayta urinib ko'ring.",
     "accountDisabled": "Hisobingiz o'chirilgan. Administratoringizga murojaat qiling.",
     "tenantBlocked": "Kompaniya hisobi bloklangan yoki obuna muddati tugagan. Administrator bilan bog'laning.",
-    "wrongTenant": "Bu hisob ushbu kompaniyaga tegishli emas.",
-    "wrongTenantGoTo": "O'z kompaniyangiz manzilidan kiring:",
     "staffAccountAdmin": "Bu super-admin hisobi — u kompaniya paneliga kirmaydi.",
     "staffAccountSupport": "Bu qo'llab-quvvatlash xodimi hisobi — u kompaniya paneliga kirmaydi.",
     "staffAccountGoTo": "O'z portalingiz manzilidan kiring:",
@@ -470,6 +468,9 @@
     "orderAlreadyHasDelivery": "Bu sotuv buyurtmasiga ochiq yetkazma allaqachon mavjud. Avval uni bekor qiling yoki boshqa buyurtmani tanlang."
   },
   "sales": {
+    "balanceDebtors": "Qarzdorlar",
+    "balanceCreditors": "Haqdorlar",
+    "balanceZero": "Balansi 0",
     "title": "Sotuv",
     "orders": "Sotuvlar",
     "recentOrders": "Oxirgi sotuvlar",
@@ -702,6 +703,33 @@
     "selectAccountRequired": "Hisobni tanlang"
   },
   "procurement": {
+    "payment": {
+      "title": "To'lov",
+      "onAccount": "Qarzga",
+      "onAccountHint": "Pul hozir to'lanmaydi — summa ta'minotchi qarziga yoziladi.",
+      "paidHint": "{amount} kassadan chiqim sifatida yechiladi.",
+      "migrationRequired": "To'lovli xarid uchun ma'lumotlar bazasi migratsiyasi qo'llanishi kerak (migration_purchase_payment.sql). Hozircha xaridni qarzga saqlashingiz mumkin."
+    },
+    "cancel": {
+      "action": "Xaridni bekor qilish",
+      "title": "Xaridni bekor qilish",
+      "description": "{number} xaridi bekor qilinadi. Bu amalni qaytarib bo'lmaydi.",
+      "effectStock": "Qabul qilingan tovarlar omborchadan yechiladi",
+      "effectMoney": "To'langan summa kassaga qaytariladi",
+      "confirm": "Bekor qilish",
+      "done": "Xarid bekor qilindi",
+      "doneRefunded": "Xarid bekor qilindi. {amount} «{cashbox}» kassasiga qaytarildi.",
+      "forbidden": "Buning uchun ruxsatingiz yo'q",
+      "not_found": "Xarid topilmadi",
+      "already_cancelled": "Bu xarid allaqachon bekor qilingan",
+      "already_sold": "«{product}» tovari allaqachon sotilgan — bu xaridni bekor qilib bo'lmaydi. Ombor tuzatishi yoki ta'minotchiga qaytarishdan foydalaning.",
+      "insufficient_stock": "«{product}» tovari omborda yetarli emas — bu xaridni bekor qilib bo'lmaydi",
+      "rpc_missing": "Ma'lumotlar bazasi migratsiyasi qo'llanmagan (migration_purchase_payment.sql)"
+    },
+    "advancePaid": "Avans to'langan",
+    "advancePaidHint": "Ortiqcha to'landi — keyingi xaridga hisobga olinadi",
+    "balanceOwedHint": "Qabul qilingan tovarlar uchun to'lanmagan qoldiq",
+    "settled": "Hisob-kitob yopilgan",
     "title": "Ta'minot",
     "purchaseOrders": "Xarid buyurtmalari",
     "purchases": "Xaridlar",

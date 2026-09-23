@@ -12,7 +12,7 @@ import { invalidateCustomers } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
+import { TableSearch, TablePagination, TableFilterChips } from '@/components/shared/table-pagination'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -37,6 +37,8 @@ import { formatCurrency } from '@/lib/utils'
 interface CustomersTableProps {
   /** Only the current page's rows — the server applied search and paging. */
   customers: any[]
+  /** Active balance filter (`all` when none) — the server does the filtering. */
+  balance: string
   lang: string
   page: number
   pageSize: number
@@ -45,6 +47,7 @@ interface CustomersTableProps {
 }
 
 export function CustomersTable({
+  balance,
   customers,
   lang,
   page,
@@ -88,8 +91,21 @@ export function CustomersTable({
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between p-4 border-b">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
             <TableSearch />
+            {/* Who owes us, who is in credit, who is square. Server-side like
+                every other list filter — the balance is not a column, so the
+                matching ids are resolved before paging (getCustomersPage). */}
+            <TableFilterChips
+              param="balance"
+              value={balance}
+              options={[
+                { value: 'all', label: tCommon('all') },
+                { value: 'debtor', label: tSales('balanceDebtors') },
+                { value: 'creditor', label: tSales('balanceCreditors') },
+                { value: 'zero', label: tSales('balanceZero') },
+              ]}
+            />
           </div>
         <Table>
           <TableHeader>
@@ -141,7 +157,11 @@ export function CustomersTable({
                   <TableCell className="text-right tabular-nums">
                     {(() => {
                       const balance = (Number(customer.credit_balance) || 0) - (Number(customer.total_debt) || 0)
-                      if (balance === 0) return <span className="text-muted-foreground">—</span>
+                      // Zero is a real balance, not missing data: a dash read as
+                      // "unknown" on a row whose account is simply settled.
+                      if (balance === 0) {
+                        return <span className="text-muted-foreground tabular-nums">{formatCurrency(0)}</span>
+                      }
                       return (
                         <span className={`font-semibold ${balance > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                           {balance > 0 ? '+' : '-'}{formatCurrency(Math.abs(balance))}

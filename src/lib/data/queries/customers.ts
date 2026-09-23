@@ -115,10 +115,35 @@ export const getCachedCustomerDetails = unstable_cache(
  * CURRENT page — the previous version summed debt across every invoice in the
  * tenant on every page load.
  */
+export type CustomerBalanceFilter = 'debtor' | 'creditor' | 'zero'
+
 export async function getCustomersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
+  opts: {
+    page: number
+    pageSize: number
+    search?: string
+    ownerId?: string
+    /** Narrow to who owes us, who holds credit, or whose account is settled. */
+    balance?: CustomerBalanceFilter
+  }
 ): Promise<PageResult<any>> {
+  // Debt is not a column — it is what is still open on the customer's invoices,
+  // computed below — so a balance filter cannot be an `.eq()` on the paged
+  // query. The matching ids are worked out first, across the whole tenant, and
+  // the page is then taken from that set. The `own` scope still applies on top:
+  // queryPage narrows by assignee independently of this list.
+  let balanceIds: string[] | null = null
+  if (opts.balance) {
+    balanceIds = await customerIdsByBalance(tenantId, opts.balance)
+    // No matches at all. Returned here rather than passed down, because an
+    // empty `in` list is ignored by queryPage — which would show every
+    // customer instead of none.
+    if (balanceIds.length === 0) {
+      return { rows: [], total: 0, page: opts.page, pageSize: opts.pageSize, totalPages: 0 }
+    }
+  }
+
   const result = await queryPage<any>({
     table: 'customers',
     tenantId,
@@ -129,6 +154,7 @@ export async function getCustomersPage(
     searchColumns: ['name', 'email', 'phone'],
     orderBy: { column: 'created_at', ascending: false },
     ownerId: opts.ownerId,
+    ...(balanceIds ? { inFilters: { id: balanceIds } } : {}),
   })
 
   if (result.rows.length === 0) return result
@@ -152,6 +178,44 @@ export async function getCustomersPage(
     ...result,
     rows: result.rows.map((c) => ({ ...c, total_debt: debtByCustomer.get(c.id) || 0 })),
   }
+}
+
+/**
+ * Every customer whose balance matches, for the whole tenant.
+ *
+ * Balance is credit held minus debt outstanding, the same arithmetic the list
+ * and the totals card use — kept in one place so the filter can never disagree
+ * with the number printed on the row it filtered.
+ */
+async function customerIdsByBalance(
+  tenantId: string,
+  balance: CustomerBalanceFilter
+): Promise<string[]> {
+  const supabase = getCacheClient() as any
+  const [{ data: customers }, { data: unpaid }] = await Promise.all([
+    supabase.from('customers').select('id, credit_balance').eq('tenant_id', tenantId),
+    supabase
+      .from('invoices')
+      .select('customer_id, total_amount, paid_amount')
+      .eq('tenant_id', tenantId)
+      .not('status', 'in', '("paid","cancelled")'),
+  ])
+
+  const debtByCustomer = new Map<string, number>()
+  for (const inv of unpaid ?? []) {
+    if (!inv.customer_id) continue
+    const outstanding = (Number(inv.total_amount) || 0) - (Number(inv.paid_amount) || 0)
+    debtByCustomer.set(inv.customer_id, (debtByCustomer.get(inv.customer_id) || 0) + outstanding)
+  }
+
+  return (customers ?? [])
+    .filter((c: any) => {
+      const value = (Number(c.credit_balance) || 0) - (debtByCustomer.get(c.id) || 0)
+      if (balance === 'debtor') return value < 0
+      if (balance === 'creditor') return value > 0
+      return value === 0
+    })
+    .map((c: any) => c.id as string)
 }
 
 /**

@@ -57,11 +57,19 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
 
   // Only received goods are owed, and only expense rows are payments — see
   // src/lib/supplier-debt.ts (the dashboard and the cashbox use the same rule).
+  //
+  // The expense rows are picked out ONCE and used everywhere below. They used
+  // to be filtered for the total but not for the count beside it, nor for the
+  // payments tab — so a supplier with an income row tagged to them showed a
+  // payment count that did not match the sum, and that row was listed as a
+  // payment with a minus in front of it.
+  const payments = transactions.filter((tx) => tx.type === 'expense')
   const totalPurchases = purchaseOrders.reduce((sum, po) => sum + orderOwed(po), 0)
-  const totalPayments = transactions
-    .filter((tx) => tx.type === 'expense')
-    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0)
-  const outstandingDebt = supplierBalance(purchaseOrders, transactions)
+  const totalPayments = payments.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0)
+  const balance = supplierBalance(purchaseOrders, transactions)
+  // Positive: we owe them. Negative: we are in advance. Both were printed as
+  // "balance owed", so an advance read as a negative debt.
+  const isAdvance = balance < 0
 
   // Export to Excel function
   const handleExport = async () => {
@@ -144,17 +152,21 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('totalPaid')}</span>
             <h3 className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight mt-1">{formatCurrency(totalPayments)}</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('paymentsCount', { count: transactions.length })}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('paymentsCount', { count: payments.length })}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('balanceOwed')}</span>
-            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${outstandingDebt > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-              {formatCurrency(outstandingDebt)}
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
+              {isAdvance ? t('advancePaid') : t('balanceOwed')}
+            </span>
+            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${balance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+              {formatCurrency(Math.abs(balance))}
             </h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('tin')}: {supplier.tin || '—'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+              {balance === 0 ? t('settled') : isAdvance ? t('advancePaidHint') : t('balanceOwedHint')}
+            </span>
           </CardContent>
         </Card>
 
@@ -286,7 +298,13 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                       </TableRow>
                     ) : (
                       purchaseOrders.map((po, idx) => (
-                        <TableRow key={po.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                        <TableRow
+                          key={po.id}
+                          // The rows already looked clickable — they highlight
+                          // on hover — but went nowhere.
+                          className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
+                          onClick={() => router.push(`/${lang}/procurement/purchase-orders/${po.id}`)}
+                        >
                           <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                           <TableCell className="font-semibold text-slate-900 dark:text-slate-100">{po.po_number}</TableCell>
                           <TableCell className="text-right font-bold text-rose-600 dark:text-rose-400">{formatCurrency(po.total_amount)}</TableCell>
@@ -313,15 +331,19 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.length === 0 ? (
+                    {payments.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
                           {tc('noData')}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      transactions.map((tx, idx) => (
-                        <TableRow key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                      payments.map((tx, idx) => (
+                        <TableRow
+                          key={tx.id}
+                          className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
+                          onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}`)}
+                        >
                           <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                           <TableCell className="font-semibold text-slate-800 dark:text-slate-200">
                             {tx.category}

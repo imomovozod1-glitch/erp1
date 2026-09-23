@@ -20,20 +20,17 @@ export interface AssignedSupportAgent {
 export const getAssignedSupportAgent = unstable_cache(
   async (tenantId: string): Promise<AssignedSupportAgent | null> => {
     const supabase = getCacheClient() as any
+    // One round trip, not two: PostgREST follows tenants.support_agent_id and
+    // returns the agent inline. This runs while someone waits for the
+    // dashboard, where two chained Supabase calls are two chained network
+    // latencies for a strip showing a name and a phone number.
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('support_agent_id')
+      .select('support_agents(id, full_name, phone)')
       .eq('id', tenantId)
       .maybeSingle()
 
-    if (!tenant?.support_agent_id) return null
-
-    const { data: agent } = await supabase
-      .from('support_agents')
-      .select('id, full_name, phone')
-      .eq('id', tenant.support_agent_id)
-      .maybeSingle()
-
+    const agent = tenant?.support_agents
     if (!agent) return null
     return { id: agent.id, fullName: agent.full_name, phone: agent.phone }
   },

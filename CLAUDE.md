@@ -23,6 +23,8 @@ A Capacitor shell (`capacitor.config.ts`, `android/`, `ios/`) wraps the **live V
 - `npm run lint` — ESLint, includes React Compiler purity rules (see Gotchas)
 - `npm run apk` / `npm run apk:release` — Android build via `scripts/build-apk.sh` (macOS-only paths: Homebrew JDK, `~/Library/Android/sdk`)
 
+`vercel.json` pins the functions to **`hnd1` (Tokyo, `ap-northeast-1`)** — the region the Supabase project is in. Vercel defaults every new project to `iad1` (Washington), which put a trans-Pacific round trip on *every* query: a page render makes several sequential Supabase calls, so the distance was paid several times per navigation. Keep the two regions together; if the Supabase project ever moves, this moves with it (Hobby allows a single region).
+
 Required env (`.env.local`, git-ignored, documented in `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `TELEGRAM_MINIAPP_BOT_TOKEN`. Optional: `NEXT_PUBLIC_ROOT_DOMAIN` (default `falco.business`) plus `DOMAIN_API_TOKEN` / `DOMAIN_PROJECT_ID` / `DOMAIN_TEAM_ID`, which let provisioning register each tenant's host with Vercel (`src/lib/vercel-domains.ts`) — the Hobby plan has no wildcard domain, so a tenant subdomain is only served once it is added to the project by name. `lint-results.txt` in the repo root is a stale snapshot from another machine — don't treat it as current.
 
 ## Architecture

@@ -6,7 +6,8 @@ export interface ReportKpi {
   label: string
   value: string
   hint?: string
-  icon: LucideIcon
+  /** Optional: a tile reads fine without one, and profit is shown without. */
+  icon?: LucideIcon
 }
 
 /**
@@ -37,7 +38,7 @@ export function ReportKpis({ items }: { items: ReportKpi[] }) {
               <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {item.label}
               </p>
-              <Icon className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+              {Icon && <Icon className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />}
             </div>
             <p className="mt-2 truncate text-xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-slate-100">
               {item.value}
