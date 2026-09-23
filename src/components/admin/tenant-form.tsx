@@ -8,7 +8,7 @@ import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Building2, Globe, Phone, KeyRound, Layers, CalendarDays, Wallet, FileText, ReceiptText, IdCard, Users, LifeBuoy } from 'lucide-react'
+import { Loader2, Building2, Wallet, FileText, ReceiptText, LifeBuoy } from 'lucide-react'
 import { addMonths, DURATION_PRESETS, LICENSE_COUNT_PRESETS, PresetPicker } from '@/components/admin/preset-picker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -218,17 +218,13 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
       <form onSubmit={handleSubmit(onSubmit)}>
         <AdminFormSection icon={Building2} title={t('sectionBasics')} description={t('sectionBasicsHint')}>
           <AdminField>
-            <Label htmlFor="company_name" className="flex items-center gap-1.5">
-              <Building2 className="h-3.5 w-3.5 text-muted-foreground" /> {t('companyName')}
-            </Label>
+            <Label htmlFor="company_name">{t('companyName')}</Label>
             <Input id="company_name" placeholder={t('companyNamePlaceholder')} {...register('company_name')} />
             {errors.company_name && <p className="text-sm text-red-500">{errors.company_name.message}</p>}
           </AdminField>
 
           <AdminField>
-            <Label htmlFor="subdomain" className="flex items-center gap-1.5">
-              <Globe className="h-3.5 w-3.5 text-muted-foreground" /> {t('subdomain')}
-            </Label>
+            <Label htmlFor="subdomain">{t('subdomain')}</Label>
             <Input id="subdomain" placeholder={t('subdomainPlaceholder')} {...register('subdomain')} />
             {errors.subdomain ? (
               <p className="text-sm text-red-500">{errors.subdomain.message}</p>
@@ -238,9 +234,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
           </AdminField>
 
           <AdminField>
-            <Label htmlFor="phone" className="flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-muted-foreground" /> {t('phone')}
-            </Label>
+            <Label htmlFor="phone">{t('phone')}</Label>
             <Controller
               control={control}
               name="phone"
@@ -259,9 +253,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
 
           {mode === 'create' && (
             <AdminField>
-              <Label htmlFor="password" className="flex items-center gap-1.5">
-                <KeyRound className="h-3.5 w-3.5 text-muted-foreground" /> {t('password')}
-              </Label>
+              <Label htmlFor="password">{t('password')}</Label>
               <PasswordInput
                 id="password"
                 placeholder={t('passwordPlaceholder')}
@@ -284,18 +276,14 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
                 by migration_tenant_costing_lock.sql, but the operator still
                 needs to see which one a tenant runs on. */}
             <AdminField>
-              <Label className="flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
-              </Label>
+              <Label>{t('costingMethod')}</Label>
               <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
                 {tCosting(initialData.costing_method)}
               </div>
               <p className="text-xs text-muted-foreground">{tDetail('costingLockedHint')}</p>
             </AdminField>
             <AdminField>
-              <Label className="flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
-              </Label>
+              <Label>{t('subscriptionEnd')}</Label>
               <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
                 {initialData.subscription_ends_at ? formatDate(initialData.subscription_ends_at) : '—'}
               </div>
@@ -314,9 +302,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
         ) : (
           <AdminFormSection icon={ReceiptText} title={t('sectionSubscription')} description={t('sectionSubscriptionHint')}>
             <AdminField>
-              <Label className="flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-muted-foreground" /> {t('costingMethod')}
-              </Label>
+              <Label>{t('costingMethod')}</Label>
               <Controller
                 control={control}
                 name="costing_method"
@@ -339,9 +325,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
             </AdminField>
 
             <AdminField wide>
-              <Label className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseCount')}
-              </Label>
+              <Label>{t('licenseCount')}</Label>
               <Controller
                 control={control}
                 name="license_count"
@@ -358,9 +342,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
             </AdminField>
 
             <AdminField wide>
-              <Label className="flex items-center gap-1.5">
-                <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {t('licenseMonths')}
-              </Label>
+              <Label>{t('licenseMonths')}</Label>
               <Controller
                 control={control}
                 name="license_months"
@@ -378,9 +360,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
             </AdminField>
 
             <AdminField>
-              <Label htmlFor="subscription_started_at" className="flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionStart')}
-              </Label>
+              <Label htmlFor="subscription_started_at">{t('subscriptionStart')}</Label>
               <Controller
                 control={control}
                 name="subscription_started_at"
@@ -400,9 +380,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
             </AdminField>
 
             <AdminField>
-              <Label className="flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" /> {t('subscriptionEnd')}
-              </Label>
+              <Label>{t('subscriptionEnd')}</Label>
               {/* Computed from start date + duration preset above — not
                   directly editable, so it can never drift out of sync with
                   the chosen duration (see handleStartDateChange/applyDurationPreset). */}
@@ -415,9 +393,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
             </AdminField>
 
             <AdminField>
-              <Label htmlFor="price_paid" className="flex items-center gap-1.5">
-                <Wallet className="h-3.5 w-3.5 text-muted-foreground" /> {t('initialPayment')}
-              </Label>
+              <Label htmlFor="price_paid">{t('initialPayment')}</Label>
               <Controller
                 control={control}
                 name="price_paid"

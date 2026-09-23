@@ -17,7 +17,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Trash2, Sparkles, Upload, Loader2, Wallet } from 'lucide-react'
+import { Plus, Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
 import { cn, formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { unitAllowsDecimals } from '@/lib/units'
@@ -544,9 +544,7 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
       {items.length > 0 && (
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-3">
-            <Label className="flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5 text-muted-foreground" /> {t('payment.title')}
-            </Label>
+            <Label>{t('payment.title')}</Label>
             <div className="flex flex-wrap gap-1.5 rounded-lg bg-slate-100 p-1 w-fit dark:bg-slate-800">
               {([null, 'cash', 'card', 'transfer'] as const).map((method) => (
                 <button

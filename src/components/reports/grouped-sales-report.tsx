@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import { Coins, Layers, ShoppingBag, Users, Wallet } from 'lucide-react'
 import { ReportLayout, type ReportPeriod } from '@/components/reports/report-layout'
 import { ReportKpis } from '@/components/reports/report-kpis'
 import { DailySalesChart } from '@/components/reports/daily-sales-chart'
@@ -107,15 +106,14 @@ function Body({
     <>
       <ReportKpis
         items={[
-          { label: t('metric.revenue'), value: formatCurrency(totals.revenue), hint: periodLabel, icon: Coins },
-          { label: t('metric.orders'), value: formatNumber(totals.orders), hint: periodLabel, icon: ShoppingBag },
-          { label: t('metric.avgOrder'), value: formatCurrency(totals.avgCheck), hint: periodLabel, icon: Wallet },
-          { label: t('metric.avgItemsPerOrder'), value: totals.avgItemsPerCheck.toFixed(2), hint: periodLabel, icon: Layers },
+          { label: t('metric.revenue'), value: formatCurrency(totals.revenue), hint: periodLabel },
+          { label: t('metric.orders'), value: formatNumber(totals.orders), hint: periodLabel },
+          { label: t('metric.avgOrder'), value: formatCurrency(totals.avgCheck), hint: periodLabel },
+          { label: t('metric.avgItemsPerOrder'), value: totals.avgItemsPerCheck.toFixed(2), hint: periodLabel },
           {
             label: dimension === 'seller' ? t('activeSellers') : t('activeCustomers'),
             value: formatNumber(groups.length),
             hint: periodLabel,
-            icon: Users,
           },
         ]}
       />

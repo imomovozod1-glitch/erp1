@@ -8,7 +8,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, User, Phone, KeyRound } from 'lucide-react'
+import { Loader2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -91,17 +91,13 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
       <form onSubmit={handleSubmit(onSubmit)}>
         <AdminFormSection icon={User} title={t('sectionAgent')} description={t('sectionAgentHint')}>
           <AdminField>
-            <Label htmlFor="full_name" className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5 text-muted-foreground" /> {t('fullName')}
-            </Label>
+            <Label htmlFor="full_name">{t('fullName')}</Label>
             <Input id="full_name" {...register('full_name')} />
             {errors.full_name && <p className="text-sm text-red-500">{errors.full_name.message}</p>}
           </AdminField>
 
           <AdminField>
-            <Label htmlFor="phone" className="flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-muted-foreground" /> {t('phone')}
-            </Label>
+            <Label htmlFor="phone">{t('phone')}</Label>
             <Controller
               control={control}
               name="phone"
@@ -119,9 +115,7 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
           </AdminField>
 
           <AdminField>
-            <Label htmlFor="password" className="flex items-center gap-1.5">
-              <KeyRound className="h-3.5 w-3.5 text-muted-foreground" /> {t('password')}
-            </Label>
+            <Label htmlFor="password">{t('password')}</Label>
             <PasswordInput
               id="password"
               placeholder={t('passwordPlaceholder')}

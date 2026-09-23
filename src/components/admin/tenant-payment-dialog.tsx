@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { CalendarDays, IdCard, Loader2, Users, Wallet } from 'lucide-react'
+import { Loader2, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -114,9 +114,7 @@ export function TenantPaymentDialog({
 
         <div className="space-y-5">
           <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-muted-foreground" /> {tForm('licenseCount')}
-            </Label>
+            <Label>{tForm('licenseCount')}</Label>
             <PresetPicker
               value={licenseCount}
               options={LICENSE_COUNT_PRESETS}
@@ -126,9 +124,7 @@ export function TenantPaymentDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <IdCard className="h-3.5 w-3.5 text-muted-foreground" /> {tForm('licenseMonths')}
-            </Label>
+            <Label>{tForm('licenseMonths')}</Label>
             <PresetPicker
               value={months}
               options={DURATION_PRESETS}
@@ -140,17 +136,13 @@ export function TenantPaymentDialog({
 
           <div className="grid grid-cols-2 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm dark:border-slate-800 dark:bg-slate-800/50">
             <div>
-              <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                <CalendarDays className="h-3 w-3" /> {t('currentEnd')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('currentEnd')}</p>
               <p className="mt-0.5 font-semibold text-slate-700 dark:text-slate-300">
                 {tenant.subscription_ends_at ? formatDate(tenant.subscription_ends_at) : '—'}
               </p>
             </div>
             <div>
-              <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                <CalendarDays className="h-3 w-3" /> {t('newEnd')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('newEnd')}</p>
               <p className="mt-0.5 font-semibold text-violet-700 dark:text-violet-400">{formatDate(newEndsAt)}</p>
             </div>
           </div>

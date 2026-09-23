@@ -2,14 +2,6 @@
 
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import {
-  Coins,
-  Layers,
-  Package,
-  Receipt,
-  ShoppingBag,
-  Wallet,
-} from 'lucide-react'
 import { ReportLayout, type ReportPeriod } from '@/components/reports/report-layout'
 import { ReportKpis } from '@/components/reports/report-kpis'
 import { DailySalesChart } from '@/components/reports/daily-sales-chart'
@@ -97,15 +89,15 @@ function Body({
     <>
       <ReportKpis
         items={[
-          { label: t('metric.revenue'), value: formatCurrency(totals.revenue), hint: periodLabel, icon: Coins },
+          { label: t('metric.revenue'), value: formatCurrency(totals.revenue), hint: periodLabel },
           { label: t('metric.profit'), value: formatCurrency(totals.profit), hint: `${totals.margin.toFixed(1)}%` },
-          { label: t('metric.cost'), value: formatCurrency(totals.cost), hint: periodLabel, icon: Receipt },
-          { label: t('metric.orders'), value: formatNumber(totals.orders), hint: periodLabel, icon: ShoppingBag },
+          { label: t('metric.cost'), value: formatCurrency(totals.cost), hint: periodLabel },
+          { label: t('metric.orders'), value: formatNumber(totals.orders), hint: periodLabel },
           // The two "per receipt" figures the shop floor actually asks for:
           // how much a customer spends, and how many items they leave with.
-          { label: t('metric.avgOrder'), value: formatCurrency(totals.avgCheck), hint: periodLabel, icon: Wallet },
-          { label: t('metric.avgItemsPerOrder'), value: totals.avgItemsPerCheck.toFixed(2), hint: periodLabel, icon: Layers },
-          { label: t('metric.soldQty'), value: formatNumber(Math.round(totals.soldQty * 100) / 100), hint: periodLabel, icon: Package },
+          { label: t('metric.avgOrder'), value: formatCurrency(totals.avgCheck), hint: periodLabel },
+          { label: t('metric.avgItemsPerOrder'), value: totals.avgItemsPerCheck.toFixed(2), hint: periodLabel },
+          { label: t('metric.soldQty'), value: formatNumber(Math.round(totals.soldQty * 100) / 100), hint: periodLabel },
         ]}
       />
 

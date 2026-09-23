@@ -17,7 +17,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateEmployees, invalidateProfile } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
-import { Loader2, KeyRound } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { DatePicker } from '@/components/ui/date-picker'
 import type { Resolver } from 'react-hook-form'
 import { Textarea } from '@/components/ui/textarea'
@@ -433,9 +433,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
             </div>
             <p className="text-xs text-muted-foreground">{t('isPaidHint')}</p>
 
-            <Label className="flex items-center gap-1.5 pt-2">
-              <KeyRound className="h-3.5 w-3.5 text-muted-foreground" /> {t('systemAccess')}
-            </Label>
+            <Label className="pt-2">{t('systemAccess')}</Label>
 
             <div className="flex flex-wrap gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 p-1 w-fit">
               {(['none', 'link', 'create'] as const).map((mode) => (

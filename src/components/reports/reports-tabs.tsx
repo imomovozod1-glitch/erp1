@@ -3,17 +3,8 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import {
-  ArrowRight,
-  BarChart3,
-  Boxes,
-  Contact,
-  Layers,
-  Table2,
-  TrendingUp,
-  Users,
-  type LucideIcon,
-} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { ArrowRight, BarChart3, Boxes, Contact, Layers, Table2, TrendingUp, Users } from 'lucide-react'
 import { ReportBuilder } from '@/components/reports/report-builder'
 import { PageHeader } from '@/components/shared/page-header'
 
