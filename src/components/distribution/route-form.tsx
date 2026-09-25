@@ -10,7 +10,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateRoutes } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
-import { Trash2, Plus, Loader2, ArrowUp, ArrowDown } from 'lucide-react'
+import { Trash2, Loader2, ArrowUp, ArrowDown, Waypoints, MapPinOff } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { ItemPicker } from '@/components/shared/item-picker'
 import {
   Table,
   TableBody,
@@ -27,12 +28,23 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { WEEKDAY_KEYS } from '@/components/distribution/weekdays'
+import { RouteMap } from '@/components/distribution/route-map'
+import {
+  isRoutePlanError,
+  planAdHocRoute,
+  routeHoursMinutes,
+  routeKm,
+  routePlanErrorMessage,
+  type RouteGeometry,
+} from '@/lib/route-plan'
 
 export interface RouteCustomerOption {
   id: string
   name: string
   phone?: string | null
   address?: string | null
+  latitude?: number | null
+  longitude?: number | null
 }
 
 interface Stop {
@@ -40,6 +52,8 @@ interface Stop {
   name: string
   phone?: string | null
   address?: string | null
+  latitude?: number | null
+  longitude?: number | null
 }
 
 interface RouteFormProps {
@@ -61,6 +75,7 @@ interface RouteFormProps {
  */
 export function RouteForm({ initialData, initialStops, customers, lang, assignableUsers }: RouteFormProps) {
   const tCommon = useTranslations('common')
+  const tRoot = useTranslations()
   const t = useTranslations('distribution')
   const exitForm = useRouteModalExit(`/${lang}/distribution/routes`)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -75,9 +90,95 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
       name: s.customer?.name ?? '',
       phone: s.customer?.phone ?? null,
       address: s.customer?.address ?? null,
+      latitude: s.customer?.latitude ?? null,
+      longitude: s.customer?.longitude ?? null,
     }))
   )
-  const [picked, setPicked] = useState('')
+
+  /**
+   * The solved shape of the round, or null when it has not been solved since
+   * the stops last changed.
+   *
+   * Held next to the stop list rather than fetched on render: each solve is a
+   * metered Mapbox request (src/lib/mapbox.ts), so it happens when the user
+   * asks for it, and the result is saved onto the route so no one pays for it
+   * twice. `null` is the honest state — the map still shows the pins, just
+   * without a line, which is also what the user sees for a route saved before
+   * any of this existed.
+   */
+  const [plan, setPlan] = useState<{
+    geometry: RouteGeometry
+    distanceM: number
+    durationS: number
+    solver: 'mapbox' | 'local' | 'none'
+  } | null>(
+    initialData?.geometry && initialData?.optimized_at
+      ? {
+          geometry: initialData.geometry,
+          distanceM: initialData.distance_m ?? 0,
+          durationS: initialData.duration_s ?? 0,
+          solver: initialData.optimized_by ?? 'mapbox',
+        }
+      : null
+  )
+  const [isOptimizing, setIsOptimizing] = useState(false)
+
+  /** Stops that can actually be routed — a customer with no pin cannot be. */
+  const located = stops.filter(
+    (s) => typeof s.latitude === 'number' && typeof s.longitude === 'number'
+  )
+  const unlocatedCount = stops.length - located.length
+
+  /**
+   * Any change to the list invalidates the drawn line. Mirrors what the
+   * database does on its own side (distribution_route_stops_clear_geometry in
+   * migration_route_geometry.sql), so the form and a row edited elsewhere
+   * cannot disagree about whether the shape is current.
+   */
+  const editStops = (next: (current: Stop[]) => Stop[]) => {
+    setPlan(null)
+    setStops(next)
+  }
+
+  /**
+   * Orders the stops by driving time and draws the result.
+   *
+   * Nothing is saved here — this plans the list the user is looking at,
+   * including on a route that does not exist yet, and the order becomes real
+   * when the form is submitted like any other field.
+   */
+  const optimize = async () => {
+    if (located.length < 2) {
+      toast.error(t('routeErrorTooFewStops'))
+      return
+    }
+    setIsOptimizing(true)
+    try {
+      const result = await planAdHocRoute(
+        located.map((s) => ({ lng: s.longitude as number, lat: s.latitude as number })),
+        { optimize: true }
+      )
+      if (isRoutePlanError(result)) {
+        toast.error(routePlanErrorMessage(tRoot, result))
+        return
+      }
+      // Routed stops take the solved order; the ones with no pin keep their
+      // relative order and go to the end, where the courier can see they still
+      // need an address.
+      const reordered = result.order.map((index) => located[index])
+      const rest = stops.filter((s) => !located.includes(s))
+      setStops([...reordered, ...rest])
+      setPlan({
+        geometry: result.geometry,
+        distanceM: result.distanceM,
+        durationS: result.durationS,
+        solver: result.solver,
+      })
+      toast.success(t('routeOptimized'))
+    } finally {
+      setIsOptimizing(false)
+    }
+  }
 
   const schema = z.object({
     name: z.string().min(1, tCommon('required')),
@@ -99,24 +200,35 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
     },
   })
 
-  const addStop = () => {
-    if (!picked) return
-    if (stops.some((s) => s.customerId === picked)) {
+  /**
+   * One click puts the customer on the round, at the end — the same gesture the
+   * sales and production forms use. Unlike a product line there is no quantity
+   * to bump, so a customer already on the route is disabled in the list rather
+   * than re-addable, and carries the number of the stop they already are.
+   */
+  const addStop = (customerId: string) => {
+    if (stops.some((s) => s.customerId === customerId)) {
       toast.error(t('stopExists'))
-      return
+      return false
     }
-    const customer = customers.find((c) => c.id === picked)
-    if (!customer) return
-    setStops((current) => [
+    const customer = customers.find((c) => c.id === customerId)
+    if (!customer) return false
+    editStops((current) => [
       ...current,
-      { customerId: customer.id, name: customer.name, phone: customer.phone, address: customer.address },
+      {
+        customerId: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        address: customer.address,
+        latitude: customer.latitude ?? null,
+        longitude: customer.longitude ?? null,
+      },
     ])
-    setPicked('')
   }
 
   /** Visit order is the point of the list, so it is reordered, not just built. */
   const move = (index: number, delta: number) => {
-    setStops((current) => {
+    editStops((current) => {
       const next = [...current]
       const target = index + delta
       if (target < 0 || target >= next.length) return current
@@ -175,6 +287,27 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
       )
       if (stopsError) throw stopsError
 
+      // Geometry last. Inserting the stops above fires
+      // distribution_route_stops_clear_geometry (migration_route_geometry.sql),
+      // which blanks the shape — so writing it before this point would have it
+      // wiped by the very rows it describes.
+      if (plan) {
+        const { error: geometryError } = await supabase
+          .from('distribution_routes')
+          .update({
+            geometry: plan.geometry,
+            distance_m: plan.distanceM,
+            duration_s: plan.durationS,
+            optimized_at: new Date().toISOString(),
+            optimized_by: plan.solver === 'none' ? 'local' : plan.solver,
+          })
+          .eq('id', routeId)
+        // The round itself saved; only its picture did not. Not worth failing
+        // the whole submit over — the map simply shows pins until it is solved
+        // again.
+        if (geometryError) console.error('Route geometry not saved', geometryError)
+      }
+
       toast.success(tCommon('success'))
       await invalidateRoutes()
       clearPersistedForm(FORM_ID)
@@ -186,7 +319,10 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
     }
   }
 
-  const available = customers.filter((c) => !stops.some((s) => s.customerId === c.id))
+  // Everyone stays in the list. A customer already on the round is shown with
+  // the number of the stop they are, and disabled — which answers "is this one
+  // already on here, and where?" without scrolling down to the table.
+  const stopIndexById = new Map(stops.map((s, index) => [s.customerId, index + 1]))
 
   return (
     <Card className="border-0 shadow-sm">
@@ -277,27 +413,41 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
           </div>
 
           <div className="space-y-3">
-            <Label>{t('stops')} *</Label>
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="min-w-60 flex-1 space-y-1">
-                <Label className="text-xs">{t('stop')}</Label>
-                <Select value={picked} onValueChange={(val) => setPicked(val ?? '')}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={tCommon('select')}>
-                      {picked ? customers.find((c) => c.id === picked)?.name : tCommon('select')}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {available.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button type="button" variant="outline" onClick={addStop} disabled={!picked}>
-                <Plus className="mr-2 h-4 w-4" /> {t('addStop')}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label>{t('stops')} *</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={optimize}
+                disabled={isOptimizing || located.length < 2}
+                title={t('optimizeHint')}
+              >
+                {isOptimizing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Waypoints className="mr-2 h-4 w-4" />
+                )}
+                {t('optimize')}
               </Button>
             </div>
+            <ItemPicker
+              options={customers.map((c) => ({
+                id: c.id,
+                name: c.name,
+                keywords: c.phone ?? '',
+                meta:
+                  typeof c.latitude === 'number' && typeof c.longitude === 'number'
+                    ? c.address || c.phone || ''
+                    : t('stopNotLocated'),
+                badge: stopIndexById.get(c.id) ?? null,
+                disabled: stopIndexById.has(c.id),
+              }))}
+              onPick={(option) => addStop(option.id)}
+              placeholder={`${t('stop')}...`}
+              emptyLabel={tCommon('noData')}
+              hint={t('clickToAddStopHint')}
+            />
 
             <div className="overflow-x-auto rounded-lg border">
               <Table>
@@ -329,7 +479,17 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
                           )}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground">
-                          {stop.address || '—'}
+                          {typeof stop.latitude === 'number' && typeof stop.longitude === 'number' ? (
+                            stop.address || '—'
+                          ) : (
+                            <span
+                              className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400"
+                              title={t('stopNotLocatedHint')}
+                            >
+                              <MapPinOff className="h-3.5 w-3.5" />
+                              {t('stopNotLocated')}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -360,7 +520,7 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
                               variant="ghost"
                               size="sm"
                               onClick={() =>
-                                setStops((c) => c.filter((s) => s.customerId !== stop.customerId))
+                                editStops((c) => c.filter((s) => s.customerId !== stop.customerId))
                               }
                               className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
                             >
@@ -374,6 +534,46 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
                 </TableBody>
               </Table>
             </div>
+
+            {located.length > 0 && (
+              <div className="space-y-2">
+                {plan && (
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-slate-100 bg-slate-50 px-3.5 py-2.5 text-xs dark:border-slate-700 dark:bg-slate-800">
+                    <span className="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('routeSummary')}
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {t('routeDistance', { km: routeKm(plan.distanceM) })}
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {t('routeDuration', routeHoursMinutes(plan.durationS))}
+                    </span>
+                    {/* Above 12 stops Mapbox refuses to solve it and the order
+                        comes from our own straight-line pass — a weaker answer,
+                        so it says so rather than passing itself off as optimal. */}
+                    {plan.solver === 'local' && (
+                      <span className="text-amber-600 dark:text-amber-400">{t('routeApproximate')}</span>
+                    )}
+                  </div>
+                )}
+                {unlocatedCount > 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    {t('routeUnlocated', { count: unlocatedCount })}
+                  </p>
+                )}
+                <RouteMap
+                  stops={located.map((stop) => ({
+                    id: stop.customerId,
+                    name: stop.name,
+                    address: stop.address,
+                    latitude: stop.latitude ?? null,
+                    longitude: stop.longitude ?? null,
+                  }))}
+                  geometry={plan?.geometry ?? null}
+                  className="w-full h-96"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

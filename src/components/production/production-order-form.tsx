@@ -11,7 +11,7 @@ import { invalidateProductionOrders } from '@/lib/data/revalidate'
 import { saveProductionOrder, productionErrorMessage } from '@/lib/production-actions'
 import { businessRpcErrorMessage } from '@/lib/business-rpc'
 import { toast } from 'sonner'
-import { Trash2, Plus, Loader2 } from 'lucide-react'
+import { Trash2, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { ItemPicker } from '@/components/shared/item-picker'
 import { StatusBadge } from '@/components/shared/status-badge'
 import {
   Table,
@@ -52,6 +53,14 @@ export interface ProductionBomOption {
 interface Line {
   componentId: string
   quantity: number
+  /**
+   * Qo'shimcha xomashyo — added to this run by hand rather than carried in
+   * from the composition (supabase/migration_production_extra_materials.sql).
+   * It changes nothing about how the run is completed; it is what lets the
+   * quantity be re-scaled without throwing these lines away, and what lets the
+   * table show where each line came from.
+   */
+  isExtra: boolean
 }
 
 interface ProductionOrderFormProps {
@@ -106,10 +115,9 @@ export function ProductionOrderForm({
     (initialItems ?? []).map((item: any) => ({
       componentId: item.component_id,
       quantity: Number(item.quantity) || 0,
+      isExtra: Boolean(item.is_extra),
     }))
   )
-  const [pickedComponent, setPickedComponent] = useState('')
-  const [pickedQuantity, setPickedQuantity] = useState<number | ''>(1)
 
   const productById = useMemo(
     () => new Map(products.map((p) => [p.id, p])),
@@ -128,6 +136,7 @@ export function ProductionOrderForm({
     return (bom.items ?? []).map((item) => ({
       componentId: item.component_id,
       quantity: Number((Number(item.quantity) * batches).toFixed(3)),
+      isExtra: false,
     }))
   }
 
@@ -142,13 +151,22 @@ export function ProductionOrderForm({
     const next = !value || value === 'none' ? null : value
     setBomId(next ?? '')
     const chosen = boms.find((b) => b.id === next)
+    // The extras belong to this RUN, not to the composition, so swapping the
+    // recipe keeps them — except any that would now be the product itself,
+    // which the RPC refuses outright.
+    const keptExtras = lines.filter((l) => l.isExtra)
     if (!chosen) {
-      setLines([])
+      setLines(keptExtras)
       return
     }
     setProductId(chosen.product_id)
     setExtraCost(Number(chosen.extra_cost) || '')
-    setLines(deriveLines(chosen, Number(quantity) || 0))
+    setLines([
+      ...deriveLines(chosen, Number(quantity) || 0).filter(
+        (l) => !keptExtras.some((e) => e.componentId === l.componentId)
+      ),
+      ...keptExtras.filter((l) => l.componentId !== chosen.product_id),
+    ])
   }
 
   /**
@@ -162,24 +180,38 @@ export function ProductionOrderForm({
   const changeQuantity = (value: number | '') => {
     setQuantity(value)
     if (!bomId) return
-    setLines(deriveLines(boms.find((b) => b.id === bomId), Number(value) || 0))
+    // Only the recipe lines are re-derived. An extra was put on this run
+    // deliberately and at a quantity the user chose, so re-scaling the batch
+    // leaves it exactly where it is — before is_extra existed there was no way
+    // to tell it apart and it was silently thrown away here.
+    const keptExtras = lines.filter((l) => l.isExtra)
+    setLines([
+      ...deriveLines(boms.find((b) => b.id === bomId), Number(value) || 0).filter(
+        (l) => !keptExtras.some((e) => e.componentId === l.componentId)
+      ),
+      ...keptExtras,
+    ])
   }
 
-  const addLine = () => {
-    if (!pickedComponent) return
-    const qty = Number(pickedQuantity) || 0
-    if (qty <= 0) return
-    if (pickedComponent === productId) {
+  /**
+   * One click adds the material at a quantity of 1, and a second click on the
+   * same one bumps it — the gesture the sales form uses. Anything added here is
+   * an EXTRA by definition: the composition's own lines arrive through
+   * deriveLines, never through this.
+   */
+  const addComponent = (id: string) => {
+    if (id === productId) {
       toast.error(t('selfComponent'))
+      return false
+    }
+    const existing = lines.findIndex((l) => l.componentId === id)
+    if (existing >= 0) {
+      setLines((current) =>
+        current.map((line, idx) => (idx === existing ? { ...line, quantity: line.quantity + 1 } : line))
+      )
       return
     }
-    if (lines.some((l) => l.componentId === pickedComponent)) {
-      toast.error(t('componentExists'))
-      return
-    }
-    setLines((current) => [...current, { componentId: pickedComponent, quantity: qty }])
-    setPickedComponent('')
-    setPickedQuantity(1)
+    setLines((current) => [...current, { componentId: id, quantity: 1, isExtra: true }])
   }
 
   const componentsCost = lines.reduce(
@@ -216,7 +248,7 @@ export function ProductionOrderForm({
         extra_cost: Number(extraCost) || 0,
         notes: notes.trim() || null,
         assigned_to: assignedTo,
-        items: lines.map((l) => ({ component_id: l.componentId, quantity: l.quantity })),
+        items: lines.map((l) => ({ component_id: l.componentId, quantity: l.quantity, is_extra: l.isExtra })),
       })
       toast.success(tCommon('success'))
       await invalidateProductionOrders()
@@ -228,9 +260,14 @@ export function ProductionOrderForm({
     }
   }
 
-  const availableComponents = products.filter(
-    (p) => p.id !== productId && !lines.some((l) => l.componentId === p.id)
-  )
+  // Everything except the run's own output. Materials already on the list stay
+  // in the picker, badged with their quantity — clicking one again bumps it.
+  const availableComponents = products.filter((p) => p.id !== productId)
+  const recipeLines = lines.filter((l) => !l.isExtra)
+  const extraLines = lines.filter((l) => l.isExtra)
+  // Headed groups only when there is something to tell apart: with no
+  // composition every line is an addition, and a header saying so is noise.
+  const grouped = recipeLines.length > 0 && extraLines.length > 0
   // A run puts its output ON the shelf, and a service has no shelf — the RPC
   // would write stock onto a row the services constraint pins at zero. Services
   // stay available as COMPONENTS (subcontracted work), just not as the output.
@@ -316,33 +353,19 @@ export function ProductionOrderForm({
       <div className="space-y-3">
         <Label>{t('components')} *</Label>
         {bomId && <p className="text-[11px] leading-snug text-muted-foreground">{t('bomAppliedHint')}</p>}
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-60 flex-1 space-y-1">
-            <Label className="text-xs">{t('component')}</Label>
-            <Select value={pickedComponent} onValueChange={(val) => setPickedComponent(val ?? '')}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={tCommon('select')}>
-                  {pickedComponent ? productById.get(pickedComponent)?.name : tCommon('select')}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {availableComponents.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                    {isService(p) ? '' : ` — ${formatNumber(p.stock)} ${p.unit}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-28 space-y-1">
-            <Label className="text-xs">{tCommon('quantity')}</Label>
-            <NumericInput value={pickedQuantity} onChange={(val) => setPickedQuantity(val as any)} />
-          </div>
-          <Button type="button" variant="outline" onClick={addLine} disabled={!pickedComponent}>
-            <Plus className="mr-2 h-4 w-4" /> {t('addComponent')}
-          </Button>
-        </div>
+        <ItemPicker
+          options={availableComponents.map((p) => ({
+            id: p.id,
+            name: p.name,
+            meta: isService(p) ? tRoot('inventory.service') : `${t('available')}: ${formatNumber(p.stock)} ${p.unit}`,
+            trailing: formatCurrency(Number(p.cost_price) || 0),
+            badge: lines.find((l) => l.componentId === p.id)?.quantity ?? null,
+          }))}
+          onPick={(option) => addComponent(option.id)}
+          placeholder={`${t('extraMaterial')}...`}
+          emptyLabel={tCommon('noData')}
+          hint={t('clickToAddExtraHint')}
+        />
 
         <div className="overflow-x-auto rounded-lg border">
           <Table>
@@ -364,7 +387,26 @@ export function ProductionOrderForm({
                   </TableCell>
                 </TableRow>
               ) : (
-                lines.map((line) => {
+                (grouped
+                  ? [
+                      { key: 'recipe', label: t('fromBom'), rows: recipeLines },
+                      { key: 'extra', label: t('extraMaterials'), rows: extraLines },
+                    ]
+                  : [{ key: 'all', label: null as string | null, rows: lines }]
+                ).flatMap((group) => [
+                  ...(group.label
+                    ? [
+                        <TableRow key={`${group.key}-head`} className="bg-slate-50/70 dark:bg-slate-800/40">
+                          <TableCell
+                            colSpan={6}
+                            className="py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                          >
+                            {group.label}
+                          </TableCell>
+                        </TableRow>,
+                      ]
+                    : []),
+                  ...group.rows.map((line) => {
                   const product = productById.get(line.componentId)
                   const service = isService(product)
                   const short = !service && (Number(product?.stock) || 0) < line.quantity
@@ -418,7 +460,8 @@ export function ProductionOrderForm({
                       </TableCell>
                     </TableRow>
                   )
-                })
+                  }),
+                ])
               )}
             </TableBody>
           </Table>

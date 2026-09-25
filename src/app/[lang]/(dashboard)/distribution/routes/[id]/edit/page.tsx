@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { RouteForm } from '@/components/distribution/route-form'
 import { Metadata } from 'next'
 import { requireModuleEdit } from '@/lib/permissions-server'
-import { getCachedCustomersForSelect, getAssignableUsers, getCachedRouteDetails } from '@/lib/data/queries'
+import { getCachedCustomersForRouting, getAssignableUsers, getCachedRouteDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -25,7 +25,7 @@ export default async function EditRoutePage({
   const [t, tCommon, customers, assignableUsers, details] = await Promise.all([
     getTranslations('distribution'),
     getTranslations('common'),
-    getCachedCustomersForSelect(tenantId),
+    getCachedCustomersForRouting(tenantId),
     getAssignableUsers(tenantId),
     getCachedRouteDetails(id, tenantId),
   ])

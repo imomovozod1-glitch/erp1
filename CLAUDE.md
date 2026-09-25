@@ -25,7 +25,7 @@ A Capacitor shell (`capacitor.config.ts`, `android/`, `ios/`) wraps the **live V
 
 `vercel.json` pins the functions to **`hnd1` (Tokyo, `ap-northeast-1`)** — the region the Supabase project is in. Vercel defaults every new project to `iad1` (Washington), which put a trans-Pacific round trip on *every* query: a page render makes several sequential Supabase calls, so the distance was paid several times per navigation. Keep the two regions together; if the Supabase project ever moves, this moves with it (Hobby allows a single region).
 
-Required env (`.env.local`, git-ignored, documented in `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `TELEGRAM_MINIAPP_BOT_TOKEN`. Optional: `NEXT_PUBLIC_ROOT_DOMAIN` (default `falco.business`) plus `DOMAIN_API_TOKEN` / `DOMAIN_PROJECT_ID` / `DOMAIN_TEAM_ID`, which let provisioning register each tenant's host with Vercel (`src/lib/vercel-domains.ts`) — the Hobby plan has no wildcard domain, so a tenant subdomain is only served once it is added to the project by name. `lint-results.txt` in the repo root is a stale snapshot from another machine — don't treat it as current.
+Required env (`.env.local`, git-ignored, documented in `.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY`, `TELEGRAM_MINIAPP_BOT_TOKEN`, `MAPBOX_ACCESS_TOKEN`. Optional: `NEXT_PUBLIC_ROOT_DOMAIN` (default `falco.business`) plus `DOMAIN_API_TOKEN` / `DOMAIN_PROJECT_ID` / `DOMAIN_TEAM_ID`, which let provisioning register each tenant's host with Vercel (`src/lib/vercel-domains.ts`) — the Hobby plan has no wildcard domain, so a tenant subdomain is only served once it is added to the project by name. `lint-results.txt` in the repo root is a stale snapshot from another machine — don't treat it as current.
 
 ## Architecture
 
@@ -55,6 +55,17 @@ Required env (`.env.local`, git-ignored, documented in `.env.example`): `NEXT_PU
 - `profiles.role` (`admin`/`manager`/`staff`) plus `profiles.permissions` JSONB: `{ module: { view, create, edit, delete, export, approve, scope: 'all' | 'own' } }`. Role templates (`role_templates`) pre-fill it.
 - `src/lib/permissions.ts`: `can()` (admin always passes), `normaliseModulePermission` (upgrades the legacy `{view, edit}` shape). `src/lib/permissions-server.ts`: `canDo`, `getDataScope`, `requireModuleView` (called from each module's `layout.tsx`), `requireModuleEdit`, `requireAction`, `requireTenantAdmin`.
 - Tenant user management goes through `src/app/api/tenant/users/**` and `api/tenant/roles/**` (admin-only, service role).
+
+### Feature flags & release flow
+
+One deployment serves every tenant, so `main` deploying is every company getting the new code at once. `tenants.features` JSONB (`migration_tenant_features.sql`) is how a change reaches ONE company first: it ships switched off, the super-admin turns it on for the test company (admin → company → **Feature flags**), and only that subdomain takes the new path.
+
+- Registry: `src/lib/features.ts` — `FEATURE_FLAGS` (key → label + description), `normaliseFeatures`, `isFeatureOn`. Pure and client-safe. Adding a key is all that is needed for the admin toggle to appear; labels live in code, not `messages/*.json`, because a flag is temporary and only the platform operator sees it.
+- Reading: `hasFeature('x')` / `getCurrentTenantFeatures()` (`src/lib/features-server.ts`, off the `getCachedTenant` row — no extra query) in server code; `useFeature('x')` (`src/components/providers/features-provider.tsx`, fed once by the dashboard layout) in client components. Outside a tenant tree every flag reads as off, as it does on a database where the migration is not applied yet.
+- Writing: super-admin only, through `PATCH /api/admin/tenants/[id]` (`features`), which runs the payload through `normaliseFeatures` and clears the `tenant:<id>` tag. Tenant users can read their own row but have no column grant on it, so a tenant admin cannot switch a flag on for themselves.
+- NOT permissions: `permissions.ts` answers "may this USER do this?" and is permanent product configuration. A flag answers "is this code released to this COMPANY yet?" — delete the flag and its branch once the feature is on everywhere.
+
+The flow around it: work on `dev` → CI green (`.github/workflows/ci.yml`: `npm run lint`, `npx tsc --noEmit`, `npm run build` on every push/PR to `dev` and `main`) → PR `dev` into `main` → merge → production. `tsc --noEmit` in CI is not redundant with the Vercel build: `next.config.ts` sets `typescript.ignoreBuildErrors: true`, so a production build ships type errors happily, and CI is the only place they fail. Vercel builds a preview per `dev` push automatically, but tenant subdomains do NOT resolve on `*.vercel.app` (`getTenantSubdomain`, `src/lib/tenant-host.ts`) — the preview can only exercise `/admin`, `/support`, `/tg` and the bare host, which is why tenant-facing changes are checked on the flagged test company instead.
 
 ### Data layer & mutation pattern
 
@@ -95,6 +106,17 @@ API routes (`src/app/api/`) handle everything that needs the service role or a s
 - `src/lib/inventory-costing.ts` + `migration_inventory_costing.sql`: FIFO / LIFO / AVECO per tenant (`tenants.costing_method`), `inventory_cost_layers` per stock-in; `products.cost_price` kept as a weighted average.
 - `src/lib/finance-helpers.ts`: `adjustCashboxBalance(...)` (throws `InsufficientFundsError`; falls back to a `localStorage['erp_cashboxes']` mirror if Supabase fails), `applyCustomerCredit(...)`.
 - POS (`src/components/pos/`) shows the receipt immediately and saves in the background. Printing: `src/lib/printer/` builds ESC/POS bytes (58/80 mm, CP866 Cyrillic) and sends over WebUSB or Web Bluetooth, falling back to `window.print()`; config is per-device in `localStorage['erp_printer_config']`.
+
+### Maps & route planning
+
+Maps are Leaflet + `react-leaflet`; **Mapbox is used for routing only**, never for the basemap. Mapbox bills its raster tiles per tile REQUEST and one Leaflet viewport is 10–20 of them, so the 50 000 free allowance is roughly 3 000 map openings a month — the basemap has free alternatives, road geometry does not.
+
+- Basemap: `useTileConfig()` (`src/lib/map-tiles.ts`) answers a themed tile URL — CARTO's free light/dark raster pair, which is what gives the maps a dark mode. Every `<TileLayer>` in the app reads from it. Setting `NEXT_PUBLIC_MAPBOX_STYLE_TILES` + `NEXT_PUBLIC_MAPBOX_TILE_TOKEN` switches the basemap to Mapbox; `api.mapbox.com` is already in the CSP's `img-src` for that.
+- Routing: `src/lib/mapbox.ts` (`server-only`). `optimizeStops()` sends ≤ 12 points to Optimization v1 (its hard cap) and orders anything longer itself with nearest-neighbour + 2-opt on straight-line distance, then draws it with `getRouteGeometry()`, which chunks at the Directions cap of 25 with one overlapping point per seam. The `solver` field says which did it — `'local'` is the weaker answer and the UI labels it as approximate.
+- `MAPBOX_ACCESS_TOKEN` is **server-only on purpose**: every call runs in an API route, so `api.mapbox.com` never has to be opened in `connect-src` and the token is not in the client bundle. Without it the API routes answer `mapbox_not_configured` and routes still work, ordered by hand.
+- Two routes, both `getTenantContext()` + RBAC'd, both using the caller's own Supabase client so tenant RLS applies: `POST /api/distribution/routes/[id]/optimize` (`distribution.edit`, `own` scope honoured) re-orders a saved marshrut's stops and **persists** the result; `POST /api/distribution/directions` (`customers.view`) plans an ad-hoc round and stores nothing.
+- Caching is the cost control: `migration_route_geometry.sql` adds `geometry`/`distance_m`/`duration_s`/`optimized_at`/`optimized_by` to `distribution_routes`, so a company spends about one request per route EDIT rather than one per page view. A trigger on `distribution_route_stops` blanks them whenever the stops change, so a stale line is never drawn — which is why the route form writes geometry **after** the stops, never before.
+- Client side: `src/lib/route-plan.ts` (fetch wrappers, `toLeafletPath` for the GeoJSON `[lng,lat]` → Leaflet `[lat,lng]` flip, `routePlanErrorMessage(tRoot, error)`) and `<RouteMap>` (`src/components/distribution/route-map.tsx`, `ssr:false` wrapper like `all-customers-map.tsx`).
 
 ### Reports
 
@@ -145,6 +167,10 @@ Added by migrations:
 | `measurement_units` | `measurement_units` | Per-tenant units |
 | `integration_settings` | `integrations` | Telegram bot credentials |
 | `telegram_links` | `telegram_miniapp` | Telegram user → profile/tenant |
+| — (columns on `distribution_routes`) | `route_geometry` | Cached Mapbox route shape, distance and duration |
+| — (column on `production_order_items`) | `production_extra_materials` | `is_extra`: the line was added to this run by hand, not carried in from the composition |
+
+`migration_tenant_features.sql` adds `tenants.features` JSONB (see Feature flags & release flow) — readable by the tenant's own members, writable only with the service role.
 
 `migration_tenant_costing_lock.sql` makes `tenants.costing_method` immutable after creation (trigger, and revokes the tenant users' column grant). The admin tenant edit page therefore never shows it; the subscription there only moves through "Make payment" (`tenant-payment-dialog.tsx` → `POST /api/admin/tenants/[id]/payments`, which takes the term and seat count).
 
@@ -163,6 +189,7 @@ Functions (`migration_business_rpc.sql`): the money/stock entry points listed un
 ## Conventions
 
 - Path alias `@/*` → `src/*`.
+- **Line-item forms add by CLICK, not by a form row**: `<ItemPicker>` (`src/components/shared/item-picker.tsx`) is a search box whose list adds the clicked row immediately, at a quantity of 1 — a second click on the same one bumps it, and quantity/price are then edited inline in the lines table. Used by `sale-form.tsx` (where the pattern started), `bom-form.tsx`, `production-order-form.tsx`, `purchase-order-form.tsx` and `route-form.tsx` — every add-to-a-list form in the app goes through it. A row that cannot be added again (a route stop, which has no quantity) is `disabled` and badged with where it already is, rather than hidden from the list. Don't build another select → type a quantity → press "Add" row; `onPick` returning `false` keeps the list open for a refusal the user has to act on.
 - **Every delete asks first**: `const [confirmDelete, confirmDialog] = useConfirmDelete()` from `src/components/shared/confirm-dialog.tsx`, `if (!(await confirmDelete({ name }))) return` at the top of the handler, and `{confirmDialog}` anywhere in the component's JSX. Never `window.confirm`.
 - `src/components/ui/` (shadcn-based) — primitives only. Notably **missing**: `form.tsx`, `pagination.tsx`, `alert-dialog.tsx`, `toast.tsx` — forms use raw `react-hook-form` + manual error `<p>` tags; tables page server-side through `queryPage` + `src/components/shared/table-pagination.tsx` (see `AGENTS.md` § Table Interfaces).
 - Feature components are grouped by domain (`inventory/`, `sales/`, `hr/`, `finance/`, `procurement/`, `customers` pages, `pos/`, `reports/`, `settings/`, `support/`, `admin/`, `support-portal/`, `telegram/`, `dashboard/`, `layout/`), with `shared/` for cross-domain pieces (`PageHeader`, `StatsCard`, `StatusBadge`, `ImportExportMenu`, `AssigneeSelect`, `PeriodFilter`, `ThemeToggle`, …).

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { KeyRound, ShieldAlert, Receipt, Globe } from 'lucide-react'
+import { KeyRound, ShieldAlert, Receipt, Globe, FlaskConical } from 'lucide-react'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,7 +11,9 @@ import { DeleteTenantButton } from '@/components/admin/delete-tenant-button'
 import { ResetPasswordForm } from '@/components/admin/reset-password-form'
 import { PaymentHistory } from '@/components/admin/payment-history'
 import { TenantDomainCard } from '@/components/admin/tenant-domain-card'
+import { TenantFeaturesCard } from '@/components/admin/tenant-features-card'
 import { computeEffectiveStatus } from '@/lib/tenant-status'
+import { normaliseFeatures } from '@/lib/features'
 import { formatPhoneInput } from '@/lib/tenant-auth'
 import { getInitials } from '@/lib/utils'
 
@@ -114,6 +116,18 @@ export default async function TenantDetailPage({
         </CardHeader>
         <CardContent>
           <TenantDomainCard tenantId={tenant.id} />
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FlaskConical className="h-4 w-4 text-violet-600 dark:text-violet-400" /> {t('featuresTitle')}
+          </CardTitle>
+          <CardDescription>{t('featuresDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TenantFeaturesCard tenantId={tenant.id} features={normaliseFeatures(tenant.features)} />
         </CardContent>
       </Card>
 

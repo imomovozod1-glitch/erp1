@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { Resolver, Controller } from 'react-hook-form'
-import { formatCurrency, formatNumber } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,7 +12,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateBoms } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
-import { Trash2, Plus, Loader2 } from 'lucide-react'
+import { Trash2, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { ItemPicker } from '@/components/shared/item-picker'
 import {
   Table,
   TableBody,
@@ -90,8 +91,7 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
       quantity: Number(item.quantity) || 0,
     }))
   )
-  const [pickedComponent, setPickedComponent] = useState('')
-  const [pickedQuantity, setPickedQuantity] = useState<number | ''>(1)
+
 
   const schema = z.object({
     name: z.string().min(1, tCommon('required')),
@@ -136,20 +136,26 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
   const batchCost = componentsCost + extraCost
   const perUnitCost = outputQuantity > 0 ? batchCost / outputQuantity : 0
 
-  const addLine = () => {
-    if (!pickedComponent) return
-    const quantity = Number(pickedQuantity) || 0
-    if (quantity <= 0) return
-    if (pickedComponent === productId) {
+  /**
+   * One click adds the component, at a quantity of 1 — the same gesture the
+   * sales form uses. How much of it goes in is then typed in the table, next to
+   * the other lines and next to the running batch cost, which is where that
+   * number is actually decided. Clicking one already listed bumps it by one.
+   */
+  const addComponent = (id: string) => {
+    if (id === productId) {
       toast.error(t('selfComponent'))
+      return false
+    }
+    const existing = lines.findIndex((l) => l.componentId === id)
+    if (existing >= 0) {
+      setLines((current) =>
+        current.map((line, idx) => (idx === existing ? { ...line, quantity: line.quantity + 1 } : line))
+      )
       return
     }
-    if (lines.some((l) => l.componentId === pickedComponent)) {
-      toast.error(t('componentExists'))
-      return
-    }
-    const product = products.find((p) => p.id === pickedComponent)
-    if (!product) return
+    const product = products.find((p) => p.id === id)
+    if (!product) return false
     setLines((current) => [
       ...current,
       {
@@ -157,11 +163,16 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
         name: product.name,
         unit: product.unit,
         costPrice: Number(product.cost_price) || 0,
-        quantity,
+        quantity: 1,
       },
     ])
-    setPickedComponent('')
-    setPickedQuantity(1)
+  }
+
+  /** The missing half of the line CRUD: a quantity that can be corrected. */
+  const setLineQuantity = (componentId: string, quantity: number) => {
+    setLines((current) =>
+      current.map((line) => (line.componentId === componentId ? { ...line, quantity } : line))
+    )
   }
 
   const onSubmit = async (data: any) => {
@@ -215,9 +226,12 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
     }
   }
 
-  const availableComponents = products.filter(
-    (p) => p.id !== productId && !lines.some((l) => l.componentId === p.id)
-  )
+  // Everything except the recipe's own output — a product cannot be made out
+  // of itself. Components ALREADY on the list stay in the picker rather than
+  // disappearing from it: they carry a badge with their current quantity, and
+  // clicking one again bumps it, which is how the sales form behaves and what
+  // makes a second helping one click instead of a scroll down to the table.
+  const availableComponents = products.filter((p) => p.id !== productId)
   // The output of a recipe is stocked when a run completes, so it cannot be a
   // service — but a service may well be one of its components.
   const producibleProducts = products.filter((p) => !p.is_service)
@@ -308,32 +322,19 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
       {/* Components */}
       <div className="space-y-3">
         <Label>{t('components')} *</Label>
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-60 flex-1 space-y-1">
-            <Label className="text-xs">{t('component')}</Label>
-            <Select value={pickedComponent} onValueChange={(val) => setPickedComponent(val ?? '')}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={tCommon('select')}>
-                  {pickedComponent ? products.find((p) => p.id === pickedComponent)?.name : tCommon('select')}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {availableComponents.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name} — {formatCurrency(p.cost_price)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-28 space-y-1">
-            <Label className="text-xs">{tCommon('quantity')}</Label>
-            <NumericInput value={pickedQuantity} onChange={(val) => setPickedQuantity(val as any)} />
-          </div>
-          <Button type="button" variant="outline" onClick={addLine} disabled={!pickedComponent}>
-            <Plus className="mr-2 h-4 w-4" /> {t('addComponent')}
-          </Button>
-        </div>
+        <ItemPicker
+          options={availableComponents.map((p) => ({
+            id: p.id,
+            name: p.name,
+            meta: p.unit,
+            trailing: formatCurrency(p.cost_price),
+            badge: lines.find((l) => l.componentId === p.id)?.quantity ?? null,
+          }))}
+          onPick={(option) => addComponent(option.id)}
+          placeholder={`${t('component')}...`}
+          emptyLabel={tCommon('noData')}
+          hint={t('clickToAddComponentHint')}
+        />
 
         <div className="rounded-lg border overflow-x-auto">
           <Table>
@@ -358,7 +359,14 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
                   <TableRow key={line.componentId}>
                     <TableCell className="font-medium">{line.name}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatNumber(line.quantity)} {line.unit}
+                      <div className="ml-auto flex w-32 items-center gap-1.5">
+                        <NumericInput
+                          value={line.quantity}
+                          onChange={(val) => setLineQuantity(line.componentId, Number(val) || 0)}
+                          className="h-8 text-right"
+                        />
+                        <span className="shrink-0 text-xs text-muted-foreground">{line.unit}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{formatCurrency(line.costPrice)}</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">

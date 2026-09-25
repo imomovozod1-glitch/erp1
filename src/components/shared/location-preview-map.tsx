@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useTileConfig } from '@/lib/map-tiles'
 
 const pinIcon = L.divIcon({
   html: `<div class="flex items-center justify-center w-6 h-6 rounded-full bg-violet-600 shadow-lg border-2 border-white">
@@ -30,6 +31,7 @@ interface LocationPreviewMapProps {
  * there's no address/coordinates to show at all.
  */
 export function LocationPreviewMap({ address, latitude, longitude, onClick }: LocationPreviewMapProps) {
+  const tiles = useTileConfig()
   const hasCoords = typeof latitude === 'number' && typeof longitude === 'number'
   const [resolved, setResolved] = useState<{ lat: number; lng: number } | null>(
     hasCoords ? { lat: latitude, lng: longitude } : null
@@ -71,7 +73,7 @@ export function LocationPreviewMap({ address, latitude, longitude, onClick }: Lo
         className="w-full h-36 pointer-events-none"
         style={{ zIndex: 1 }}
       >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer url={tiles.url} maxZoom={tiles.maxZoom} />
         <Marker position={[resolved.lat, resolved.lng]} icon={pinIcon} />
       </MapContainer>
     </button>

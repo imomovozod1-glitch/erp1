@@ -8,9 +8,11 @@ import { HANDOFF_SKIP_COOKIE } from '@/lib/tenant-handoff'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { FeaturesProvider } from '@/components/providers/features-provider'
 import { OfflineBanner } from '@/components/shared/offline-banner'
 import { SubscriptionBanner } from '@/components/shared/subscription-banner'
 import { SUBSCRIPTION_WARNING_DAYS, daysUntil } from '@/lib/subscription'
+import { normaliseFeatures } from '@/lib/features'
 
 export default async function DashboardLayout({
   children,
@@ -100,20 +102,28 @@ export default async function DashboardLayout({
   const showSubscriptionWarning =
     endsAt !== null && daysLeft !== null && daysLeft >= 0 && daysLeft <= SUBSCRIPTION_WARNING_DAYS
 
+  // Read off the tenant row this layout already fetched rather than through
+  // getCurrentTenantFeatures(), which would be a second cached read of the same
+  // row. `{}` — every flag off — on a host with no company at all: a preview
+  // deployment, or the bare host where the handoff above was skipped.
+  const features = normaliseFeatures((tenant as { features?: unknown } | null)?.features)
+
   return (
-    <SidebarProvider defaultOpen={sidebarOpen}>
-      <AppSidebar lang={lang} profile={profile} />
-      <SidebarInset>
-        <AppHeader profile={profile} lang={lang} />
-        <main className="flex-1 p-6 pt-[calc(5.5rem+env(safe-area-inset-top))] bg-slate-50/50 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
-          <OfflineBanner />
-          {showSubscriptionWarning && (
-            <SubscriptionBanner daysLeft={daysLeft} endsAt={endsAt.slice(0, 10)} />
-          )}
-          {children}
-          {modal}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+    <FeaturesProvider features={features}>
+      <SidebarProvider defaultOpen={sidebarOpen}>
+        <AppSidebar lang={lang} profile={profile} />
+        <SidebarInset>
+          <AppHeader profile={profile} lang={lang} />
+          <main className="flex-1 p-6 pt-[calc(5.5rem+env(safe-area-inset-top))] bg-slate-50/50 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
+            <OfflineBanner />
+            {showSubscriptionWarning && (
+              <SubscriptionBanner daysLeft={daysLeft} endsAt={endsAt.slice(0, 10)} />
+            )}
+            {children}
+            {modal}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </FeaturesProvider>
   )
 }

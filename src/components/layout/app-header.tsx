@@ -18,6 +18,8 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
+import { StatusBadge } from '@/components/shared/status-badge'
+import { useFeature } from '@/components/providers/features-provider'
 import { useConfirm } from '@/components/shared/confirm-dialog'
 import { GlobalSearch } from '@/components/layout/global-search'
 import { formatDate, getInitials, isoDate } from '@/lib/utils'
@@ -53,6 +55,11 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
   const tCommon = useTranslations('common')
   const t = useTranslations('auth')
   const sidebarOffset = useSidebarOffset()
+  // The company the operator uses to try releases out before they reach real
+  // customers (src/lib/features.ts). Said out loud in the bar because this
+  // company sits on the same deployment and the same database as the live ones
+  // — without it, a test order looks exactly like a real one.
+  const isTestCompany = useFeature('test_company')
 
   const [notifications, setNotifications] = useState<any[]>([])
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -315,6 +322,8 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         permissions={(profile as any)?.permissions}
         userId={profile?.id ?? null}
       />
+
+      {isTestCompany && <StatusBadge label={tCommon('testCompany')} tone="amber" />}
 
       <div className="flex-1" />
 
