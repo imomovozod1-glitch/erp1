@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
-import { formatCurrency, formatNumber, isoDate } from '@/lib/utils'
+import { formatNumber, isoDate } from '@/lib/utils'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProductionOrders } from '@/lib/data/revalidate'
@@ -195,11 +195,16 @@ export function ProductionOrderForm({
 
   /**
    * One click adds the material at a quantity of 1, and a second click on the
-   * same one bumps it — the gesture the sales form uses. Anything added here is
-   * an EXTRA by definition: the composition's own lines arrive through
-   * deriveLines, never through this.
+   * same one bumps it — the gesture the sales form uses.
+   *
+   * `isExtra` comes from WHICH of the two pickers was used, so the distinction
+   * is made at the moment of adding rather than guessed afterwards: the left
+   * one adds to the run's recipe, the right one adds something this batch
+   * needed on top of it. Bumping an existing line leaves its flag alone — the
+   * line is already on the run, and a second click is about how much, not about
+   * where it came from.
    */
-  const addComponent = (id: string) => {
+  const addComponent = (id: string, isExtra: boolean) => {
     if (id === productId) {
       toast.error(t('selfComponent'))
       return false
@@ -211,15 +216,8 @@ export function ProductionOrderForm({
       )
       return
     }
-    setLines((current) => [...current, { componentId: id, quantity: 1, isExtra: true }])
+    setLines((current) => [...current, { componentId: id, quantity: 1, isExtra }])
   }
-
-  const componentsCost = lines.reduce(
-    (sum, l) => sum + (Number(productById.get(l.componentId)?.cost_price) || 0) * l.quantity,
-    0
-  )
-  const totalCost = componentsCost + (Number(extraCost) || 0)
-  const perUnit = (Number(quantity) || 0) > 0 ? totalCost / (Number(quantity) as number) : 0
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -263,6 +261,17 @@ export function ProductionOrderForm({
   // Everything except the run's own output. Materials already on the list stay
   // in the picker, badged with their quantity — clicking one again bumps it.
   const availableComponents = products.filter((p) => p.id !== productId)
+  // Both pickers offer the same catalogue; only what they do with a click
+  // differs. Stock is shown because a run is limited by it — cost is not,
+  // because what the batch really costs is only known when it is completed and
+  // the stock layers are drawn down, and a guess next to every line invites
+  // being read as a figure.
+  const pickerOptions = availableComponents.map((p) => ({
+    id: p.id,
+    name: p.name,
+    meta: isService(p) ? tRoot('inventory.service') : `${t('available')}: ${formatNumber(p.stock)} ${p.unit}`,
+    badge: lines.find((l) => l.componentId === p.id)?.quantity ?? null,
+  }))
   const recipeLines = lines.filter((l) => !l.isExtra)
   const extraLines = lines.filter((l) => l.isExtra)
   // Headed groups only when there is something to tell apart: with no
@@ -353,19 +362,32 @@ export function ProductionOrderForm({
       <div className="space-y-3">
         <Label>{t('components')} *</Label>
         {bomId && <p className="text-[11px] leading-snug text-muted-foreground">{t('bomAppliedHint')}</p>}
-        <ItemPicker
-          options={availableComponents.map((p) => ({
-            id: p.id,
-            name: p.name,
-            meta: isService(p) ? tRoot('inventory.service') : `${t('available')}: ${formatNumber(p.stock)} ${p.unit}`,
-            trailing: formatCurrency(Number(p.cost_price) || 0),
-            badge: lines.find((l) => l.componentId === p.id)?.quantity ?? null,
-          }))}
-          onPick={(option) => addComponent(option.id)}
-          placeholder={`${t('extraMaterial')}...`}
-          emptyLabel={tCommon('noData')}
-          hint={t('clickToAddExtraHint')}
-        />
+        {/* Two pickers, not one: which box a material is added from is what
+            decides whether it counts as part of the run's recipe or as
+            something this batch needed on top. The right-hand one is entirely
+            optional — a run with nothing extra simply never uses it. */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs">{t('component')}</Label>
+            <ItemPicker
+              options={pickerOptions}
+              onPick={(option) => addComponent(option.id, false)}
+              placeholder={`${t('component')}...`}
+              emptyLabel={tCommon('noData')}
+              hint={t('clickToAddComponentHint')}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">{t('extraMaterial')}</Label>
+            <ItemPicker
+              options={pickerOptions}
+              onPick={(option) => addComponent(option.id, true)}
+              placeholder={`${t('extraMaterial')}...`}
+              emptyLabel={tCommon('noData')}
+              hint={t('clickToAddExtraHint')}
+            />
+          </div>
+        </div>
 
         <div className="overflow-x-auto rounded-lg border">
           <Table>
@@ -374,15 +396,13 @@ export function ProductionOrderForm({
                 <TableHead>{t('component')}</TableHead>
                 <TableHead className="text-right tabular-nums">{t('required')}</TableHead>
                 <TableHead className="text-right tabular-nums">{t('available')}</TableHead>
-                <TableHead className="text-right tabular-nums">{t('unitCost')}</TableHead>
-                <TableHead className="text-right tabular-nums">{tCommon('total')}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {lines.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
                     {t('noComponents')}
                   </TableCell>
                 </TableRow>
@@ -398,7 +418,7 @@ export function ProductionOrderForm({
                     ? [
                         <TableRow key={`${group.key}-head`} className="bg-slate-50/70 dark:bg-slate-800/40">
                           <TableCell
-                            colSpan={6}
+                            colSpan={4}
                             className="py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                           >
                             {group.label}
@@ -441,12 +461,6 @@ export function ProductionOrderForm({
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatCurrency(Number(product?.cost_price) || 0)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums">
-                        {formatCurrency((Number(product?.cost_price) || 0) * line.quantity)}
-                      </TableCell>
                       <TableCell>
                         <Button
                           type="button"
@@ -467,37 +481,17 @@ export function ProductionOrderForm({
           </Table>
         </div>
 
-        {lines.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200/60 bg-linear-to-r from-slate-50 to-slate-100 p-4 shadow-inner dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/60">
-            <div className="flex flex-wrap gap-8">
-              <div className="space-y-1">
-                <span className="block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {t('totalCost')} · {t('estimated')}
-                </span>
-                <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                  {formatCurrency(totalCost)}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <span className="block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {t('perUnitCost')} · {t('estimated')}
-                </span>
-                <span className="text-lg font-bold tracking-tight text-violet-600 dark:text-violet-400">
-                  {formatCurrency(perUnit)}
-                </span>
-              </div>
-              {initialData?.status && (
-                <div className="space-y-1">
-                  <span className="block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {tCommon('status')}
-                  </span>
-                  <StatusBadge tone="amber" label={t(`status_${initialData.status}`)} />
-                </div>
-              )}
-            </div>
-            <p className="basis-full text-[11px] leading-snug text-slate-400 dark:text-slate-500">
-              {t('estimatedHint')}
-            </p>
+        {/* No cost estimate here on purpose. What a run costs is decided when
+            it is completed, out of the cost layers actually drawn down
+            (complete_production_order) — a figure computed from today's average
+            cost prices looks like an answer and is not one. The real numbers
+            are on the order's own page once it is finished. */}
+        {initialData?.status && (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200/60 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {tCommon('status')}
+            </span>
+            <StatusBadge tone="amber" label={t(`status_${initialData.status}`)} />
           </div>
         )}
       </div>
