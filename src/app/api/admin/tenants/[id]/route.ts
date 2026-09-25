@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
+import { normaliseFeatures } from '@/lib/features'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
@@ -25,6 +27,13 @@ const updateTenantSchema = z.object({
   subscription_ends_at: z.string().optional().nullable(),
   details: z.string().optional().nullable(),
   support_agent_id: z.string().uuid().nullable().optional(),
+  // Which unreleased features this one company gets
+  // (supabase/migration_tenant_features.sql). Any shape of object is accepted
+  // here and then put through normaliseFeatures below, which keeps only the
+  // keys the build actually knows and only `true` values — so a client cannot
+  // park arbitrary JSON on the row, and a flag deleted from the code is dropped
+  // rather than written back.
+  features: z.record(z.string(), z.boolean()).optional(),
 })
 
 const INACTIVITY_THRESHOLD_MS = 180 * 24 * 60 * 60 * 1000 // 180 days
@@ -66,6 +75,7 @@ export async function PATCH(
   if (input.subscription_ends_at !== undefined) update.subscription_ends_at = input.subscription_ends_at || null
   if (input.details !== undefined) update.details = input.details || null
   if (input.support_agent_id !== undefined) update.support_agent_id = input.support_agent_id || null
+  if (input.features !== undefined) update.features = normaliseFeatures(input.features)
 
   // Status is never set directly — it's purely date-derived (see
   // src/lib/tenant-status.ts). Editing the subscription term here can just
@@ -106,6 +116,13 @@ export async function PATCH(
     const message = error.code === '23505' ? 'Subdomain or phone already in use' : error.message
     return NextResponse.json({ error: message }, { status: 409 })
   }
+
+  // The company's own workspace reads this row through `getCachedTenant`, which
+  // holds it for 60 s under this tag — long enough that a feature flag flipped
+  // here, or a renamed company, would look like it had not saved. Cleared for
+  // every edit rather than only for the flags: they all come out of the same
+  // cached row.
+  revalidateTag(`tenant:${id}`, { expire: 0 })
 
   // Moving a tenant to another subdomain moves its host with it: the new one
   // is registered first, so a failure there leaves the company reachable at

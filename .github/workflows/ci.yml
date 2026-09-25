@@ -1,0 +1,61 @@
+# The gate between `dev` and production.
+#
+# Nothing here talks to Supabase or deploys anything — it answers one question:
+# does this commit still compile and lint? That is not redundant with the Vercel
+# build, because next.config.ts sets `typescript.ignoreBuildErrors: true`: a
+# production build succeeds and ships with type errors in it, so `tsc --noEmit`
+# below is the only thing in the pipeline that will ever fail on one.
+#
+# Release flow this belongs to:
+#   work on dev  ->  CI green  ->  check the Vercel preview of dev
+#   ->  PR dev into main  ->  CI green  ->  merge  ->  production
+#
+# See CLAUDE.md, "Release flow", for the feature-flag half of it — how a change
+# reaches one company before all of them.
+
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+# A second push to the same branch makes the first run's answer worthless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `ci`, not `install`: the lockfile decides, and a lockfile that has
+      # drifted from package.json fails here instead of resolving to something
+      # nobody tested.
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # The step the Vercel build cannot do for us — see the header.
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          # Placeholders on purpose: no page is rendered against a real database
+          # during the build, and putting live credentials in CI would hand every
+          # fork's pull request the production service-role key. The build only
+          # needs these to be present and well-formed.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_ROOT_DOMAIN: falco.business

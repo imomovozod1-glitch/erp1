@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
@@ -10,19 +10,19 @@ import { invalidateSale } from '@/lib/data/revalidate'
 import { createSaleRpc, SaleCreateError } from '@/lib/sale-create'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
+import { Trash2, ShoppingCart, Wallet, CreditCard, ArrowRightLeft, AlertTriangle } from 'lucide-react'
 import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { unitAllowsDecimals } from '@/lib/units'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { isService } from '@/lib/product-kind'
+import { ItemPicker } from '@/components/shared/item-picker'
 
 interface SaleFormProps {
   products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; is_service?: boolean }[]
@@ -293,60 +293,15 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [assignedTo, setAssignedTo] = useState<string | null>(null)
 
-  const [productSearch, setProductSearch] = useState('')
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const pickerRef = useRef<HTMLDivElement>(null)
-
-  // Click-outside and Escape close the list. Registered on the document rather
-  // than using the Popover primitive because the trigger here IS the text
-  // input: a popover would take focus off it and typing would stop working.
-  useEffect(() => {
-    if (!pickerOpen) return
-    const onPointerDown = (event: MouseEvent) => {
-      if (!pickerRef.current?.contains(event.target as Node)) setPickerOpen(false)
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setPickerOpen(false)
-    }
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [pickerOpen])
-
-  /**
-   * The pickable list. The whole catalogue is browsable by scrolling, capped at
-   * 200 rows so a tenant with thousands of products does not mint thousands of
-   * DOM nodes on every keystroke — past that, typing two letters is faster than
-   * scrolling anyway.
-   */
-  const pickable = useMemo(() => {
-    const needle = productSearch.trim().toLowerCase()
-    const matches = needle
-      ? products.filter(
-          (p) => p.name.toLowerCase().includes(needle) || (p.sku ?? '').toLowerCase().includes(needle)
-        )
-      : products
-    return matches.slice(0, 200)
-  }, [products, productSearch])
-
-  /** Picking a product ends the search: box emptied, list closed. */
-  const closePicker = () => {
-    setProductSearch('')
-    setPickerOpen(false)
-  }
-
   /**
    * One click adds the product — the same gesture as the POS grid, instead of
    * select → type a quantity → press Add for every line. Clicking one already
    * on the order bumps its quantity, which is what a second click means;
    * quantity and price are then edited in the table itself.
    *
-   * A refused click (nothing left on the shelf) leaves the list open and the
-   * search where it was: the cashier is still looking for something to sell,
-   * and closing it would make them start over.
+   * A refused click (nothing left on the shelf) returns `false`, which leaves
+   * the list open and the search where it was: the cashier is still looking for
+   * something to sell, and closing it would make them start over.
    */
   const addProduct = (product: (typeof products)[number]) => {
     const service = isService(product)
@@ -356,20 +311,19 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
       const next = items[existing].quantity + 1
       if (!service && next > product.stock) {
         toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
-        return
+        return false
       }
       setItems((prev) =>
         prev.map((item, idx) =>
           idx === existing ? { ...item, quantity: next, totalPrice: next * item.unitPrice } : item
         )
       )
-      closePicker()
       return
     }
 
     if (!service && product.stock < 1) {
       toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
-      return
+      return false
     }
     setItems((prev) => [
       ...prev,
@@ -382,7 +336,6 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
         totalPrice: product.price,
       },
     ])
-    closePicker()
   }
 
   /** Quantity and price are edited on the line; the row total follows both. */
@@ -584,72 +537,27 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
           <CardTitle className="text-base">{t('addItem')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="relative" ref={pickerRef}>
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={productSearch}
-              onChange={(e) => {
-                setProductSearch(e.target.value)
-                setPickerOpen(true)
-              }}
-              onFocus={() => setPickerOpen(true)}
-              onClick={() => setPickerOpen(true)}
-              placeholder={`${t('selectProduct')}...`}
-              className="h-9 pl-9"
-              role="combobox"
-              aria-expanded={pickerOpen}
-            />
-
-            {pickerOpen && (
-              /* Exactly three rows tall, then it scrolls. 172px = 3 x h-14 (56px)
-                 + the 2 dividers between them + the container's own 1px top and
-                 bottom border, because box-sizing is border-box. Fixed-height
-                 rows are what makes that arithmetic hold — with rows that size
-                 themselves to their text, "three rows" would drift with every
-                 long product name. */
-              <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[172px] overflow-y-auto rounded-lg border bg-white shadow-lg dark:bg-slate-900">
-                {pickable.length === 0 ? (
-                  <p className="p-6 text-center text-sm text-muted-foreground">{t('noProductsFound')}</p>
-                ) : (
-                  <ul className="divide-y">
-                    {pickable.map((p) => {
-                      const service = isService(p)
-                      const soldOut = !service && p.stock <= 0
-                      const inCart = items.find((i) => i.productId === p.id)
-                      return (
-                        <li key={p.id}>
-                          <button
-                            type="button"
-                            onClick={() => addProduct(p)}
-                            disabled={soldOut}
-                            className="flex h-14 w-full items-center justify-between gap-3 px-3 text-left transition-colors hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent dark:hover:bg-violet-950/20"
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-200">
-                                {p.name}
-                                {inCart && (
-                                  <span className="ml-2 rounded bg-violet-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
-                                    {inCart.quantity}
-                                  </span>
-                                )}
-                              </span>
-                              <span className="block text-xs text-muted-foreground">
-                                {service ? tInventory('service') : `${t('availableStock')}: ${p.stock} ${p.unit}`}
-                              </span>
-                            </span>
-                            <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                              {formatCurrency(p.price)}
-                            </span>
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-          <p className="text-[11px] leading-snug text-muted-foreground">{t('clickToAddHint')}</p>
+          <ItemPicker
+            options={products.map((p) => {
+              const service = isService(p)
+              return {
+                id: p.id,
+                name: p.name,
+                keywords: p.sku ?? '',
+                meta: service ? tInventory('service') : `${t('availableStock')}: ${p.stock} ${p.unit}`,
+                trailing: formatCurrency(p.price),
+                badge: items.find((i) => i.productId === p.id)?.quantity ?? null,
+                disabled: !service && p.stock <= 0,
+              }
+            })}
+            onPick={(option) => {
+              const product = products.find((p) => p.id === option.id)
+              return product ? addProduct(product) : false
+            }}
+            placeholder={`${t('selectProduct')}...`}
+            emptyLabel={t('noProductsFound')}
+            hint={t('clickToAddHint')}
+          />
         </CardContent>
       </Card>
 

@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { RouteForm } from '@/components/distribution/route-form'
 import { Metadata } from 'next'
-import { getCachedCustomersForSelect, getAssignableUsers } from '@/lib/data/queries'
+import { getCachedCustomersForRouting, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireModuleEdit } from '@/lib/permissions-server'
 
@@ -19,7 +19,7 @@ export default async function NewRoutePage({ params }: { params: Promise<{ lang:
   const [t, tCommon, customers, assignableUsers] = await Promise.all([
     getTranslations('distribution'),
     getTranslations('common'),
-    getCachedCustomersForSelect(tenantId),
+    getCachedCustomersForRouting(tenantId),
     getAssignableUsers(tenantId),
   ])
 

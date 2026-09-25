@@ -5,6 +5,7 @@ import { Loader2, MapPin, ExternalLink, AlertCircle } from 'lucide-react'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useTileConfig } from '@/lib/map-tiles'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
@@ -34,6 +35,7 @@ interface LocationMapDialogProps {
  * records saved before coordinates were captured.
  */
 export function LocationMapDialog({ open, onOpenChange, address, latitude, longitude, title, lang }: LocationMapDialogProps) {
+  const tiles = useTileConfig()
   const hasCoords = typeof latitude === 'number' && typeof longitude === 'number'
   const [resolved, setResolved] = useState<{ lat: number; lng: number } | null>(hasCoords ? { lat: latitude, lng: longitude } : null)
   const [isResolving, setIsResolving] = useState(!hasCoords)
@@ -124,8 +126,9 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
                 style={{ zIndex: 1 }}
               >
                 <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+                  url={tiles.url}
+                  attribution={tiles.attribution}
+                  maxZoom={tiles.maxZoom}
                 />
                 <Marker position={[resolved.lat, resolved.lng]} icon={pinIcon} />
               </MapContainer>

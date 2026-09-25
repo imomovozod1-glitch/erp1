@@ -224,7 +224,20 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
                       : Number(item.component?.cost_price) || 0
                     return (
                       <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.component?.name ?? '—'}</TableCell>
+                        <TableCell className="font-medium">
+                          {item.component?.name ?? '—'}
+                          {/* Where the line came from: the composition, or this
+                              run's own addition (is_extra). Consumption is
+                              identical either way — this only says why it is
+                              here. A badge rather than a second table, because
+                              the order the components are listed in is still
+                              the recipe's. */}
+                          {item.is_extra && (
+                            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                              {t('extraMaterialShort')}
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {formatNumber(Number(item.quantity))} {item.component?.unit}
                         </TableCell>

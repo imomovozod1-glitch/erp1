@@ -17,9 +17,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
-import { cn, formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
+import { Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
+import { cn, formatCurrency, formatNumber, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { ItemPicker } from '@/components/shared/item-picker'
 import { unitAllowsDecimals } from '@/lib/units'
 
 interface PurchaseOrderFormProps {
@@ -65,36 +66,47 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | null>(null)
   const [items, setItems] = useState<LineItem[]>([])
 
-  // Temp item state
-  const [selectedProductId, setSelectedProductId] = useState('')
-  const [tempQty, setTempQty] = useState<number | ''>(1)
-  const [tempUnitCost, setTempUnitCost] = useState<number | ''>('')
-
-  const handleProductChange = (productId: string) => {
-    setSelectedProductId(productId)
+  /**
+   * One click adds the product at a quantity of 1, priced at what it last cost;
+   * a second click on the same one bumps it. Quantity and the actual invoice
+   * price are then corrected in the table, where they sit next to the running
+   * total that the supplier's bill has to match.
+   *
+   * Only MATCHED lines are bumped. A scanned invoice can leave rows with no
+   * productId at all (see handleScanInvoice), and two of those are two
+   * different unrecognised names, not one thing twice.
+   */
+  const addItem = (productId: string) => {
     const product = products.find(p => p.id === productId)
-    if (product) {
-      setTempUnitCost(product.cost_price)
+    if (!product) return false
+
+    const existing = items.findIndex(i => i.productId === productId)
+    if (existing >= 0) {
+      setItems(prev => prev.map((item, idx) =>
+        idx === existing
+          ? { ...item, quantity: item.quantity + 1, totalCost: (item.quantity + 1) * item.unitCost }
+          : item
+      ))
+      return
     }
-  }
 
-  const addItem = () => {
-    const qty = Number(tempQty) || 0
-    const cost = Number(tempUnitCost) || 0
-    if (!selectedProductId || qty <= 0) return
-    const product = products.find(p => p.id === selectedProductId)
-    if (!product) return
-
+    const cost = Number(product.cost_price) || 0
     setItems(prev => [...prev, {
       productId: product.id,
       productName: product.name,
-      quantity: qty,
+      quantity: 1,
       unitCost: cost,
-      totalCost: qty * cost,
+      totalCost: cost,
     }])
-    setSelectedProductId('')
-    setTempQty(1)
-    setTempUnitCost('')
+  }
+
+  /** The missing half of the line CRUD: quantity and price, correctable. */
+  const updateItem = (index: number, patch: Partial<LineItem>) => {
+    setItems(prev => prev.map((item, idx) => {
+      if (idx !== index) return item
+      const next = { ...item, ...patch }
+      return { ...next, totalCost: next.quantity * next.unitCost }
+    }))
   }
 
   const removeItem = (index: number) => {
@@ -416,49 +428,20 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
           <CardTitle className="text-base">{t('addItem')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-50 space-y-1">
-              <Label className="text-xs">{t('selectProduct')}</Label>
-              <Select value={selectedProductId} onValueChange={(val) => handleProductChange(val || '')}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={tCommon('select')}>
-                    {selectedProductId ? products.find((p) => p.id === selectedProductId)?.name : tCommon('select')}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-24 space-y-1">
-              <Label className="text-xs">{t('quantity')}</Label>
-              <NumericInput
-                value={tempQty}
-                onChange={(val) => setTempQty(val)}
-                allowDecimals={unitAllowsDecimals(products.find(p => p.id === selectedProductId)?.unit)}
-                className="h-9"
-              />
-            </div>
-            <div className="w-32 space-y-1">
-              <Label className="text-xs">{t('unitCost')}</Label>
-              <NumericInput
-                value={tempUnitCost}
-                onChange={(val) => setTempUnitCost(val)}
-                className="h-9"
-              />
-            </div>
-            <Button
-              type="button"
-              onClick={addItem}
-              size="sm"
-              className="h-9 bg-violet-600 hover:bg-violet-500"
-              disabled={!selectedProductId}
-            >
-              <Plus className="h-4 w-4 mr-1" /> {t('addItem')}
-            </Button>
-          </div>
+          <ItemPicker
+            options={products.map((p) => ({
+              id: p.id,
+              name: p.name,
+              keywords: p.sku ?? '',
+              meta: `${t('quantity')}: ${formatNumber(Number(p.stock) || 0)} ${p.unit ?? ''}`.trim(),
+              trailing: formatCurrency(Number(p.cost_price) || 0),
+              badge: items.find((i) => i.productId === p.id)?.quantity ?? null,
+            }))}
+            onPick={(option) => addItem(option.id)}
+            placeholder={`${t('selectProduct')}...`}
+            emptyLabel={tCommon('noData')}
+            hint={t('clickToAddItemHint')}
+          />
         </CardContent>
       </Card>
 
@@ -512,8 +495,30 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.unitCost)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="ml-auto w-24">
+                        <NumericInput
+                          value={item.quantity}
+                          onChange={(val) => updateItem(idx, { quantity: Number(val) || 0 })}
+                          allowDecimals={unitAllowsDecimals(
+                            products.find((p) => p.id === item.productId)?.unit
+                          )}
+                          className="h-8 text-right"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {/* The invoice price, not the catalogue one: what a
+                          supplier charges moves between deliveries, and
+                          re-adding the whole line was the only way to say so. */}
+                      <div className="ml-auto w-32">
+                        <NumericInput
+                          value={item.unitCost}
+                          onChange={(val) => updateItem(idx, { unitCost: Number(val) || 0 })}
+                          className="h-8 text-right"
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(item.totalCost)}</TableCell>
                     <TableCell>
                       <Button

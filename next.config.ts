@@ -9,13 +9,20 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 // those allowances, object-src/base-uri/frame-ancestors/form-action still
 // close off plugin-based injection, <base>-tag hijacking, clickjacking, and
 // XSS-driven form exfiltration — and connect-src/img-src are pinned to the
-// app's actual external dependencies (Supabase, OpenStreetMap tiles/geocoding)
-// instead of left wide open.
+// app's actual external dependencies (Supabase, basemap tiles, OpenStreetMap
+// geocoding) instead of left wide open.
+//
+// Mapbox is deliberately NOT in connect-src: route planning calls it from the
+// server (src/lib/mapbox.ts, behind /api/distribution/**), so the token never
+// reaches the browser. api.mapbox.com is allowed in img-src only, and only so
+// that NEXT_PUBLIC_MAPBOX_STYLE_TILES can switch the basemap over without a
+// config change (src/lib/map-tiles.ts) — the default basemap is CARTO's free
+// light/dark pair, which is what gives the maps a dark theme.
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.supabase.co https://*.tile.openstreetmap.org",
+  "img-src 'self' data: blob: https://*.supabase.co https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://api.mapbox.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://nominatim.openstreetmap.org",
   "frame-ancestors 'none'",

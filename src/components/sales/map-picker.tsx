@@ -6,6 +6,7 @@ import { Search, MapPin, Loader2, Navigation } from 'lucide-react'
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useTileConfig } from '@/lib/map-tiles'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -54,6 +55,7 @@ function MapController({
 
 export function MapPicker({ onLocationSelect, initialAddress, initialLat, initialLng }: MapPickerProps) {
   const t = useTranslations('sales.locationPicker')
+  const tiles = useTileConfig()
   const mapRef = useRef<L.Map | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
@@ -200,8 +202,9 @@ export function MapPicker({ onLocationSelect, initialAddress, initialLat, initia
           style={{ zIndex: 1 }}
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+            url={tiles.url}
+            attribution={tiles.attribution}
+            maxZoom={tiles.maxZoom}
           />
           <Marker
             position={[coords.lat, coords.lng]}

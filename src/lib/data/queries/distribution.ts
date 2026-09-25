@@ -46,7 +46,7 @@ export const getCachedRouteDetails = unstable_cache(
       supabase.from('distribution_routes').select(ROUTE_SELECT).eq('id', id).eq('tenant_id', tenantId).maybeSingle(),
       supabase
         .from('distribution_route_stops')
-        .select('*, customer:customers(id, name, phone, address)')
+        .select('*, customer:customers(id, name, phone, address, latitude, longitude)')
         .eq('route_id', id)
         .eq('tenant_id', tenantId)
         .order('position'),
@@ -55,6 +55,35 @@ export const getCachedRouteDetails = unstable_cache(
   },
   ['route-details-by-id'],
   { tags: [CACHE_TAGS.routes, CACHE_TAGS.customers], revalidate: 30 }
+)
+
+/**
+ * Customers for the route form's stop picker.
+ *
+ * Deliberately not getCachedCustomersForSelect: that one is `id, name` and is
+ * used by half the forms in the app, while a marshrut stop is only useful if
+ * it can be put on a map — so this carries the pin as well, and the picker can
+ * say which customers have no address saved yet.
+ */
+export const getCachedCustomersForRouting = unstable_cache(
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const { data } = await supabase
+      .from('customers')
+      .select('id, name, phone, address, latitude, longitude')
+      .eq('tenant_id', tenantId)
+      .order('name')
+    return (data ?? []) as {
+      id: string
+      name: string
+      phone: string | null
+      address: string | null
+      latitude: number | null
+      longitude: number | null
+    }[]
+  },
+  ['customers-routing'],
+  { tags: [CACHE_TAGS.customers], revalidate: 120 }
 )
 
 /** Active routes for the delivery form's picker. */
