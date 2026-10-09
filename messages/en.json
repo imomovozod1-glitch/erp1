@@ -1046,6 +1046,7 @@
     "orderSuccess": "Sale completed successfully!",
     "cashier": "Cashier",
     "noProducts": "No products found",
+    "showMore": "Show more",
     "insufficientStock": "Insufficient stock in warehouse!",
     "addCustomer": "Add Customer",
     "customerName": "Customer Name",

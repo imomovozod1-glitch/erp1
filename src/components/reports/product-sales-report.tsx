@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import dynamic from 'next/dynamic'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ReportLayout, type ReportPeriod } from '@/components/reports/report-layout'
 import { ReportKpis } from '@/components/reports/report-kpis'
-import { DailySalesChart } from '@/components/reports/daily-sales-chart'
 import { ReportTable } from '@/components/reports/report-table'
 import {
   computeTotals,
@@ -17,6 +18,13 @@ import {
   type SalesOrderRow,
 } from '@/lib/reports/sales-analytics'
 import { cn, formatCurrency, formatNumber } from '@/lib/utils'
+
+// recharts is the bulk of this page's JavaScript and the chart is client-only
+// anyway (ResponsiveContainer measures the DOM), so it is fetched on its own.
+const DailySalesChart = dynamic(
+  () => import('@/components/reports/daily-sales-chart').then((m) => m.DailySalesChart),
+  { ssr: false, loading: () => <Skeleton className="h-[400px] w-full rounded-xl" /> }
+)
 
 /** How many units still counts as "barely moving" in the period. */
 const MOVEMENT_THRESHOLDS = [0, 3, 10] as const

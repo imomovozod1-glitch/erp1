@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination, TableFilterSelect } from '@/components/shared/table-pagination'
+import { EmployeeImportExport } from '@/components/hr/employee-import-export'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -33,6 +34,8 @@ interface EmployeesTableProps {
   totalPages: number
   status: 'all' | 'hired' | 'not_hired'
   paid: 'all' | 'paid' | 'free'
+  /** Whether the user may export — shows the Excel import/export menu. */
+  canExport?: boolean
 }
 
 export function EmployeesTable({
@@ -44,6 +47,7 @@ export function EmployeesTable({
   totalPages,
   status,
   paid,
+  canExport = false,
 }: EmployeesTableProps) {
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
@@ -57,7 +61,8 @@ export function EmployeesTable({
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-        <div className="flex flex-wrap items-center gap-2 border-b p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center gap-3">
           <TableSearch />
           <TableFilterSelect
             param="status"
@@ -79,6 +84,10 @@ export function EmployeesTable({
               { value: 'free', label: t('notSubscribed') },
             ]}
           />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {canExport && <EmployeeImportExport employees={employees} lang={lang} />}
+          </div>
         </div>
         <Table>
           <TableHeader>
@@ -93,7 +102,7 @@ export function EmployeesTable({
               <TableHead className="hidden md:table-cell">{t('hiredAt')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead>{t('subscription')}</TableHead>
-              <TableHead className="w-12.5"></TableHead>
+              <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>

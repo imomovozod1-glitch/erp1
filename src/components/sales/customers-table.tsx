@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination, TableFilterChips } from '@/components/shared/table-pagination'
+import { CustomerImportExport } from '@/components/sales/customer-import-export'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -44,10 +45,13 @@ interface CustomersTableProps {
   pageSize: number
   total: number
   totalPages: number
+  /** Whether the user may export — shows the Excel import/export menu. */
+  canExport?: boolean
 }
 
 export function CustomersTable({
   balance,
+  canExport = false,
   customers,
   lang,
   page,
@@ -91,7 +95,8 @@ export function CustomersTable({
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+            <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
             {/* Who owes us, who is in credit, who is square. Server-side like
                 every other list filter — the balance is not a column, so the
@@ -106,6 +111,10 @@ export function CustomersTable({
                 { value: 'zero', label: tSales('balanceZero') },
               ]}
             />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {canExport && <CustomerImportExport customers={customers} lang={lang} />}
+            </div>
           </div>
         <Table>
           <TableHeader>

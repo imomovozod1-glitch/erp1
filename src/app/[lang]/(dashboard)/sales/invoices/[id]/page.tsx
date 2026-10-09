@@ -36,35 +36,34 @@ import { effectiveInvoiceStatus, invoiceStatusTone } from "@/lib/statuses";
 // setState on their own terms (calling a state-setting function from inside an
 // effect trips the react-hooks/set-state-in-effect rule).
 async function fetchInvoiceData(supabase: any, id: string) {
-  const { data: invoiceData, error: invoiceErr } = await supabase
-    .from("invoices")
-    .select("*, customers(name), sales_orders(order_number)")
-    .eq("id", id)
-    .single();
+  // The caller's profile does not depend on the invoice, so it is read in
+  // parallel with it rather than after it. The order's lines ride along in the
+  // invoice query (invoice → sales_orders → sales_order_items) instead of a
+  // third round trip that had to wait for `order_id`.
+  const [{ data: invoiceData, error: invoiceErr }, { userId, profile }] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("*, customers(name), sales_orders(order_number, sales_order_items(*, products(name)))")
+      .eq("id", id)
+      .single(),
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId: string | undefined = session?.user?.id;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, permissions")
+        .eq("id", userId ?? "")
+        .maybeSingle();
+      return { userId, profile };
+    })(),
+  ]);
 
   if (invoiceErr) throw invoiceErr;
 
-  let items: any[] = [];
-  if (invoiceData.order_id) {
-    const { data: itemsData, error: itemsErr } = await supabase
-      .from("sales_order_items")
-      .select("*, products(name)")
-      .eq("order_id", invoiceData.order_id);
-
-    if (!itemsErr) {
-      items = itemsData || [];
-    }
-  }
+  const items: any[] = invoiceData.sales_orders?.sales_order_items ?? [];
 
   // What the caller may do with this invoice — the same rule the database
   // functions apply (sales.edit, and only their own with an 'own' scope).
-  const { data: { session } } = await supabase.auth.getSession();
-  const userId: string | undefined = session?.user?.id;
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, permissions")
-    .eq("id", userId ?? "")
-    .maybeSingle();
   const canEdit =
     can(profile?.role, profile?.permissions, "sales", "edit") &&
     (dataScope(profile?.role, profile?.permissions, "sales") === "all" || invoiceData.assigned_to === userId);

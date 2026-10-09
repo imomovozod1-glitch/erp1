@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
 import { Download, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,7 +35,6 @@ interface ImportExportMenuProps {
 
 export function ImportExportMenu({ data, fetchAllRows, exportColumns, templateColumns, filenamePrefix, onImport }: ImportExportMenuProps) {
   const t = useTranslations('common')
-  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isImporting, setIsImporting] = useState(false)
 
@@ -93,8 +91,9 @@ export function ImportExportMenu({ data, fetchAllRows, exportColumns, templateCo
       } else if (result.count === 0) {
         toast.error(t('importNoValidRows'), { id: loadingToast })
       } else {
+        // No router.refresh(): every onImport awaits its invalidate*() action,
+        // which already re-renders the route.
         toast.success(t('importSuccess', { count: result.count }), { id: loadingToast })
-        router.refresh()
       }
     } catch {
       toast.error(t('importReadError'), { id: loadingToast })

@@ -3,17 +3,25 @@ import { getTranslations } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { RoleTemplatesTable } from '@/components/hr/role-templates-table'
-import { getCachedRoleTemplates } from '@/lib/data/queries'
+import { getRoleTemplatesPage } from '@/lib/data/queries'
+import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 
 export const metadata: Metadata = { title: 'Roles' }
 
-export default async function RoleTemplatesPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
+export default async function RoleTemplatesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lang: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [{ lang }, sp] = await Promise.all([params, searchParams])
+  const { page, pageSize, search } = readPageParams(sp)
   const tenantId = await getCurrentTenantId() as string
-  const [t, roles] = await Promise.all([
+  const [t, rolesPage] = await Promise.all([
     getTranslations('hr'),
-    getCachedRoleTemplates(tenantId),
+    getRoleTemplatesPage(tenantId, { page, pageSize, search }),
   ])
 
   return (
@@ -28,7 +36,14 @@ export default async function RoleTemplatesPage({ params }: { params: Promise<{ 
           { label: t('roles') },
         ]}
       />
-      <RoleTemplatesTable roles={roles} lang={lang} />
+      <RoleTemplatesTable
+        roles={rolesPage.rows}
+        lang={lang}
+        page={rolesPage.page}
+        pageSize={rolesPage.pageSize}
+        total={rolesPage.total}
+        totalPages={rolesPage.totalPages}
+      />
     </div>
   )
 }

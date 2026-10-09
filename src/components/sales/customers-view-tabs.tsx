@@ -19,10 +19,13 @@ interface CustomersViewTabsProps {
   lang: string
   /** Which balance filter is active, for the chips above the list. */
   balance: string
+  /** Whether the user may export — shows the Excel menu in the list toolbar. */
+  canExport?: boolean
 }
 
 export function CustomersViewTabs({
   balance,
+  canExport = false,
   customers,
   mapCustomers,
   currentUserId,
@@ -66,6 +69,7 @@ export function CustomersViewTabs({
       {activeTab === 'list' ? (
         <CustomersTable
           balance={balance}
+          canExport={canExport}
           customers={customers}
           lang={lang}
           page={page}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -46,14 +46,6 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
   const [activeTab, setActiveTab] = useState<'purchases' | 'payments'>('purchases')
   const [isMapOpen, setIsMapOpen] = useState(false)
 
-  // Force a fresh server fetch on every visit — the browser's client-side
-  // router cache can otherwise show a stale balance right after a payment
-  // was made on the Cashbox page (Next.js reuses cached RSC payloads on
-  // back/forward navigation regardless of server-side cache invalidation).
-  useEffect(() => {
-    router.refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Only received goods are owed, and only expense rows are payments — see
   // src/lib/supplier-debt.ts (the dashboard and the cashbox use the same rule).

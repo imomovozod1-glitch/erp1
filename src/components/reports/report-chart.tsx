@@ -10,8 +10,7 @@ import { formatCurrency, formatNumber } from '@/lib/utils'
 import type { ReportColumn } from '@/lib/reports/definitions'
 import type { ReportRow } from '@/lib/reports/view'
 
-export const CHART_TYPES = ['bar', 'line', 'area', 'pie'] as const
-export type ChartType = (typeof CHART_TYPES)[number]
+import type { ChartType } from '@/components/reports/chart-types'
 
 /**
  * Series palette. Starts on the app's violet accent and moves around the wheel

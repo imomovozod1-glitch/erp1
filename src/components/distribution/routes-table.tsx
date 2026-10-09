@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { MoreHorizontal, Pencil, Trash2, Power, Search, Route as RouteIcon, Waypoints } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Power, Route as RouteIcon, Waypoints } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateRoutes } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import {
@@ -45,46 +45,30 @@ interface RouteRow {
 }
 
 interface RoutesTableProps {
+  /** Only the current page's rows — the server applied search and paging. */
   routes: RouteRow[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }
 
 /**
  * Marshrutlar — the routes list.
  *
- * Built like the compositions and role-templates lists rather than the sales
- * tables: a route is reference data a tenant has a handful of, so the whole
- * list arrives at once and the search runs in the browser.
+ * Paged and searched on the server (`getRoutesPage`), like every other list:
+ * `routes` is only the page being shown.
  */
-export function RoutesTable({ routes, lang }: RoutesTableProps) {
+export function RoutesTable({ routes, lang, page, pageSize, total, totalPages }: RoutesTableProps) {
   const tCommon = useTranslations('common')
   const tRoot = useTranslations()
   const t = useTranslations('distribution')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
-  const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null)
   const [isOptimizing, setIsOptimizing] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
-
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
-
-  const filtered = routes.filter((r) => {
-    const needle = search.toLowerCase()
-    return (
-      r.name.toLowerCase().includes(needle) ||
-      (r.agent?.full_name ?? '').toLowerCase().includes(needle)
-    )
-  })
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   /**
    * Re-plans a saved marshrut without opening it.
@@ -157,19 +141,10 @@ export function RoutesTable({ routes, lang }: RoutesTableProps) {
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center gap-3 p-4 border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={`${tCommon('search')}...`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
-            />
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <TableSearch />
           </div>
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} {tCommon('rows')}
-          </span>
         </div>
 
         <Table>
@@ -182,11 +157,11 @@ export function RoutesTable({ routes, lang }: RoutesTableProps) {
               <TableHead>{t('stops')}</TableHead>
               <TableHead className="hidden lg:table-cell">{t('routeSummary')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
-              <TableHead className="w-12.5" />
+              <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {routes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -196,14 +171,14 @@ export function RoutesTable({ routes, lang }: RoutesTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              paginated.map((route, index) => (
+              routes.map((route, index) => (
                 <TableRow
                   key={route.id}
                   className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                   onClick={() => router.push(`/${lang}/distribution/routes/${route.id}/edit`)}
                 >
                   <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
+                    {(page - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell>
                     <p className="font-medium text-slate-800 dark:text-slate-200">{route.name}</p>
@@ -261,7 +236,7 @@ export function RoutesTable({ routes, lang }: RoutesTableProps) {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDelete(route.id)}
-                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
                           disabled={isDeleting === route.id}
                         >
                           <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
@@ -274,31 +249,7 @@ export function RoutesTable({ routes, lang }: RoutesTableProps) {
             )}
           </TableBody>
         </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs text-muted-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+        <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
       {confirmDialog}
     </Card>

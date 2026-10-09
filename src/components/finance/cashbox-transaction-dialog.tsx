@@ -2,12 +2,20 @@
 
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { ArrowDownRight, ArrowUpRight, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import { DatePicker } from '@/components/ui/date-picker'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -121,23 +129,19 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300"
-      onClick={() => onClose()}
+    <Dialog
+      open
+      // A stray click outside must not throw away a half-filled form.
+      disablePointerDismissal
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
     >
-      <div
-        className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl p-7 relative animate-in zoom-in-95 duration-300 space-y-4"
-        onClick={(e) => e.stopPropagation()}
+      <DialogContent
+        initialFocus={() => document.getElementById('tx_amount')}
+        className="bg-white dark:bg-slate-900 sm:max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl p-6"
       >
-        <button
-          type="button"
-          onClick={() => onClose()}
-          aria-label={tCommon('cancel')}
-          className="absolute right-5 top-5 rounded-full p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <div className="flex items-center gap-3 pb-3 pr-8 border-b border-slate-100 dark:border-slate-800">
+        <DialogHeader className="flex-row items-center gap-3 pb-3 pr-8 border-b border-slate-100 dark:border-slate-800">
           <div className={`p-2.5 rounded-xl ${value.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400'}`}>
             {value.type === 'income' ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
           </div>
@@ -165,18 +169,18 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                 </SelectContent>
               </Select>
             ) : (
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <DialogTitle className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                 {cashbox.name}
-              </h3>
+              </DialogTitle>
             )}
-            <p className={`text-xs text-muted-foreground ${cashboxes.length > 1 ? 'mt-1.5 pl-3' : ''}`}>
+            <DialogDescription className={`text-xs text-muted-foreground ${cashboxes.length > 1 ? 'mt-1.5 pl-3' : ''}`}>
               {value.type === 'income'
                 ? (lang === 'uz' ? 'Kirim operatsiyasini kiritish' : lang === 'ru' ? 'Внести приходную операцию' : 'Register Income')
                 : (lang === 'uz' ? 'Chiqim operatsiyasini kiritish' : lang === 'ru' ? 'Внести расходную операцию' : 'Register Expense')
               }
-            </p>
+            </DialogDescription>
           </div>
-        </div>
+        </DialogHeader>
 
         <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100/50 dark:border-slate-700/50 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
           <span>{lang === 'uz' ? 'Joriy kassa qoldigʻi:' : lang === 'ru' ? 'Текущий остаток:' : 'Current balance:'}</span>
@@ -397,26 +401,25 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <DialogFooter className="-mx-6 -mb-6 rounded-b-2xl px-6 py-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onClose()}
               disabled={isSaving}
-              className="rounded-xl h-10 px-4 font-semibold text-xs"
             >
               {tCommon('cancel')}
             </Button>
             <Button
               type="submit"
               disabled={isSaving}
-              className={`${value.type === 'income' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/10'} text-white rounded-xl h-10 px-5 font-semibold text-xs shadow-md transition-all hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed`}
+              className={value.type === 'income' ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-rose-600 text-white hover:bg-rose-700'}
             >
               {isSaving ? tCommon('saving') : tCommon('save')}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

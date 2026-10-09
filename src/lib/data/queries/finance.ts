@@ -8,7 +8,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { ilikeAny, type PageResult } from '@/lib/data/paginate'
+import { ilikeAny, queryPage, type PageResult } from '@/lib/data/paginate'
 import { CACHE_TAGS } from './cache-tags'
 
 export const getCachedTransactions = unstable_cache(
@@ -38,6 +38,23 @@ export const getCachedTransactionCategories = unstable_cache(
   ['transaction-categories-list'],
   { tags: [CACHE_TAGS.transactionCategories], revalidate: 120 }
 )
+
+/** One page of the transaction categories list, searched by name. */
+export function getTransactionCategoriesPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'transaction_categories',
+    tenantId,
+    select: '*',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['name'],
+    orderBy: { column: 'name', ascending: true },
+  })
+}
 
 export const getCachedCashboxPageData = unstable_cache(
   async (tenantId: string) => {

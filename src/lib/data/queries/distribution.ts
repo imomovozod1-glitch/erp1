@@ -8,7 +8,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { queryPage, type PageResult } from '@/lib/data/paginate'
+import { ilikeAny, queryPage, type PageResult } from '@/lib/data/paginate'
 import { CACHE_TAGS } from './cache-tags'
 
 const ROUTE_SELECT =
@@ -38,6 +38,55 @@ export const getCachedRoutes = unstable_cache(
   ['routes-list'],
   { tags: [CACHE_TAGS.routes, CACHE_TAGS.customers], revalidate: 60 }
 )
+
+/**
+ * One page of the routes list, with each route's stops for the count column.
+ *
+ * Hand-rolled rather than `queryPage` because the search also matches the
+ * agent's name, which lives on `profiles`: the matching agents are resolved
+ * first and folded into the same `or(...)` as the route-name match.
+ */
+export async function getRoutesPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  const supabase = getCacheClient() as any
+  const from = (opts.page - 1) * opts.pageSize
+  const term = opts.search?.trim() ?? ''
+
+  let query = supabase
+    .from('distribution_routes')
+    .select(`${ROUTE_SELECT}, stops:distribution_route_stops(id)`, { count: 'exact' })
+    .eq('tenant_id', tenantId)
+
+  if (term) {
+    const { data: agents } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .ilike('full_name', `%${term.replace(/[%_\\]/g, (c: string) => `\\${c}`)}%`)
+      .limit(500)
+    const agentIds = ((agents ?? []) as { id: string }[]).map((a) => a.id)
+    const nameMatch = ilikeAny(['name'], term)
+    query = query.or(agentIds.length ? `${nameMatch},agent_id.in.(${agentIds.join(',')})` : nameMatch)
+  }
+
+  const { data, count, error } = await query
+    .order('created_at', { ascending: false })
+    .range(from, from + opts.pageSize - 1)
+  if (error) {
+    console.warn('[routes] page query failed:', error.message)
+    return { rows: [], total: 0, page: opts.page, pageSize: opts.pageSize, totalPages: 0 }
+  }
+  const total = count ?? 0
+  return {
+    rows: (data ?? []) as any[],
+    total,
+    page: opts.page,
+    pageSize: opts.pageSize,
+    totalPages: Math.max(Math.ceil(total / opts.pageSize), 1),
+  }
+}
 
 export const getCachedRouteDetails = unstable_cache(
   async (id: string, tenantId: string) => {

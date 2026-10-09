@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { MoreHorizontal, Pencil, Trash2, Search, Tags } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Tags } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateCustomerCategories } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -22,31 +22,20 @@ import {
 } from '@/components/ui/table'
 
 interface CustomerCategoriesTableProps {
+  /** Only the current page's rows — the server applied search and paging. */
   categories: any[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }
 
-export function CustomerCategoriesTable({ categories, lang }: CustomerCategoriesTableProps) {
+export function CustomerCategoriesTable({ categories, lang, page, pageSize, total, totalPages }: CustomerCategoriesTableProps) {
   const tCommon = useTranslations('common')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
-  const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
-
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
-
-  const filtered = categories.filter(
-    (c) => c.name.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const handleDelete = async (id: string) => {
     if (!(await confirmDelete({ name: categories.find((c) => c.id === id)?.name }))) return
@@ -65,19 +54,10 @@ export function CustomerCategoriesTable({ categories, lang }: CustomerCategories
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center gap-3 p-4 border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={`${tCommon('search')}...`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
-            />
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <TableSearch />
           </div>
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} {tCommon('rows')}
-          </span>
         </div>
 
         <Table>
@@ -86,11 +66,11 @@ export function CustomerCategoriesTable({ categories, lang }: CustomerCategories
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead className="font-semibold">{tCommon('name')}</TableHead>
               <TableHead>{tCommon('description')}</TableHead>
-              <TableHead className="w-12.5" />
+              <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
-             {filtered.length === 0 ? (
+             {categories.length === 0 ? (
                <TableRow>
                  <TableCell colSpan={4} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -100,14 +80,14 @@ export function CustomerCategoriesTable({ categories, lang }: CustomerCategories
                 </TableCell>
               </TableRow>
              ) : (
-                paginated.map((category, index) => (
+                categories.map((category, index) => (
                   <TableRow
                     key={category.id}
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                     onClick={() => router.push(`/${lang}/customers/categories/${category.id}/edit`)}
                   >
                     <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
+                      {(page - 1) * pageSize + index + 1}
                     </TableCell>
                     <TableCell>
                       <p className="font-medium text-slate-800 dark:text-slate-200">{category.name}</p>
@@ -130,7 +110,7 @@ export function CustomerCategoriesTable({ categories, lang }: CustomerCategories
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(category.id)}
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
                             disabled={isDeleting === category.id}
                           >
                             <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
@@ -143,31 +123,7 @@ export function CustomerCategoriesTable({ categories, lang }: CustomerCategories
             )}
           </TableBody>
         </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs text-muted-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+        <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
       {confirmDialog}
     </Card>

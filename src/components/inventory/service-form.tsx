@@ -333,7 +333,7 @@ export function ServiceForm({ initialData, categories, lang, options }: ServiceF
       </div>
 
 
-      <div className="flex gap-4 pt-4 border-t">
+      <div className="flex justify-end gap-2 border-t pt-4">
         <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
           {tCommon('cancel')}
         </Button>

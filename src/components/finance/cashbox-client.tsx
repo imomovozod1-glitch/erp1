@@ -17,7 +17,8 @@ import {
   CreditCard,
   ArrowLeftRight,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PageHeader } from '@/components/shared/page-header'
@@ -807,6 +808,7 @@ export function CashboxClient({
         title={t('cashbox')}
         subtitle={t('title')}
         info={tInfo('cashbox')}
+        action={{ label: t('addCashbox'), onClick: handleOpenAddModal, icon: Plus }}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
           { label: t('title') },
@@ -860,96 +862,86 @@ export function CashboxClient({
         </div>
       )}
 
-      {/* Actions and List Grid */}
-      <Card className="border border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-3xl overflow-hidden">
-        <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-              <Landmark className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-              {t('cashboxes')}
-            </CardTitle>
-            <CardDescription className="text-xs">{lang === 'uz' ? "Moliya kassalari va ularning qoldiqlari ro'yxati" : lang === 'ru' ? "Список касс и их остатков" : "List of cashboxes and their balances"}</CardDescription>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative min-w-[200px] flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder={`${tCommon('search')}...`}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9 border-slate-200 dark:border-slate-700 rounded-xl text-xs"
-              />
-            </div>
-            <Button onClick={handleOpenAddModal} className="bg-violet-600 hover:bg-violet-700 text-white gap-2 h-9 px-4 rounded-xl text-xs font-semibold shadow-sm shadow-violet-500/10 hover:shadow-violet-500/25">
-              <Plus className="h-4 w-4" />
-              {t('addCashbox')}
-            </Button>
-          </div>
-        </CardHeader>
+      {/* Cashbox list */}
+      <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/70 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800">
-                  <th className="p-4 pl-6 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('cashboxName')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('description')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-right">{t('balance')}</th>
-                  <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('date')}</th>
-                  <th className="p-4 pr-6 text-right text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{lang === 'uz' ? 'Amallar' : lang === 'ru' ? 'Действия' : 'Actions'}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                {isLoading && cashboxes.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="h-6 w-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
-                        <span>{tCommon('loading')}...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredCashboxes.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-12 text-slate-400 dark:text-slate-500">
-                      <div className="flex flex-col items-center gap-2 py-4">
-                        <Wallet className="h-10 w-10 opacity-30 text-slate-400" />
-                        <p className="text-sm font-semibold">{tCommon('noData')}</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredCashboxes.map((cb) => {
-                    const isMain = cb.name.toLowerCase().includes('asosiy') || cb.name.toLowerCase().includes('main')
-                    const typeInfo = CASHBOX_TYPES.find((ct) => ct.key === (cb.type || 'cash'))
-                    return (
-                      <tr key={cb.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
-                        <td className="p-4 pl-6 font-semibold text-slate-800 dark:text-slate-200">
-                          <div className="flex items-center gap-2.5">
-                            <div className={`p-1.5 rounded-lg ${isMain ? 'bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
-                              <Landmark className="h-4 w-4" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{cb.name}</span>
-                              {typeInfo && (
-                                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">{typeInfo.label}</span>
-                              )}
-                            </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* A handful of cashboxes at most — filtered in memory, not paged. */}
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder={`${tCommon('search')}...`}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+            </div>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+                <TableHead>{t('cashboxName')}</TableHead>
+                <TableHead className="hidden md:table-cell">{tCommon('description')}</TableHead>
+                <TableHead className="text-right">{t('balance')}</TableHead>
+                <TableHead className="hidden md:table-cell">{tCommon('date')}</TableHead>
+                <TableHead className="text-right">{lang === 'uz' ? 'Amallar' : lang === 'ru' ? 'Действия' : 'Actions'}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && cashboxes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <div className="h-6 w-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+                      <span className="text-sm">{tCommon('loading')}...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredCashboxes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Wallet className="h-8 w-8 opacity-40" />
+                      <p className="text-sm">{tCommon('noData')}</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredCashboxes.map((cb) => {
+                  const isMain = cb.name.toLowerCase().includes('asosiy') || cb.name.toLowerCase().includes('main')
+                  const typeInfo = CASHBOX_TYPES.find((ct) => ct.key === (cb.type || 'cash'))
+                  return (
+                    <TableRow key={cb.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors">
+                      <TableCell className="font-semibold text-slate-800 dark:text-slate-200">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`p-1.5 rounded-lg ${isMain ? 'bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
+                            <Landmark className="h-4 w-4" />
                           </div>
-                        </td>
-                        <td className="p-4 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">{cb.description || '—'}</td>
-                        <td className="p-4 font-bold text-right text-violet-600 dark:text-violet-400 text-base">{formatCurrency(cb.balance)}</td>
-                        <td className="p-4 text-xs text-slate-400 dark:text-slate-500">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span>{formatDateTime(cb.created_at)}</span>
+                          <div className="flex flex-col">
+                            <span className="group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{cb.name}</span>
+                            {typeInfo && (
+                              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">{typeInfo.label}</span>
+                            )}
                           </div>
-                        </td>
-                        <td className="p-4 pr-6 flex justify-end items-center gap-2">
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground max-w-xs truncate">{cb.description || '—'}</TableCell>
+                      <TableCell className="text-right font-bold tabular-nums text-violet-600 dark:text-violet-400">{formatCurrency(cb.balance)}</TableCell>
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>{formatDateTime(cb.created_at)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenTransactionModal(cb, 'income')}
-                            className="h-8 border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold text-xs rounded-xl transition-all px-3 hover:-translate-y-0.5 shadow-sm"
+                            className="h-8 border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold text-xs transition-colors px-3"
                           >
                             <Plus className="h-3 w-3 mr-1" />
                             {lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income'}
@@ -958,7 +950,7 @@ export function CashboxClient({
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenTransactionModal(cb, 'expense')}
-                            className="h-8 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-800 dark:hover:text-rose-300 font-semibold text-xs rounded-xl transition-all px-3 hover:-translate-y-0.5 shadow-sm"
+                            className="h-8 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-800 dark:hover:text-rose-300 font-semibold text-xs transition-colors px-3"
                           >
                             <Minus className="h-3 w-3 mr-1" />
                             {lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense'}
@@ -967,7 +959,7 @@ export function CashboxClient({
                             variant="ghost"
                             size="icon"
                             onClick={() => handleOpenEditModal(cb)}
-                            className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                            className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </Button>
@@ -975,42 +967,44 @@ export function CashboxClient({
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDelete(cb.id)}
-                            className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                            className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-              {filteredCashboxes.length > 0 && (
-                <tfoot>
-                  <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50">
-                    <td className="p-4 pl-6 font-bold text-slate-800 dark:text-slate-200" colSpan={2}>
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
-                          <Wallet className="h-4 w-4" />
                         </div>
-                        <div className="flex flex-col">
-                          <span>{t('totalBalance')}</span>
-                          <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">
-                            {t('cashboxCount', { count: filteredCashboxes.length })}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right text-lg font-extrabold text-violet-600 dark:text-violet-400 tabular-nums">
-                      {formatCurrency(totalCashboxBalance)}
-                    </td>
-                    <td className="p-4" />
-                    <td className="p-4 pr-6" />
-                  </tr>
-                </tfoot>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
-            </table>
-          </div>
+            </TableBody>
+            {filteredCashboxes.length > 0 && (
+              <TableFooter>
+                <TableRow>
+                  <TableCell className="font-bold text-slate-800 dark:text-slate-200">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400">
+                        <Wallet className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span>{t('totalBalance')}</span>
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">
+                          {t('cashboxCount', { count: filteredCashboxes.length })}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  {/* Mirrors the header's responsive columns so the total stays under Balance. */}
+                  <TableCell className="hidden md:table-cell" />
+                  <TableCell className="text-right text-lg font-extrabold text-violet-600 dark:text-violet-400 tabular-nums">
+                    {formatCurrency(totalCashboxBalance)}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell" />
+                  <TableCell />
+                </TableRow>
+              </TableFooter>
+            )}
+          </Table>
         </CardContent>
       </Card>
 

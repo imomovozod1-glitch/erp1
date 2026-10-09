@@ -606,7 +606,7 @@ export function ProductForm({ initialData, categories, lang, options }: ProductF
       </div>
 
 
-      <div className="flex gap-4 pt-4 border-t">
+      <div className="flex justify-end gap-2 border-t pt-4">
         <Button
           type="button"
           variant="outline"

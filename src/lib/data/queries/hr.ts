@@ -39,6 +39,23 @@ export const getCachedRoleTemplates = unstable_cache(
   { tags: [CACHE_TAGS.roleTemplates], revalidate: 120 }
 )
 
+/** One page of the role templates list, searched by name. */
+export function getRoleTemplatesPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'role_templates',
+    tenantId,
+    select: '*',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['name'],
+    orderBy: { column: 'name', ascending: true },
+  })
+}
+
 export const getCachedRoleTemplateById = unstable_cache(
   async (id: string, tenantId: string) => {
     const supabase = getCacheClient() as any

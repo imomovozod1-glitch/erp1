@@ -80,7 +80,7 @@ export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryForm
         {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
       </div>
 
-      <div className="flex gap-4 pt-4 border-t">
+      <div className="flex justify-end gap-2 border-t pt-4">
         <Button
           type="button"
           variant="outline"

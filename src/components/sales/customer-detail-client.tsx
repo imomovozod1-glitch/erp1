@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -47,14 +47,6 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
   const [activeTab, setActiveTab] = useState<'orders' | 'invoices' | 'transactions'>('orders')
   const [isMapOpen, setIsMapOpen] = useState(false)
 
-  // Force a fresh server fetch on every visit — the browser's client-side
-  // router cache can otherwise show a stale balance right after a payment
-  // was made on a different page (Next.js reuses cached RSC payloads on
-  // back/forward navigation regardless of server-side cache invalidation).
-  useEffect(() => {
-    router.refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Calculate Metrics
   const totalPurchases = salesOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)

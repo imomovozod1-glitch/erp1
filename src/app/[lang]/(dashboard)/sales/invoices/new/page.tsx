@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { InvoiceForm } from '@/components/sales/invoice-form'
-import { getCachedCustomersForSelect, getCachedOrders, getAssignableUsers } from '@/lib/data/queries'
+import { getCachedCustomersForSelect, getCachedOrdersForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { requireModuleEdit } from '@/lib/permissions-server'
@@ -25,7 +25,7 @@ export default async function NewInvoicePage({
     getTranslations('sales'),
     getTranslations('common'),
     getCachedCustomersForSelect(tenantId),
-    getCachedOrders(tenantId),
+    getCachedOrdersForSelect(tenantId),
     getAssignableUsers(tenantId),
   ])
 

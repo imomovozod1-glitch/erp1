@@ -3,7 +3,6 @@ import { getTranslations } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { EmployeesTable } from '@/components/hr/employees-table'
-import { EmployeeImportExport } from '@/components/hr/employee-import-export'
 import { getEmployeesPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
@@ -51,9 +50,7 @@ export default async function EmployeesPage({
           { label: t('title') },
           { label: t('employees') },
         ]}
-      >
-        {canExport && <EmployeeImportExport employees={result.rows} lang={lang} />}
-      </PageHeader>
+      />
       <EmployeesTable
         employees={result.rows}
         lang={lang}
@@ -63,6 +60,7 @@ export default async function EmployeesPage({
         totalPages={result.totalPages}
         status={status}
         paid={paid}
+        canExport={canExport}
       />
     </div>
   )

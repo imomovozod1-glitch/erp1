@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
@@ -26,7 +25,6 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
   const t = useTranslations('hr')
-  const router = useRouter()
   const exitForm = useRouteModalExit(`/${lang}/hr/roles`)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -79,7 +77,6 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
 
       await invalidateRoleTemplates()
       exitForm()
-      router.refresh()
     } catch (error: any) {
       toast.error(error.message || tCommon('error'))
     } finally {
@@ -105,7 +102,7 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
             <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-2 border-t pt-4">
             <Button
               type="button"
               variant="outline"

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { Plus, Trash2, Scale, Pencil, Check, X } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -26,7 +26,6 @@ interface UnitRow {
 export function UnitsList({ lang, initialUnits }: UnitsListProps) {
   const tCommon = useTranslations('common')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
-  const t = useTranslations('inventory')
   const supabase = createClient() as any
   // The list arrives with the page instead of from a round trip after
   // hydration, so the table renders filled on first paint.
@@ -122,7 +121,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
       {/* Stats and Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Statistics Card */}
-        <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm flex items-center p-6 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+        <Card className="border-0 shadow-sm flex items-center p-6 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
           <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
             <Scale className="h-6 w-6" />
           </div>
@@ -140,7 +139,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
         </Card>
 
         {/* Add Unit Form */}
-        <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
+        <Card className="border-0 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
           <CardHeader className="py-4">
             <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">
               {lang === 'uz' ? 'Yangi o\'lchov birligi qo\'shish' : lang === 'ru' ? 'Добавить единицу измерения' : 'Add New Unit'}
@@ -168,20 +167,12 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
       </div>
 
       {/* List Table */}
-      <Card className="border-slate-200/60 dark:border-slate-700 shadow-sm animate-in fade-in duration-300">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200">
-            {t('unit')}
-          </CardTitle>
-          <CardDescription>
-            {lang === 'uz' ? 'Tizimda mavjud barcha o\'lchov birliklari ro\'yxati' : lang === 'ru' ? 'Список всех единиц измерения в системе' : 'Directory of all active measurement units'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border border-slate-100 dark:border-slate-700 overflow-hidden">
+      <Card className="border-0 shadow-sm animate-in fade-in duration-300">
+        <CardContent className="p-0">
+          <div>
             <Table>
-              <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
-                <TableRow>
+              <TableHeader>
+                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center font-semibold text-slate-600 dark:text-slate-300">#</TableHead>
                   <TableHead className="font-semibold text-slate-600 dark:text-slate-300">{lang === 'uz' ? 'O\'lchov birligi nomi' : lang === 'ru' ? 'Название единицы' : 'Unit Name'}</TableHead>
                   <TableHead className="w-[100px] font-semibold text-slate-600 dark:text-slate-300 text-right tabular-nums">{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</TableHead>

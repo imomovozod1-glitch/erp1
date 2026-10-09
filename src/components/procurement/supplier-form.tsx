@@ -333,17 +333,16 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
         />
       </div>
 
-      <div className="flex gap-3 pt-5 justify-end border-t border-slate-100 dark:border-slate-800">
+      <div className="flex justify-end gap-2 border-t pt-4">
         <Button
           type="button"
           variant="outline"
           onClick={() => exitForm()}
           disabled={isSubmitting}
-          className="rounded-lg"
         >
           {tCommon('cancel')}
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500 rounded-lg">
+        <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>
       </div>
@@ -369,19 +368,17 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
               initialLng={tempLng}
             />
           </div>
-          <DialogFooter className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+          <DialogFooter className="-mx-6 -mb-6 rounded-b-xl px-6 py-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsMapOpen(false)}
-              className="h-10 px-4 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg font-medium text-sm transition-colors"
             >
               {tCommon('cancel')}
             </Button>
             <Button
               type="button"
               onClick={handleConfirmLocation}
-              className="h-10 px-4 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
             >
               {tCommon('save')}
             </Button>

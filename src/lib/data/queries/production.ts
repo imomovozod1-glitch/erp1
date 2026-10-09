@@ -8,7 +8,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { queryPage, type PageResult } from '@/lib/data/paginate'
+import { ilikeAny, queryPage, type PageResult } from '@/lib/data/paginate'
 import { CACHE_TAGS } from './cache-tags'
 
 const BOM_SELECT =
@@ -38,6 +38,56 @@ export const getCachedBoms = unstable_cache(
   ['boms-list'],
   { tags: [CACHE_TAGS.boms, CACHE_TAGS.products], revalidate: 60 }
 )
+
+/**
+ * One page of the compositions list, with each composition's component ids for
+ * the count column.
+ *
+ * Hand-rolled rather than `queryPage` because the search also matches the
+ * finished product's name, which lives on `products`: the matching products are
+ * resolved first and folded into the same `or(...)` as the composition-name match.
+ */
+export async function getBomsPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  const supabase = getCacheClient() as any
+  const from = (opts.page - 1) * opts.pageSize
+  const term = opts.search?.trim() ?? ''
+
+  let query = supabase
+    .from('product_boms')
+    .select(`${BOM_SELECT}, items:product_bom_items(id)`, { count: 'exact' })
+    .eq('tenant_id', tenantId)
+
+  if (term) {
+    const { data: products } = await supabase
+      .from('products')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .ilike('name', `%${term.replace(/[%_\\]/g, (c: string) => `\\${c}`)}%`)
+      .limit(500)
+    const productIds = ((products ?? []) as { id: string }[]).map((p) => p.id)
+    const nameMatch = ilikeAny(['name'], term)
+    query = query.or(productIds.length ? `${nameMatch},product_id.in.(${productIds.join(',')})` : nameMatch)
+  }
+
+  const { data, count, error } = await query
+    .order('created_at', { ascending: false })
+    .range(from, from + opts.pageSize - 1)
+  if (error) {
+    console.warn('[boms] page query failed:', error.message)
+    return { rows: [], total: 0, page: opts.page, pageSize: opts.pageSize, totalPages: 0 }
+  }
+  const total = count ?? 0
+  return {
+    rows: (data ?? []) as any[],
+    total,
+    page: opts.page,
+    pageSize: opts.pageSize,
+    totalPages: Math.max(Math.ceil(total / opts.pageSize), 1),
+  }
+}
 
 export function getProductionOrdersPage(
   tenantId: string,

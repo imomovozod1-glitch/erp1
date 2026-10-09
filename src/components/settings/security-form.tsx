@@ -118,11 +118,18 @@ export function SecurityForm() {
             )}
           </div>
 
-          <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex justify-end gap-2 border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => reset()}
+              disabled={isSubmitting}
+            >
+              {tCommon('cancel')}
+            </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-violet-600 hover:bg-violet-700 text-white transition-colors px-6 shadow-sm"
             >
               {isSubmitting ? tCommon('loading') : tCommon('save')}
             </Button>

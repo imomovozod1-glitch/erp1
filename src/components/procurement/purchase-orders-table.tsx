@@ -63,7 +63,7 @@ export function PurchaseOrdersTable({
     <>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
             <div className="flex flex-wrap items-center gap-3">
               <TableSearch />
               {/* Server-side like the search beside it: changing the period
@@ -81,7 +81,6 @@ export function PurchaseOrdersTable({
                 lang={lang}
               />
             </div>
-            <span className="text-xs text-muted-foreground">{total} {tCommon('rows')}</span>
           </div>
           <Table>
             <TableHeader>

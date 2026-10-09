@@ -140,18 +140,20 @@ export function ServicesTable({
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b">
-            <TableSearch />
-            <TableFilterChips
-              param="status"
-              value={status}
-              options={[
-                { value: 'all', label: t('common.all') },
-                { value: 'active', label: t('common.active') },
-                { value: 'inactive', label: t('common.inactive') },
-              ]}
-            />
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
             <div className="flex flex-wrap items-center gap-3">
+              <TableSearch />
+              <TableFilterChips
+                param="status"
+                value={status}
+                options={[
+                  { value: 'all', label: t('common.all') },
+                  { value: 'active', label: t('common.active') },
+                  { value: 'inactive', label: t('common.inactive') },
+                ]}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="outline"

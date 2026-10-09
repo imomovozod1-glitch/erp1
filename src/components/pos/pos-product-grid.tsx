@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 import { Package, Scale, Search } from 'lucide-react'
@@ -15,6 +16,13 @@ import {
 } from '@/components/ui/select'
 import { formatCurrency } from '@/lib/utils'
 import { isService } from '@/lib/product-kind'
+
+/**
+ * Tiles mounted at a time. A catalogue of a few thousand products used to
+ * mount a few thousand buttons (each with an <Image>) on every till load; the
+ * cashier reaches anything past the first screenful by searching anyway.
+ */
+const TILE_BATCH = 120
 
 /**
  * The catalogue half of the till: search, category filter and the product
@@ -52,6 +60,19 @@ export function PosProductGrid({
   // Declared last of the group so the editor's i18n plugin attributes the bare
   // `t(...)` calls in this file to `pos` — see AGENTS.md § Translations.
   const t = useTranslations('pos')
+
+  // How many tiles are mounted, reset to one batch whenever the search or the
+  // category changes. Adjusted during render (React's "storing information
+  // from previous renders" pattern, as TableSearch does) rather than in an
+  // effect, which the React Compiler lint rules forbid.
+  const filterKey = `${selectedCategory}\u0000${search}`
+  const [tileLimit, setTileLimit] = useState({ key: filterKey, limit: TILE_BATCH })
+  let visibleLimit = tileLimit.limit
+  if (tileLimit.key !== filterKey) {
+    visibleLimit = TILE_BATCH
+    setTileLimit({ key: filterKey, limit: TILE_BATCH })
+  }
+  const visibleProducts = products.length > visibleLimit ? products.slice(0, visibleLimit) : products
 
   return (
     <div className="md:col-span-2 md:h-full md:flex md:flex-col md:min-h-0 space-y-5">
@@ -141,77 +162,91 @@ export function PosProductGrid({
              photo, the name and the price to read instantly; stock is
              secondary text and only speaks up (in one colour) when it is
              actually running out. */
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-            {products.map((p) => {
-              // A service has no shelf to be empty, so it is never out of
-              // stock and never low — its tile says what it is instead of a
-              // count that would always read zero.
-              const service = isService(p)
-              const isOutOfStock = !service && p.stock <= 0
-              const isLowStock = !service && p.stock > 0 && p.stock <= p.min_stock
-              // An out-of-stock tile stays legible rather than being faded
-              // to 45%: the cashier still has to read the name and price of
-              // the thing they cannot sell, and a wholly dimmed tile reads
-              // as "broken" rather than "none left". Only the photo is
-              // muted; the stock line says it in words.
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  disabled={isOutOfStock}
-                  onClick={() => onSelect(p)}
-                  className="group flex select-none flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-colors duration-150 hover:border-violet-400 hover:bg-violet-50/40 focus-visible:border-violet-500 focus-visible:ring-2 focus-visible:ring-violet-500/20 focus-visible:outline-none disabled:pointer-events-none disabled:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-violet-600 dark:hover:bg-violet-950/20 dark:disabled:bg-slate-900"
-                >
-                  {/* Photo band — a 4:3 slot rather than a fixed 96px strip, so
-                      the picture grows with the column instead of staying
-                      thumbnail-sized on a wide till screen. An aspect ratio
-                      still keeps every tile in a row exactly as tall as its
-                      neighbours, image or no image.
-                      `object-contain` (not `cover`) because a cashier has to
-                      recognise the whole product at a glance: photos come in
-                      every aspect ratio and cropping to fill the band cut the
-                      top and bottom off portrait shots. */}
-                  <div className="relative aspect-4/3 w-full shrink-0 bg-slate-50 p-1.5 dark:bg-slate-800/60">
-                    {p.image_url ? (
-                      <Image
-                        src={p.image_url}
-                        alt={p.name}
-                        fill
-                        sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                        className={`object-contain ${isOutOfStock ? 'opacity-40 grayscale' : ''}`}
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
-                        <Package className="h-9 w-9" />
-                      </div>
-                    )}
-                  </div>
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+              {visibleProducts.map((p) => {
+                // A service has no shelf to be empty, so it is never out of
+                // stock and never low — its tile says what it is instead of a
+                // count that would always read zero.
+                const service = isService(p)
+                const isOutOfStock = !service && p.stock <= 0
+                const isLowStock = !service && p.stock > 0 && p.stock <= p.min_stock
+                // An out-of-stock tile stays legible rather than being faded
+                // to 45%: the cashier still has to read the name and price of
+                // the thing they cannot sell, and a wholly dimmed tile reads
+                // as "broken" rather than "none left". Only the photo is
+                // muted; the stock line says it in words.
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={() => onSelect(p)}
+                    className="group flex select-none flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left transition-colors duration-150 hover:border-violet-400 hover:bg-violet-50/40 focus-visible:border-violet-500 focus-visible:ring-2 focus-visible:ring-violet-500/20 focus-visible:outline-none disabled:pointer-events-none disabled:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-violet-600 dark:hover:bg-violet-950/20 dark:disabled:bg-slate-900"
+                  >
+                    {/* Photo band — a 4:3 slot rather than a fixed 96px strip, so
+                        the picture grows with the column instead of staying
+                        thumbnail-sized on a wide till screen. An aspect ratio
+                        still keeps every tile in a row exactly as tall as its
+                        neighbours, image or no image.
+                        `object-contain` (not `cover`) because a cashier has to
+                        recognise the whole product at a glance: photos come in
+                        every aspect ratio and cropping to fill the band cut the
+                        top and bottom off portrait shots. */}
+                    <div className="relative aspect-4/3 w-full shrink-0 bg-slate-50 p-1.5 dark:bg-slate-800/60">
+                      {p.image_url ? (
+                        <Image
+                          src={p.image_url}
+                          alt={p.name}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                          className={`object-contain ${isOutOfStock ? 'opacity-40 grayscale' : ''}`}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-slate-300 dark:text-slate-600">
+                          <Package className="h-9 w-9" />
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="flex flex-1 flex-col gap-1 p-3">
-                    <p className="  text-[13px] font-medium leading-snug text-slate-800 dark:text-slate-200">
-                      {p.name}
-                    </p>
-                    <p className="mt-auto text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                      {formatCurrency(p.price)}
-                    </p>
-                    <p
-                      className={
-                        isOutOfStock || isLowStock
-                          ? 'text-xs font-medium text-amber-600 tabular-nums dark:text-amber-400'
-                          : 'text-xs text-slate-400 tabular-nums dark:text-slate-500'
-                      }
-                    >
-                      {service
-                        ? tInventory('service')
-                        : isOutOfStock
-                        ? t('outOfStock')
-                        : `${p.stock} ${p.unit || tCommon('pieces')}`}
-                    </p>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+                    <div className="flex flex-1 flex-col gap-1 p-3">
+                      <p className="  text-[13px] font-medium leading-snug text-slate-800 dark:text-slate-200">
+                        {p.name}
+                      </p>
+                      <p className="mt-auto text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                        {formatCurrency(p.price)}
+                      </p>
+                      <p
+                        className={
+                          isOutOfStock || isLowStock
+                            ? 'text-xs font-medium text-amber-600 tabular-nums dark:text-amber-400'
+                            : 'text-xs text-slate-400 tabular-nums dark:text-slate-500'
+                        }
+                      >
+                        {service
+                          ? tInventory('service')
+                          : isOutOfStock
+                          ? t('outOfStock')
+                          : `${p.stock} ${p.unit || tCommon('pieces')}`}
+                      </p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            {products.length > visibleLimit && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTileLimit({ key: filterKey, limit: visibleLimit + TILE_BATCH })}
+                  className="h-10 rounded-xl border-slate-200 px-6 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                >
+                  {t('showMore')} ({products.length - visibleLimit})
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

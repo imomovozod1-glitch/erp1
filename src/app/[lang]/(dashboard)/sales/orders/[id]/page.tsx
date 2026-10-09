@@ -80,10 +80,26 @@ export default function OrderDetailPage() {
           { data: orderData, error: orderErr },
           { data: itemsData, error: itemsErr },
           { data: profile },
+          deliveryData,
         ] = await Promise.all([
           supabase.from('sales_orders').select('*, customers(name)').eq('id', id).single(),
           supabase.from('sales_order_items').select('*, products(name)').eq('order_id', id),
           supabase.from('profiles').select('role, permissions').eq('id', userId ?? '').maybeSingle(),
+          // The delivery, if this sale is out on a round. Tolerant of failure:
+          // the distribution tables are a later migration, and a tenant that
+          // has not applied it must still be able to open a sale — so an error
+          // here resolves to "no delivery" instead of rejecting the batch.
+          Promise.resolve(
+            supabase
+              .from('deliveries')
+              .select('id, delivery_number, status, planned_date, agent:profiles!deliveries_agent_id_fkey(full_name)')
+              .eq('order_id', id)
+              .neq('status', 'cancelled')
+              .maybeSingle()
+          ).then(
+            ({ data }: any) => data ?? null,
+            () => null
+          ),
         ])
 
         if (orderErr) throw orderErr
@@ -99,20 +115,7 @@ export default function OrderDetailPage() {
         })
         setOrder(orderData)
         setItems(itemsData || [])
-        // The delivery, if this sale is out on a round. Fetched separately and
-        // tolerantly: the distribution tables are a later migration, and a
-        // tenant that has not applied it must still be able to open a sale.
-        try {
-          const { data: deliveryData } = await supabase
-            .from('deliveries')
-            .select('id, delivery_number, status, planned_date, agent:profiles!deliveries_agent_id_fkey(full_name)')
-            .eq('order_id', id)
-            .neq('status', 'cancelled')
-            .maybeSingle()
-          setDelivery(deliveryData ?? null)
-        } catch {
-          setDelivery(null)
-        }
+        setDelivery(deliveryData)
       } catch (err: any) {
         toast.error(err.message || tCommon('error'))
         router.push(`/${lang}/sales/orders`)

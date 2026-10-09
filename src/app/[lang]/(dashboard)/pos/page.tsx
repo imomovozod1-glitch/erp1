@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { getCachedProducts, getCachedCategories, getCachedCustomers } from '@/lib/data/queries'
+import { getPosProducts, getCachedCategories, getPosCustomers } from '@/lib/data/queries'
 import { getCurrentTenantId, getCachedTenant } from '@/lib/tenant'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { POSClient } from '@/components/pos/pos-client'
@@ -26,9 +26,9 @@ export default async function POSPage({
   const tenantId = await getCurrentTenantId() as string
   const user = await getSessionUser()
   const [products, categories, customers, tenant, profile] = await Promise.all([
-    getCachedProducts(tenantId),
+    getPosProducts(tenantId),
     getCachedCategories(tenantId),
-    getCachedCustomers(tenantId),
+    getPosCustomers(tenantId),
     getCachedTenant(tenantId),
     // The cashier's name is printed on the receipt. Read here, from cache, so
     // the receipt can be shown the instant the button is pressed rather than
@@ -36,12 +36,9 @@ export default async function POSPage({
     user ? getCachedProfile(user.id) : Promise.resolve(null),
   ])
 
-  // Filter only active products for the POS screen
-  const activeProducts = products.filter((p: any) => p.is_active)
-
   return (
     <POSClient
-      initialProducts={activeProducts}
+      initialProducts={products}
       initialCategories={categories}
       initialCustomers={customers}
       company={{

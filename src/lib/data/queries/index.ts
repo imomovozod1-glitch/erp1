@@ -36,6 +36,7 @@ export * from './finance'
 export * from './hr'
 export * from './procurement'
 export * from './analytics'
+export * from './pos'
 // Re-exported for the callers that imported it from here before it moved out
 // of the query layer; new code should import it from '@/lib/sales-discounts'.
 export { orderDiscountFactors } from '@/lib/sales-discounts'

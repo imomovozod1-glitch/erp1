@@ -63,6 +63,23 @@ export const getCachedCustomerCategories = unstable_cache(
   { tags: [CACHE_TAGS.customerCategories], revalidate: 60 }
 )
 
+/** One page of the customer categories list, searched by name. */
+export function getCustomerCategoriesPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'customer_categories',
+    tenantId,
+    select: '*',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['name', 'description'],
+    orderBy: { column: 'name', ascending: true },
+  })
+}
+
 export const getCachedCustomerById = unstable_cache(
   async (id: string, tenantId: string) => {
     const supabase = getCacheClient() as any

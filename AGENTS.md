@@ -33,10 +33,20 @@ There is one established table convention — do not introduce a table library (
 - **Pagination is server-side and URL-driven**: the list `page.tsx` reads `?page=&q=` with `readPageParams` and fetches one page with `queryPage` (`src/lib/data/paginate.ts`, `DEFAULT_PAGE_SIZE = 10`); the table renders `<TableSearch>`, `<TableFilterChips param=…>` and `<TablePagination page totalPages total pageSize>` from `src/components/shared/table-pagination.tsx`, which update the query string (and reset to page 1 on search/filter change). Don't keep page or search state in `useState`, and don't `.slice()` a full list client-side.
 - **Row actions**: a trailing `w-12` column with a `DropdownMenu` behind a `MoreHorizontal` trigger; call `e.stopPropagation()` on the trigger so it doesn't also fire the row's own click-to-navigate handler.
 - **Clickable rows**: `<TableRow onClick={() => router.push(detailUrl)}>` for navigation to a detail page, in addition to (not instead of) the actions menu.
-- **Toolbar**: `<TableSearch>` plus `<TableFilterChips>` plus export/import actions, in a `flex flex-wrap items-center justify-between border-b` bar.
+- **Toolbar**: `<div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">` — left group `flex flex-wrap items-center gap-3` with `<TableSearch>` then filters (`<TableFilterChips>` for ≤ 5 fixed options, `<TableFilterSelect>` when there are several filters or a dynamic list); right group `flex flex-wrap items-center gap-2` with export/import (`ImportExportMenu`) then any extra tool. No "{n} rows" label — `TablePagination` already shows the count.
 - **Empty state**: one centered `TableCell colSpan={N}` with a muted icon and `t('common.noData')`.
 - Format money/numbers with `formatCurrency`/`formatNumber` and dates with `formatDate` from `@/lib/utils` — never format inline with ad-hoc string concatenation.
 - Real-time feel: after any mutation, call the matching `invalidate*()` action from `src/lib/data/revalidate.ts` (Next.js cache tags) — don't hand-roll polling. Its response already carries the current route re-rendered, so do **not** follow it with `router.refresh()` (that renders the page a second time); only `router.push()` when the flow navigates away. Logout is a full `window.location.replace(...)` to the login page.
+
+## 3a. One placement rule for every page
+
+Every screen is laid out the same way, so a user who learned one page knows where everything is on the next:
+
+1. **Page header** — `<PageHeader title subtitle info breadcrumbs action={…}>`. The primary "Add" button is ALWAYS its `action` (rendered last, on the right), guarded by the module's edit permission. `PageHeader` children hold only page-wide controls: a period filter that also drives KPI cards, or a detail page's actions.
+2. **Then** KPI tiles (`<StatsCard>`), **then** the list card (§3). List-specific tools (search, filters, export/import) live in the list's toolbar, never in the page header.
+3. **Scrolling** — the window never scrolls. A list page fits the viewport and only the rows scroll vertically; a wide table scrolls horizontally inside its own container, never the page. Both are enforced by the `app-main` / `app-page` rules in `globals.css` — keep the list card's shape (`Card > CardContent p-0 > toolbar, Table, TablePagination`) or they stop matching.
+4. **Form footer** — `<div className="flex justify-end gap-2 border-t pt-4">`: `<Button type="button" variant="outline">Cancel</Button>` first, `<Button type="submit">Save</Button>` last. Default variants, no colour or height overrides.
+5. **Dialog footer** — `<DialogFooter>`, same order (Cancel outline, then the primary; a destructive primary may be rose). With `p-6` dialog content use `<DialogFooter className="-mx-6 -mb-6 rounded-b-2xl px-6 py-4">`. Never hand-build a `fixed inset-0` modal. The POS receipt's full-width touch buttons are the one deliberate exception.
 
 ## 4. Logic & Architecture
 

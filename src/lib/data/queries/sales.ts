@@ -25,6 +25,29 @@ export const getCachedOrders = unstable_cache(
   { tags: [CACHE_TAGS.orders, CACHE_TAGS.customers], revalidate: 30 }
 )
 
+/**
+ * The invoice form's order picker: only `id` and `order_number`, live orders
+ * only, newest 500. getCachedOrders reads every order with every column, which
+ * the picker never shows. The edit page adds the invoice's own order back if
+ * it falls outside this list (older or cancelled), from the invoice row's own
+ * embedded `sales_orders(order_number)`.
+ */
+export const getCachedOrdersForSelect = unstable_cache(
+  async (tenantId: string) => {
+    const supabase = getCacheClient() as any
+    const { data } = await supabase
+      .from('sales_orders')
+      .select('id, order_number')
+      .eq('tenant_id', tenantId)
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: false })
+      .limit(500)
+    return (data ?? []) as { id: string; order_number: string }[]
+  },
+  ['orders-select'],
+  { tags: [CACHE_TAGS.orders, CACHE_TAGS.customers], revalidate: 30 }
+)
+
 export const getCachedInvoices = unstable_cache(
   async (tenantId: string) => {
     const supabase = getCacheClient() as any
