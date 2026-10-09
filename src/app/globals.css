@@ -376,3 +376,32 @@
 .dark .map-tiles-osm {
   filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
 }
+
+/* -----------------------------------------------------------------------------
+   No page-level horizontal scroll — a wide list scrolls inside itself.
+
+   A flex or grid item defaults to `min-width: auto`, i.e. "never narrower than
+   my content", so one wide table used to stretch its grid cell, the cell its
+   row, and so on up to the page, which then scrolled sideways as a whole. With
+   `min-width: 0` down the chain the table's own container (`overflow-x: auto`,
+   ui/table.tsx) is what ends up too narrow — and it is the one that scrolls.
+
+   Grid cells always get it (a cell sized to its track is what every grid here
+   means); flex items only when they hold a table, since squeezing an ordinary
+   flex row's icons and labels is not wanted. `overflow-x: hidden` on the page
+   and dialog bodies is the backstop for anything that still slips through.
+   ------------------------------------------------------------------------- */
+[data-slot="sidebar-inset"],
+.app-main,
+.app-page,
+.app-page > * {
+  min-width: 0;
+}
+.app-main,
+[data-slot="dialog-content"] {
+  overflow-x: hidden;
+}
+:is(.app-page, [data-slot="dialog-content"]) .grid > *,
+:is(.app-page, [data-slot="dialog-content"]) .flex > *:has([data-slot="table-container"]) {
+  min-width: 0;
+}

@@ -9,6 +9,7 @@ import { MoreHorizontal, Pencil, Truck, MapPin } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
+import { SupplierImportExport } from '@/components/procurement/supplier-import-export'
 import dynamic from 'next/dynamic'
 
 // react-leaflet/leaflet touch `window` at module-evaluation time, not just
@@ -35,6 +36,8 @@ interface SuppliersTableProps {
   pageSize: number
   total: number
   totalPages: number
+  /** Whether the user may export — shows the Excel import/export menu. */
+  canExport?: boolean
 }
 
 export function SuppliersTable({
@@ -44,6 +47,7 @@ export function SuppliersTable({
   pageSize,
   total,
   totalPages,
+  canExport = false,
 }: SuppliersTableProps) {
   const tCommon = useTranslations('common')
   const t = useTranslations('procurement')
@@ -59,8 +63,13 @@ export function SuppliersTable({
     <TooltipProvider>
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between p-4 border-b">
-            <TableSearch />
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <TableSearch />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {canExport && <SupplierImportExport suppliers={suppliers} lang={lang} />}
+            </div>
           </div>
           <Table>
             <TableHeader>

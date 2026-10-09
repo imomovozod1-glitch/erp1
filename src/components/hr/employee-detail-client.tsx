@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -41,20 +40,11 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   const tPerm = useTranslations('permissions')
   const tSettings = useTranslations('settings')
   const t = useTranslations('hr')
-  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'payouts' | 'sales'>('payouts')
   const [period, setPeriod] = useState<Period>('all')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
 
-  // Force a fresh server fetch on every visit — the browser's client-side
-  // router cache can otherwise show a stale payout total right after a
-  // salary was paid on the Cashbox page (Next.js reuses cached RSC payloads
-  // on back/forward navigation regardless of server-side cache invalidation).
-  useEffect(() => {
-    router.refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleApplyCustomRange = (start: string, end: string) => {
     setCustomStart(start)

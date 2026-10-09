@@ -175,19 +175,17 @@ export function PosAddCustomerDialog({
                 </Button>
               </div>
             </div>
-            <DialogFooter className="pt-2">
+            <DialogFooter className="-mx-6 -mb-6 rounded-b-2xl px-6 py-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg"
               >
                 {tCommon('cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg"
               >
                 {isSaving ? tCommon('saving') : tCommon('save')}
               </Button>
@@ -221,11 +219,10 @@ export function PosAddCustomerDialog({
                 initialLng={lng}
               />
             </div>
-            <DialogFooter className="pt-2">
+            <DialogFooter className="-mx-6 -mb-6 rounded-b-2xl px-6 py-4">
               <Button
                 type="button"
                 onClick={() => setIsMapOpen(false)}
-                className="bg-violet-600 hover:bg-violet-700 text-white rounded-lg"
               >
                 {tCommon('save')}
               </Button>

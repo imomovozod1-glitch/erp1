@@ -1,9 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import dynamic from 'next/dynamic'
 import { subDays, startOfMonth, endOfMonth, subMonths, startOfWeek } from 'date-fns'
 import { CalendarRange, Check, ChevronDown } from 'lucide-react'
-import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+
+// The custom-range picker carries the calendar (react-day-picker), which most
+// visits to a page with this filter never open. Fetched as its own chunk, with
+// a placeholder of the trigger's size so the toolbar does not shift.
+const CustomDateRangePicker = dynamic(
+  () => import('@/components/shared/custom-date-range-picker').then((m) => m.CustomDateRangePicker),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[38px] w-full animate-pulse rounded-xl border border-slate-200 bg-white sm:w-36 dark:border-slate-700 dark:bg-slate-900" />
+    ),
+  }
+)
 
 export type Period = string
 

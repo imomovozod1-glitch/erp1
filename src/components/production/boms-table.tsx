@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { MoreHorizontal, Pencil, Trash2, Power, Search, Layers } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Power, Layers } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateBoms } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import {
@@ -33,8 +33,13 @@ interface BomRow {
 }
 
 interface BomsTableProps {
+  /** Only the current page's rows — the server applied search and paging. */
   boms: BomRow[]
   lang: string
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
 }
 
 /**
@@ -42,38 +47,18 @@ interface BomsTableProps {
  *
  * Deliberately built like `role-templates-table.tsx` rather than like the
  * product or sales tables: a composition is a reusable TEMPLATE, the same kind
- * of thing a role template is. A tenant has a handful of them, not a ledger
- * that grows forever, so the whole list arrives at once and the search runs in
- * the browser — and each row says the one thing that matters at a glance, how
- * many components it holds, the way a role says how many modules it grants.
+ * of thing a role template is — each row says the one thing that matters at a
+ * glance, how many components it holds, the way a role says how many modules
+ * it grants. Paged and searched on the server (`getBomsPage`): `boms` is only
+ * the page being shown.
  */
-export function BomsTable({ boms, lang }: BomsTableProps) {
+export function BomsTable({ boms, lang, page, pageSize, total, totalPages }: BomsTableProps) {
   const tCommon = useTranslations('common')
   const t = useTranslations('production')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
-  const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
-
-  useEffect(() => {
-    setTimeout(() => {
-      setCurrentPage(1)
-    }, 0)
-  }, [search])
-
-  const filtered = boms.filter((b) => {
-    const needle = search.toLowerCase()
-    return (
-      b.name.toLowerCase().includes(needle) ||
-      (b.product?.name ?? '').toLowerCase().includes(needle)
-    )
-  })
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     setIsUpdatingStatus(id)
@@ -122,19 +107,10 @@ export function BomsTable({ boms, lang }: BomsTableProps) {
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center gap-3 p-4 border-b">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={`${tCommon('search')}...`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
-            />
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <TableSearch />
           </div>
-          <span className="text-xs text-muted-foreground">
-            {filtered.length} {tCommon('rows')}
-          </span>
         </div>
 
         <Table>
@@ -146,11 +122,11 @@ export function BomsTable({ boms, lang }: BomsTableProps) {
               <TableHead className="hidden md:table-cell text-right tabular-nums">{t('outputQuantity')}</TableHead>
               <TableHead>{t('components')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
-              <TableHead className="w-12.5" />
+              <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {boms.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -160,14 +136,14 @@ export function BomsTable({ boms, lang }: BomsTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              paginated.map((bom, index) => (
+              boms.map((bom, index) => (
                 <TableRow
                   key={bom.id}
                   className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
                   onClick={() => router.push(`/${lang}/production/boms/${bom.id}/edit`)}
                 >
                   <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
+                    {(page - 1) * pageSize + index + 1}
                   </TableCell>
                   <TableCell>
                     <p className="font-medium text-slate-800 dark:text-slate-200">{bom.name}</p>
@@ -207,7 +183,7 @@ export function BomsTable({ boms, lang }: BomsTableProps) {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDelete(bom.id)}
-                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
                           disabled={isDeleting === bom.id}
                         >
                           <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
@@ -220,31 +196,7 @@ export function BomsTable({ boms, lang }: BomsTableProps) {
             )}
           </TableBody>
         </Table>
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
-            </Button>
-            <span className="text-xs text-muted-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="cursor-pointer"
-            >
-              {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
-            </Button>
-          </div>
-        )}
+        <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
       {confirmDialog}
     </Card>

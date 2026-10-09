@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { InvoiceForm } from '@/components/sales/invoice-form'
-import { getCachedInvoiceById, getCachedCustomersForSelect, getCachedOrders, getAssignableUsers } from '@/lib/data/queries'
+import { getCachedInvoiceById, getCachedCustomersForSelect, getCachedOrdersForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -27,13 +27,28 @@ export default async function EditInvoicePage({
     getTranslations('common'),
     getCachedInvoiceById(id, tenantId),
     getCachedCustomersForSelect(tenantId),
-    getCachedOrders(tenantId),
+    getCachedOrdersForSelect(tenantId),
     getAssignableUsers(tenantId),
   ])
 
   if (!invoice) {
     notFound()
   }
+
+  // The picker holds the newest 500 live orders; an invoice linked to an older
+  // or cancelled one must still show it, or the select would read blank and
+  // saving would look like it unlinks the order.
+  const linkedOrderId: string | null = (invoice as any).order_id ?? null
+  const orderOptions =
+    linkedOrderId && !orders.some((o) => o.id === linkedOrderId)
+      ? [
+          ...orders,
+          {
+            id: linkedOrderId,
+            order_number: (invoice as any).sales_orders?.order_number ?? linkedOrderId,
+          },
+        ]
+      : orders
 
   return (
     <div className="space-y-6">
@@ -46,7 +61,7 @@ export default async function EditInvoicePage({
           { label: tCommon('edit') },
         ]}
       />
-      <InvoiceForm initialData={invoice} customers={customers} orders={orders} lang={lang} assignableUsers={assignableUsers} />
+      <InvoiceForm initialData={invoice} customers={customers} orders={orderOptions} lang={lang} assignableUsers={assignableUsers} />
     </div>
   )
 }

@@ -45,6 +45,23 @@ export const getCachedCategories = unstable_cache(
   { tags: [CACHE_TAGS.categories], revalidate: 60 }
 )
 
+/** One page of the categories list (Ombor > Kategoriyalar), searched by name and slug. */
+export function getCategoriesPage(
+  tenantId: string,
+  opts: { page: number; pageSize: number; search?: string }
+): Promise<PageResult<any>> {
+  return queryPage({
+    table: 'categories',
+    tenantId,
+    select: '*',
+    page: opts.page,
+    pageSize: opts.pageSize,
+    search: opts.search,
+    searchColumns: ['name', 'slug', 'description'],
+    orderBy: { column: 'created_at', ascending: false },
+  })
+}
+
 export const getCachedMovements = unstable_cache(
   async (tenantId: string) => {
     const supabase = getCacheClient() as any

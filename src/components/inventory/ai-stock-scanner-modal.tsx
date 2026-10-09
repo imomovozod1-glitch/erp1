@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -563,12 +564,11 @@ export function AIStockScannerModal({
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="pt-4 border-t flex items-center justify-between mt-auto">
+        <DialogFooter className="-mx-6 -mb-6 mt-auto rounded-b-xl px-6 py-4">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isScanning || isSaving}
-            className="text-xs"
           >
             {lang === 'uz' ? 'Yopish' : lang === 'ru' ? 'Закрыть' : 'Close'}
           </Button>
@@ -577,7 +577,6 @@ export function AIStockScannerModal({
             <Button
               onClick={handleScanImage}
               disabled={!file || isScanning}
-              className="bg-violet-600 hover:bg-violet-500 text-xs gap-2 h-10 px-5 rounded-lg"
             >
               {isScanning ? (
                 <>
@@ -595,7 +594,6 @@ export function AIStockScannerModal({
             <Button
               onClick={handleSaveToWarehouse}
               disabled={isSaving || items.length === 0}
-              className="bg-emerald-600 hover:bg-emerald-500 text-xs gap-2 h-10 px-5 rounded-lg"
             >
               {isSaving ? (
                 <>
@@ -610,7 +608,7 @@ export function AIStockScannerModal({
               )}
             </Button>
           )}
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

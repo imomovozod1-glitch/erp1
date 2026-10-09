@@ -3,7 +3,8 @@ import { getTranslations } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { BomsTable } from '@/components/production/boms-table'
-import { getCachedBoms } from '@/lib/data/queries'
+import { getBomsPage } from '@/lib/data/queries'
+import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { canEditModule } from '@/lib/permissions-server'
 
@@ -13,15 +14,21 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return { title: t('boms') }
 }
 
-export default async function BomsPage({ params }: { params: Promise<{ lang: string }> }) {
-  const { lang } = await params
+export default async function BomsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ lang: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [{ lang }, sp] = await Promise.all([params, searchParams])
+  const { page, pageSize, search } = readPageParams(sp)
   const tenantId = (await getCurrentTenantId()) as string
-  const [t, tInfo, canEdit, boms] = await Promise.all([
+  const [t, tInfo, canEdit, bomsPage] = await Promise.all([
     getTranslations('production'),
     getTranslations('pageInfo'),
     canEditModule('production'),
-    // The whole list, like the role templates page — see `BomsTable`.
-    getCachedBoms(tenantId),
+    getBomsPage(tenantId, { page, pageSize, search }),
   ])
 
   return (
@@ -37,7 +44,14 @@ export default async function BomsPage({ params }: { params: Promise<{ lang: str
           { label: t('boms') },
         ]}
       />
-      <BomsTable boms={boms} lang={lang} />
+      <BomsTable
+        boms={bomsPage.rows}
+        lang={lang}
+        page={bomsPage.page}
+        pageSize={bomsPage.pageSize}
+        total={bomsPage.total}
+        totalPages={bomsPage.totalPages}
+      />
     </div>
   )
 }

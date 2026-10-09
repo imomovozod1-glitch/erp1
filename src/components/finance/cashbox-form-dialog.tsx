@@ -9,6 +9,14 @@ import { Label } from '@/components/ui/label'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -89,14 +97,21 @@ export function CashboxFormDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl p-7 relative animate-in zoom-in-95 duration-300 space-y-4">
-        <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+    <Dialog
+      open
+      // A stray click outside must not throw away a half-filled form.
+      disablePointerDismissal
+      onOpenChange={(open) => {
+        if (!open && !isSaving) onOpenChange(false)
+      }}
+    >
+      <DialogContent className="bg-white dark:bg-slate-900 sm:max-w-md rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl p-6">
+        <DialogHeader className="flex-row items-center gap-3 pb-3 pr-8 border-b border-slate-100 dark:border-slate-800">
           <div className="p-2 bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 rounded-xl">
             <Landmark className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+            <DialogTitle className="text-lg font-bold text-slate-800 dark:text-slate-100">
               {cashbox
                 ? lang === 'uz'
                   ? 'Kassani tahrirlash'
@@ -104,16 +119,16 @@ export function CashboxFormDialog({
                     ? 'Редактировать кассу'
                     : 'Edit cashbox'
                 : t('addCashbox')}
-            </h3>
-            <p className="text-xs text-muted-foreground">
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
               {lang === 'uz'
                 ? "Kassa ma'lumotlarini kiriting"
                 : lang === 'ru'
                   ? 'Введите параметры кассы'
                   : 'Enter the cashbox details'}
-            </p>
+            </DialogDescription>
           </div>
-        </div>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
@@ -198,26 +213,21 @@ export function CashboxFormDialog({
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <DialogFooter className="-mx-6 -mb-6 rounded-b-2xl px-6 py-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
-              className="rounded-xl h-10 px-4 font-semibold text-xs"
             >
               {tCommon('cancel')}
             </Button>
-            <Button
-              type="submit"
-              disabled={isSaving}
-              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl h-10 px-5 font-semibold text-xs shadow-sm shadow-violet-500/10 hover:shadow-violet-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" disabled={isSaving}>
               {isSaving ? tCommon('saving') : tCommon('save')}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

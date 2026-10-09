@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import dynamic from 'next/dynamic'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { toast } from 'sonner'
 import {
@@ -23,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Skeleton } from '@/components/ui/skeleton'
 import { DatePicker } from '@/components/ui/date-picker'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -30,7 +32,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { ReportChart, CHART_TYPES, type ChartType } from '@/components/reports/report-chart'
+import { CHART_TYPES, type ChartType } from '@/components/reports/chart-types'
 import { ReportFilters } from '@/components/reports/report-filters'
 import { exportRowsToExcel } from '@/lib/excel-io'
 import { formatCurrency, formatDate, formatNumber, isoDate } from '@/lib/utils'
@@ -51,6 +53,13 @@ import {
   type FilterRule,
   type SortRule,
 } from '@/lib/reports/view'
+
+// The chart pulls in recharts and is only shown once the user switches to the
+// chart view, so it is fetched on demand rather than with the builder.
+const ReportChart = dynamic(
+  () => import('@/components/reports/report-chart').then((m) => m.ReportChart),
+  { ssr: false, loading: () => <Skeleton className="m-4 h-[360px] rounded-xl" /> }
+)
 
 /** Saved report configurations, per browser. Mirrors how measurement units and
  *  the cashbox fallback already persist small user preferences locally. */

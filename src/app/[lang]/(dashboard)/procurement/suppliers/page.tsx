@@ -7,7 +7,6 @@ import { getSuppliersPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { SuppliersTable } from '@/components/procurement/suppliers-table'
-import { SupplierImportExport } from '@/components/procurement/supplier-import-export'
 import { canEditModule , canDo, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 
 export const metadata: Metadata = { title: 'Suppliers' }
@@ -77,9 +76,7 @@ export default async function SuppliersPage({
           { label: t('title') },
           { label: t('suppliers') },
         ]}
-      >
-        {canExport && <SupplierImportExport suppliers={suppliersPage.rows} lang={lang} />}
-      </PageHeader>
+      />
       <SuppliersTable
         suppliers={suppliersWithDebt}
         lang={lang}
@@ -87,6 +84,7 @@ export default async function SuppliersPage({
         pageSize={suppliersPage.pageSize}
         total={suppliersPage.total}
         totalPages={suppliersPage.totalPages}
+        canExport={canExport}
       />
     </div>
   )

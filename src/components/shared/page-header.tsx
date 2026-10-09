@@ -69,20 +69,25 @@ export function PageHeader({
       <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
         {children}
         {action && (
+          // Both variants are the same Button so a link action and a click
+          // action look identical. nativeButton={false}: with `href` the
+          // rendered element is an <a>, and Base UI warns when a button-role
+          // component is not a real <button>.
           action.href ? (
-            <Link
-              href={action.href}
-              prefetch={true}
-              className="inline-flex items-center gap-1.5 h-7 px-2.5 text-[0.8rem] font-medium rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition-colors"
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={<Link href={action.href} prefetch={true} />}
+              className="bg-violet-600 hover:bg-violet-500 text-white gap-1.5"
             >
-              {ActionIcon && <ActionIcon className="h-3.5 w-3.5" />}
+              {ActionIcon && <ActionIcon className="h-4 w-4" />}
               {action.label}
-            </Link>
+            </Button>
           ) : (
             <Button
               size="sm"
               onClick={action.onClick}
-              className="bg-violet-600 hover:bg-violet-500 gap-1.5"
+              className="bg-violet-600 hover:bg-violet-500 text-white gap-1.5"
             >
               {ActionIcon && <ActionIcon className="h-4 w-4" />}
               {action.label}

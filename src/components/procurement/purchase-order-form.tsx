@@ -581,7 +581,7 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
       )}
 
       {/* Actions */}
-      <div className="flex gap-4">
+      <div className="flex justify-end gap-2 border-t pt-4">
         <Button
           type="button"
           variant="outline"
@@ -593,7 +593,6 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
         <Button
           type="submit"
           disabled={isSubmitting || items.length === 0 || !supplierId || items.some(item => !item.productId)}
-          className="bg-violet-600 hover:bg-violet-500"
         >
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>

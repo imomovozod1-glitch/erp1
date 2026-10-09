@@ -91,9 +91,10 @@ export function OrdersTable({
     <>
       <Card className="border-0 shadow-sm">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center gap-3 p-4 border-b">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
-          <span className="text-xs text-muted-foreground">{total} {tCommon('rows')}</span>
+          </div>
         </div>
         <Table>
           <TableHeader>

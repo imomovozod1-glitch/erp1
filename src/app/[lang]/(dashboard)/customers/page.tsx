@@ -4,7 +4,6 @@ import { Plus, Scale } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatsCard } from '@/components/shared/stats-card'
 import { CustomersViewTabs } from '@/components/sales/customers-view-tabs'
-import { CustomerImportExport } from '@/components/sales/customer-import-export'
 import { getCustomersPage , getCustomersMapPoints, getCustomerBalanceTotals} from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
@@ -66,9 +65,7 @@ export default async function CustomersPage({
           { label: tNav('customers'), href: `/${lang}/customers` },
           { label: t('customers') },
         ]}
-      >
-        {canExport && <CustomerImportExport customers={result.rows} lang={lang} />}
-      </PageHeader>
+      />
 
       {/* One figure, so one tile's worth of width — full-bleed it stretched a
           single number across the whole page. */}
@@ -91,6 +88,7 @@ export default async function CustomersPage({
 
       <CustomersViewTabs
         balance={balance ?? 'all'}
+        canExport={canExport}
         customers={result.rows}
         mapCustomers={mapPoints}
         currentUserId={permCtx?.userId ?? null}

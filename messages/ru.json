@@ -1046,6 +1046,7 @@
     "orderSuccess": "Продажа успешно завершена!",
     "cashier": "Кассир",
     "noProducts": "Товары не найдены",
+    "showMore": "Показать ещё",
     "insufficientStock": "Недостаточно товара на складе!",
     "addCustomer": "Добавить клиента",
     "customerName": "Имя клиента",
