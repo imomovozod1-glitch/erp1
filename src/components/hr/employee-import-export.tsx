@@ -14,7 +14,7 @@ interface EmployeeImportExportProps {
 const EXPORT_COLUMNS: ExcelColumn[] = [
   { header: 'Xodim kodi', key: 'employee_code' },
   { header: "F.I.Sh.", key: 'fullName' },
-  { header: 'Email', key: 'email' },
+  { header: 'Telefon raqami', key: 'phone' },
   { header: 'Lavozim', key: 'position' },
   { header: 'Oylik maosh', key: 'salary' },
   { header: 'Ishga qabul qilingan sana', key: 'hiredAtLabel' },
@@ -23,8 +23,8 @@ const EXPORT_COLUMNS: ExcelColumn[] = [
 
 const TEMPLATE_COLUMNS: ExcelColumn[] = [
   { header: 'Xodim kodi', key: 'employee_code', sample: 'EMP-1001' },
-  { header: "F.I.Sh. (ixtiyoriy, mavjud foydalanuvchi bilan bog'lash uchun email)", key: 'fullName', sample: '' },
-  { header: 'Email', key: 'email', sample: 'user@example.com' },
+  { header: "F.I.Sh.", key: 'fullName', sample: '' },
+  { header: "Telefon raqami (ixtiyoriy, mavjud foydalanuvchi bilan bog'lash uchun)", key: 'phone', sample: '+998901234567' },
   { header: 'Lavozim', key: 'position', sample: 'Sotuvchi' },
   { header: 'Oylik maosh', key: 'salary', sample: 3000000 },
   { header: 'Ishga qabul qilingan sana (YYYY-MM-DD)', key: 'hiredAtLabel', sample: '2026-01-15' },
@@ -39,25 +39,25 @@ export function EmployeeImportExport({ employees, lang }: EmployeeImportExportPr
   const exportRows = employees.map((e) => ({
     ...e,
     fullName: e.full_name || '',
-    email: e.profiles?.email || '',
+    phone: e.profiles?.phone || '',
     hiredAtLabel: e.hired_at ? formatDate(e.hired_at) : '',
     statusLabel: e.is_active ? activeLabel : inactiveLabel,
   }))
 
   const handleImport = async (rows: Record<string, any>[]) => {
-    // Employees can optionally link to an existing user account (profiles row) by email —
-    // importing never creates new login accounts, only the employee record itself.
-    const emails = rows
-      .map((row) => pickField(row, 'Email', 'Почта'))
-      .filter(Boolean)
+    // Employees can optionally link to an existing user account (profiles row) by
+    // phone — the login itself — compared digits-only so "+998 90 123-45-67" and
+    // "998901234567" match. Importing never creates new login accounts.
+    const digits = (v: string | null | undefined) => (v ?? '').replace(/\D/g, '')
+    const readPhone = (row: Record<string, any>) =>
+      digits(pickField(row, "Telefon raqami (ixtiyoriy, mavjud foydalanuvchi bilan bog'lash uchun)", 'Telefon raqami', 'Phone', 'Телефон'))
 
-    let profilesByEmail: Record<string, string> = {}
-    if (emails.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .in('email', emails)
-      profilesByEmail = Object.fromEntries((profiles || []).map((p: any) => [p.email.toLowerCase(), p.id]))
+    let profilesByPhone: Record<string, string> = {}
+    if (rows.some((row) => readPhone(row))) {
+      const { data: profiles } = await supabase.from('profiles').select('id, phone')
+      profilesByPhone = Object.fromEntries(
+        (profiles || []).filter((p: any) => digits(p.phone)).map((p: any) => [digits(p.phone), p.id])
+      )
     }
 
     const newEmployees = rows
@@ -65,12 +65,12 @@ export function EmployeeImportExport({ employees, lang }: EmployeeImportExportPr
         const employeeCode = pickField(row, 'Xodim kodi', 'Employee Code', 'Код сотрудника')
         const hiredAt = pickField(row, 'Ishga qabul qilingan sana (YYYY-MM-DD)', 'Ishga qabul qilingan sana', 'Hired At', 'Дата приёма')
         if (!hiredAt) return null
-        const email = pickField(row, 'Email', 'Почта').toLowerCase()
+        const phone = readPhone(row)
         const salaryRaw = pickField(row, 'Oylik maosh', 'Salary', 'Зарплата')
         return {
           // Optional, as in the form: a blank one is generated.
           employee_code: employeeCode || generateDocumentNumber('EMP'),
-          profile_id: email ? profilesByEmail[email] || null : null,
+          profile_id: phone ? profilesByPhone[phone] || null : null,
           position: pickField(row, 'Lavozim', 'Position', 'Должность') || null,
           salary: salaryRaw ? Number(salaryRaw.replace(/[^\d.]/g, '')) || 0 : 0,
           hired_at: hiredAt,

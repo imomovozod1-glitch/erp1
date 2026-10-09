@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 /**
  * URL-driven search + pagination controls, shared by every server-paginated
@@ -170,5 +171,46 @@ export function TableFilterChips({
         </Button>
       ))}
     </div>
+  )
+}
+
+/**
+ * The same URL filter as `TableFilterChips`, as one compact dropdown — for a
+ * toolbar carrying several filters, where a row of chips per filter wraps onto
+ * extra lines. The label sits inside the trigger so no separate caption is
+ * needed to tell two of them apart.
+ */
+export function TableFilterSelect({
+  param,
+  label,
+  options,
+  value,
+}: {
+  param: string
+  label: string
+  options: { value: string; label: string }[]
+  value: string
+}) {
+  const { setParams, isPending } = useUrlState()
+  const current = options.find((o) => o.value === value) ?? options[0]
+  return (
+    <Select
+      value={value}
+      onValueChange={(next) => setParams({ [param]: !next || next === 'all' ? null : next, page: null })}
+      disabled={isPending}
+    >
+      <SelectTrigger className="h-9 w-auto min-w-40 gap-2">
+        <SelectValue>
+          <span className="text-muted-foreground">{label}:</span> {current?.label}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

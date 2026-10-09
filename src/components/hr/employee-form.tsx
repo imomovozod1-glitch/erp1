@@ -46,7 +46,7 @@ interface EmployeeFormProps {
 interface AccountOption {
   id: string
   full_name: string | null
-  email: string | null
+  phone: string | null
   permissions: unknown
 }
 
@@ -473,14 +473,14 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
                     <SelectValue>
                       {(val: string) => {
                         const chosen = accountOptions.find((p) => p.id === val)
-                        return chosen ? (chosen.full_name || chosen.email || val) : t('selectAccount')
+                        return chosen ? (chosen.full_name || chosen.phone || val) : t('selectAccount')
                       }}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {accountOptions.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.full_name || p.email} {p.email ? `(${p.email})` : ''}
+                        {p.full_name || p.phone} {p.full_name && p.phone ? `(${p.phone})` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>

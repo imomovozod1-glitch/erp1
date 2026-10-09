@@ -80,9 +80,9 @@ export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
   }
 
   return (
-    <Card className="border-0 shadow-sm">
-      <CardContent className="p-0">
-        <div className="flex flex-wrap items-center gap-3 p-4 border-b">
+    <Card className="border-0 shadow-sm md:min-h-0 md:flex-1">
+      <CardContent className="flex flex-col p-0 md:min-h-0 md:flex-1">
+        <div className="flex shrink-0 flex-wrap items-center gap-3 p-4 border-b">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -97,8 +97,9 @@ export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
           </span>
         </div>
 
+        <div className="md:min-h-0 md:flex-1 md:overflow-auto md:[&_[data-slot=table-container]]:overflow-visible">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900">
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
               <TableHead className="font-semibold">{t('roleName')}</TableHead>
@@ -160,8 +161,9 @@ export function RoleTemplatesTable({ roles, lang }: RoleTemplatesTableProps) {
             )}
           </TableBody>
         </Table>
+        </div>
         {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
+          <div className="flex shrink-0 items-center justify-between p-4 border-t">
             <Button
               variant="outline"
               size="sm"

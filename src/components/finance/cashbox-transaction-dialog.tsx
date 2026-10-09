@@ -251,26 +251,27 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                 </SelectContent>
               </Select>
 
-              {/* Both sides of the customer's balance: what they still owe on
-                  invoices (qarzdorlik) and what the company owes them
-                  (haqdorlik, credit_balance) — shown for income and expense
-                  alike, since a refund is decided by the second. */}
-              {value.customerId && (
-                <div className="mt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">
-                  <div className="flex items-center justify-between rounded-2xl border border-rose-100 bg-rose-50 p-3.5 text-xs text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
-                    <span className="font-medium">{t('customerDebtLabel')}</span>
+              {/* One line, not two: the customer's NET position — credit held
+                  (haqdorlik, credit_balance) minus invoice debt (qarzdorlik).
+                  Whichever side it lands on is the one shown. */}
+              {value.customerId && (() => {
+                const net = (customerCredit || 0) - (customerDebt || 0)
+                const tone = net > 0
+                  ? 'border-emerald-100 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300'
+                  : net < 0
+                    ? 'border-rose-100 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300'
+                return (
+                  <div className={`mt-2 flex items-center justify-between rounded-2xl border p-3.5 text-xs animate-in slide-in-from-top-1 duration-200 ${tone}`}>
+                    <span className="font-medium">
+                      {net > 0 ? t('customerCreditLabel') : net < 0 ? t('customerDebtLabel') : t('customerSettledLabel')}
+                    </span>
                     <span className="text-sm font-extrabold tabular-nums">
-                      {isLoadingDebt ? '...' : formatCurrency(customerDebt || 0)}
+                      {isLoadingDebt ? '...' : formatCurrency(Math.abs(net))}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
-                    <span className="font-medium">{t('customerCreditLabel')}</span>
-                    <span className="text-sm font-extrabold tabular-nums">
-                      {isLoadingDebt ? '...' : formatCurrency(customerCredit || 0)}
-                    </span>
-                  </div>
-                </div>
-              )}
+                )
+              })()}
             </div>
           )}
 
