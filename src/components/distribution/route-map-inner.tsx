@@ -94,7 +94,7 @@ export function RouteMapInner({
         className={className}
         style={{ zIndex: 1 }}
       >
-        <TileLayer url={tiles.url} attribution={tiles.attribution} maxZoom={tiles.maxZoom} />
+        <TileLayer url={tiles.url} className={tiles.className} attribution={tiles.attribution} maxZoom={tiles.maxZoom} />
         <FitRoute points={bounds} />
         {path.length > 0 && (
           <>

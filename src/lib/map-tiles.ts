@@ -5,46 +5,38 @@ import { useTheme } from '@/components/providers/theme-provider'
 /**
  * Which basemap the Leaflet maps draw.
  *
- * Two reasons this is not just a hardcoded OSM URL any more:
+ * OpenStreetMap's own raster tiles: free and with no key. This used to be
+ * CARTO's light/dark pair, until CARTO started answering every keyless request
+ * with an "API KEY REQUIRED" placeholder tile — every map in the app went blank
+ * at once (October 2026). OSM has no dark variant, so dark mode is a CSS filter
+ * on the tile layer (`.map-tiles-osm` in globals.css) rather than a second URL —
+ * which also means switching the theme needs no tile reload.
  *
- * 1. **Dark mode.** The app has a full dark theme, but plain OSM raster is
- *    always daylight-bright — a white rectangle in the middle of a dark page.
- *    CARTO publishes a matched light/dark pair off the same OSM data, free and
- *    with no key, so the map finally follows the theme like everything else.
- *
- * 2. **Cost.** Mapbox bills its raster basemap per TILE request, not per map
- *    load, and one Leaflet viewport is 10–20 tiles — the 50k free allowance is
- *    roughly 3 000 map openings a month, which an ERP passes quickly. The
- *    routing APIs have no free alternative; basemaps do. So the Mapbox budget
- *    goes entirely to Directions/Optimization (src/lib/mapbox.ts) and the tiles
- *    stay free.
+ * Mapbox is NOT the default on purpose: it bills its raster basemap per TILE
+ * request, not per map load, and one Leaflet viewport is 10–20 tiles — the 50k
+ * free allowance is roughly 3 000 map openings a month. The Mapbox budget goes
+ * to Directions/Optimization (src/lib/mapbox.ts).
  *
  * Set NEXT_PUBLIC_MAPBOX_STYLE_TILES to a style id (e.g. `mapbox/streets-v12`)
  * together with NEXT_PUBLIC_MAPBOX_TILE_TOKEN to switch the basemap to Mapbox
- * anyway — next.config.ts already allows api.mapbox.com in img-src, so nothing
- * else has to change. That token is necessarily public, so restrict it to the
- * app's hosts in the Mapbox dashboard.
+ * anyway — next.config.ts already allows api.mapbox.com in img-src. That token
+ * is necessarily public, so restrict it to the app's hosts in the Mapbox
+ * dashboard.
  */
 
 export interface TileConfig {
   url: string
   attribution: string
   maxZoom: number
+  /** Passed to `<TileLayer className>`; constant per provider so it never needs a remount. */
+  className?: string
 }
 
-const CARTO_ATTRIBUTION =
-  '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
-
-const LIGHT: TileConfig = {
-  url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-  attribution: CARTO_ATTRIBUTION,
-  maxZoom: 20,
-}
-
-const DARK: TileConfig = {
-  url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  attribution: CARTO_ATTRIBUTION,
-  maxZoom: 20,
+const OSM: TileConfig = {
+  url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 19,
+  className: 'map-tiles-osm',
 }
 
 function mapboxTiles(resolved: 'light' | 'dark'): TileConfig | null {
@@ -64,5 +56,5 @@ function mapboxTiles(resolved: 'light' | 'dark'): TileConfig | null {
 /** The basemap for the current theme. Safe to call in any client component. */
 export function useTileConfig(): TileConfig {
   const { resolvedTheme } = useTheme()
-  return mapboxTiles(resolvedTheme) ?? (resolvedTheme === 'dark' ? DARK : LIGHT)
+  return mapboxTiles(resolvedTheme) ?? OSM
 }

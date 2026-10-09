@@ -73,7 +73,7 @@ export function LocationPreviewMap({ address, latitude, longitude, onClick }: Lo
         className="w-full h-36 pointer-events-none"
         style={{ zIndex: 1 }}
       >
-        <TileLayer url={tiles.url} maxZoom={tiles.maxZoom} />
+        <TileLayer url={tiles.url} className={tiles.className} maxZoom={tiles.maxZoom} />
         <Marker position={[resolved.lat, resolved.lng]} icon={pinIcon} />
       </MapContainer>
     </button>
