@@ -740,6 +740,7 @@
     "payment": {
       "title": "Оплата",
       "onAccount": "В долг",
+      "fromCashbox": "Из какой кассы оплата",
       "onAccountHint": "Деньги сейчас не платятся — сумма пойдёт в долг поставщику.",
       "paidFromHint": "{amount} будет списано из кассы «{cashbox}» как расход.",
       "notEnoughInCashbox": "В этой кассе недостаточно средств.",

@@ -740,6 +740,7 @@
     "payment": {
       "title": "To'lov",
       "onAccount": "Qarzga",
+      "fromCashbox": "Qaysi kassadan to'lanadi",
       "onAccountHint": "Pul hozir to'lanmaydi — summa ta'minotchi qarziga yoziladi.",
       "paidFromHint": "{amount} \"{cashbox}\" kassasidan chiqim sifatida yechiladi.",
       "notEnoughInCashbox": "Bu kassada mablag' yetarli emas.",

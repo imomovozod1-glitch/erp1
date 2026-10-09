@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Trash2, Sparkles, Upload, Loader2 } from 'lucide-react'
-import { cn, formatCurrency, formatNumber, generateDocumentNumber, isoDate } from '@/lib/utils'
+import { formatCurrency, formatNumber, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { ItemPicker } from '@/components/shared/item-picker'
 import { unitAllowsDecimals } from '@/lib/units'
@@ -375,6 +375,32 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
                 </SelectContent>
               </Select>
             </div>
+            {/* Which cashbox pays for it — up here next to the supplier, not
+                under the lines, so it is in sight before anything is added. */}
+            <div className="space-y-2">
+              <Label>{t('payment.fromCashbox')}</Label>
+              <Select value={cashboxId ?? 'debt'} onValueChange={(val) => setCashboxId(!val || val === 'debt' ? null : val)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue>{cashbox ? cashbox.name : t('payment.onAccount')}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="debt">{t('payment.onAccount')}</SelectItem>
+                  {cashboxes.map((box) => (
+                    <SelectItem key={box.id} value={box.id}>
+                      {box.name} — {formatCurrency(Number(box.balance) || 0)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {cashbox === null
+                  ? t('payment.onAccountHint')
+                  : t('payment.paidFromHint', { amount: formatCurrency(totalAmount), cashbox: cashbox.name })}
+              </p>
+              {cashbox && (Number(cashbox.balance) || 0) < totalAmount && (
+                <p className="text-xs font-medium text-rose-600 dark:text-rose-400">{t('payment.notEnoughInCashbox')}</p>
+              )}
+            </div>
             <div className="space-y-2">
               <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
             </div>
@@ -430,8 +456,10 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
         </Card>
       </div>
 
-      {/* Add Item Row */}
-      <Card className="border shadow-sm">
+      {/* Add Item Row. `overflow-visible`: the picker's list drops below the
+          card, and Card's default overflow-hidden clipped it to a sliver that
+          could not be scrolled. */}
+      <Card className="border shadow-sm overflow-visible">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">{t('addItem')}</CardTitle>
         </CardHeader>
@@ -548,49 +576,6 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
                 </TableRow>
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* How it is being paid for. Sits after the lines because the amount is
-          what the question is about. */}
-      {items.length > 0 && (
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-5 space-y-3">
-            <Label>{t('payment.title')}</Label>
-            <div className="flex flex-wrap gap-2">
-              {[null, ...cashboxes].map((box) => {
-                const selected = (box?.id ?? null) === cashboxId
-                return (
-                  <button
-                    key={box?.id ?? 'debt'}
-                    type="button"
-                    onClick={() => setCashboxId(box?.id ?? null)}
-                    className={cn(
-                      'rounded-lg border px-3 py-2 text-left transition-colors',
-                      selected
-                        ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-400 dark:bg-violet-950/30 dark:text-violet-300'
-                        : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                    )}
-                  >
-                    <span className="block text-xs font-semibold">{box ? box.name : t('payment.onAccount')}</span>
-                    {box && (
-                      <span className="block text-[11px] tabular-nums text-muted-foreground">
-                        {formatCurrency(Number(box.balance) || 0)}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {cashbox === null
-                ? t('payment.onAccountHint')
-                : t('payment.paidFromHint', { amount: formatCurrency(totalAmount), cashbox: cashbox.name })}
-            </p>
-            {cashbox && (Number(cashbox.balance) || 0) < totalAmount && (
-              <p className="text-xs font-medium text-rose-600 dark:text-rose-400">{t('payment.notEnoughInCashbox')}</p>
-            )}
           </CardContent>
         </Card>
       )}
