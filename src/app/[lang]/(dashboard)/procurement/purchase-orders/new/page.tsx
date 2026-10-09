@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { PurchaseOrderForm } from '@/components/procurement/purchase-order-form'
-import { getCachedSuppliersForSelect, getCachedProductsForSelect, getAssignableUsers } from '@/lib/data/queries'
+import { getCachedSuppliersForSelect, getCachedProductsForSelect, getAssignableUsers, getCashboxesForSelect } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireModuleEdit } from '@/lib/permissions-server'
 
@@ -19,11 +19,12 @@ export default async function NewPurchaseOrderPage({ params }: { params: Promise
   // Creating/editing needs the module's Edit permission, not just View.
   await requireModuleEdit('procurement', lang, '/procurement/purchase-orders')
   const tenantId = await getCurrentTenantId() as string
-  const [t, suppliers, products, assignableUsers] = await Promise.all([
+  const [t, suppliers, products, assignableUsers, cashboxes] = await Promise.all([
     getTranslations('procurement'),
     getCachedSuppliersForSelect(tenantId),
     getCachedProductsForSelect(tenantId),
     getAssignableUsers(tenantId),
+    getCashboxesForSelect(tenantId),
   ])
 
   return (
@@ -38,7 +39,13 @@ export default async function NewPurchaseOrderPage({ params }: { params: Promise
           { label: t('addPurchase') },
         ]}
       />
-      <PurchaseOrderForm suppliers={suppliers} products={products} lang={lang} assignableUsers={assignableUsers} />
+      <PurchaseOrderForm
+        suppliers={suppliers}
+        products={products}
+        cashboxes={cashboxes}
+        lang={lang}
+        assignableUsers={assignableUsers}
+      />
     </div>
   )
 }

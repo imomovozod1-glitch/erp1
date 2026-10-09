@@ -100,10 +100,6 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
       (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
       z.number().positive(tCommon('required'))
     ),
-    extra_cost: z.preprocess(
-      (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
-      z.number().min(0).optional()
-    ),
     notes: z.string().optional(),
     is_active: z.boolean().default(true),
   })
@@ -116,7 +112,6 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
       name: initialData?.name || '',
       product_id: initialData?.product_id || presetProductId || '',
       output_quantity: initialData?.output_quantity ?? 1,
-      extra_cost: initialData?.extra_cost ?? '' as any,
       notes: initialData?.notes || '',
       is_active: initialData?.is_active ?? true,
     },
@@ -124,7 +119,6 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
 
   const productId = watch('product_id')
   const outputQuantity = Number(watch('output_quantity')) || 0
-  const extraCost = Number(watch('extra_cost')) || 0
 
   // What the batch looks like it will cost at today's cost prices. The real
   // figure is only known when a run is completed and the stock layers are
@@ -133,7 +127,7 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
     () => lines.reduce((sum, l) => sum + l.costPrice * l.quantity, 0),
     [lines]
   )
-  const batchCost = componentsCost + extraCost
+  const batchCost = componentsCost
   const perUnitCost = outputQuantity > 0 ? batchCost / outputQuantity : 0
 
   /**
@@ -189,7 +183,6 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
         name: data.name.trim(),
         product_id: data.product_id,
         output_quantity: data.output_quantity,
-        extra_cost: data.extra_cost ?? 0,
         notes: data.notes || null,
         is_active: data.is_active,
         assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
@@ -231,9 +224,11 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
   // disappearing from it: they carry a badge with their current quantity, and
   // clicking one again bumps it, which is how the sales form behaves and what
   // makes a second helping one click instead of a scroll down to the table.
-  const availableComponents = products.filter((p) => p.id !== productId)
+  // A recipe lists raw materials, which are goods — services (electricity,
+  // wages) are added per run as extras, not here.
+  const availableComponents = products.filter((p) => p.id !== productId && !p.is_service)
   // The output of a recipe is stocked when a run completes, so it cannot be a
-  // service — but a service may well be one of its components.
+  // service.
   const producibleProducts = products.filter((p) => !p.is_service)
 
   return (
@@ -284,19 +279,6 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
           />
           <p className="text-[11px] text-muted-foreground leading-snug">{t('outputHint')}</p>
           {errors.output_quantity && <p className="text-sm text-red-500">{errors.output_quantity.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="extra_cost">{t('extraCost')}</Label>
-          <Controller
-            control={control}
-            name="extra_cost"
-            render={({ field: { onChange, value } }) => (
-              <NumericInput id="extra_cost" value={value} onChange={onChange} />
-            )}
-          />
-          <p className="text-[11px] text-muted-foreground leading-snug">{t('extraCostHint')}</p>
-          {errors.extra_cost && <p className="text-sm text-red-500">{errors.extra_cost.message}</p>}
         </div>
 
         <div className="space-y-2">

@@ -3,6 +3,9 @@
 --
 -- Runs after: migration_business_rpc.sql. Re-runnable.
 --
+-- `p_purchase.cashbox_id` (optional) names the drawer a paid purchase comes
+-- out of; without it the main drawer of `payment_method`'s type is used.
+--
 -- Two things were missing from the procurement side that the sales side has
 -- had all along. A purchase moved stock but never moved money: whether it had
 -- been paid for was not recorded anywhere, so every purchase silently became a
@@ -68,7 +71,13 @@ BEGIN
   -- moved would leave the goods received and the money not taken. The row is
   -- locked here and debited at the end, so nothing can spend it in between.
   IF v_method IS NOT NULL THEN
-    v_cashbox := pick_cashbox(v_method, true);
+    -- The drawer the user chose, when they chose one; otherwise the main drawer
+    -- of that payment type. RLS keeps a foreign tenant's id from resolving.
+    IF NULLIF(p_purchase ->> 'cashbox_id', '') IS NOT NULL THEN
+      SELECT id INTO v_cashbox FROM cashboxes WHERE id = (p_purchase ->> 'cashbox_id')::uuid;
+    ELSE
+      v_cashbox := pick_cashbox(v_method, true);
+    END IF;
     IF v_cashbox IS NULL THEN
       RETURN jsonb_build_object('ok', false, 'code', 'insufficient_cashbox',
         'cashbox_name', NULL, 'balance', 0, 'amount', v_total);

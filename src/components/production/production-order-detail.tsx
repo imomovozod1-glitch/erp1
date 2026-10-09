@@ -162,7 +162,13 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
           <div className="grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-4">
             <Field label={t('plannedDate')} value={order.planned_date ? formatDate(order.planned_date) : '—'} />
             <Field label={t('completedAt')} value={order.completed_at ? formatDate(order.completed_at) : '—'} />
-            <Field label={t('extraCost')} value={formatCurrency(Number(order.extra_cost) || 0)} />
+            {/* Only for runs that predate itemised extras. The lump-sum field is
+                gone from the form — electricity, wages and the like are lines of
+                their own now — but old runs were costed with it and must keep
+                showing what they were charged. */}
+            {Number(order.extra_cost) > 0 && (
+              <Field label={t('extraCost')} value={formatCurrency(Number(order.extra_cost))} />
+            )}
             <Field label={tCommon('assignedTo')} value={order.assignee?.full_name || tCommon('unassigned')} />
             <Field
               label={t('totalCost')}

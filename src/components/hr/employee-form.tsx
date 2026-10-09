@@ -26,7 +26,7 @@ import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
 import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
 import { isStrongPassword } from '@/lib/password-validation'
 import { isValidPhone } from '@/lib/phone-validation'
-import { cn, isoDate } from '@/lib/utils'
+import { cn, generateDocumentNumber, isoDate } from '@/lib/utils'
 
 
 /** Dropdown contents, fetched on the server — see `getCachedEmployeeFormOptions`. */
@@ -136,12 +136,13 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
         .trim()
         .min(2, tCommon('required'))
         .max(120, tCommon('tooLong')),
+      // Optional: left blank, one is generated on save (the column is NOT NULL
+      // and unique per tenant, so it cannot simply be stored empty).
       employee_code: z
         .string()
         .trim()
-        .min(1, tCommon('required'))
         .max(32, tCommon('tooLong'))
-        .regex(/^[A-Za-z0-9._-]+$/, t('employeeCodeFormat')),
+        .regex(/^[A-Za-z0-9._-]*$/, t('employeeCodeFormat')),
       position: z.string().trim().max(100, tCommon('tooLong')).optional().or(z.literal('')),
       salary: z
         .coerce.number({ message: tCommon('invalidAmount') })
@@ -264,6 +265,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
 
       const payload = {
         ...data,
+        employee_code: data.employee_code || initialData?.employee_code || generateDocumentNumber('EMP'),
         terminated_at: !data.is_active && data.terminated_at ? data.terminated_at : null,
         profile_id: profileId,
         is_paid: isPaid,

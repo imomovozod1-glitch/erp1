@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import type { AssignableUser } from '@/components/shared/assignee-select'
 import { ImageUpload } from '@/components/shared/image-upload'
 
 /** Tenant-level settings the form needs — see `getCachedProductFormOptions`. */
@@ -32,20 +32,19 @@ export interface ProductFormOptions {
 
 interface ProductFormProps {
   /** Active tenant members who can be made responsible for this record. */
-  assignableUsers: AssignableUser[]
+  assignableUsers?: AssignableUser[]
   initialData?: any
   categories: any[]
   lang: string
   options: ProductFormOptions
 }
 
-export function ProductForm({ initialData, categories, lang, assignableUsers, options }: ProductFormProps) {
+export function ProductForm({ initialData, categories, lang, options }: ProductFormProps) {
   const tCommon = useTranslations('common')
   const t = useTranslations('inventory')
   const exitForm = useRouteModalExit(`/${lang}/inventory/products`)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
-  // Kept outside the zod form (like `assignedTo`): the value is produced by an
+  // Kept outside the zod form: the value is produced by an
   // upload, not typed, so there is nothing to validate and nothing to persist
   // into the sessionStorage draft.
   const [imageUrl, setImageUrl] = useState<string | null>(initialData?.image_url ?? null)
@@ -173,7 +172,7 @@ export function ProductForm({ initialData, categories, lang, assignableUsers, op
       const payload: Record<string, any> = {
         // Responsible person; falls back to the current user so a record is
         // never left unassigned by accident.
-        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
+        assigned_to: initialData?.assigned_to ?? userId,
         created_by: initialData?.created_by ?? userId,
         image_url: imageUrl,
         ...data,
@@ -606,13 +605,6 @@ export function ProductForm({ initialData, categories, lang, assignableUsers, op
         {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
       </div>
 
-      <div className="max-w-sm">
-        <AssigneeSelect
-          value={assignedTo}
-          onChange={setAssignedTo}
-          users={assignableUsers}
-        />
-      </div>
 
       <div className="flex gap-4 pt-4 border-t">
         <Button

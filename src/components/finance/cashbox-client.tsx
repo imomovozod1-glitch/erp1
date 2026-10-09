@@ -187,6 +187,8 @@ export function CashboxClient({
   // Customer debt states — the customer list itself comes from the server (see
   // `snapshot` above); only the selection and the looked-up debt live here.
   const [customerDebt, setCustomerDebt] = useState<number | null>(null)
+  // What the company owes the customer (haqdorlik) — `customers.credit_balance`.
+  const [customerCredit, setCustomerCredit] = useState<number | null>(null)
   const [isLoadingDebt, setIsLoadingDebt] = useState(false)
 
   // Employee payroll states
@@ -212,20 +214,27 @@ export function CashboxClient({
           debt = 0
         }
         setCustomerDebt(debt)
+        setCustomerCredit(0)
       } else {
-        const { data, error } = await supabase
-          .from('invoices')
-          .select('total_amount, paid_amount')
-          .eq('customer_id', cId)
-          .not('status', 'in', '("paid","cancelled")')
-        
+        const [{ data, error }, { data: customer, error: customerError }] = await Promise.all([
+          supabase
+            .from('invoices')
+            .select('total_amount, paid_amount')
+            .eq('customer_id', cId)
+            .not('status', 'in', '("paid","cancelled")'),
+          supabase.from('customers').select('credit_balance').eq('id', cId).maybeSingle(),
+        ])
+
         if (error) throw error
+        if (customerError) throw customerError
         const debt = (data || []).reduce((sum: number, i: any) => sum + ((Number(i.total_amount) || 0) - (Number(i.paid_amount) || 0)), 0)
         setCustomerDebt(debt)
+        setCustomerCredit(Number(customer?.credit_balance) || 0)
       }
     } catch (err: any) {
       console.error('Error fetching customer debt:', err.message)
       setCustomerDebt(0)
+      setCustomerCredit(0)
     } finally {
       setIsLoadingDebt(false)
     }
@@ -560,6 +569,7 @@ export function CashboxClient({
       date: isoDate(),
     })
     setCustomerDebt(null)
+    setCustomerCredit(null)
     setIsTransactionModalOpen(true)
   }
 
@@ -1037,12 +1047,14 @@ export function CashboxClient({
           employees={employees}
           suppliers={suppliers}
           customerDebt={customerDebt}
+          customerCredit={customerCredit}
           isLoadingDebt={isLoadingDebt}
           onCustomerSelected={(customerId) => {
-            if (customerId && txForm.type === 'income') {
+            if (customerId) {
               fetchCustomerDebt(customerId, isLocalStorageFallback)
             } else {
               setCustomerDebt(null)
+              setCustomerCredit(null)
             }
           }}
           supplierDebt={supplierDebt}

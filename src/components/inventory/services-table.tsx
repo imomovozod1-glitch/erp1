@@ -177,7 +177,6 @@ export function ServicesTable({
                 <TableHead className="text-right tabular-nums">{t("inventory.costPrice")}</TableHead>
                 <TableHead className="text-right tabular-nums">{t("inventory.price")}</TableHead>
                 <TableHead className="hidden lg:table-cell text-right tabular-nums">{t("inventory.margin")}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t("common.assignedTo")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
@@ -185,7 +184,7 @@ export function ServicesTable({
             <TableBody>
               {paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-12">
+                  <TableCell colSpan={10} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Wrench className="h-8 w-8 opacity-40" />
                       <p className="text-sm">{t("common.noData")}</p>
@@ -257,9 +256,6 @@ export function ServicesTable({
                             {margin.toFixed(1)}%
                           </span>
                         )}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        {service.assignee?.full_name || t("common.unassigned")}
                       </TableCell>
                       <TableCell>
                         <StatusBadge

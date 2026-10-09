@@ -4,11 +4,11 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
-import { formatNumber, isoDate } from '@/lib/utils'
+import { formatCurrency, formatNumber, isoDate } from '@/lib/utils'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { createClient } from '@/lib/supabase/client'
-import { invalidateProductionOrders } from '@/lib/data/revalidate'
-import { saveProductionOrder, productionErrorMessage } from '@/lib/production-actions'
+import { invalidateProduction, invalidateProductionOrders } from '@/lib/data/revalidate'
+import { saveProductionOrder, completeProductionOrder, productionErrorMessage } from '@/lib/production-actions'
 import { businessRpcErrorMessage } from '@/lib/business-rpc'
 import { toast } from 'sonner'
 import { Trash2, Loader2 } from 'lucide-react'
@@ -45,7 +45,6 @@ export interface ProductionBomOption {
   name: string
   product_id: string
   output_quantity: number
-  extra_cost: number
   product?: { id: string; name: string; unit: string } | null
   items?: { component_id: string; quantity: number }[]
 }
@@ -74,12 +73,13 @@ interface ProductionOrderFormProps {
 }
 
 /**
- * The production run, as a draft.
+ * The production run.
  *
  * Saving goes through `save_production_order` rather than browser writes: a
  * run and its component list must never be half-written, and the function is
- * also where the `production` permission is enforced. Nothing here moves
- * stock — that is the Complete button on the run's own page.
+ * also where the `production` permission is enforced. Stock moves only in
+ * `complete_production_order`, which the main button calls right after the
+ * save (see `onSubmit`); "Save as draft" leaves that to the run's own page.
  *
  * Picking a composition fills the lines in, scaled to the quantity being
  * produced, and they stay editable: a real batch rarely takes exactly what the
@@ -108,7 +108,6 @@ export function ProductionOrderForm({
   const [productId, setProductId] = useState<string>(initialData?.product_id || '')
   const [quantity, setQuantity] = useState<number | ''>(initialData?.quantity ?? 1)
   const [plannedDate, setPlannedDate] = useState<string>(initialData?.planned_date || isoDate())
-  const [extraCost, setExtraCost] = useState<number | ''>(initialData?.extra_cost ?? '')
   const [notes, setNotes] = useState<string>(initialData?.notes || '')
 
   const [lines, setLines] = useState<Line[]>(() =>
@@ -160,7 +159,6 @@ export function ProductionOrderForm({
       return
     }
     setProductId(chosen.product_id)
-    setExtraCost(Number(chosen.extra_cost) || '')
     setLines([
       ...deriveLines(chosen, Number(quantity) || 0).filter(
         (l) => !keptExtras.some((e) => e.componentId === l.componentId)
@@ -219,7 +217,15 @@ export function ProductionOrderForm({
     setLines((current) => [...current, { componentId: id, quantity: 1, isExtra }])
   }
 
-  const onSubmit = async (e: React.FormEvent) => {
+  /**
+   * Saving finishes the run by default: the save is followed straight by
+   * `complete_production_order`, so materials leave the shelf and the product
+   * arrives in one step instead of the run sitting as a draft until someone
+   * opens it and presses Complete. "Save as draft" keeps the old behaviour for
+   * a run that is only being planned. If completing is refused (not enough
+   * stock), the run is still saved — as a draft, with the reason shown.
+   */
+  const onSubmit = async (e: React.SyntheticEvent, complete = true) => {
     e.preventDefault()
     if (!productId || !orderNumber.trim()) {
       toast.error(tCommon('required'))
@@ -243,13 +249,25 @@ export function ProductionOrderForm({
         product_id: productId,
         quantity: Number(quantity),
         planned_date: plannedDate || null,
-        extra_cost: Number(extraCost) || 0,
         notes: notes.trim() || null,
         assigned_to: assignedTo,
         items: lines.map((l) => ({ component_id: l.componentId, quantity: l.quantity, is_extra: l.isExtra })),
       })
-      toast.success(tCommon('success'))
-      await invalidateProductionOrders()
+      if (complete) {
+        try {
+          const done = await completeProductionOrder(supabase, result.id, isoDate())
+          toast.success(t('completed', { cost: formatCurrency(Number(done.unit_cost) || 0) }))
+          await invalidateProduction()
+        } catch (error) {
+          toast.error(
+            `${t('savedAsDraft')} ${productionErrorMessage(tRoot, error, (err) => businessRpcErrorMessage(tRoot, err))}`
+          )
+          await invalidateProductionOrders()
+        }
+      } else {
+        toast.success(tCommon('success'))
+        await invalidateProductionOrders()
+      }
       router.push(`/${lang}/production/orders/${result.id}`)
     } catch (error) {
       toast.error(productionErrorMessage(tRoot, error, (e) => businessRpcErrorMessage(tRoot, e)))
@@ -261,8 +279,7 @@ export function ProductionOrderForm({
   // Everything except the run's own output. Materials already on the list stay
   // in the picker, badged with their quantity — clicking one again bumps it.
   const availableComponents = products.filter((p) => p.id !== productId)
-  // Both pickers offer the same catalogue; only what they do with a click
-  // differs. Stock is shown because a run is limited by it — cost is not,
+  // Stock is shown because a run is limited by it — cost is not,
   // because what the batch really costs is only known when it is completed and
   // the stock layers are drawn down, and a guess next to every line invites
   // being read as a figure.
@@ -272,6 +289,9 @@ export function ProductionOrderForm({
     meta: isService(p) ? tRoot('inventory.service') : `${t('available')}: ${formatNumber(p.stock)} ${p.unit}`,
     badge: lines.find((l) => l.componentId === p.id)?.quantity ?? null,
   }))
+  // Raw materials are goods off the shelf; a service (electricity, wages) is
+  // never one of them. It only goes in through the extras picker.
+  const materialOptions = pickerOptions.filter((o) => !isService(productById.get(o.id)))
   const recipeLines = lines.filter((l) => !l.isExtra)
   const extraLines = lines.filter((l) => l.isExtra)
   // Headed groups only when there is something to tell apart: with no
@@ -288,7 +308,7 @@ export function ProductionOrderForm({
         <CardTitle>{initialData ? t('editOrder') : t('addOrder')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={(e) => onSubmit(e)} className="space-y-6">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="order_number">{t('orderNumber')} *</Label>
@@ -351,12 +371,6 @@ export function ProductionOrderForm({
           <Label htmlFor="planned_date">{t('plannedDate')}</Label>
           <Input id="planned_date" type="date" value={plannedDate} onChange={(e) => setPlannedDate(e.target.value)} />
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="extra_cost">{t('extraCost')}</Label>
-          <NumericInput id="extra_cost" value={extraCost} onChange={(val) => setExtraCost(val as any)} />
-          <p className="text-[11px] leading-snug text-muted-foreground">{t('extraCostHint')}</p>
-        </div>
       </div>
 
       <div className="space-y-3">
@@ -370,7 +384,7 @@ export function ProductionOrderForm({
           <div className="space-y-1.5">
             <Label className="text-xs">{t('component')}</Label>
             <ItemPicker
-              options={pickerOptions}
+              options={materialOptions}
               onPick={(option) => addComponent(option.id, false)}
               placeholder={`${t('component')}...`}
               emptyLabel={tCommon('noData')}
@@ -509,9 +523,17 @@ export function ProductionOrderForm({
         <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
           {tCommon('cancel')}
         </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={(e) => onSubmit(e, false)}
+          disabled={isSubmitting}
+        >
+          {t('saveAsDraft')}
+        </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {tCommon('save')}
+          {t('saveAndComplete')}
         </Button>
       </div>
         </form>
