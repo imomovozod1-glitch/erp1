@@ -740,6 +740,7 @@
     "payment": {
       "title": "Payment",
       "onAccount": "On account",
+      "fromCashbox": "Paid from cashbox",
       "onAccountHint": "Nothing is paid now — the amount goes on the supplier's account.",
       "paidFromHint": "{amount} will be taken from the \"{cashbox}\" cashbox as an expense.",
       "notEnoughInCashbox": "This cashbox does not have enough money.",
