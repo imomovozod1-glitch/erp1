@@ -127,6 +127,7 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
               >
                 <TileLayer
                   url={tiles.url}
+                  className={tiles.className}
                   attribution={tiles.attribution}
                   maxZoom={tiles.maxZoom}
                 />

@@ -369,3 +369,10 @@
   z-index: 10;
   background-color: var(--card);
 }
+
+/* Dark mode for the OpenStreetMap basemap (src/lib/map-tiles.ts), which only
+   ships a daylight style: invert the lightness and turn the hues back round,
+   so land goes dark while water stays blue and parks stay green. */
+.dark .map-tiles-osm {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
