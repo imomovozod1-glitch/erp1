@@ -55,11 +55,9 @@ export function EmployeesTable({
 
   return (
     <TooltipProvider>
-      {/* Fills what is left of the viewport (md+): the toolbar and the pager
-          stay put and only the rows scroll, instead of the whole page. */}
-      <Card className="border-0 shadow-sm md:min-h-0 md:flex-1">
-        <CardContent className="flex flex-col p-0 md:min-h-0 md:flex-1">
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b p-3">
+      <Card className="border-0 shadow-sm">
+        <CardContent className="p-0">
+        <div className="flex flex-wrap items-center gap-2 border-b p-3">
           <TableSearch />
           <TableFilterSelect
             param="status"
@@ -82,9 +80,8 @@ export function EmployeesTable({
             ]}
           />
         </div>
-        <div className="md:min-h-0 md:flex-1 md:overflow-auto md:[&_[data-slot=table-container]]:overflow-visible">
         <Table>
-          <TableHeader className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900">
+          <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
               <TableHead>{tCommon('name')}</TableHead>
@@ -200,10 +197,7 @@ export function EmployeesTable({
             )}
           </TableBody>
         </Table>
-        </div>
-        <div className="shrink-0">
         <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
-        </div>
       </CardContent>
     </Card>
     </TooltipProvider>
