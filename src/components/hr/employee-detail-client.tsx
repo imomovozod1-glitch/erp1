@@ -12,6 +12,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { formatCurrency, formatDate, formatDateTime, isoDate } from '@/lib/utils'
+import {
+  PERMISSION_ACTIONS,
+  PERMISSION_MODULES,
+  allPermissions,
+  normalisePermissions,
+} from '@/lib/permissions'
 import { useTranslations } from 'next-intl'
 import {
   Download, DollarSign, ShoppingCart, X
@@ -31,6 +37,9 @@ interface EmployeeDetailClientProps {
 export function EmployeeDetailClient({ lang, employee, transactions, salesOrders }: EmployeeDetailClientProps) {
   const tc = useTranslations('common')
   const tSales = useTranslations('sales')
+  const tNav = useTranslations('nav')
+  const tPerm = useTranslations('permissions')
+  const tSettings = useTranslations('settings')
   const t = useTranslations('hr')
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'payouts' | 'sales'>('payouts')
@@ -98,6 +107,18 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
     : periodLabels[period]
   const periodSuffix = period !== 'all' ? ` · ${activePeriodLabel}` : ''
 
+  // Modules the linked login can open, with what it may do in each.
+  const profile = employee.profiles
+  const effectivePermissions = !profile
+    ? {}
+    : profile.role === 'admin'
+      ? allPermissions()
+      : normalisePermissions(profile.permissions)
+  const grantedModules = PERMISSION_MODULES.flatMap((module) => {
+    const perm = effectivePermissions[module]
+    return perm?.view ? [{ module, perm }] : []
+  })
+
   // Export to Excel function
   const handleExport = async () => {
     const XLSX = await import('xlsx')
@@ -106,7 +127,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
     // 1. Profile Info Sheet
     const profileData = [
       { Parameter: tc('name'), Value: employee.full_name ?? '—' },
-      { Parameter: tc('email'), Value: employee.profiles?.email ?? '—' },
+      { Parameter: t('phoneNumber'), Value: employee.profiles?.phone ?? '—' },
       { Parameter: t('employeeCode'), Value: employee.employee_code },
       { Parameter: t('position'), Value: employee.position },
       { Parameter: t('department'), Value: employee.profiles?.departments?.name ?? '—' },
@@ -250,14 +271,15 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
       {/* Profile Details & Tabs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="border-0 shadow-sm self-start">
+        <div className="space-y-6 self-start">
+        <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Kadr ma\'lumotlari' : lang === 'ru' ? 'Личное дело' : 'Personnel details'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div>
-              <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('email')}</span>
-              <span className="font-medium text-slate-800 dark:text-slate-200">{employee.profiles?.email ?? '—'}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 block">{t('phoneNumber')}</span>
+              <span className="font-medium tabular-nums text-slate-800 dark:text-slate-200">{employee.profiles?.phone ?? '—'}</span>
             </div>
             <div>
               <span className="text-xs text-slate-400 dark:text-slate-500 block">{t('department')}</span>
@@ -281,6 +303,51 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             )}
           </CardContent>
         </Card>
+
+
+        {/* What this person's login may do. An admin passes every check
+            (`can()`), so their matrix is shown as full rather than as
+            whatever happens to be stored on the row. */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{t('roles')}</CardTitle>
+            {employee.profiles && (
+              <p className="text-xs text-muted-foreground">
+                {employee.profiles.role_templates?.name
+                  ?? (employee.profiles.role ? tSettings(`role.${employee.profiles.role}`) : '')}
+              </p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-2.5 text-sm">
+            {grantedModules.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {employee.profiles ? tc('noData') : t('systemAccessNone')}
+              </p>
+            ) : (
+              grantedModules.map(({ module, perm }) => (
+                <div key={module} className="border-b border-slate-100 pb-2.5 last:border-0 last:pb-0 dark:border-slate-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{tNav(module)}</span>
+                    {perm.scope === 'own' && (
+                      <span className="text-[11px] text-amber-600 dark:text-amber-400">{tPerm('scope_own')}</span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {PERMISSION_ACTIONS.filter((action) => perm[action]).map((action) => (
+                      <span
+                        key={action}
+                        className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                      >
+                        {tPerm(`action_${action}`)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+        </div>
 
         {/* Tabbed Activity / Documents */}
         <div className="lg:col-span-2 space-y-4">

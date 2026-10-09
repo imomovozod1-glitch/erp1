@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { TableSearch, TablePagination, TableFilterChips } from '@/components/shared/table-pagination'
+import { TableSearch, TablePagination, TableFilterSelect } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -55,12 +55,15 @@ export function EmployeesTable({
 
   return (
     <TooltipProvider>
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-0">
-        <div className="flex flex-wrap items-center gap-3 p-4 border-b">
+      {/* Fills what is left of the viewport (md+): the toolbar and the pager
+          stay put and only the rows scroll, instead of the whole page. */}
+      <Card className="border-0 shadow-sm md:min-h-0 md:flex-1">
+        <CardContent className="flex flex-col p-0 md:min-h-0 md:flex-1">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b p-3">
           <TableSearch />
-          <TableFilterChips
+          <TableFilterSelect
             param="status"
+            label={tCommon('status')}
             value={status}
             options={[
               { value: 'all', label: tCommon('all') },
@@ -68,25 +71,20 @@ export function EmployeesTable({
               { value: 'not_hired', label: lang === 'uz' ? 'Ishlamaydi' : lang === 'ru' ? 'Не работает' : 'Not employed' },
             ]}
           />
-          {/* Labelled, because two chip groups side by side each carry their own
-              "All" button and would otherwise be indistinguishable. */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {t('subscription')}
-            </span>
-            <TableFilterChips
-              param="paid"
-              value={paid}
-              options={[
-                { value: 'all', label: tCommon('all') },
-                { value: 'paid', label: t('subscribed') },
-                { value: 'free', label: t('notSubscribed') },
-              ]}
-            />
-          </div>
+          <TableFilterSelect
+            param="paid"
+            label={t('subscription')}
+            value={paid}
+            options={[
+              { value: 'all', label: tCommon('all') },
+              { value: 'paid', label: t('subscribed') },
+              { value: 'free', label: t('notSubscribed') },
+            ]}
+          />
         </div>
+        <div className="md:min-h-0 md:flex-1 md:overflow-auto md:[&_[data-slot=table-container]]:overflow-visible">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900">
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
               <TableHead>{tCommon('name')}</TableHead>
@@ -138,7 +136,6 @@ export function EmployeesTable({
                               {emp.full_name ?? '—'}
                             </Link>
                           </p>
-                          <p className="text-xs text-muted-foreground">{emp.profiles?.email}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -203,7 +200,10 @@ export function EmployeesTable({
             )}
           </TableBody>
         </Table>
+        </div>
+        <div className="shrink-0">
         <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
+        </div>
       </CardContent>
     </Card>
     </TooltipProvider>

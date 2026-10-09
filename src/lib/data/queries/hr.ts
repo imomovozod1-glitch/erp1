@@ -114,7 +114,7 @@ export const getCachedEmployeeFormOptions = unstable_cache(
         .order('name'),
       supabase
         .from('profiles')
-        .select('id, full_name, email, role, permissions')
+        .select('id, full_name, phone, role, permissions')
         .eq('tenant_id', tenantId),
       supabase
         .from('employees')
@@ -188,7 +188,7 @@ export const getCachedEmployeeDetails = unstable_cache(
     const supabase = getCacheClient() as any
     const { data: employee } = await supabase
       .from('employees')
-      .select('*, profiles(*, departments!fk_profiles_department(name))')
+      .select('*, profiles(*, departments!fk_profiles_department(name), role_templates(name))')
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .single()
@@ -240,7 +240,7 @@ export function getEmployeesPage(
   return queryPage({
     table: 'employees',
     tenantId,
-    select: '*, profiles(full_name, email, phone, role, avatar_url, departments!fk_profiles_department(name), role_templates(name))',
+    select: '*, profiles(full_name, phone, role, avatar_url, departments!fk_profiles_department(name), role_templates(name))',
     page: opts.page,
     pageSize: opts.pageSize,
     search: opts.search,
