@@ -17,10 +17,8 @@ export default async function RoleTemplatesPage({ params }: { params: Promise<{ 
   ])
 
   return (
-    // Viewport-high on md+ so only the list scrolls — see hr/employees/page.tsx.
-    <div className="flex flex-col md:h-[calc(100dvh-7rem-env(safe-area-inset-top))]">
+    <div>
       <PageHeader
-        className="shrink-0"
         title={t('roles')}
         subtitle={t('title')}
         action={{ label: t('addRole'), href: `/${lang}/hr/roles/new`, icon: Plus }}

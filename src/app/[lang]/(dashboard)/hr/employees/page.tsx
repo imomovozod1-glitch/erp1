@@ -40,12 +40,8 @@ export default async function EmployeesPage({
   ])
 
   return (
-    // Exactly the viewport below the fixed header (main's 5.5rem top + 1.5rem
-    // bottom padding) on md+, so the list scrolls inside its card and the page
-    // itself does not move.
-    <div className="flex flex-col md:h-[calc(100dvh-7rem-env(safe-area-inset-top))]">
+    <div>
       <PageHeader
-        className="shrink-0"
         title={t('employees')}
         subtitle={t('title')}
         info={tInfo('employees')}

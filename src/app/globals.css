@@ -288,3 +288,84 @@
     }
   }
 }
+
+/* -----------------------------------------------------------------------------
+   No page-level vertical scroll — only lists scroll.
+
+   The dashboard's <main class="app-main"> is exactly the viewport tall, so the
+   window never scrolls. On a LIST page — one whose table card (Card >
+   CardContent > the table's own container, the shape every list in the app
+   shares) sits in the page root, directly or one plain wrapper down — that
+   card stretches to fill the remaining height and only its rows scroll: the
+   page header, the toolbar and the pager stay where they are, and the column
+   headings stick to the top of the rows.
+
+   Anything else (forms, detail pages, the dashboard) keeps its natural height;
+   if it is taller than the screen, main itself scrolls as the last resort
+   rather than cutting content off.
+
+   Unlayered on purpose, so it outranks the Tailwind utilities on the same
+   elements without !important.
+   ------------------------------------------------------------------------- */
+.app-main {
+  height: 100dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.app-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+}
+
+/* Page root → card (depth 1) or page root → plain wrapper → card (depth 2).
+   A grid wrapper is left alone: that is a detail page's layout, not a list. */
+.app-page:has(> div > [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"]),
+.app-page:has(> div > div:not(.grid) > [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"]) {
+  flex: 1 1 0;
+  min-height: 0;
+}
+.app-page > div:has(> [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"]),
+.app-page > div:has(> div:not(.grid) > [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"]),
+.app-page > div > div:not(.grid):has(> [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+/* Everything beside the list (page header, KPI tiles, filters) keeps its size. */
+.app-page > div:has(> [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"]) > *,
+.app-page > div > div:not(.grid):has(> [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"]) > * {
+  flex-shrink: 0;
+}
+.app-page > div > [data-slot="card"]:has(> [data-slot="card-content"] > [data-slot="table-container"]),
+.app-page > div > div:not(.grid) > [data-slot="card"]:has(> [data-slot="card-content"] > [data-slot="table-container"]) {
+  flex: 1 1 0;
+  /* Never squeezed to nothing on a short screen: below this, main scrolls. */
+  min-height: 18rem;
+}
+.app-page > div > [data-slot="card"] > [data-slot="card-content"]:has(> [data-slot="table-container"]),
+.app-page > div > div:not(.grid) > [data-slot="card"] > [data-slot="card-content"]:has(> [data-slot="table-container"]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+.app-page > div > [data-slot="card"] > [data-slot="card-content"] > *,
+.app-page > div > div:not(.grid) > [data-slot="card"] > [data-slot="card-content"] > * {
+  flex-shrink: 0;
+}
+.app-page > div > [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"],
+.app-page > div > div:not(.grid) > [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"] {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+.app-page > div > [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"] > table > thead,
+.app-page > div > div:not(.grid) > [data-slot="card"] > [data-slot="card-content"] > [data-slot="table-container"] > table > thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--card);
+}

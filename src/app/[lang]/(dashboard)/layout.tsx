@@ -114,12 +114,14 @@ export default async function DashboardLayout({
         <AppSidebar lang={lang} profile={profile} />
         <SidebarInset>
           <AppHeader profile={profile} lang={lang} />
-          <main className="flex-1 p-6 pt-[calc(5.5rem+env(safe-area-inset-top))] bg-slate-50/50 dark:bg-slate-950 min-h-[calc(100vh-4rem)]">
+          {/* `app-main` / `app-page` (globals.css): the window never scrolls —
+              a list page fits the screen and only its rows scroll. */}
+          <main className="app-main p-6 pt-[calc(5.5rem+env(safe-area-inset-top))] bg-slate-50/50 dark:bg-slate-950">
             <OfflineBanner />
             {showSubscriptionWarning && (
               <SubscriptionBanner daysLeft={daysLeft} endsAt={endsAt.slice(0, 10)} />
             )}
-            {children}
+            <div className="app-page">{children}</div>
             {modal}
           </main>
         </SidebarInset>
