@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { invalidateEmployees } from '@/lib/data/revalidate'
-import { formatDate } from '@/lib/utils'
+import { formatDate, generateDocumentNumber } from '@/lib/utils'
 import { ImportExportMenu } from '@/components/shared/import-export-menu'
 import { pickField, type ExcelColumn } from '@/lib/excel-io'
 
@@ -64,11 +64,12 @@ export function EmployeeImportExport({ employees, lang }: EmployeeImportExportPr
       .map((row) => {
         const employeeCode = pickField(row, 'Xodim kodi', 'Employee Code', 'Код сотрудника')
         const hiredAt = pickField(row, 'Ishga qabul qilingan sana (YYYY-MM-DD)', 'Ishga qabul qilingan sana', 'Hired At', 'Дата приёма')
-        if (!employeeCode || !hiredAt) return null
+        if (!hiredAt) return null
         const email = pickField(row, 'Email', 'Почта').toLowerCase()
         const salaryRaw = pickField(row, 'Oylik maosh', 'Salary', 'Зарплата')
         return {
-          employee_code: employeeCode,
+          // Optional, as in the form: a blank one is generated.
+          employee_code: employeeCode || generateDocumentNumber('EMP'),
           profile_id: email ? profilesByEmail[email] || null : null,
           position: pickField(row, 'Lavozim', 'Position', 'Должность') || null,
           salary: salaryRaw ? Number(salaryRaw.replace(/[^\d.]/g, '')) || 0 : 0,

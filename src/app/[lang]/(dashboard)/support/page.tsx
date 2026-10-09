@@ -4,7 +4,6 @@ import { getTranslations } from 'next-intl/server'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { SupportClient } from '@/components/support/support-client'
-import { AssignedAgentCard } from '@/components/support/assigned-agent-card'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -35,10 +34,6 @@ export default async function SupportPage({
   // The tenant's realtime inbox topic, so a support reply appears immediately
   // rather than on the next poll.
   return (
-    <SupportClient
-      lang={lang}
-      tenantId={tenantId}
-      agentCard={<AssignedAgentCard tenantId={tenantId} lang={lang} />}
-    />
+    <SupportClient lang={lang} tenantId={tenantId} />
   )
 }

@@ -46,6 +46,7 @@ export function EmployeesTable({
   paid,
 }: EmployeesTableProps) {
   const tCommon = useTranslations('common')
+  const tSettings = useTranslations('settings')
   const t = useTranslations('hr')
   const router = useRouter()
   
@@ -89,6 +90,8 @@ export function EmployeesTable({
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
               <TableHead>{tCommon('name')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('phoneNumber')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('roles')}</TableHead>
               <TableHead className="hidden lg:table-cell">{t('employeeCode')}</TableHead>
               <TableHead>{t('position')}</TableHead>
               <TableHead className="hidden md:table-cell text-right">{t('salary')}</TableHead>
@@ -101,7 +104,7 @@ export function EmployeesTable({
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-12">
+                <TableCell colSpan={11} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="h-8 w-8 opacity-40" />
                     <p className="text-sm">{tCommon('noData')}</p>
@@ -138,6 +141,15 @@ export function EmployeesTable({
                           <p className="text-xs text-muted-foreground">{emp.profiles?.email}</p>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell whitespace-nowrap text-sm tabular-nums text-slate-700 dark:text-slate-300">
+                      {emp.profiles?.phone || '—'}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-sm text-slate-700 dark:text-slate-300">
+                      {/* What the login may do: its role template, or the bare role
+                          for an account set up without one. No login, no rights. */}
+                      {emp.profiles?.role_templates?.name
+                        ?? (emp.profiles?.role ? tSettings(`role.${emp.profiles.role}`) : '—')}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">{emp.employee_code}</code>

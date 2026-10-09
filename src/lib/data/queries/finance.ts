@@ -205,3 +205,18 @@ async function getTransactionsPageRows(
     totalPages: Math.max(Math.ceil(total / opts.pageSize), 1),
   }
 }
+
+/**
+ * The cashboxes a payment can be taken from, with their balances. Uncached on
+ * purpose — the balance is what the user decides by ("is there enough in this
+ * drawer?"), so it has to be the live figure, not one up to a minute old.
+ */
+export async function getCashboxesForSelect(tenantId: string) {
+  const supabase = getCacheClient() as any
+  const { data } = await supabase
+    .from('cashboxes')
+    .select('id, name, type, balance')
+    .eq('tenant_id', tenantId)
+    .order('created_at')
+  return (data ?? []) as { id: string; name: string; type: string; balance: number }[]
+}

@@ -240,7 +240,7 @@ export function getEmployeesPage(
   return queryPage({
     table: 'employees',
     tenantId,
-    select: '*, profiles(full_name, email, avatar_url, departments!fk_profiles_department(name))',
+    select: '*, profiles(full_name, email, phone, role, avatar_url, departments!fk_profiles_department(name), role_templates(name))',
     page: opts.page,
     pageSize: opts.pageSize,
     search: opts.search,

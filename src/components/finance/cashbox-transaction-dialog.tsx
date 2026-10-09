@@ -69,6 +69,7 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
   employees,
   suppliers,
   customerDebt,
+  customerCredit,
   isLoadingDebt,
   onCustomerSelected,
   supplierDebt,
@@ -91,6 +92,8 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
   suppliers: NamedRow[]
   /** Outstanding debt of the selected customer, or null when not looked up. */
   customerDebt: number | null
+  /** What the company owes the selected customer (credit_balance), or null when not looked up. */
+  customerCredit: number | null
   isLoadingDebt: boolean
   /** Called when a customer is picked (or cleared) so the caller can read their debt. */
   onCustomerSelected: (customerId: string) => void
@@ -229,7 +232,7 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                 value={value.customerId}
                 onValueChange={(val) => {
                   onChange({ customerId: val || '' })
-                  if (val && value.type === 'income') onCustomerSelected(val)
+                  onCustomerSelected(val || '')
                 }}
               >
                 <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
@@ -248,12 +251,24 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                 </SelectContent>
               </Select>
 
-              {value.type === 'income' && value.customerId && (
-                <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/50 rounded-2xl p-3.5 mt-2 flex items-center justify-between text-xs text-rose-800 dark:text-rose-300 animate-in slide-in-from-top-1 duration-200">
-                  <span className="font-medium">{lang === 'uz' ? 'Umumiy qarzdorlik summasi:' : lang === 'ru' ? 'Общая сумма задолженности:' : 'Total debt amount:'}</span>
-                  <span className="font-extrabold text-sm">
-                    {isLoadingDebt ? '...' : formatCurrency(customerDebt || 0)}
-                  </span>
+              {/* Both sides of the customer's balance: what they still owe on
+                  invoices (qarzdorlik) and what the company owes them
+                  (haqdorlik, credit_balance) — shown for income and expense
+                  alike, since a refund is decided by the second. */}
+              {value.customerId && (
+                <div className="mt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">
+                  <div className="flex items-center justify-between rounded-2xl border border-rose-100 bg-rose-50 p-3.5 text-xs text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+                    <span className="font-medium">{t('customerDebtLabel')}</span>
+                    <span className="text-sm font-extrabold tabular-nums">
+                      {isLoadingDebt ? '...' : formatCurrency(customerDebt || 0)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                    <span className="font-medium">{t('customerCreditLabel')}</span>
+                    <span className="text-sm font-extrabold tabular-nums">
+                      {isLoadingDebt ? '...' : formatCurrency(customerCredit || 0)}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

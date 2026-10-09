@@ -28,6 +28,8 @@ interface PurchaseOrderFormProps {
   assignableUsers: AssignableUser[]
   suppliers: { id: string; name: string }[]
   products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string }[]
+  /** The drawers a purchase can be paid from, with live balances. */
+  cashboxes?: { id: string; name: string; type: string; balance: number }[]
   lang: string
 }
 
@@ -43,13 +45,10 @@ function generatePoNumber() {
   return generateDocumentNumber('PO')
 }
 
-export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }: PurchaseOrderFormProps) {
+export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, assignableUsers }: PurchaseOrderFormProps) {
   const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('procurement')
-  // The payment methods are already named in the POS namespace; naming them a
-  // second time here would be two words for one thing.
-  const tFinance = useTranslations('pos')
   const exitForm = useRouteModalExit(`/${lang}/procurement/purchase-orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
@@ -59,11 +58,19 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
   const [notes, setNotes] = useState('')
   const [assignedTo, setAssignedTo] = useState<string | null>(null)
   /**
-   * How this purchase is being settled. `null` is "on account" — the default,
-   * and the only thing that used to happen: every purchase became a debt to
-   * the supplier because nothing here ever recorded a payment.
+   * Which cashbox this purchase is paid from. `null` is "on account" — the
+   * default: the purchase becomes a debt to the supplier. The user picks the
+   * drawer itself rather than a payment method, because a company with two
+   * cash drawers has to know which one the money left.
    */
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer' | null>(null)
+  const [cashboxId, setCashboxId] = useState<string | null>(null)
+  const cashbox = cashboxes.find((c) => c.id === cashboxId) ?? null
+  // `receive_purchase` still takes a method — it labels the expense, and a
+  // database still on the older receive_purchase (before `cashbox_id`) picks
+  // the drawer by it.
+  const paymentMethod: 'cash' | 'card' | 'transfer' | null = cashbox
+    ? cashbox.type === 'card' || cashbox.type === 'transfer' ? cashbox.type : 'cash'
+    : null
   const [items, setItems] = useState<LineItem[]>([])
 
   /**
@@ -218,6 +225,7 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
           // writes the expense that settles the supplier's balance
           // (supabase/migration_purchase_payment.sql).
           payment_method: paymentMethod,
+          cashbox_id: cashboxId,
           items: items.map((item) => ({
             product_id: item.productId,
             quantity: item.quantity,
@@ -550,28 +558,39 @@ export function PurchaseOrderForm({ suppliers, products, lang, assignableUsers }
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 space-y-3">
             <Label>{t('payment.title')}</Label>
-            <div className="flex flex-wrap gap-1.5 rounded-lg bg-slate-100 p-1 w-fit dark:bg-slate-800">
-              {([null, 'cash', 'card', 'transfer'] as const).map((method) => (
-                <button
-                  key={method ?? 'debt'}
-                  type="button"
-                  onClick={() => setPaymentMethod(method)}
-                  className={cn(
-                    'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
-                    paymentMethod === method
-                      ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-700 dark:text-violet-400'
-                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
-                  )}
-                >
-                  {method === null ? t('payment.onAccount') : tFinance(method)}
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-2">
+              {[null, ...cashboxes].map((box) => {
+                const selected = (box?.id ?? null) === cashboxId
+                return (
+                  <button
+                    key={box?.id ?? 'debt'}
+                    type="button"
+                    onClick={() => setCashboxId(box?.id ?? null)}
+                    className={cn(
+                      'rounded-lg border px-3 py-2 text-left transition-colors',
+                      selected
+                        ? 'border-violet-500 bg-violet-50 text-violet-700 dark:border-violet-400 dark:bg-violet-950/30 dark:text-violet-300'
+                        : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    )}
+                  >
+                    <span className="block text-xs font-semibold">{box ? box.name : t('payment.onAccount')}</span>
+                    {box && (
+                      <span className="block text-[11px] tabular-nums text-muted-foreground">
+                        {formatCurrency(Number(box.balance) || 0)}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
             <p className="text-xs text-muted-foreground">
-              {paymentMethod === null
+              {cashbox === null
                 ? t('payment.onAccountHint')
-                : t('payment.paidHint', { amount: formatCurrency(totalAmount) })}
+                : t('payment.paidFromHint', { amount: formatCurrency(totalAmount), cashbox: cashbox.name })}
             </p>
+            {cashbox && (Number(cashbox.balance) || 0) < totalAmount && (
+              <p className="text-xs font-medium text-rose-600 dark:text-rose-400">{t('payment.notEnoughInCashbox')}</p>
+            )}
           </CardContent>
         </Card>
       )}
