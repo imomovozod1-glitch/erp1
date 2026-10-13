@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { isReservedSubdomain, phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { signInWithPhone, tenantIdForSubdomain } from '@/lib/phone-login'
 import { getTenantSubdomain } from '@/lib/tenant-host'
 import { getStaffIdentity } from '@/lib/admin-auth'
 import { computeEffectiveStatus } from '@/lib/tenant-status'
@@ -41,28 +42,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
 
-  const email = phoneToSyntheticEmail(parsed.data.phone)
+  // The phone's global login names the rate-limit bucket, whichever of the
+  // phone's logins (src/lib/phone-login.ts) the password turns out to open.
+  const rateKey = phoneToSyntheticEmail(parsed.data.phone)
   const ip = getClientIp(request)
 
-  const rateLimit = await checkLoginRateLimit(email, ip)
+  // Which company's address this sign-in arrived on. The reserved hosts are
+  // skipped because they are not companies at all — src/proxy.ts rewrites them
+  // to the two consoles.
+  const subdomain = getTenantSubdomain(request.headers.get('host') || '')
+  const onTenantHost = Boolean(subdomain && !isReservedSubdomain(subdomain))
+
+  const rateLimit = await checkLoginRateLimit(rateKey, ip)
   if (!rateLimit.allowed) {
     const { body, init } = tooManyAttemptsBody(rateLimit)
     return NextResponse.json(body, init)
   }
 
   const supabase = await createClient()
-  const { data: auth, error } = await supabase.auth.signInWithPassword({
-    email,
-    password: parsed.data.password,
-  })
+  // On a company's own host its member login is tried first; elsewhere every
+  // login this phone has (src/lib/phone-login.ts).
+  const signedIn = await signInWithPhone(
+    supabase,
+    parsed.data.phone,
+    parsed.data.password,
+    onTenantHost ? await tenantIdForSubdomain(subdomain) : null
+  )
 
   // Logged after the response is sent: the audit row is not something the
   // person signing in should wait for.
-  after(() => recordLoginAttempt(email, ip, !error))
+  after(() => recordLoginAttempt(rateKey, ip, signedIn.ok))
 
-  if (error) {
+  if (!signedIn.ok) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
   }
+  const auth = { user: signedIn.user }
+  const email = signedIn.email
 
   // One round trip for both answers. This used to be two — the profile, then
   // the tenant it points at — and every extra Supabase call on this path is
@@ -97,12 +112,6 @@ export async function POST(request: NextRequest) {
   /** Blocked or lapsed — checked the same way wherever the answer is needed. */
   const tenantBlocked =
     Boolean(own?.status) && computeEffectiveStatus(own!.status!, own?.subscription_ends_at ?? null) !== 'active'
-
-  // Which company's address this sign-in arrived on. The reserved hosts are
-  // skipped because they are not companies at all — src/proxy.ts rewrites them
-  // to the two consoles.
-  const subdomain = getTenantSubdomain(request.headers.get('host') || '')
-  const onTenantHost = Boolean(subdomain && !isReservedSubdomain(subdomain))
 
   if (onTenantHost) {
     // No company on the profile. Either a staff account — handle_new_user()

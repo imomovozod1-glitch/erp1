@@ -7,6 +7,7 @@ import { resolveTenantOwner } from '@/lib/tenant-owner'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
 import { isDuplicateLoginError } from '@/lib/admin-errors'
 import { adminServerError } from '@/lib/admin-errors-server'
+import { freeGlobalLogin } from '@/lib/phone-login'
 
 // Same strength policy as every other place a password is SET
 // (src/lib/password-validation.ts) — a 6-digit numeric password used to slip
@@ -46,6 +47,10 @@ export async function POST(
     // does (src/app/api/admin/tenants/route.ts). Answering "no owner" instead
     // left the company with no way back in short of the database.
     const loginEmail = phoneToSyntheticEmail(tenant.phone)
+    // A member (of this or another company) may still hold that login from
+    // before member logins were company-scoped: move them to their own first.
+    const freed = await freeGlobalLogin(tenant.phone, tenant.id, null)
+    if (!freed.ok) return NextResponse.json({ error: freed.error }, { status: 409 })
     const { data: created, error: createError } = await supabase.auth.admin.createUser({
       email: loginEmail,
       password: parsed.data.password,
@@ -53,9 +58,8 @@ export async function POST(
       user_metadata: { tenant_id: tenant.id, full_name: tenant.company_name },
     })
     if (createError || !created?.user) {
-      // The phone's login email belongs to an account in ANOTHER tenant (a
-      // staff member there) — resetting that one would hand this company
-      // someone else's login. The tenant's phone has to change first.
+      // Still held after freeGlobalLogin: a support agent or another
+      // company's owner — a real conflict, the tenant's phone has to change.
       if (isDuplicateLoginError(createError)) return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
       return adminServerError(createError ?? 'createUser returned no user')
     }
@@ -68,6 +72,10 @@ export async function POST(
 
   // If the owner's login email drifted from the tenant's phone, put it back in
   // the same call, so the phone shown in the admin panel is the one that works.
+  if (!owner.emailMatches) {
+    const freed = await freeGlobalLogin(tenant.phone, tenant.id, owner.userId)
+    if (!freed.ok) return NextResponse.json({ error: freed.error }, { status: 409 })
+  }
   const { data: updated, error } = await supabase.auth.admin.updateUserById(owner.userId, {
     password: parsed.data.password,
     ...(owner.emailMatches ? {} : { email: owner.loginEmail, email_confirm: true }),

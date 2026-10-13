@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { signInWithPhone } from '@/lib/phone-login'
 import { checkLoginRateLimit, recordLoginAttempt, getClientIp, tooManyAttemptsBody } from '@/lib/rate-limit'
 import { verifyTelegramInitData, telegramDisplayName } from '@/lib/telegram-miniapp'
 import { createTenantHandoff, requestOrigin } from '@/lib/tenant-handoff'
@@ -32,9 +33,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: verified.reason }, { status })
   }
 
-  const email = phoneToSyntheticEmail(parsed.data.phone)
+  // The rate-limit bucket is the phone's global login, whichever of its logins
+  // (src/lib/phone-login.ts) the password opens.
+  const rateKey = phoneToSyntheticEmail(parsed.data.phone)
   const ip = getClientIp(request)
-  const rateLimit = await checkLoginRateLimit(email, ip)
+  const rateLimit = await checkLoginRateLimit(rateKey, ip)
   if (!rateLimit.allowed) {
     const { body, init } = tooManyAttemptsBody(rateLimit)
     return NextResponse.json(body, init)
@@ -47,16 +50,17 @@ export async function POST(request: NextRequest) {
   // jumping straight to the company host used to land the user on its login
   // form, one screen after they had just typed their password.
   const supabase = await createClient()
-  const { data: auth, error } = await supabase.auth.signInWithPassword({
-    email,
-    password: parsed.data.password,
-  })
+  // The Mini App opens on the bare host, so no company is known: every login
+  // this phone has is tried.
+  const signedIn = await signInWithPhone(supabase, parsed.data.phone, parsed.data.password, null)
   // Logged after the response is sent: the audit row is not something the
   // person signing in should wait for.
-  after(() => recordLoginAttempt(email, ip, !error))
-  if (error || !auth.user) {
+  after(() => recordLoginAttempt(rateKey, ip, signedIn.ok))
+  if (!signedIn.ok) {
     return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 })
   }
+  const auth = { user: signedIn.user }
+  const email = signedIn.email
 
   const service = getCacheClient() as any
   const { data: profile } = await service

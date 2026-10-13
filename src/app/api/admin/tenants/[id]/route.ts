@@ -10,6 +10,7 @@ import { resolveTenantOwner } from '@/lib/tenant-owner'
 import { registerTenantDomain, unregisterTenantDomain } from '@/lib/vercel-domains'
 import { zodErrorCode, isDuplicateLoginError } from '@/lib/admin-errors'
 import { adminServerError } from '@/lib/admin-errors-server'
+import { freeGlobalLogin, tenantPhoneTaken } from '@/lib/phone-login'
 
 const updateTenantSchema = z.object({
   subdomain: z
@@ -92,21 +93,23 @@ export async function PATCH(
   // first: if it fails (e.g. another login already uses the new number), the
   // tenant keeps its old phone instead of showing one nobody can sign in with.
   if (phoneChanged) {
+    // Unique among companies only; a member anywhere with this number is fine.
+    if (await tenantPhoneTaken(input.phone!, id)) {
+      return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+    }
     // The account that signs in with the CURRENT phone (src/lib/tenant-owner.ts).
     const owner = await resolveTenantOwner(supabase, existing)
     const email = phoneToSyntheticEmail(input.phone!)
-    // Without an owner there is no auth update to collide, so check the
-    // number by hand: otherwise the tenant takes a phone whose login belongs
-    // to someone else, and its owner login can never be (re)created.
-    const { data: taken } = owner
-      ? { data: null }
-      : await supabase.from('profiles').select('id').eq('email', email).limit(1).maybeSingle()
+    // A member still holding the new number's global login moves to their own
+    // scoped login, so the owner (now, or when one is created) can take it.
+    const freed = await freeGlobalLogin(input.phone!, id, owner?.userId ?? null)
+    if (!freed.ok) return NextResponse.json({ error: freed.error }, { status: 409 })
     const { error: authError } = owner
       ? await supabase.auth.admin.updateUserById(owner.userId, {
           email,
           email_confirm: true,
         })
-      : { error: taken ? { code: 'email_exists' } : null }
+      : { error: null }
     if (authError) {
       if (isDuplicateLoginError(authError)) return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
       return adminServerError(authError, 409)
