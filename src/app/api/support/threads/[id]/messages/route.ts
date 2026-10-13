@@ -17,7 +17,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSupportAgentSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   // The access check only needs the thread row; the history and the read-marker
@@ -38,7 +38,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSupportAgentSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   const parsed = bodySchema.safeParse(await request.json().catch(() => null))

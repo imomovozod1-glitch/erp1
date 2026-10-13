@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { zodErrorCode } from '@/lib/admin-errors'
+import { adminServerError } from '@/lib/admin-errors-server'
 
 const updateProfileSchema = z.object({
   full_name: z.string().min(1),
@@ -16,12 +18,12 @@ const updateProfileSchema = z.object({
  */
 export async function PATCH(request: NextRequest) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const body = await request.json().catch(() => null)
   const parsed = updateProfileSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: zodErrorCode(parsed.error) }, { status: 400 })
   }
 
   const supabase = getCacheClient() as any
@@ -32,6 +34,6 @@ export async function PATCH(request: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) return adminServerError(error)
   return NextResponse.json({ admin })
 }

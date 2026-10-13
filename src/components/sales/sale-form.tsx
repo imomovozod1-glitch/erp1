@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { createClient } from '@/lib/supabase/client'
 import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers'
 import { consumeCostLayers, getEffectiveCostingMethod } from '@/lib/inventory-costing'
@@ -75,7 +76,6 @@ async function submitSaleInBrowser(
     invoiceNumber,
     orderDateStr,
     dueDateStr,
-    availableStockLabel,
   }: {
     items: SaleItem[]
     customerId: string
@@ -86,7 +86,6 @@ async function submitSaleInBrowser(
     invoiceNumber: string
     orderDateStr: string
     dueDateStr: string
-    availableStockLabel: string
   }
 ): Promise<void> {
   const isDebtSale = paymentMethod === 'debt'
@@ -97,7 +96,7 @@ async function submitSaleInBrowser(
   // checkout made this trade already; this form had not.
   const { data: { session } } = await supabase.auth.getSession()
   const user = session?.user
-  if (!user) throw new Error('Not authenticated')
+  if (!user) throw new Error('unauthorized')
 
   // Current stock and the costing method: neither depends on the other, so
   // they travel together. Stock is re-read immediately before writing
@@ -125,7 +124,7 @@ async function submitSaleInBrowser(
     const currentStock = stockById.get(productId)
     if (currentStock === undefined || currentStock < quantity) {
       const name = items.find((i) => i.productId === productId)?.productName ?? ''
-      throw new Error(`${availableStockLabel}: ${currentStock ?? 0} — ${name}`)
+      throw new SaleCreateError('insufficient_stock', { productId, productName: name, available: currentStock ?? 0 })
     }
   }
 
@@ -281,6 +280,7 @@ async function submitSaleInBrowser(
 }
 
 export function SaleForm({ products, customers, assignableUsers, lang }: SaleFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const tPos = useTranslations('pos')
   const tInventory = useTranslations('inventory')
@@ -364,7 +364,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
 
     const isDebtSale = paymentMethod === 'debt'
     if (isDebtSale && !customerId) {
-      toast.error(lang === 'uz' ? 'Qarzga sotish uchun mijozni tanlang!' : lang === 'ru' ? 'Выберите клиента для продажи в долг!' : 'Select a customer for a debt sale!')
+      toast.error(tPos('selectCustomerForDebt'))
       return
     }
 
@@ -407,7 +407,6 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
           invoiceNumber,
           orderDateStr,
           dueDateStr,
-          availableStockLabel: t('availableStock'),
         })
       }
 
@@ -444,7 +443,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
           toast.error(error.code === 'forbidden' ? tCommon('noPermission') : tPos('selectCustomerForDebt'))
         }
       } else {
-        toast.error(error.message || tCommon('error'))
+        toast.error(errorMessage(tRoot, error, tCommon('error')))
       }
     } finally {
       setIsSubmitting(false)
@@ -523,7 +522,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
           </div>
           {paymentMethod === 'debt' && !customerId && (
             <p className="text-xs text-amber-600 font-medium mt-2">
-              {lang === 'uz' ? 'Qarzga sotish uchun mijozni tanlang' : lang === 'ru' ? 'Выберите клиента для продажи в долг' : 'Select a customer for a debt sale'}
+              {t('selectCustomerForDebtHint')}
             </p>
           )}
         </CardContent>

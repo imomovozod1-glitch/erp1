@@ -5,7 +5,7 @@ import { validateImageUpload } from '@/lib/file-validation'
 
 export async function POST(request: NextRequest) {
   const user = await getVerifiedUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   try {
     const formData = await request.formData()
@@ -14,14 +14,18 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json(
-        { error: 'Rasm fayli yuklanmagan' },
+        { error: 'image_file_missing' },
         { status: 400 }
       )
     }
 
     const uploadError = validateImageUpload(file)
     if (uploadError) {
-      return NextResponse.json({ error: uploadError }, { status: 400 })
+      // validateImageUpload answers English text; the client gets a code.
+      return NextResponse.json(
+        { error: /large/i.test(uploadError) ? 'image_too_large' : 'image_type_unsupported' },
+        { status: 400 }
+      )
     }
 
     const defaultPrompt = `Analyze this document/image for an ERP system. 
@@ -36,7 +40,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('OCR Error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Rasmni o`qishda xatolik yuz berdi' },
+      { error: 'server_error' },
       { status: 500 }
     )
   }

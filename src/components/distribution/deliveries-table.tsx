@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -105,7 +106,7 @@ export function DeliveriesTable({
     const supabase = createClient() as any
     const { error } = await supabase.from('deliveries').delete().eq('id', delivery.id)
     if (error) {
-      toast.error(error.message || t('common.error'))
+      toast.error(errorMessage(t, error, t('common.error')))
     } else {
       toast.success(t('common.success'))
       await invalidateDelivery()

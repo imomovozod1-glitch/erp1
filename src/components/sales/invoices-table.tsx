@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { MoreHorizontal, Pencil, FileText, CheckCircle2, Loader2, ArrowRight, Ban } from 'lucide-react'
@@ -68,7 +69,7 @@ export function InvoicesTable({
       toast.error(
         error instanceof BusinessRpcError
           ? businessRpcErrorMessage(tRoot, error)
-          : error?.message || tCommon('error')
+          : errorMessage(tRoot, error, tCommon('error'))
       )
     } finally {
       setPendingId(null)

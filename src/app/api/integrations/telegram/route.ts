@@ -11,6 +11,7 @@ import {
   isValidBotTokenFormat,
   isValidChatIdFormat,
 } from '@/lib/integrations/telegram'
+import { TELEGRAM_LANGUAGES } from '@/lib/integrations/telegram-types'
 
 /**
  * Read/save/disconnect this tenant's Telegram bot integration.
@@ -50,13 +51,15 @@ const saveSchema = z.object({
   chat_id: z.string().trim().optional(),
   enabled: z.boolean(),
   events: eventsSchema,
+  // The language the bot writes in. Omitted → the stored one is kept.
+  language: z.enum(TELEGRAM_LANGUAGES).optional(),
 })
 
 async function requireAdmin() {
   const ctx = await getTenantContext()
-  if (!ctx) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  if (!ctx) return { error: NextResponse.json({ error: 'unauthorized' }, { status: 401 }) }
   if (ctx.role !== 'admin') {
-    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+    return { error: NextResponse.json({ error: 'forbidden' }, { status: 403 }) }
   }
   return { ctx }
 }
@@ -77,7 +80,7 @@ export async function PUT(request: NextRequest) {
   const body = await request.json().catch(() => null)
   const parsed = saveSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
   const input = parsed.data
 
@@ -99,7 +102,8 @@ export async function PUT(request: NextRequest) {
   // never throws by design).
   const info = await getBotInfo(token)
   if (!info.ok) {
-    return NextResponse.json({ error: 'token_rejected', detail: info.error }, { status: 400 })
+    console.error('[telegram] bot token rejected:', info.error)
+    return NextResponse.json({ error: 'token_rejected' }, { status: 400 })
   }
 
   // No chat given: try to work it out from the bot's pending updates. A brand
@@ -115,23 +119,34 @@ export async function PUT(request: NextRequest) {
     }
   }
 
-  const { error: upsertError } = await supabase
+  const row: Record<string, unknown> = {
+    tenant_id: tenantId,
+    telegram_bot_token: token,
+    telegram_chat_id: chatId,
+    telegram_bot_username: info.data.username,
+    telegram_enabled: input.enabled,
+    telegram_events: pickKnownEvents(input.events) ?? existing?.telegram_events ?? {},
+    telegram_linked_at: existing?.telegram_linked_at ?? new Date().toISOString(),
+  }
+  if (input.language) row.telegram_language = input.language
+
+  let { error: upsertError } = await supabase
     .from('integration_settings')
-    .upsert(
-      {
-        tenant_id: tenantId,
-        telegram_bot_token: token,
-        telegram_chat_id: chatId,
-        telegram_bot_username: info.data.username,
-        telegram_enabled: input.enabled,
-        telegram_events: pickKnownEvents(input.events) ?? existing?.telegram_events ?? {},
-        telegram_linked_at: existing?.telegram_linked_at ?? new Date().toISOString(),
-      },
-      { onConflict: 'tenant_id' }
-    )
+    .upsert(row, { onConflict: 'tenant_id' })
+
+  // PGRST204: migration_telegram_language.sql has not run here yet, so the
+  // column does not exist. Save everything else rather than nothing — the bot
+  // keeps writing in Uzbek until the migration is applied.
+  if (upsertError?.code === 'PGRST204' && 'telegram_language' in row) {
+    delete row.telegram_language
+    ;({ error: upsertError } = await supabase
+      .from('integration_settings')
+      .upsert(row, { onConflict: 'tenant_id' }))
+  }
 
   if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 400 })
+    console.error('[telegram] saving integration failed:', upsertError.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 
   return NextResponse.json({
@@ -161,6 +176,9 @@ export async function DELETE() {
     })
     .eq('tenant_id', ctx!.tenantId)
 
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 400 })
+  if (updateError) {
+    console.error('[telegram] disconnect failed:', updateError.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }

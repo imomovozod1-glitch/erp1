@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateDepartments } from '@/lib/data/revalidate'
+import { errorMessage } from '@/lib/error-message'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 type FormData = {
@@ -26,6 +27,7 @@ interface DepartmentFormProps {
 }
 
 export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const exitForm = useRouteModalExit(`/${lang}/hr/departments`)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -65,7 +67,7 @@ export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
       await invalidateDepartments()
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

@@ -209,7 +209,7 @@ export function LoginForm({ lang }: { lang: string }) {
     <AuthCard
       icon={Building2}
       brandTitle="Falco ERP"
-      brandSubtitle="Enterprise Management"
+      brandSubtitle={t('brandSubtitle')}
       heading={t('loginTitle')}
       subheading={t('loginSubtitle')}
       action={<LocaleSwitcher mode="path" variant="glass" />}

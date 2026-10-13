@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Loader2, MapPin, ExternalLink, AlertCircle } from 'lucide-react'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import L from 'leaflet'
@@ -34,7 +35,8 @@ interface LocationMapDialogProps {
  * Prefers the exact saved lat/lng; only falls back to text-address geocoding for legacy
  * records saved before coordinates were captured.
  */
-export function LocationMapDialog({ open, onOpenChange, address, latitude, longitude, title, lang }: LocationMapDialogProps) {
+export function LocationMapDialog({ open, onOpenChange, address, latitude, longitude, title }: LocationMapDialogProps) {
+  const t = useTranslations('common')
   const tiles = useTileConfig()
   const hasCoords = typeof latitude === 'number' && typeof longitude === 'number'
   const [resolved, setResolved] = useState<{ lat: number; lng: number } | null>(hasCoords ? { lat: latitude, lng: longitude } : null)
@@ -104,7 +106,7 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 dark:bg-slate-800/90 z-10 space-y-2">
                 <Loader2 className="h-8 w-8 animate-spin text-violet-600 dark:text-violet-400" />
                 <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  {lang === 'uz' ? 'Manzil aniqlanmoqda...' : lang === 'ru' ? 'Определение адреса...' : 'Locating address...'}
+                  {t('locatingAddress')}
                 </span>
               </div>
             )}
@@ -112,7 +114,7 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50/95 dark:bg-slate-800/95 z-10 space-y-2 text-center px-6">
                 <AlertCircle className="h-8 w-8 text-amber-500" />
                 <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  {lang === 'uz' ? 'Manzil xaritada topilmadi' : lang === 'ru' ? 'Адрес не найден на карте' : 'Address could not be located on the map'}
+                  {t('addressNotOnMap')}
                 </span>
               </div>
             )}
@@ -144,7 +146,7 @@ export function LocationMapDialog({ open, onOpenChange, address, latitude, longi
             className="w-full h-10 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-1.5"
           >
             <ExternalLink className="h-4 w-4" />
-            {lang === 'uz' ? 'Google Xaritada ochish' : lang === 'ru' ? 'Открыть в Google Картах' : 'Open in Google Maps'}
+            {t('openInGoogleMaps')}
           </Button>
         </div>
       </DialogContent>

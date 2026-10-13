@@ -43,6 +43,7 @@ interface CustomerDetailClientProps {
 export function CustomerDetailClient({ lang, customer, salesOrders, invoices, transactions }: CustomerDetailClientProps) {
   const tSales = useTranslations('sales')
   const tc = useTranslations('common')
+  const tcd = useTranslations('sales.customerDetail')
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'orders' | 'invoices' | 'transactions'>('orders')
   const [isMapOpen, setIsMapOpen] = useState(false)
@@ -66,49 +67,49 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
 
     // 1. Customer Details Sheet
     const customerData = [
-      { [tc('name')]: customer.name, Value: customer.name },
-      { [tc('email')]: customer.email ?? '—', Value: customer.email ?? '—' },
-      { [tc('phone')]: customer.phone ?? '—', Value: customer.phone ?? '—' },
-      { [tSales('tin')]: customer.tin ?? '—', Value: customer.tin ?? '—' },
-      { [tc('address')]: customer.address ?? '—', Value: customer.address ?? '—' },
-      { [tc('status')]: customer.is_active ? tc('active') : tc('inactive'), Value: customer.is_active ? tc('active') : tc('inactive') }
+      { [tc('name')]: customer.name, [tcd('value')]: customer.name },
+      { [tc('email')]: customer.email ?? '—', [tcd('value')]: customer.email ?? '—' },
+      { [tc('phone')]: customer.phone ?? '—', [tcd('value')]: customer.phone ?? '—' },
+      { [tSales('tin')]: customer.tin ?? '—', [tcd('value')]: customer.tin ?? '—' },
+      { [tc('address')]: customer.address ?? '—', [tcd('value')]: customer.address ?? '—' },
+      { [tc('status')]: customer.is_active ? tc('active') : tc('inactive'), [tcd('value')]: customer.is_active ? tc('active') : tc('inactive') }
     ]
     const customerWS = XLSX.utils.json_to_sheet(customerData)
-    XLSX.utils.book_append_sheet(workbook, customerWS, "Customer Profile")
+    XLSX.utils.book_append_sheet(workbook, customerWS, tcd('sheetProfile'))
 
     // 2. Orders Sheet
     const ordersData = salesOrders.map(o => ({
-      OrderNumber: o.order_number,
-      TotalAmount: o.total_amount,
-      Status: o.status,
-      Notes: o.notes || '—',
-      Date: formatDateTime(o.created_at)
+      [tSales('orderNumber')]: o.order_number,
+      [tc('totalAmount')]: o.total_amount,
+      [tc('status')]: tSales(`status.${o.status}`),
+      [tc('notes')]: o.notes || '—',
+      [tc('date')]: formatDateTime(o.created_at)
     }))
     const ordersWS = XLSX.utils.json_to_sheet(ordersData)
-    XLSX.utils.book_append_sheet(workbook, ordersWS, "Sales Orders")
+    XLSX.utils.book_append_sheet(workbook, ordersWS, tcd('sheetOrders'))
 
     // 3. Invoices Sheet
     const invoicesData = invoices.map(inv => ({
-      InvoiceNumber: inv.invoice_number,
-      TotalAmount: inv.total_amount,
-      PaidAmount: inv.paid_amount,
-      Status: inv.status,
-      DueDate: formatDate(inv.due_at),
-      IssuedDate: formatDateTime(inv.created_at)
+      [tSales('invoiceNumber')]: inv.invoice_number,
+      [tc('totalAmount')]: inv.total_amount,
+      [tSales('paidAmount')]: inv.paid_amount,
+      [tc('status')]: tSales(`status.${inv.status}`),
+      [tSales('dueDate')]: formatDate(inv.due_at),
+      [tcd('issuedDate')]: formatDateTime(inv.created_at)
     }))
     const invoicesWS = XLSX.utils.json_to_sheet(invoicesData)
-    XLSX.utils.book_append_sheet(workbook, invoicesWS, "Invoices")
+    XLSX.utils.book_append_sheet(workbook, invoicesWS, tcd('sheetInvoices'))
 
     // 4. Transactions (Payment History) Sheet
     const transactionsData = transactions.map(tx => ({
-      Type: tx.type,
-      Category: tx.category,
-      Amount: tx.amount,
-      Date: formatDateTime(tx.created_at),
-      Note: tx.description || '—'
+      [tc('type')]: tx.type === 'income' ? tcd('income') : tcd('expense'),
+      [tc('category')]: tx.category,
+      [tc('amount')]: tx.amount,
+      [tc('date')]: formatDateTime(tx.created_at),
+      [tcd('note')]: tx.description || '—'
     }))
     const transactionsWS = XLSX.utils.json_to_sheet(transactionsData)
-    XLSX.utils.book_append_sheet(workbook, transactionsWS, "Payment History")
+    XLSX.utils.book_append_sheet(workbook, transactionsWS, tcd('sheetPayments'))
 
     XLSX.writeFile(workbook, `${customer.name.replace(/\s+/g, '_')}_details.xlsx`)
   }
@@ -135,7 +136,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
           <StatusBadge tone={customer.is_active ? 'emerald' : 'slate'} label={customer.is_active ? tc('active') : tc('inactive')} />
           <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
-            {tc('export') || 'Eksport'}
+            {tc('export')}
           </Button>
         </div>
       </div>
@@ -144,23 +145,23 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami xaridlar' : lang === 'ru' ? 'Всего покупок' : 'Total purchases'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tcd('totalPurchases')}</span>
             <h3 className="mt-1 text-xl font-bold tracking-tight break-words tabular-nums text-slate-900 dark:text-slate-100">{formatCurrency(totalPurchases)}</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{salesOrders.length} {lang === 'uz' ? 'ta sotuv' : lang === 'ru' ? 'продаж' : 'sales'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{tcd('salesCount', { count: salesOrders.length })}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Jami to\'langan' : lang === 'ru' ? 'Всего оплачено' : 'Total paid'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tcd('totalPaid')}</span>
             <h3 className="mt-1 text-xl font-bold tracking-tight break-words tabular-nums text-emerald-700 dark:text-emerald-400">{formatCurrency(totalPaid)}</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{invoices.length} {lang === 'uz' ? 'ta hisob-faktura' : lang === 'ru' ? 'счетов' : 'invoices'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{tcd('invoicesCount', { count: invoices.length })}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tSales('balanceRemaining')}</span>
             {/* Musbat — haqdorlik, manfiy — qarz. Qorong'i rejimda musbati
                 `dark:text-white` edi: rang jufti buzilib, faqat manfiysi
                 rangli qolardi. */}
@@ -176,7 +177,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               {balance > 0 ? '+' : balance < 0 ? '-' : ''}{formatCurrency(Math.abs(balance))}
             </h3>
             <span className="mt-2 text-xs tabular-nums text-slate-400 dark:text-slate-500">
-              {lang === 'uz' ? 'Qarz' : lang === 'ru' ? 'Долг' : 'Debt'}: {formatCurrency(outstandingDebt)} · {lang === 'uz' ? 'Haqdorlik' : lang === 'ru' ? 'Депозит' : 'Credit'}: {formatCurrency(creditBalance)}
+              {tSales('debt')}: {formatCurrency(outstandingDebt)} · {tSales('credit')}: {formatCurrency(creditBalance)}
             </span>
           </CardContent>
         </Card>
@@ -185,9 +186,9 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tc('status')}</span>
             <h3 className="mt-1 text-xl font-bold tracking-tight break-words tabular-nums text-slate-900 dark:text-slate-100">
-              {customer.is_active ? (lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active') : (lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive')}
+              {customer.is_active ? tc('active') : tc('inactive')}
             </h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{lang === 'uz' ? 'Kontakt' : lang === 'ru' ? 'Контакты' : 'Contact'}: {customer.phone || '—'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{tcd('contact')}: {customer.phone || '—'}</span>
           </CardContent>
         </Card>
       </div>
@@ -196,7 +197,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border-0 shadow-sm self-start">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? "Mijoz ma'lumotlari" : lang === 'ru' ? 'Профиль клиента' : 'Customer profile'}</CardTitle>
+            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{tcd('profile')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             {customer.customer_categories?.name && (
@@ -254,7 +255,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                     onClick={() => setIsMapOpen(true)}
                     className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
                   >
-                    {lang === 'uz' ? "Kattaroq xaritada ko'rish" : lang === 'ru' ? 'Показать на большой карте' : 'View larger map'}
+                    {tcd('viewLargerMap')}
                   </button>
                 </div>
               </div>
@@ -279,7 +280,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                 }`}
               >
                 <ShoppingCart className="h-4 w-4" />
-                {lang === 'uz' ? 'Sotuvlar' : lang === 'ru' ? 'Продажи' : 'Sales'}
+                {tcd('tabSales')}
               </button>
               <button
                 onClick={() => setActiveTab('invoices')}
@@ -288,7 +289,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                 }`}
               >
                 <FileText className="h-4 w-4" />
-                {lang === 'uz' ? 'Hisob-fakturalar' : lang === 'ru' ? 'Счета' : 'Invoices'}
+                {tcd('tabInvoices')}
               </button>
               <button
                 onClick={() => setActiveTab('transactions')}
@@ -297,7 +298,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                 }`}
               >
                 <History className="h-4 w-4" />
-                {lang === 'uz' ? "To'lov tarixi" : lang === 'ru' ? 'История платежей' : 'Payment history'}
+                {tcd('tabPayments')}
               </button>
             </div>
 
@@ -307,7 +308,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Sotuv kodi' : lang === 'ru' ? 'Код продажи' : 'Order #'}</TableHead>
+                      <TableHead>{tcd('orderCode')}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
                       <TableHead>{tc('status')}</TableHead>
                       <TableHead>{tc('date')}</TableHead>
@@ -346,11 +347,11 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Hisob-faktura' : lang === 'ru' ? 'Счёт' : 'Invoice #'}</TableHead>
+                      <TableHead>{tcd('invoiceCode')}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
-                      <TableHead className="text-right">{lang === 'uz' ? "To'langan" : lang === 'ru' ? 'Оплачено' : 'Paid'}</TableHead>
+                      <TableHead className="text-right">{tcd('paid')}</TableHead>
                       <TableHead>{tc('status')}</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Muddat' : lang === 'ru' ? 'Срок' : 'Due'}</TableHead>
+                      <TableHead>{tcd('due')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -390,11 +391,11 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Turi' : lang === 'ru' ? 'Тип' : 'Type'}</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Kategoriya' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
+                      <TableHead>{tc('type')}</TableHead>
+                      <TableHead>{tc('category')}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
                       <TableHead>{tc('date')}</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Izoh' : lang === 'ru' ? 'Примечание' : 'Note'}</TableHead>
+                      <TableHead>{tcd('note')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -413,7 +414,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                             <TableCell>
                               <StatusBadge
                                 tone={isIncome ? 'emerald' : 'rose'}
-                                label={isIncome ? (lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income') : (lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense')}
+                                label={isIncome ? tcd('income') : tcd('expense')}
                               />
                             </TableCell>
                             <TableCell className="text-slate-700 dark:text-slate-300 text-xs">{tx.category}</TableCell>

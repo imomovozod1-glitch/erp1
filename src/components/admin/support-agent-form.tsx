@@ -22,6 +22,7 @@ import {
 } from '@/components/admin/admin-form-layout'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 export interface SupportAgentFormInitialData {
   id: string
@@ -35,6 +36,7 @@ interface SupportAgentFormProps {
 }
 
 export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
+  const tErrors = useTranslations('admin.errors')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const t = useTranslations('admin.support.form')
@@ -73,7 +75,7 @@ export function SupportAgentForm({ mode, initialData }: SupportAgentFormProps) {
       )
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.error || t('genericError'))
+        toast.error(adminErrorMessage(tErrors, json, t('genericError')))
         setIsSubmitting(false)
         return
       }

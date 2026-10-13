@@ -7,7 +7,11 @@ import { getCachedSupplierById, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireModuleEdit } from '@/lib/permissions-server'
 
-export const metadata: Metadata = { title: 'Edit Supplier' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string; id: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'procurement' })
+  return { title: t('editSupplier') }
+}
 
 export default async function EditSupplierPage({
   params,

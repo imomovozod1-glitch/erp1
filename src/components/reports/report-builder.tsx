@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import dynamic from 'next/dynamic'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { toast } from 'sonner'
@@ -114,6 +115,7 @@ function isoDaysAgo(days: number, today: string): string {
 export function ReportBuilder({ today }: { today: string }) {
   const tCommon = useTranslations('common')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
+  const tRoot = useTranslations()
   const t = useTranslations('reports')
 
   const [source, setSource] = useState<ReportSource>('sales')
@@ -182,13 +184,13 @@ export function ReportBuilder({ today }: { today: string }) {
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(json.error === 'forbidden' ? t('errorForbidden') : tCommon('error'))
+        toast.error(json.error === 'forbidden' ? t('errorForbidden') : errorMessage(tRoot, json, tCommon('error')))
         return
       }
       setResult(json as ReportResult)
       if ((json as ReportResult).truncated) toast.warning(t('truncated'))
-    } catch {
-      toast.error(tCommon('error'))
+    } catch (error) {
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsRunning(false)
     }
@@ -247,8 +249,13 @@ export function ReportBuilder({ today }: { today: string }) {
     })
   }
 
-  const renderCell = (value: string | number | null, type: string) => {
+  /** `type` columns come back as raw enum keys (income / in / adjustment …). */
+  const typeLabel = (value: string | number | null) =>
+    typeof value === 'string' && t.has(`typeValue.${value}`) ? t(`typeValue.${value}`) : value
+
+  const renderCell = (value: string | number | null, type: string, key?: string) => {
     if (value === null || value === '') return '—'
+    if (key === 'type') return String(typeLabel(value))
     if (type === 'money') return formatCurrency(Number(value))
     if (type === 'number') return formatNumber(Number(value))
     if (type === 'date') return formatDate(String(value))
@@ -263,8 +270,9 @@ export function ReportBuilder({ today }: { today: string }) {
       key: column.key,
     }))
     const stamp = isDated ? `${from}_${to}` : today
+    const exportData = rows.map((row) => ('type' in row ? { ...row, type: typeLabel(row.type) } : row))
     // Exports what is on screen — filtered and sorted — not the raw result.
-    await exportRowsToExcel(rows, exportColumns, `${t(`source.${source}`)}_${stamp}.xlsx`, 'Report')
+    await exportRowsToExcel(exportData, exportColumns, `${t(`source.${source}`)}_${stamp}.xlsx`, t('title'))
   }
 
   const persist = (next: SavedReport[]) => {
@@ -609,7 +617,7 @@ export function ReportBuilder({ today }: { today: string }) {
                                   : ''
                               }
                             >
-                              {renderCell(row[column.key], column.type)}
+                              {renderCell(row[column.key], column.type, column.key)}
                             </TableCell>
                           ))}
                         </TableRow>

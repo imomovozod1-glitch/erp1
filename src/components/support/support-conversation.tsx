@@ -11,6 +11,7 @@ import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
 import { formatDateTime } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { errorMessage } from '@/lib/error-message'
 
 type SenderRole = 'tenant' | 'agent' | 'admin'
 
@@ -82,6 +83,7 @@ export function SupportConversation({
   inboxTopic,
   className,
 }: SupportConversationProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('supportChat')
 
@@ -227,7 +229,7 @@ export function SupportConversation({
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(json.error === 'thread_closed' ? t('threadClosed') : tCommon('error'))
+        throw new Error(json.error || '')
       }
       // Swap the placeholder for the stored row (real id and timestamp), or
       // just drop the pending flag if this server can't return the row.
@@ -247,7 +249,7 @@ export function SupportConversation({
       // Put the text back in the box rather than losing what was typed.
       setMessages((prev) => prev.filter((message) => message.id !== tempId))
       setReply(body)
-      toast.error(error.message || tCommon('error'))
+      toast.error(error?.message === 'thread_closed' ? t('threadClosed') : errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSending(false)
     }

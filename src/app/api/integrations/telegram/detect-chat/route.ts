@@ -13,8 +13,8 @@ import { discoverChat, getTelegramSettings, storeChatId } from '@/lib/integratio
  */
 export async function POST() {
   const ctx = await getTenantContext()
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const settings = await getTelegramSettings(ctx.tenantId)
   if (!settings?.telegram_bot_token) {
@@ -23,7 +23,8 @@ export async function POST() {
 
   const found = await discoverChat(settings.telegram_bot_token)
   if (!found.ok) {
-    return NextResponse.json({ error: 'detect_failed', detail: found.error }, { status: 400 })
+    console.error('[telegram] chat detection failed:', found.error)
+    return NextResponse.json({ error: 'detect_failed' }, { status: 400 })
   }
   if (!found.data) {
     return NextResponse.json({ error: 'no_chat_yet' }, { status: 404 })

@@ -6,7 +6,11 @@ import { requireModuleEdit } from '@/lib/permissions-server'
 import { getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
-export const metadata: Metadata = { title: 'Add Supplier' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'procurement' })
+  return { title: t('addSupplier') }
+}
 
 export default async function NewSupplierPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params

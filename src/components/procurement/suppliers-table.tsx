@@ -80,7 +80,7 @@ export function SuppliersTable({
                 <TableHead>{tCommon('phone')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t('contactPerson')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{t('tin')}</TableHead>
-                <TableHead className="text-right tabular-nums">{lang === 'uz' ? 'Qarzimiz' : lang === 'ru' ? 'Наш долг' : 'Debt owed'}</TableHead>
+                <TableHead className="text-right tabular-nums">{t('debtOwed')}</TableHead>
                 <TableHead>{tCommon('status')}</TableHead>
                 <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
                 <TableHead className="w-12" />
@@ -144,7 +144,7 @@ export function SuppliersTable({
                               }
                             />
                             <TooltipContent side="left">
-                              <p>{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</p>
+                              <p>{tCommon('actions')}</p>
                             </TooltipContent>
                           </Tooltip>
                           <DropdownMenuContent align="end">
@@ -155,7 +155,7 @@ export function SuppliersTable({
                             {(supplier.address || (supplier.latitude && supplier.longitude)) && (
                               <DropdownMenuItem onClick={() => setMapSupplier({ name: supplier.name, address: supplier.address, latitude: supplier.latitude, longitude: supplier.longitude })}>
                                 <MapPin className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                                {lang === 'uz' ? "Xaritada ko'rish" : lang === 'ru' ? 'Показать на карте' : 'View on map'}
+                                {t('viewOnMap')}
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>

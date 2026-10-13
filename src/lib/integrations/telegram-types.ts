@@ -8,6 +8,14 @@
  * boundary explicit rather than relying on that.
  */
 
+/** The languages the company's bot can write in — the app's own locales. */
+export const TELEGRAM_LANGUAGES = ['uz', 'ru', 'en'] as const
+export type TelegramLanguage = (typeof TELEGRAM_LANGUAGES)[number]
+
+export function normaliseTelegramLanguage(value: unknown): TelegramLanguage {
+  return (TELEGRAM_LANGUAGES as readonly unknown[]).includes(value) ? (value as TelegramLanguage) : 'uz'
+}
+
 /** What the settings screen is allowed to know: never the token, only a mask. */
 export interface TelegramStatus {
   connected: boolean
@@ -19,4 +27,6 @@ export interface TelegramStatus {
   tokenHint: string | null
   events: Record<string, boolean>
   linkedAt: string | null
+  /** The language the bot writes its notifications in. */
+  language: TelegramLanguage
 }

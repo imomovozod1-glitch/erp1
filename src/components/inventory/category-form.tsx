@@ -9,6 +9,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateCategories } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,6 +31,7 @@ interface CategoryFormProps {
 }
 
 export function CategoryForm({ initialData, lang }: CategoryFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('inventory')
   const exitForm = useRouteModalExit(`/${lang}/inventory/categories`)
@@ -77,7 +79,7 @@ export function CategoryForm({ initialData, lang }: CategoryFormProps) {
       exitForm()
      
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

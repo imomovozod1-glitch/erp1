@@ -1,10 +1,15 @@
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import { CashboxClient } from '@/components/finance/cashbox-client'
 import { getCachedCashboxPageData, getCachedCashboxTransactions } from '@/lib/data/queries'
 import { resolvePeriodDays, type PeriodKey } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 
-export const metadata: Metadata = { title: 'Cashbox' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'finance' })
+  return { title: t('cashbox') }
+}
 
 const PERIODS: PeriodKey[] = ['today', 'yesterday', 'week', 'month', 'custom', 'all']
 

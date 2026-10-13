@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { CancelPurchaseDialog } from '@/components/procurement/cancel-purchase-dialog'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { errorMessage } from '@/lib/error-message'
 
 export default function PurchaseOrderDetailPage() {
   const params = useParams() as any
@@ -29,6 +30,7 @@ export default function PurchaseOrderDetailPage() {
   const lang = params.lang
   const id = params.id
 
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('procurement')
 
@@ -60,7 +62,7 @@ export default function PurchaseOrderDetailPage() {
         setOrder(orderData)
         setItems(itemsData || [])
       } catch (err: any) {
-        toast.error(err.message || tCommon('error'))
+        toast.error(errorMessage(tRoot, err, tCommon('error')))
         router.push(`/${lang}/procurement/purchase-orders`)
       } finally {
         setIsLoading(false)

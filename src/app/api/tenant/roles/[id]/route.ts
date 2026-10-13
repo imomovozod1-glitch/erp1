@@ -33,8 +33,8 @@ function normalise(permissions: Record<string, unknown>) {
 
 async function requireAdmin() {
   const ctx = await getTenantContext()
-  if (!ctx) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
-  if (ctx.role !== 'admin') return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+  if (!ctx) return { error: NextResponse.json({ error: 'unauthorized' }, { status: 401 }) }
+  if (ctx.role !== 'admin') return { error: NextResponse.json({ error: 'forbidden' }, { status: 403 }) }
   return { ctx }
 }
 
@@ -49,7 +49,7 @@ export async function PATCH(
   const body = await request.json().catch(() => null)
   const parsed = bodySchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
   const permissions = normalise(parsed.data.permissions)
 
@@ -74,7 +74,8 @@ export async function PATCH(
     if (updateError.code === '23505') {
       return NextResponse.json({ error: 'duplicate_name' }, { status: 409 })
     }
-    return NextResponse.json({ error: updateError.message }, { status: 400 })
+    console.error('[tenant/roles] update failed:', updateError.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 400 })
   }
 
   // Push the new permission set onto everyone currently on this role.
@@ -91,7 +92,8 @@ export async function PATCH(
       .update({ permissions })
       .in('id', ids)
     if (propagateError) {
-      return NextResponse.json({ error: propagateError.message }, { status: 400 })
+      console.error('[tenant/roles] permission propagation failed:', propagateError.message)
+      return NextResponse.json({ error: 'server_error' }, { status: 400 })
     }
     await Promise.all(ids.map((profileId) => invalidateProfile(profileId)))
   }
@@ -118,14 +120,20 @@ export async function DELETE(
     .update({ role_template_id: null })
     .eq('tenant_id', ctx!.tenantId)
     .eq('role_template_id', id)
-  if (unlinkError) return NextResponse.json({ error: unlinkError.message }, { status: 400 })
+  if (unlinkError) {
+    console.error('[tenant/roles] unlink failed:', unlinkError.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 400 })
+  }
 
   const { error: deleteError } = await supabase
     .from('role_templates')
     .delete()
     .eq('id', id)
     .eq('tenant_id', ctx!.tenantId)
-  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 400 })
+  if (deleteError) {
+    console.error('[tenant/roles] delete failed:', deleteError.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 400 })
+  }
 
   await invalidateRoleTemplates()
   return NextResponse.json({ ok: true })

@@ -6,7 +6,11 @@ import { getCachedProductsForSelect, getCachedCustomersForSelect, getAssignableU
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireModuleEdit } from '@/lib/permissions-server'
 
-export const metadata: Metadata = { title: 'New Sale' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'sales' })
+  return { title: t('addSale') }
+}
 
 // This page picks products from a live list that must reflect anything just
 // added elsewhere — without this, Next.js treats it as a static route and can

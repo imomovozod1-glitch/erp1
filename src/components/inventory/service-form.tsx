@@ -13,6 +13,7 @@ import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProducts } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,6 +45,7 @@ interface ServiceFormProps {
  * it is charged at (`consume_cost_layers` returns it directly for a service).
  */
 export function ServiceForm({ initialData, categories, lang, options }: ServiceFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('inventory')
   const exitForm = useRouteModalExit(`/${lang}/inventory/services`)
@@ -117,7 +119,10 @@ export function ServiceForm({ initialData, categories, lang, options }: ServiceF
       if (initialData?.id) nameQuery = nameQuery.neq('id', initialData.id)
       const { data: existing, error: checkError } = await nameQuery
       if (checkError) throw checkError
-      if (existing && existing.length > 0) throw new Error(t('nameExists'))
+      if (existing && existing.length > 0) {
+        toast.error(t('nameExists'))
+        return
+      }
 
       const userRes = await supabase.auth.getUser()
       const userId: string | null = userRes.data?.user?.id ?? null
@@ -151,7 +156,7 @@ export function ServiceForm({ initialData, categories, lang, options }: ServiceF
       clearPersistedForm(FORM_ID)
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

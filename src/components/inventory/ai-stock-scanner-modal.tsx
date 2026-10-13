@@ -13,6 +13,8 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
 import { recordCostLayer } from '@/lib/inventory-costing'
@@ -63,8 +65,10 @@ export function AIStockScannerModal({
   open,
   onOpenChange,
   categories = [],
-  lang = 'uz',
 }: AIStockScannerModalProps) {
+  const tRoot = useTranslations()
+  const tCommon = useTranslations('common')
+  const t = useTranslations('inventory')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isScanning, setIsScanning] = useState(false)
@@ -86,7 +90,7 @@ export function AIStockScannerModal({
     const selected = e.target.files?.[0]
     if (selected) {
       if (!selected.type.startsWith('image/') && !selected.name.endsWith('.avif')) {
-        toast.error(lang === 'uz' ? "Faqat rasm fayllari (JPG, PNG, WEBP, AVIF) qo'llab-quvvatlanadi" : lang === 'ru' ? 'Поддерживаются только файлы изображений (JPG, PNG, WEBP, AVIF)' : 'Only image files (JPG, PNG, WEBP, AVIF) are supported')
+        toast.error(t('aiScanner.imagesOnly'))
         return
       }
       setFile(selected)
@@ -175,29 +179,26 @@ export function AIStockScannerModal({
         data = JSON.parse(rawText)
       } catch {
         if (!response.ok) {
-          if (response.status === 413) {
-            throw new Error(lang === 'uz' ? 'Rasm hajmi juda katta. Iltimos kichikroq rasm yuklang.' : lang === 'ru' ? 'Размер изображения слишком большой. Загрузите файл меньшего размера.' : 'Image is too large. Please upload a smaller image.')
-          }
-          const match = rawText.match(/<title>(.*?)<\/title>/i) || rawText.match(/<h1>(.*?)<\/h1>/i)
-          const errorTitle = match ? match[1].replace(/<[^>]+>/g, '').trim() : ''
-          const fallback = lang === 'uz' ? 'Xatolik yuz berdi' : lang === 'ru' ? 'Произошла ошибка' : 'An error occurred'
-          throw new Error(`${lang === 'uz' ? 'Server xatosi' : lang === 'ru' ? 'Ошибка сервера' : 'Server error'} (${response.status}): ${errorTitle || fallback}`)
+          // A non-JSON failure is the platform's own HTML error page (413 on
+          // an oversized body, 5xx otherwise) — name it, never show its HTML.
+          throw new Error(response.status === 413 ? 'image_too_large' : 'server_error')
         }
-        throw new Error(lang === 'uz' ? 'Serverdan kutilmagan javob qaytdi. Qayta urinib ko\'ring.' : lang === 'ru' ? 'Сервер вернул неожиданный ответ. Попробуйте еще раз.' : 'Unexpected response from server. Please try again.')
+        toast.error(t('aiScanner.unexpectedResponse'))
+        return
       }
 
       if (!response.ok) {
-        throw new Error(String(data.error || (lang === 'uz' ? 'Rasmni AI o\'qiy olmadi' : lang === 'ru' ? 'ИИ не смог прочитать изображение' : 'AI could not read the image')))
+        throw new Error(String(data.error || 'image_unreadable'))
       }
 
       if (!Array.isArray(data.items) || data.items.length === 0) {
-        toast.error(lang === 'uz' ? "Rasmdan hech qanday mahsulot ma'lumoti aniqlanmadi" : lang === 'ru' ? 'На изображении не обнаружено данных о товарах' : 'No product data was detected in the image')
+        toast.error(t('aiScanner.noItemsDetected'))
         return
       }
 
       // Format items with temporary unique keys
-      const productLabel = lang === 'uz' ? 'Mahsulot' : lang === 'ru' ? 'Товар' : 'Product'
-      const unitLabel = lang === 'uz' ? 'dona' : lang === 'ru' ? 'шт' : 'pcs'
+      const productLabel = t('aiScanner.defaultProductName')
+      const unitLabel = t('aiScanner.defaultUnit')
       const formatted: ParsedStockItem[] = data.items.map((raw: Record<string, unknown>, index: number) => ({
         id: `scanned-${Date.now()}-${index}`,
         name: String(raw.name || `${productLabel} #${index + 1}`),
@@ -211,10 +212,10 @@ export function AIStockScannerModal({
 
       setItems(formatted)
       setScanStep('review')
-      toast.success(lang === 'uz' ? `AI rasmdan ${formatted.length} ta mahsulotni ajratib oldi!` : lang === 'ru' ? `ИИ извлек ${formatted.length} товаров из изображения!` : `AI extracted ${formatted.length} products from the image!`)
+      toast.success(t('aiScanner.extracted', { count: formatted.length }))
     } catch (error) {
       console.error(error)
-      toast.error(error instanceof Error ? error.message : (lang === 'uz' ? 'Scanirovka qilishda xatolik yuz berdi' : lang === 'ru' ? 'Ошибка при сканировании' : 'Error while scanning'))
+      toast.error(errorMessage(tRoot, error, t('aiScanner.scanError')))
     } finally {
       setIsScanning(false)
     }
@@ -244,7 +245,7 @@ export function AIStockScannerModal({
       id: `manual-${Date.now()}`,
       name: '',
       sku: `SKU-${Math.floor(1000 + Math.random() * 9000)}`,
-      unit: lang === 'uz' ? 'dona' : lang === 'ru' ? 'шт' : 'pcs',
+      unit: t('aiScanner.defaultUnit'),
       stock: 1,
       price: 0,
       cost_price: 0,
@@ -254,14 +255,14 @@ export function AIStockScannerModal({
 
   const handleSaveToWarehouse = async () => {
     if (items.length === 0) {
-      toast.error(lang === 'uz' ? 'Saqlash uchun kamida 1 ta mahsulot bo\'lishi kerak' : lang === 'ru' ? 'Для сохранения нужен хотя бы 1 товар' : 'At least 1 product is required to save')
+      toast.error(t('aiScanner.atLeastOne'))
       return
     }
 
     // Validation check
     const invalidItems = items.filter((item) => !item.name.trim() || !item.sku.trim())
     if (invalidItems.length > 0) {
-      toast.error(lang === 'uz' ? 'Barcha mahsulotlar nomi va SKU (Artikul) to\'ldirilgan bo\'lishi shart' : lang === 'ru' ? 'У всех товаров должны быть заполнены название и SKU (Артикул)' : 'All products must have a name and SKU filled in')
+      toast.error(t('aiScanner.nameAndSkuRequired'))
       return
     }
 
@@ -324,7 +325,7 @@ export function AIStockScannerModal({
         })
       }
 
-      toast.success(lang === 'uz' ? `${items.length} ta mahsulot omborga muvaffaqiyatli saqlandi!` : lang === 'ru' ? `${items.length} товаров успешно сохранено на склад!` : `${items.length} products successfully saved to warehouse!`)
+      toast.success(t('aiScanner.saved', { count: items.length }))
       await invalidateProducts()
       await invalidateMovements()
       onOpenChange(false)
@@ -332,7 +333,7 @@ export function AIStockScannerModal({
     } catch (error) {
       console.error('Save error:', error)
       toast.error(
-        error instanceof Error ? error.message : (lang === 'uz' ? 'Mahsulotlarni saqlashda xatolik yuz berdi' : lang === 'ru' ? 'Ошибка при сохранении товаров' : 'Error saving products')
+        errorMessage(tRoot, error, t('aiScanner.saveError'))
       )
     } finally {
       setIsSaving(false)
@@ -349,10 +350,10 @@ export function AIStockScannerModal({
             </div>
             <div>
               <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                {lang === 'uz' ? 'AI Ombor Rasmidan Yuklash (Image-to-Table)' : lang === 'ru' ? 'Загрузка со склада по фото (Image-to-Table)' : 'AI Warehouse Image Upload (Image-to-Table)'}
+                {t('aiScanner.title')}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {lang === 'uz' ? "Kelgan tovarlar ro'yxati yoki nakladnoy rasmini yuklang, AI avtomatik jadvalga o'tkazib beradi." : lang === 'ru' ? 'Загрузите фото накладной или списка товаров — ИИ автоматически перенесет данные в таблицу.' : 'Upload a photo of an incoming goods list or invoice — AI will automatically convert it into a table.'}
+                {t('aiScanner.description')}
               </DialogDescription>
             </div>
           </div>
@@ -365,7 +366,7 @@ export function AIStockScannerModal({
               {/* Dropzone */}
               <div className="flex flex-col h-full min-h-75">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                  {lang === 'uz' ? 'Hujjat / Tovarlar rasmi:' : lang === 'ru' ? 'Фото документа / товаров:' : 'Document / Products image:'}
+                  {t('aiScanner.imageLabel')}
                 </label>
                 <div
                   className={`flex-1 relative border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-6 transition-all ${
@@ -379,7 +380,7 @@ export function AIStockScannerModal({
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={preview}
-                        alt="Scanned doc preview"
+                        alt={t('aiScanner.previewAlt')}
                         className="max-h-65 w-auto object-contain rounded-lg shadow-sm"
                       />
                     </div>
@@ -389,10 +390,10 @@ export function AIStockScannerModal({
                         <UploadCloud className="h-7 w-7" />
                       </div>
                       <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 text-center">
-                        {lang === 'uz' ? 'Rasmni bu yerga yuklang yoki tanlang' : lang === 'ru' ? 'Загрузите изображение сюда или выберите' : 'Upload an image here or select one'}
+                        {t('aiScanner.uploadPrompt')}
                       </p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 text-center">
-                        {lang === 'uz' ? "PNG, JPG, WEBP formatlari qo'llab-quvvatlanadi" : lang === 'ru' ? 'Поддерживаются форматы PNG, JPG, WEBP' : 'PNG, JPG, WEBP formats are supported'}
+                        {t('aiScanner.formatsHint')}
                       </p>
                       <input
                         ref={fileInputRef}
@@ -413,7 +414,7 @@ export function AIStockScannerModal({
                       onClick={handleReset}
                       className="text-slate-600 dark:text-slate-300 text-xs"
                     >
-                      {lang === 'uz' ? 'Boshqa rasm tanlash' : lang === 'ru' ? 'Выбрать другое изображение' : 'Choose another image'}
+                      {t('aiScanner.chooseAnother')}
                     </Button>
                   </div>
                 )}
@@ -424,26 +425,26 @@ export function AIStockScannerModal({
                 <div>
                   <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-3">
                     <FileSpreadsheet className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-                    {lang === 'uz' ? 'Qanday ishlaydi?' : lang === 'ru' ? 'Как это работает?' : 'How does it work?'}
+                    {t('aiScanner.howItWorks')}
                   </h4>
                   <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
                     <li className="flex items-start gap-2">
                       <span className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
                         1
                       </span>
-                      {lang === 'uz' ? "Omborga kelgan yuk, nakladnoy yoki ro'yxat rasmini yuklaysiz." : lang === 'ru' ? 'Загрузите фото накладной, поступившего груза или списка товаров.' : 'Upload a photo of incoming goods, an invoice, or a product list.'}
+                      {t('aiScanner.step1')}
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
                         2
                       </span>
-                      {lang === 'uz' ? "Sun'iy intellekt (Gemini Vision AI) rasmdagi barcha tovarlarni tahlil qilib, Jadval shaklida o'qib beradi." : lang === 'ru' ? 'Искусственный интеллект (Gemini Vision AI) анализирует все товары на изображении и переносит их в таблицу.' : 'AI (Gemini Vision AI) analyzes all the products in the image and reads them into a table.'}
+                      {t('aiScanner.step2')}
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 font-bold rounded-full h-4 w-4 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
                         3
                       </span>
-                      {lang === 'uz' ? "Hosil bo'lgan jadvaldagi narxlar va miqdorlarni ko'rib chiqasiz hamda bir tugma bilan Omborga saqlaysiz." : lang === 'ru' ? 'Проверяете цены и количество в получившейся таблице и сохраняете на склад одной кнопкой.' : 'Review the prices and quantities in the resulting table and save to the warehouse with one click.'}
+                      {t('aiScanner.step3')}
                     </li>
                   </ul>
                 </div>
@@ -451,7 +452,7 @@ export function AIStockScannerModal({
                 <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/50 rounded-lg p-3 mt-4 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <span>
-                    {lang === 'uz' ? "Rasm sifatli va yorug' joyda olingan bo'lsa, AI ma'lumotlarni aniqroq o'qiydi." : lang === 'ru' ? 'Если снимок сделан качественно и при хорошем освещении, ИИ распознает данные точнее.' : 'If the photo is high quality and well-lit, AI will read the data more accurately.'}
+                    {t('aiScanner.qualityTip')}
                   </span>
                 </div>
               </div>
@@ -462,18 +463,18 @@ export function AIStockScannerModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50 text-xs px-2.5 py-0.5">
-                    {lang === 'uz' ? `${items.length} ta mahsulot aniqlandi` : lang === 'ru' ? `Обнаружено товаров: ${items.length}` : `${items.length} products detected`}
+                    {t('aiScanner.detected', { count: items.length })}
                   </Badge>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {lang === 'uz' ? "Jadvaldagi katakchalarni bevosita tahrirlashingiz mumkin." : lang === 'ru' ? 'Ячейки таблицы можно редактировать напрямую.' : 'You can edit the table cells directly.'}
+                    {t('aiScanner.editHint')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={handleAddRow} className="h-8 gap-1 text-xs">
-                    <Plus className="h-3.5 w-3.5" /> {lang === 'uz' ? "Qator qo'shish" : lang === 'ru' ? 'Добавить строку' : 'Add row'}
+                    <Plus className="h-3.5 w-3.5" /> {t('aiScanner.addRow')}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setScanStep('upload')} className="h-8 text-xs text-slate-500 dark:text-slate-400">
-                    {lang === 'uz' ? 'Qayta scan qilish' : lang === 'ru' ? 'Сканировать заново' : 'Scan again'}
+                    {t('aiScanner.scanAgain')}
                   </Button>
                 </div>
               </div>
@@ -483,12 +484,12 @@ export function AIStockScannerModal({
                   <TableHeader className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10">
                     <TableRow>
                       <TableHead className="w-10 text-xs font-semibold text-center">#</TableHead>
-                      <TableHead className="w-[30%] text-xs font-semibold">{lang === 'uz' ? 'Mahsulot nomi' : lang === 'ru' ? 'Название товара' : 'Product name'}</TableHead>
-                      <TableHead className="w-[15%] text-xs font-semibold">{lang === 'uz' ? 'Artikul (SKU)' : lang === 'ru' ? 'Артикул (SKU)' : 'SKU'}</TableHead>
-                      <TableHead className="w-[12%] text-xs font-semibold">{lang === 'uz' ? 'Birligi' : lang === 'ru' ? 'Ед. изм.' : 'Unit'}</TableHead>
-                      <TableHead className="w-[12%] text-xs font-semibold text-right">{lang === 'uz' ? 'Miqdori' : lang === 'ru' ? 'Кол-во' : 'Quantity'}</TableHead>
-                      <TableHead className="w-[15%] text-xs font-semibold text-right">{lang === 'uz' ? 'Sotish narxi' : lang === 'ru' ? 'Цена продажи' : 'Sale price'}</TableHead>
-                      <TableHead className="w-[15%] text-xs font-semibold text-right">{lang === 'uz' ? 'Tan narxi' : lang === 'ru' ? 'Себестоимость' : 'Cost price'}</TableHead>
+                      <TableHead className="w-[30%] text-xs font-semibold">{t('productName')}</TableHead>
+                      <TableHead className="w-[15%] text-xs font-semibold">{t('sku')}</TableHead>
+                      <TableHead className="w-[12%] text-xs font-semibold">{t('unit')}</TableHead>
+                      <TableHead className="w-[12%] text-xs font-semibold text-right">{t('quantity')}</TableHead>
+                      <TableHead className="w-[15%] text-xs font-semibold text-right">{t('price')}</TableHead>
+                      <TableHead className="w-[15%] text-xs font-semibold text-right">{t('costPrice')}</TableHead>
                       <TableHead className="w-10" />
                     </TableRow>
                   </TableHeader>
@@ -500,7 +501,7 @@ export function AIStockScannerModal({
                           <Input
                             value={item.name}
                             onChange={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
-                            placeholder={lang === 'uz' ? 'Mahsulot nomi' : lang === 'ru' ? 'Название товара' : 'Product name'}
+                            placeholder={t('productName')}
                             className="h-8 text-xs border-slate-200 dark:border-slate-700"
                           />
                         </TableCell>
@@ -516,7 +517,7 @@ export function AIStockScannerModal({
                           <Input
                             value={item.unit}
                             onChange={(e) => handleUpdateItem(item.id, 'unit', e.target.value)}
-                            placeholder={lang === 'uz' ? 'dona' : lang === 'ru' ? 'шт' : 'pcs'}
+                            placeholder={t('aiScanner.defaultUnit')}
                             className="h-8 text-xs border-slate-200 dark:border-slate-700"
                           />
                         </TableCell>
@@ -570,7 +571,7 @@ export function AIStockScannerModal({
             onClick={() => onOpenChange(false)}
             disabled={isScanning || isSaving}
           >
-            {lang === 'uz' ? 'Yopish' : lang === 'ru' ? 'Закрыть' : 'Close'}
+            {tCommon('close')}
           </Button>
 
           {scanStep === 'upload' ? (
@@ -581,12 +582,12 @@ export function AIStockScannerModal({
               {isScanning ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {lang === 'uz' ? 'AI Tahlil qilmoqda...' : lang === 'ru' ? 'ИИ анализирует...' : 'AI is analyzing...'}
+                  {t('aiScanner.analyzing')}
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  {lang === 'uz' ? "Rasmni AI bilan o'qish" : lang === 'ru' ? 'Прочитать изображение с ИИ' : 'Read image with AI'}
+                  {t('aiScanner.readWithAi')}
                 </>
               )}
             </Button>
@@ -598,12 +599,12 @@ export function AIStockScannerModal({
               {isSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {lang === 'uz' ? 'Saqlanmoqda...' : lang === 'ru' ? 'Сохранение...' : 'Saving...'}
+                  {tCommon('saving')}
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
-                  {lang === 'uz' ? 'Barcha tovarlarni omborga saqlash' : lang === 'ru' ? 'Сохранить все товары на склад' : 'Save all products to warehouse'}
+                  {t('aiScanner.saveAll')}
                 </>
               )}
             </Button>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { Resolver, Controller, useWatch } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
@@ -57,8 +58,8 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
     customer_id: z.string().optional().or(z.literal('')),
     order_id: z.string().optional().or(z.literal('')),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled']),
-    total_amount: z.coerce.number().min(0),
-    paid_amount: z.coerce.number().min(0),
+    total_amount: z.coerce.number().min(0, tCommon('invalidAmount')),
+    paid_amount: z.coerce.number().min(0, tCommon('invalidAmount')),
     issued_at: z.string().min(1, tCommon('required')),
     due_at: z.string().min(1, tCommon('required')),
     paid_at: z.string().optional().or(z.literal('')),
@@ -89,7 +90,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
 
   const onSubmit = async (data: any) => {
     if (!userId && !initialData) {
-      toast.error(lang === 'uz' ? 'Foydalanuvchi seansi topilmadi' : lang === 'ru' ? 'Сессия пользователя не найдена' : 'User session not found')
+      toast.error(tCommon('sessionNotFound'))
       return
     }
 
@@ -113,7 +114,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
       // see reconcileInvoiceStatus.
       payload.status = reconcileInvoiceStatus(data.status, data.total_amount, newPaidAmount)
 
-      const categoryLabel = lang === 'uz' ? 'Faktura to\'lovi' : lang === 'ru' ? 'Оплата по счету' : 'Invoice Payment'
+      const categoryLabel = t('invoicePaymentCategory')
 
       // One transaction: the invoice, and — when the paid amount changed — the
       // cashbox and its transaction (supabase/migration_business_rpc.sql).
@@ -167,7 +168,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
       toast.error(
         error instanceof BusinessRpcError
           ? businessRpcErrorMessage(tRoot, error)
-          : error.message || tCommon('error')
+          : errorMessage(tRoot, error, tCommon('error'))
       )
     } finally {
       setIsSubmitting(false)

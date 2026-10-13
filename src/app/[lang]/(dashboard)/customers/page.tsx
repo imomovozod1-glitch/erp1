@@ -10,7 +10,11 @@ import { getCurrentTenantId } from '@/lib/tenant'
 import { formatCurrency } from '@/lib/utils'
 import { canEditModule , canDo, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 
-export const metadata: Metadata = { title: 'Customers' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'sales' })
+  return { title: t('customers') }
+}
 
 export default async function CustomersPage({
   params,
@@ -71,16 +75,10 @@ export default async function CustomersPage({
           single number across the whole page. */}
       <div className="grid grid-cols-1 mb-6 sm:max-w-xs">
         <StatsCard
-          title={lang === 'uz' ? 'Balans qoldig\'i' : lang === 'ru' ? 'Остаток баланса' : 'Balance'}
+          title={t('balanceRemaining')}
           value={`${totalBalance > 0 ? '+' : totalBalance < 0 ? '-' : ''}${formatCurrency(Math.abs(totalBalance))}`}
           valueClassName={totalBalance > 0 ? 'text-emerald-600 dark:text-emerald-400' : totalBalance < 0 ? 'text-rose-600 dark:text-rose-400' : undefined}
-          subtitle={
-            lang === 'uz'
-              ? `Qarz: ${formatCurrency(totalDebt)} · Haqdorlik: ${formatCurrency(totalCredit)}`
-              : lang === 'ru'
-              ? `Долг: ${formatCurrency(totalDebt)} · Депозит: ${formatCurrency(totalCredit)}`
-              : `Debt: ${formatCurrency(totalDebt)} · Credit: ${formatCurrency(totalCredit)}`
-          }
+          subtitle={t('balanceSubtitle', { debt: formatCurrency(totalDebt), credit: formatCurrency(totalCredit) })}
           icon={Scale}
           iconClassName={totalBalance > 0 ? 'bg-emerald-500' : totalBalance < 0 ? 'bg-rose-500' : 'bg-slate-400'}
         />

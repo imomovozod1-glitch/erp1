@@ -6,7 +6,10 @@ import { getCacheClient } from '@/lib/supabase/cache-client'
 import { Card, CardContent } from '@/components/ui/card'
 import { SupportConversation } from '@/components/support/support-conversation'
 
-export const metadata: Metadata = { title: 'Assigned tenants' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('supportPortal')
+  return { title: t('assignedTenantsHeading') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function SupportHomePage() {

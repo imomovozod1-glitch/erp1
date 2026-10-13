@@ -19,8 +19,10 @@ import {
 } from '@/components/admin/admin-form-layout'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { changeOwnPassword } from '@/lib/change-password'
+import { authErrorCode } from '@/lib/admin-errors'
 
 export function AdminSecurityForm() {
+  const tErrors = useTranslations('admin.errors')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const t = useTranslations('admin.settings.security')
@@ -56,12 +58,14 @@ export function AdminSecurityForm() {
           setError('currentPassword', { message: t('currentWrong') })
           return
         }
-        throw new Error(result.message || t('error'))
+        const code = authErrorCode({ message: result.message })
+        toast.error(code ? tErrors(code) : t('error'))
+        return
       }
       toast.success(t('successSignedOutOthers'))
       reset()
-    } catch (error: any) {
-      toast.error(error?.message || t('error'))
+    } catch {
+      toast.error(t('error'))
     } finally {
       setIsSubmitting(false)
     }

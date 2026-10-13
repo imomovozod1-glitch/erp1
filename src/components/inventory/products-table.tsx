@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/error-message";
 import {
   MoreHorizontal,
   Pencil,
@@ -200,17 +201,19 @@ export function ProductsTable({
     const XLSX = await import('xlsx')
     const supabase = createClient();
     const systemUnits = await getMeasurementUnits(supabase);
+    // Headers in the user's language — each one is also an import alias
+    // (HEADER_ALIASES), so the filled-in template reads straight back in.
     const templateData = [
       {
-        "Nomi": "Mahsulot A",
-        "SKU": "SKU-000001",
-        "Sotuv narxi": 15000,
-        "Tannarx": 10000,
-        "Kirim narxi": 9500,
-        "Zaxira": 100,
-        "Minimal zaxira": 10,
-        "O'lchov birligi": systemUnits[0] || "Dona",
-        "Tavsif": "Namuna mahsulot tavsifi"
+        [t("inventory.excel.name")]: t("inventory.excel.sampleName"),
+        [t("inventory.excel.sku")]: "SKU-000001",
+        [t("inventory.excel.price")]: 15000,
+        [t("inventory.excel.costPrice")]: 10000,
+        [t("inventory.excel.incomingCost")]: 9500,
+        [t("inventory.excel.stock")]: 100,
+        [t("inventory.excel.minStock")]: 10,
+        [t("inventory.excel.unit")]: systemUnits[0] || t("inventory.aiScanner.defaultUnit"),
+        [t("inventory.excel.description")]: t("inventory.excel.sampleDescription"),
       }
     ];
     const workbook = XLSX.utils.book_new();
@@ -221,10 +224,10 @@ export function ProductsTable({
     // gets treated as product data, it's just documentation for the user.
     const unitsSheet = XLSX.utils.json_to_sheet(
       systemUnits.map((u) => ({
-        [lang === 'uz' ? "Ruxsat etilgan o'lchov birliklari" : lang === 'ru' ? 'Разрешённые единицы измерения' : 'Allowed units']: u,
+        [t("inventory.excel.allowedUnits")]: u,
       }))
     );
-    XLSX.utils.book_append_sheet(workbook, unitsSheet, lang === 'uz' ? 'Birliklar' : lang === 'ru' ? 'Единицы' : 'Units');
+    XLSX.utils.book_append_sheet(workbook, unitsSheet, t("inventory.excel.unitsSheet"));
 
     XLSX.writeFile(workbook, "mahsulotlar_shablon.xlsx");
   };
@@ -233,20 +236,18 @@ export function ProductsTable({
     const rows = products.map((p: any) => ({
       ...p,
       categoryName: p.categories?.name || '',
-      statusLabel: p.is_active
-        ? (lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active')
-        : (lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive'),
+      statusLabel: p.is_active ? t("common.active") : t("common.inactive"),
     }));
     await exportRowsToExcel(rows, [
-      { header: 'Nomi', key: 'name' },
-      { header: 'SKU', key: 'sku' },
-      { header: 'Kategoriya', key: 'categoryName' },
-      { header: 'Sotuv narxi', key: 'price' },
-      { header: 'Tannarx', key: 'cost_price' },
-      { header: 'Zaxira', key: 'stock' },
-      { header: 'Minimal zaxira', key: 'min_stock' },
-      { header: "O'lchov birligi", key: 'unit' },
-      { header: 'Holat', key: 'statusLabel' },
+      { header: t("inventory.excel.name"), key: 'name' },
+      { header: t("inventory.excel.sku"), key: 'sku' },
+      { header: t("inventory.category"), key: 'categoryName' },
+      { header: t("inventory.excel.price"), key: 'price' },
+      { header: t("inventory.excel.costPrice"), key: 'cost_price' },
+      { header: t("inventory.excel.stock"), key: 'stock' },
+      { header: t("inventory.excel.minStock"), key: 'min_stock' },
+      { header: t("inventory.excel.unit"), key: 'unit' },
+      { header: t("common.status"), key: 'statusLabel' },
     ], 'mahsulotlar.xlsx');
   };
 
@@ -258,7 +259,7 @@ export function ProductsTable({
       .update({ is_active: !currentStatus })
       .eq("id", id);
     if (error) {
-      toast.error(error.message || t("common.error"));
+      toast.error(errorMessage(t, error, t("common.error")));
     } else {
       toast.success(t("common.success"));
       await invalidateProducts();
@@ -293,7 +294,7 @@ export function ProductsTable({
           await invalidateProducts();
         }
       } else {
-        toast.error(error.message || t("common.error"));
+        toast.error(errorMessage(t, error, t("common.error")));
       }
     } else {
       toast.success(t("common.success"));
@@ -397,14 +398,10 @@ export function ProductsTable({
         // import rather than silently defaulting or importing a mismatched unit.
         if (invalidUnitRows.length > 0) {
           const rowList = invalidUnitRows
-            .map((r) => `${r.name} ("${r.unit || (lang === 'uz' ? "bo'sh" : lang === 'ru' ? 'пусто' : 'empty')}")`)
+            .map((r) => `${r.name} ("${r.unit || t("inventory.excel.emptyUnit")}")`)
             .join(', ');
           toast.error(
-            lang === 'uz'
-              ? `O'lchov birligi tizimdagilarga mos kelmadi: ${rowList}. Ruxsat etilgan birliklar: ${systemUnits.join(', ')}`
-              : lang === 'ru'
-              ? `Единица измерения не совпадает с системными: ${rowList}. Разрешённые единицы: ${systemUnits.join(', ')}`
-              : `Unit of measurement doesn't match the system's units: ${rowList}. Allowed units: ${systemUnits.join(', ')}`,
+            t("inventory.excel.unitMismatch", { rows: rowList, units: systemUnits.join(', ') }),
             { duration: 8000 }
           );
           return;
@@ -452,7 +449,7 @@ export function ProductsTable({
 
         toast.dismiss();
         if (error) {
-          toast.error(`${t("common.error")}: ${error.message}`);
+          toast.error(errorMessage(t, error, t("common.error")));
         } else {
           await recordImportStockMovements(
             supabase,
@@ -465,9 +462,9 @@ export function ProductsTable({
           await invalidateProducts();
           await invalidateMovements();
         }
-      } catch (err: any) {
+      } catch {
         toast.dismiss();
-        toast.error(`${t("inventory.excelReadError")}: ${err.message}`);
+        toast.error(t("inventory.excelReadError"));
       }
     };
     reader.readAsArrayBuffer(file);
@@ -558,7 +555,7 @@ export function ProductsTable({
                   }
                 />
                 <TooltipContent>
-                  <p>{lang === 'uz' ? 'AI orqali chek/fakturani skanerlash' : lang === 'ru' ? 'Сканировать чек/фактуру с помощью ИИ' : 'Scan receipt/invoice using AI'}</p>
+                  <p>{t("inventory.aiScanner.tooltip")}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -683,7 +680,7 @@ export function ProductsTable({
                             }
                           />
                           <TooltipContent side="left">
-                            <p>{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</p>
+                            <p>{t("common.actions")}</p>
                           </TooltipContent>
                         </Tooltip>
                         <DropdownMenuContent align="end" className="w-40">

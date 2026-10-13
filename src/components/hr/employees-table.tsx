@@ -70,8 +70,8 @@ export function EmployeesTable({
             value={status}
             options={[
               { value: 'all', label: tCommon('all') },
-              { value: 'hired', label: lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed' },
-              { value: 'not_hired', label: lang === 'uz' ? 'Ishlamaydi' : lang === 'ru' ? 'Не работает' : 'Not employed' },
+              { value: 'hired', label: t('statusEmployed') },
+              { value: 'not_hired', label: t('statusNotEmployed') },
             ]}
           />
           <TableFilterSelect
@@ -165,8 +165,8 @@ export function EmployeesTable({
                         tone={emp.is_active ? 'emerald' : 'rose'}
                         pulse={emp.is_active}
                         label={emp.is_active
-                          ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
-                          : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated')}
+                          ? t('statusEmployed')
+                          : t('statusTerminated')}
                       />
                     </TableCell>
                     <TableCell>
@@ -189,7 +189,7 @@ export function EmployeesTable({
                             }
                           />
                           <TooltipContent side="left">
-                            <p>{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</p>
+                            <p>{tCommon('actions')}</p>
                           </TooltipContent>
                         </Tooltip>
                         <DropdownMenuContent align="end">

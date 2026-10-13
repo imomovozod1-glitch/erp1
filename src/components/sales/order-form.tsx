@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { Resolver, Controller, useWatch } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
@@ -42,6 +43,7 @@ function getTodayString(): string {
 }
 
 export function OrderForm({ initialData, items = [], customers, assignableUsers, lang }: OrderFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('sales')
   const exitForm = useRouteModalExit(`/${lang}/sales/orders`)
@@ -88,9 +90,9 @@ export function OrderForm({ initialData, items = [], customers, assignableUsers,
     order_number: z.string().min(1, tCommon('required')),
     customer_name: z.string().optional().or(z.literal('')),
     status: z.enum(['draft', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled']),
-    total_amount: z.coerce.number().min(0),
-    discount_amount: z.coerce.number().min(0),
-    tax_amount: z.coerce.number().min(0),
+    total_amount: z.coerce.number().min(0, tCommon('invalidAmount')),
+    discount_amount: z.coerce.number().min(0, tCommon('invalidAmount')),
+    tax_amount: z.coerce.number().min(0, tCommon('invalidAmount')),
     order_date: z.string().optional().or(z.literal('')),
     delivery_date: z.string().optional().or(z.literal('')),
     notes: z.string().optional().or(z.literal('')),
@@ -117,7 +119,7 @@ export function OrderForm({ initialData, items = [], customers, assignableUsers,
 
   const onSubmit = async (data: any) => {
     if (!userId && !initialData) {
-      toast.error(lang === 'uz' ? 'Foydalanuvchi seansi topilmadi' : lang === 'ru' ? 'Сессия пользователя не найдена' : 'User session not found')
+      toast.error(tCommon('sessionNotFound'))
       return
     }
 
@@ -234,7 +236,7 @@ export function OrderForm({ initialData, items = [], customers, assignableUsers,
                   : t('cancelSaleAlreadyCancelled')
         )
       } else {
-        toast.error(error.message || tCommon('error'))
+        toast.error(errorMessage(tRoot, error, tCommon('error')))
       }
     } finally {
       setIsSubmitting(false)

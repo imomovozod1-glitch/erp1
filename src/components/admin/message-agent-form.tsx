@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 /**
  * Super-admin → support-agent direct message.
@@ -23,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea'
  * so an agent has one place to look rather than two.
  */
 export function MessageAgentForm({ agentId, agentName }: { agentId: string; agentName: string }) {
+  const tErrors = useTranslations('admin.errors')
   const t = useTranslations('admin.support.message')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
@@ -32,7 +34,7 @@ export function MessageAgentForm({ agentId, agentName }: { agentId: string; agen
     e.preventDefault()
     if (isSending) return
     if (subject.trim().length < 3 || !body.trim()) {
-      toast.error('Subject and message are required')
+      toast.error(t('messageRequired'))
       return
     }
 
@@ -45,13 +47,14 @@ export function MessageAgentForm({ agentId, agentName }: { agentId: string; agen
       })
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
-        throw new Error(json.error || 'Failed to send')
+        toast.error(adminErrorMessage(tErrors, json, t('sendFailed')))
+        return
       }
-      toast.success('Message sent')
+      toast.success(t('sent'))
       setSubject('')
       setBody('')
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send')
+    } catch {
+      toast.error(t('sendFailed'))
     } finally {
       setIsSending(false)
     }

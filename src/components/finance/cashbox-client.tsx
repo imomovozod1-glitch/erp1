@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { 
   Wallet, 
@@ -402,7 +403,7 @@ export function CashboxClient({
 
     setIsSavingCashbox(true)
     const numBalance = values.initialBalance
-    const initialBalanceLabel = lang === 'uz' ? "Boshlang'ich balans" : lang === 'ru' ? 'Начальный баланс' : 'Initial balance'
+    const initialBalanceLabel = t('initialBalance')
 
     if (isLocalStorageFallback) {
       let updated: Cashbox[]
@@ -526,7 +527,7 @@ export function CashboxClient({
         toast.error(
           err instanceof BusinessRpcError
             ? businessRpcErrorMessage(tRoot, err)
-            : err.message || tCommon('error')
+            : errorMessage(tRoot, err, tCommon('error'))
         )
       } finally {
         setIsSavingCashbox(false)
@@ -537,7 +538,7 @@ export function CashboxClient({
   const handleDelete = async (id: string) => {
     const cashbox = cashboxes.find(cb => cb.id === id);
     if (cashbox && cashbox.balance > 0) {
-      toast.error(lang === 'uz' ? 'Puli bor kassani o\'chirib bo\'lmaydi' : lang === 'ru' ? 'Нельзя удалить кассу с положительным балансом' : 'Cannot delete cashbox with balance > 0');
+      toast.error(t('cannotDeleteNonEmptyCashbox'));
       return;
     }
     
@@ -554,7 +555,7 @@ export function CashboxClient({
           toast.success(tCommon('success'))
           refreshFromServer()
         } catch (err: any) {
-          toast.error(err.message || tCommon('error'))
+          toast.error(errorMessage(tRoot, err, tCommon('error')))
         }
       }
     }
@@ -590,13 +591,7 @@ export function CashboxClient({
     }
 
     if (txForm.type === 'expense' && Number(txForm.amount) > Number(selectedCashboxForTx.balance)) {
-      toast.error(
-        lang === 'uz'
-          ? `Yetarli mablag' yo'q. Kassada faqat ${formatCurrency(selectedCashboxForTx.balance)} mavjud`
-          : lang === 'ru'
-          ? `Недостаточно средств. В кассе доступно только ${formatCurrency(selectedCashboxForTx.balance)}`
-          : `Insufficient funds. Only ${formatCurrency(selectedCashboxForTx.balance)} available in this cashbox`
-      )
+      toast.error(t('insufficientFundsOnly', { amount: formatCurrency(selectedCashboxForTx.balance) }))
       return
     }
 
@@ -606,17 +601,17 @@ export function CashboxClient({
     }
 
     if (personType === 'employee' && !txForm.employeeId) {
-      toast.error(lang === 'uz' ? "Iltimos, xodimni tanlang" : lang === 'ru' ? "Пожалуйста, выберите сотрудника" : "Please select an employee")
+      toast.error(t('selectEmployeeRequired'))
       return
     }
 
     if (personType === 'supplier' && !txForm.supplierId) {
-      toast.error(lang === 'uz' ? "Iltimos, yetkazib beruvchini tanlang" : lang === 'ru' ? "Пожалуйста, выберите поставщика" : "Please select a supplier")
+      toast.error(t('selectSupplierRequired'))
       return
     }
 
     if (personType === 'customer' && !txForm.customerId) {
-      toast.error(lang === 'uz' ? "Iltimos, mijozni tanlang" : lang === 'ru' ? "Пожалуйста, выберите клиента" : "Please select a customer")
+      toast.error(t('selectCustomerRequired'))
       return
     }
 
@@ -628,21 +623,21 @@ export function CashboxClient({
       const emp = employees.find(e => e.id === txForm.employeeId)
       if (emp) {
         finalDescription = txForm.description.trim()
-          ? `${txForm.description.trim()} (${lang === 'uz' ? 'Xodim' : lang === 'ru' ? 'Сотрудник' : 'Employee'}: ${emp.name})`
+          ? `${txForm.description.trim()} (${t('personTypeEmployee')}: ${emp.name})`
           : `${categoryText} - ${emp.name}`
       }
     } else if (personType === 'supplier' && txForm.supplierId) {
       const sup = suppliers.find(s => s.id === txForm.supplierId)
       if (sup) {
         finalDescription = txForm.description.trim()
-          ? `${txForm.description.trim()} (${lang === 'uz' ? 'Yetkazib beruvchi' : lang === 'ru' ? 'Поставщик' : 'Supplier'}: ${sup.name})`
+          ? `${txForm.description.trim()} (${t('personTypeSupplier')}: ${sup.name})`
           : `${categoryText} - ${sup.name}`
       }
     } else if (personType === 'customer' && txForm.customerId) {
       const cust = customers.find(c => c.id === txForm.customerId)
       if (cust) {
         finalDescription = txForm.description.trim()
-          ? `${txForm.description.trim()} (${lang === 'uz' ? 'Mijoz' : lang === 'ru' ? 'Клиент' : 'Customer'}: ${cust.name})`
+          ? `${txForm.description.trim()} (${t('personTypeCustomer')}: ${cust.name})`
           : `${categoryText} - ${cust.name}`
       }
     }
@@ -658,13 +653,7 @@ export function CashboxClient({
         const { data: userData } = await supabase.auth.getUser()
         userId = userData?.user?.id
         if (!userId) {
-          toast.error(
-            lang === 'uz'
-              ? 'Foydalanuvchi seansi topilmadi'
-              : lang === 'ru'
-                ? 'Сессия пользователя не найдена'
-                : 'User session not found'
-          )
+          toast.error(tCommon('sessionNotFound'))
           return
         }
       }
@@ -758,7 +747,7 @@ export function CashboxClient({
       toast.error(
         err instanceof BusinessRpcError
           ? businessRpcErrorMessage(tRoot, err)
-          : err.message || tCommon('error')
+          : errorMessage(tRoot, err, tCommon('error'))
       )
     } finally {
       setIsLoading(false)
@@ -845,18 +834,10 @@ export function CashboxClient({
           <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
           <div className="space-y-1">
             <p className="font-semibold">
-              {lang === 'uz' 
-                ? "Supabase ma'lumotlar bazasida 'cashboxes' jadvali topilmadi."
-                : lang === 'ru'
-                ? "В базе данных Supabase не найдена таблица 'cashboxes'."
-                : "The 'cashboxes' table was not found in your Supabase database."}
+              {t('cashboxTableMissing')}
             </p>
             <p className="opacity-90">
-              {lang === 'uz'
-                ? "Ushbu sahifa hozirda brauzerning LocalStorage xotirasidan foydalanmoqda. Ma'lumotlarni doimiy saqlash uchun supabase/schema.sql fayli oxiridagi SQL kodini Supabase SQL Editor orqali ishga tushiring."
-                : lang === 'ru'
-                ? "Эта страница временно работает через локальное хранилище LocalStorage. Для полноценного сохранения данных выполните SQL скрипт в конце файла supabase/schema.sql в редакторе SQL в панели управления Supabase."
-                : "This page is temporarily running on local LocalStorage. For persistent cloud storage, run the SQL script appended to supabase/schema.sql in your Supabase SQL Editor."}
+              {t('cashboxTableMissingHint')}
             </p>
           </div>
         </div>
@@ -886,7 +867,7 @@ export function CashboxClient({
                 <TableHead className="hidden md:table-cell">{tCommon('description')}</TableHead>
                 <TableHead className="text-right">{t('balance')}</TableHead>
                 <TableHead className="hidden md:table-cell">{tCommon('date')}</TableHead>
-                <TableHead className="text-right">{lang === 'uz' ? 'Amallar' : lang === 'ru' ? 'Действия' : 'Actions'}</TableHead>
+                <TableHead className="text-right">{tCommon('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -944,7 +925,7 @@ export function CashboxClient({
                             className="h-8 border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 hover:text-emerald-800 dark:hover:text-emerald-300 font-semibold text-xs transition-colors px-3"
                           >
                             <Plus className="h-3 w-3 mr-1" />
-                            {lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income'}
+                            {t('cashIn')}
                           </Button>
                           <Button
                             variant="outline"
@@ -953,7 +934,7 @@ export function CashboxClient({
                             className="h-8 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-950/60 hover:text-rose-800 dark:hover:text-rose-300 font-semibold text-xs transition-colors px-3"
                           >
                             <Minus className="h-3 w-3 mr-1" />
-                            {lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense'}
+                            {t('cashOut')}
                           </Button>
                           <Button
                             variant="ghost"

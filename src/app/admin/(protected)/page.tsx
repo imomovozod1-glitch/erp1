@@ -11,7 +11,10 @@ import { AdminRevenueChart } from '@/components/admin/admin-revenue-chart'
 import { computeEffectiveStatus } from '@/lib/tenant-status'
 import { formatCurrency, getInitials } from '@/lib/utils'
 
-export const metadata: Metadata = { title: 'Admin dashboard' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.dashboard')
+  return { title: t('title') }
+}
 export const dynamic = 'force-dynamic'
 
 const STATUS_TONE: Record<string, StatusTone> = {

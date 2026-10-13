@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Globe, Loader2, ExternalLink } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 interface DomainStatus {
   host: string
@@ -28,6 +29,7 @@ interface DomainStatus {
  * window is named rather than reported as success.
  */
 export function TenantDomainCard({ tenantId }: { tenantId: string }) {
+  const tErrors = useTranslations('admin.errors')
   const t = useTranslations('admin.tenants.detail')
   const [status, setStatus] = useState<DomainStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -56,7 +58,10 @@ export function TenantDomainCard({ tenantId }: { tenantId: string }) {
       const res = await fetch(`/api/admin/tenants/${tenantId}/domain`, { method: 'POST' })
       const data = await res.json().catch(() => null)
       if (!res.ok) {
-        toast.error(data?.error || t('domainFailed'))
+        // Vercel's own reason (`detail`) follows the translated message: it is
+        // what tells the operator which setting or project is in the way.
+        const message = adminErrorMessage(tErrors, data, t('domainFailed'))
+        toast.error(data?.detail ? `${message}: ${data.detail}` : message)
         return
       }
       setStatus(data)

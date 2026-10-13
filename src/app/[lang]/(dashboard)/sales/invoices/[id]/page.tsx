@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { errorMessage } from "@/lib/error-message";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,6 +81,7 @@ export default function InvoiceDetailPage() {
   const tRoot = useTranslations();
   const t = useTranslations("sales");
   const tCommon = useTranslations("common");
+  const tDetail = useTranslations("sales.invoiceDetail");
 
   const [invoice, setInvoice] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
@@ -97,14 +99,14 @@ export default function InvoiceDetailPage() {
         setItems(itemsData);
         setCanEdit(editable);
       } catch (err: any) {
-        toast.error(err.message || tCommon("error"));
+        toast.error(errorMessage(tRoot, err, tCommon("error")));
         router.push(`/${lang}/sales/invoices`);
       } finally {
         setIsLoading(false);
       }
     }
     load();
-  }, [id, lang, router, tCommon]);
+  }, [id, lang, router, tCommon, tRoot]);
 
   const handleAcceptPayment = async () => {
     if (!invoice) return;
@@ -152,7 +154,7 @@ export default function InvoiceDetailPage() {
       toast.error(
         err instanceof BusinessRpcError
           ? businessRpcErrorMessage(tRoot, err)
-          : err.message || tCommon("error"),
+          : errorMessage(tRoot, err, tCommon("error")),
       );
     } finally {
       setIsProcessingPayment(false);
@@ -215,7 +217,7 @@ export default function InvoiceDetailPage() {
               }
               className="w-full md:w-auto h-9 text-xs border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-100/70 dark:hover:bg-violet-950/50"
             >
-              {lang === "uz" ? "Kassa orqali to'lash" : "Оплатить через кассу"}
+              {tDetail("payViaCashbox")}
             </Button>
             {canEdit && (
             <Button
@@ -228,9 +230,7 @@ export default function InvoiceDetailPage() {
               ) : (
                 <CheckCircle2 className="h-4 w-4" />
               )}
-              {lang === "uz"
-                ? "To'lovni qabul qilish (Tezkor)"
-                : "Принять оплату (Быстро)"}
+              {tDetail("acceptPaymentQuick")}
             </Button>
             )}
           </div>
@@ -246,7 +246,7 @@ export default function InvoiceDetailPage() {
             </div>
             <div>
               <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                {lang === "uz" ? "Faktura ma'lumotlari" : "Информация о счете"}
+                {tDetail("info")}
               </CardTitle>
             </div>
           </CardHeader>
@@ -263,7 +263,7 @@ export default function InvoiceDetailPage() {
             {invoice.sales_orders?.order_number && (
               <div className="space-y-1">
                 <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  {lang === "uz" ? "Bog'langan buyurtma" : "Связанный заказ"}
+                  {tDetail("linkedOrder")}
                 </span>
                 <p
                   className="font-semibold text-violet-600 dark:text-violet-400 hover:underline cursor-pointer"
@@ -277,7 +277,7 @@ export default function InvoiceDetailPage() {
             )}
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                {lang === "uz" ? "Yaratilgan sana" : "Дата выставления"}
+                {tDetail("issuedAt")}
               </span>
               <p className="font-semibold text-slate-800 dark:text-slate-200">
                 {formatDateTime(invoice.created_at)}
@@ -285,7 +285,7 @@ export default function InvoiceDetailPage() {
             </div>
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                {lang === "uz" ? "To'lov muddati" : "Срок оплаты"}
+                {tDetail("dueAt")}
               </span>
               <p className="font-semibold text-slate-800 dark:text-slate-200">
                 {formatDate(invoice.due_at)}
@@ -294,7 +294,7 @@ export default function InvoiceDetailPage() {
             {invoice.paid_at && (
               <div className="space-y-1">
                 <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  {lang === "uz" ? "To'langan sana" : "Дата оплаты"}
+                  {tDetail("paidAt")}
                 </span>
                 <p className="font-semibold text-emerald-700 dark:text-emerald-400">
                   {formatDate(invoice.paid_at)}
@@ -314,21 +314,21 @@ export default function InvoiceDetailPage() {
             </div>
             <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
               <div className="flex justify-between text-xs text-slate-700 dark:text-slate-400">
-                <span>{lang === "uz" ? "Jami summa:" : "Итоговая сумма:"}</span>
+                <span>{tDetail("totalAmount")}</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">
                   {formatCurrency(invoice.total_amount)}
                 </span>
               </div>
               <div className="flex justify-between text-xs text-slate-700 dark:text-slate-400">
                 <span>
-                  {lang === "uz" ? "To'langan summa:" : "Оплаченная сумма:"}
+                  {tDetail("paidAmount")}
                 </span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(invoice.paid_amount)}
                 </span>
               </div>
               <div className="flex justify-between text-xs text-slate-700 dark:text-slate-400 border-t dark:border-slate-800 pt-1">
-                <span>{lang === "uz" ? "Qoldiq:" : "Остаток:"}</span>
+                <span>{tDetail("remaining")}</span>
                 <span
                   className={`font-black ${isUnpaid ? "text-rose-600 dark:text-rose-400" : "text-slate-800 dark:text-slate-200"}`}
                 >
@@ -351,9 +351,7 @@ export default function InvoiceDetailPage() {
           <CardContent className="p-0">
             {items.length === 0 ? (
               <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-sm">
-                {lang === "uz"
-                  ? "Ushbu fakturaga bog'liq mahsulotlar topilmadi"
-                  : "Товары для этого счета не найдены"}
+                {tDetail("noItems")}
               </div>
             ) : (
               <div className="overflow-x-auto w-full">

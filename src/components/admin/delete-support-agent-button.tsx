@@ -7,8 +7,10 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 export function DeleteSupportAgentButton({ agentId }: { agentId: string }) {
+  const tErrors = useTranslations('admin.errors')
   const t = useTranslations('admin.support.detail')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
@@ -21,7 +23,7 @@ export function DeleteSupportAgentButton({ agentId }: { agentId: string }) {
       const res = await fetch(`/api/admin/support-agents/${agentId}`, { method: 'DELETE' })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(json.error || 'Error')
+        toast.error(adminErrorMessage(tErrors, json, t('deleteFailed')))
         setIsDeleting(false)
         return
       }

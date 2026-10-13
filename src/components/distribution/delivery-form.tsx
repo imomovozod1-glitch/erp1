@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateDeliveries } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
@@ -61,6 +62,7 @@ export function DeliveryForm({
   nextNumber,
   lang,
 }: DeliveryFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('distribution')
   const router = useRouter()
@@ -167,7 +169,7 @@ export function DeliveryForm({
       // Two different unique rules land here as 23505, and telling the user the
       // number is taken when the real problem is that the sale is already out
       // for delivery would send them chasing the wrong thing.
-      let message: string = error?.message || tCommon('error')
+      let message: string = errorMessage(tRoot, error, tCommon('error'))
       if (error?.code === '23505') {
         const constraint = `${error.message ?? ''}${error.details ?? ''}`
         message = constraint.includes('uniq_deliveries_live_order')

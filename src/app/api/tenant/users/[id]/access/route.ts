@@ -56,14 +56,14 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const ctx = await getTenantContext()
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const { id: targetId } = await params
   const body = await request.json().catch(() => null)
   const parsed = bodySchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
   const input = parsed.data
 
@@ -120,7 +120,10 @@ export async function PATCH(
   if (input.role_template_id !== undefined) update.role_template_id = input.role_template_id
 
   const { error } = await supabase.from('profiles').update(update).eq('id', targetId)
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    console.error('[tenant/users/access] update failed:', error.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 400 })
+  }
 
   await invalidateProfile(targetId)
   return NextResponse.json({ ok: true })

@@ -125,7 +125,13 @@
     "markAs": "Mark as \"{status}\"",
     "statusUpdated": "Status updated",
     "hour": "Hour",
-    "minute": "Minute"
+    "minute": "Minute",
+    "addressNotOnMap": "Address could not be located on the map",
+    "locatingAddress": "Locating address...",
+    "openInGoogleMaps": "Open in Google Maps",
+    "sidebar": "Sidebar",
+    "sidebarDescription": "Displays the mobile sidebar.",
+    "toggleSidebar": "Toggle sidebar"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -144,7 +150,25 @@
     "faq": "FAQ",
     "help": "Help",
     "production": "Industry",
-    "distribution": "Distribution"
+    "distribution": "Distribution",
+    "brandTagline": "Enterprise",
+    "darkMode": "Dark mode",
+    "helpDesk": "Help Desk",
+    "lightMode": "Light mode",
+    "notifications": {
+      "allCaughtUp": "All caught up!",
+      "empty": "No new notifications.",
+      "lowStockDescription": "Only {stock} left of \"{name}\" (min: {min})",
+      "lowStockTitle": "Low stock alert",
+      "markAllRead": "Mark all as read",
+      "overdueInvoiceDescription": "Invoice #{number} for \"{customer}\" is past due",
+      "overdueInvoiceTitle": "Overdue invoice",
+      "supportReplyTitle": "Support reply",
+      "title": "Notifications"
+    },
+    "overdue": "Overdue",
+    "platform": "Platform",
+    "support": "Support"
   },
   "auth": {
     "loading": "Signing in...",
@@ -186,7 +210,8 @@
     "newPassword": "New password",
     "currentPasswordRequired": "Enter your current password",
     "currentPasswordWrong": "Current password is incorrect",
-    "passwordChangedSignedOutOthers": "Password changed. Sessions on other devices were signed out."
+    "passwordChangedSignedOutOthers": "Password changed. Sessions on other devices were signed out.",
+    "brandSubtitle": "Enterprise Management"
   },
   "tenantStatus": {
     "notFoundTitle": "Organization not found",
@@ -258,7 +283,9 @@
     "employeesCountText": "{count} employees",
     "suppliersCountText": "{count} suppliers",
     "revenueChartTitle": "Revenue and Expenses Analysis",
-    "soldText": "Sold: {count} units"
+    "soldText": "Sold: {count} units",
+    "expectedFromCustomers": "Expected from customers",
+    "soldOnCredit": "Sold on credit"
   },
   "inventory": {
     "title": "Inventory",
@@ -343,7 +370,87 @@
     "serviceCode": "Code",
     "serviceCostPrice": "Cost price",
     "serviceCostHint": "What delivering the service costs you — every sale of it is costed at this figure.",
-    "serviceDeactivatedInsteadOfDeleted": "The service is used on sales, so it cannot be deleted outright. It has been deactivated (archived)."
+    "serviceDeactivatedInsteadOfDeleted": "The service is used on sales, so it cannot be deleted outright. It has been deactivated (archived).",
+    "aiScanner": {
+      "addRow": "Add row",
+      "analyzing": "AI is analyzing...",
+      "atLeastOne": "At least 1 product is required to save",
+      "chooseAnother": "Choose another image",
+      "defaultProductName": "Product",
+      "defaultUnit": "pcs",
+      "description": "Upload a photo of an incoming goods list or invoice — AI will automatically convert it into a table.",
+      "detected": "{count, plural, one {# product} other {# products}} detected",
+      "editHint": "You can edit the table cells directly.",
+      "extracted": "AI extracted {count, plural, one {# product} other {# products}} from the image!",
+      "formatsHint": "PNG, JPG, WEBP formats are supported",
+      "howItWorks": "How does it work?",
+      "imageLabel": "Document / Products image:",
+      "imagesOnly": "Only image files (JPG, PNG, WEBP, AVIF) are supported",
+      "nameAndSkuRequired": "All products must have a name and SKU filled in",
+      "noItemsDetected": "No product data was detected in the image",
+      "previewAlt": "Scanned document preview",
+      "qualityTip": "If the photo is high quality and well-lit, AI will read the data more accurately.",
+      "readWithAi": "Read image with AI",
+      "saveAll": "Save all products to warehouse",
+      "saveError": "Error saving products",
+      "saved": "{count, plural, one {# product} other {# products}} successfully saved to the warehouse!",
+      "scanAgain": "Scan again",
+      "scanError": "Error while scanning",
+      "step1": "Upload a photo of incoming goods, an invoice, or a product list.",
+      "step2": "AI (Gemini Vision AI) analyzes all the products in the image and reads them into a table.",
+      "step3": "Review the prices and quantities in the resulting table and save to the warehouse with one click.",
+      "title": "AI Warehouse Image Upload (Image-to-Table)",
+      "tooltip": "Scan receipt/invoice using AI",
+      "unexpectedResponse": "Unexpected response from server. Please try again.",
+      "uploadPrompt": "Upload an image here or select one"
+    },
+    "costLayerSources": {
+      "adjustment": "Adjustment",
+      "aiScan": "AI scan",
+      "initialStock": "Initial stock",
+      "openingBalance": "Opening balance",
+      "production": "Production",
+      "productionCancellation": "Production cancelled",
+      "purchaseOrder": "Purchase order",
+      "saleCancellation": "Sale cancelled"
+    },
+    "excel": {
+      "allowedUnits": "Allowed units",
+      "costPrice": "Cost price",
+      "description": "Description",
+      "emptyUnit": "empty",
+      "generalInfoSheet": "General info",
+      "incomingCost": "Incoming price",
+      "minStock": "Min stock",
+      "name": "Name",
+      "price": "Sale price",
+      "sampleDescription": "Sample product description",
+      "sampleName": "Product A",
+      "sku": "SKU",
+      "stock": "Stock",
+      "unit": "Unit",
+      "unitMismatch": "Unit of measurement doesn't match the system's units: {rows}. Allowed units: {units}",
+      "unitsSheet": "Units"
+    },
+    "movementReasons": {
+      "aiScan": "AI stock scanner — new product",
+      "excelImport": "Excel import",
+      "initialStock": "Initial stock on product creation",
+      "manualAdjustment": "Manual adjustment in product form",
+      "posSale": "POS sale",
+      "production": "Production {number}",
+      "productionCancelled": "Production cancelled {number}",
+      "purchase": "Purchase from {supplier}",
+      "sale": "Sale {number}"
+    },
+    "units": {
+      "addNew": "Add New Unit",
+      "alreadyExists": "This unit already exists",
+      "companyWide": "Company-wide units",
+      "name": "Unit Name",
+      "placeholder": "e.g. Pair, Box",
+      "total": "Total Units"
+    }
   },
   "production": {
     "title": "Industry",
@@ -626,7 +733,61 @@
     "saleEditRefunded": "{amount} taken back out of {cashbox}",
     "saleEditCharged": "{amount} added to {cashbox}",
     "noProductsFound": "No products found",
-    "clickToAddHint": "Click a product and it goes straight into the list. Adjust quantity and price in the table below."
+    "clickToAddHint": "Click a product and it goes straight into the list. Adjust quantity and price in the table below.",
+    "balanceRemaining": "Balance",
+    "credit": "Credit",
+    "customerDetail": {
+      "totalPurchases": "Total purchases",
+      "salesCount": "{count, plural, one {# sale} other {# sales}}",
+      "totalPaid": "Total paid",
+      "invoicesCount": "{count, plural, one {# invoice} other {# invoices}}",
+      "contact": "Contact",
+      "profile": "Customer profile",
+      "viewLargerMap": "View larger map",
+      "tabSales": "Sales",
+      "tabInvoices": "Invoices",
+      "tabPayments": "Payment history",
+      "orderCode": "Order #",
+      "invoiceCode": "Invoice #",
+      "paid": "Paid",
+      "due": "Due",
+      "note": "Note",
+      "income": "Income",
+      "expense": "Expense",
+      "value": "Value",
+      "issuedDate": "Issued date",
+      "sheetProfile": "Customer Profile",
+      "sheetOrders": "Sales Orders",
+      "sheetInvoices": "Invoices",
+      "sheetPayments": "Payment History"
+    },
+    "viewList": "List",
+    "viewMap": "Map",
+    "viewOnMap": "View on map",
+    "balanceSubtitle": "Debt: {debt} · Credit: {credit}",
+    "pinnedOnMap": "Pinned on map",
+    "selectCustomerForDebtHint": "Select a customer for a debt sale",
+    "invoicePaymentCategory": "Invoice Payment",
+    "invoiceDetail": {
+      "payViaCashbox": "Pay via cashbox",
+      "acceptPaymentQuick": "Accept payment (Quick)",
+      "info": "Invoice details",
+      "linkedOrder": "Linked order",
+      "issuedAt": "Issued on",
+      "dueAt": "Due date",
+      "paidAt": "Paid on",
+      "totalAmount": "Total amount:",
+      "paidAmount": "Paid amount:",
+      "remaining": "Remaining:",
+      "noItems": "No products are linked to this invoice"
+    },
+    "posSaleNote": "POS sale - paid via {method}",
+    "posNoteMethod": {
+      "CASH": "Cash",
+      "CARD": "Card",
+      "TRANSFER": "Transfer",
+      "DEBT": "Debt"
+    }
   },
   "finance": {
     "title": "Finance",
@@ -682,7 +843,32 @@
       "other_expense": "Other Expense"
     },
     "totalBalance": "Total balance",
-    "cashboxCount": "{count} cashbox(es)"
+    "cashboxCount": "{count} cashbox(es)",
+    "cashIn": "Income",
+    "cashOut": "Expense",
+    "cannotDeleteNonEmptyCashbox": "A cashbox that still holds money cannot be deleted",
+    "insufficientFundsOnly": "Insufficient funds. Only {amount} available in this cashbox",
+    "selectEmployeeRequired": "Please select an employee",
+    "selectSupplierRequired": "Please select a supplier",
+    "selectCustomerRequired": "Please select a customer",
+    "cashboxTableMissing": "The 'cashboxes' table was not found in your Supabase database.",
+    "cashboxTableMissingHint": "This page is temporarily running on local LocalStorage. For persistent cloud storage, run the SQL script appended to supabase/schema.sql in your Supabase SQL Editor.",
+    "editCashbox": "Edit cashbox",
+    "cashboxDialogSubtitle": "Enter the cashbox details",
+    "cashboxNamePlaceholder": "e.g. Main Cashbox",
+    "currentBalance": "Current balance",
+    "balanceChangeHint": "To change the balance, use the \"Income\" or \"Expense\" button",
+    "cashboxTransactionsSubtitle": "History of incoming and outgoing operations across cash registers",
+    "registerIncome": "Register income",
+    "registerExpense": "Register expense",
+    "currentCashboxBalance": "Current balance:",
+    "selectCustomerPlaceholder": "Select a customer",
+    "selectEmployeePlaceholder": "Select an employee",
+    "selectSupplierPlaceholder": "Select a supplier",
+    "supplierOverpaid": "Overpaid:",
+    "supplierOwed": "Owed to supplier:",
+    "categoryHasTransactions": "This category has transactions and cannot be deleted",
+    "txCategoryNamePlaceholder": "e.g. Office expenses"
   },
   "hr": {
     "title": "Human Resources",
@@ -735,7 +921,38 @@
     "terminatedAtRequired": "An inactive employee needs a termination date",
     "terminatedBeforeHired": "Termination date cannot precede the hire date",
     "terminatedAtFuture": "Termination date cannot be in the future",
-    "selectAccountRequired": "Select an account"
+    "selectAccountRequired": "Select an account",
+    "statusEmployed": "Employed",
+    "statusTerminated": "Terminated",
+    "statusNotEmployed": "Not employed",
+    "detail": {
+      "periodAll": "All time",
+      "periodToday": "Today",
+      "periodWeek": "This week",
+      "periodMonth": "This month",
+      "periodCustom": "Selected period",
+      "period": "Period",
+      "tenure": "Tenure",
+      "tenureMonths": "{count} mo.",
+      "processedSales": "Processed sales",
+      "paidOut": "Paid out",
+      "personnelDetails": "Personnel details",
+      "payoutHistory": "Payout history",
+      "salesList": "Sales list",
+      "note": "Note",
+      "saleCode": "Sale code",
+      "sheetProfile": "Profile info",
+      "colParameter": "Parameter",
+      "colValue": "Value"
+    },
+    "excel": {
+      "fullName": "Full name",
+      "phone": "Phone",
+      "phoneTemplate": "Phone (optional, to link an existing user)",
+      "salary": "Salary",
+      "hiredAt": "Hired At",
+      "hiredAtTemplate": "Hired At (YYYY-MM-DD)"
+    }
   },
   "procurement": {
     "payment": {
@@ -808,7 +1025,25 @@
     "balanceOwed": "Balance (payable)",
     "supplierProfile": "Partner profile",
     "paymentHistory": "Payment history",
-    "purchaseInfo": "Purchase order details"
+    "purchaseInfo": "Purchase order details",
+    "scan": {
+      "analyzing": "AI is analyzing...",
+      "supplierMatched": "Supplier recognised: {name}",
+      "supplierNotFound": "Supplier recognised ({name}), but there is no such supplier in the system.",
+      "itemsFound": "{count, plural, one {# product} other {# products}} recognised",
+      "unknownProduct": "Unknown product",
+      "unmatchedProduct": "Not linked to a product in the system: \"{name}\""
+    },
+    "detail": {
+      "colParameter": "Parameter",
+      "colValue": "Value",
+      "contact": "Contact",
+      "viewLargerMap": "View larger map",
+      "website": "Website"
+    },
+    "pinnedOnMap": "Pinned on map",
+    "viewOnMap": "View on map",
+    "debtOwed": "Debt owed"
   },
   "analytics": {
     "title": "Reports",
@@ -1011,7 +1246,9 @@
       "advanced": "Advanced settings",
       "chatIdOptionalHint": "Optional. Leave it empty and the last chat that wrote to the bot is used. To set it by hand: a group id (e.g. -1001234567890) or @channelname.",
       "errorNoChatYet": "Nobody has written to the bot yet. Open it and press Start, or add it to a group.",
-      "errorDetectFailed": "Could not work out the destination"
+      "errorDetectFailed": "Could not work out the destination",
+      "botLanguage": "Bot language",
+      "botLanguageHint": "The bot sends its notifications (sales, orders, stock, subscription) in this language. It is one language for the whole company chat."
     },
     "cannotChangeOwnAccess": "You cannot change your own role or status",
     "lastAdminError": "Cannot change the last active administrator",
@@ -1020,7 +1257,22 @@
   "tools": {
     "title": "Tools",
     "scanner": "AI Scanner",
-    "scannerDesc": "Extract information from documents using AI"
+    "scannerDesc": "Extract information from documents using AI",
+    "aiAnalyzing": "AI is analyzing...",
+    "analyze": "Analyze (OCR)",
+    "analyzing": "Analyzing...",
+    "copied": "Copied",
+    "copiedToast": "Copied",
+    "copy": "Copy",
+    "documentImage": "Document image",
+    "imagesOnly": "Only image files (JPG, PNG) are supported",
+    "previewAlt": "Preview",
+    "result": "Result",
+    "resultPlaceholder": "The result will appear here",
+    "scanSuccess": "Document analyzed successfully",
+    "unexpectedResponse": "The server returned an unexpected response. The image size or format is not suitable.",
+    "uploadHint": "PNG, JPG, WEBP (max 10 MB)",
+    "uploadPrompt": "Upload an image or drop it here"
   },
   "pos": {
     "title": "Point of Sale",
@@ -1060,7 +1312,13 @@
     "thankYou": "Thank you for your purchase!",
     "printedDirectly": "Receipt sent to printer",
     "productNotFound": "Product not found",
-    "selectCustomerForDebt": "Select a customer for a debt sale!"
+    "selectCustomerForDebt": "Select a customer for a debt sale!",
+    "addedToCart": "\"{name}\" added to the cart",
+    "cartHint": "Click a product or scan its SKU",
+    "debtNeedsCustomer": "Can't sell on credit to an unknown customer — select a customer",
+    "pickAddressOnMap": "Pick address on map",
+    "pickOnMap": "Pick on map",
+    "pinnedOnMap": "Pinned on map"
   },
   "support": {
     "title": "Support Service",
@@ -1079,9 +1337,43 @@
     "liveStatusDesc": "Average response time: 5 minutes",
     "yourAgent": "Your account manager",
     "yourAgentHint": "Reach them directly with any question",
-    "noAgent": "No manager has been assigned to you yet"
+    "noAgent": "No manager has been assigned to you yet",
+    "subjectMessageRequired": "Subject and message are required",
+    "copied": "{label} copied",
+    "ticketFormDesc": "Leave a message and we will respond to you shortly.",
+    "ticketReceived": "Ticket received!",
+    "sendNewTicket": "Send new ticket",
+    "subjectPlaceholder": "Example: Issue with payment",
+    "messagePlaceholder": "Describe your issue in detail...",
+    "sending": "Sending...",
+    "alwaysConnected": "Always connected",
+    "premiumActive": "Premium support active",
+    "securityTitle": "Security guarantee",
+    "securityDesc": "All your data and communications are encrypted and are never shared with third parties."
   },
   "admin": {
+    "errors": {
+      "unauthorized": "Your session has expired. Please sign in again",
+      "invalid_input": "Some of the entered data is invalid",
+      "weak_password": "Password must be at least 8 characters",
+      "invalid_phone": "Invalid phone number",
+      "subdomain_reserved": "This subdomain is reserved, choose another one",
+      "tenant_not_found": "Company not found",
+      "agent_not_found": "Support agent not found",
+      "admin_not_found": "Administrator not found",
+      "phone_taken": "This phone number is already used by another login",
+      "email_taken": "This email is already used by another login",
+      "subdomain_or_phone_taken": "This subdomain or phone number is already taken",
+      "service_key_missing": "Server is not configured: SUPABASE_SERVICE_ROLE_KEY is missing",
+      "domains_unreadable": "Could not read the project domains",
+      "domain_register_failed": "Could not register the domain",
+      "tenant_recently_active": "The company was active within the last 180 days and cannot be deleted",
+      "tenant_has_data": "The company still has data and cannot be deleted. Remove its data first",
+      "cannot_remove_self": "You cannot remove your own administrator account",
+      "cannot_remove_last_admin": "The last remaining super admin cannot be removed",
+      "same_password": "The new password must be different from the old one",
+      "server_error": "Something went wrong on the server. Please try again"
+    },
     "login": {
       "brandTitle": "ERP Admin",
       "brandSubtitle": "Super-admin console",
@@ -1108,7 +1400,9 @@
       "payments": "Payments",
       "security": "Security",
       "settings": "Settings",
-      "support": "Support"
+      "support": "Support",
+      "consoleSubtitle": "Vendor console",
+      "metaDescription": "Falco ERP super-admin console — company account management"
     },
     "tenants": {
       "title": "Companies",
@@ -1254,7 +1548,7 @@
       "submit": "Reset",
       "success": "Password updated",
       "error": "Failed to update password",
-      "tooShort": "Password must be at least 8 characters, with an uppercase letter, a lowercase letter, and a digit"
+      "tooShort": "Password must be at least 8 characters"
     },
     "delete": {
       "button": "Delete company",
@@ -1330,7 +1624,7 @@
         "save": "Update",
         "success": "Password updated",
         "error": "Could not update password",
-        "tooShort": "Password must be at least 8 characters, with an uppercase letter, a lowercase letter, and a digit",
+        "tooShort": "Password must be at least 8 characters",
         "mismatch": "Passwords don't match",
         "currentPassword": "Current password",
         "currentRequired": "Enter your current password",
@@ -1352,7 +1646,7 @@
         "created": "Admin added",
         "deleted": "Admin removed",
         "error": "Could not complete action",
-        "passwordTooWeak": "Password must be at least 8 characters, with an uppercase letter, a lowercase letter, and a digit"
+        "passwordTooWeak": "Password must be at least 8 characters"
       }
     },
     "accountRecovery": {
@@ -1406,7 +1700,9 @@
         "back": "Back to support list",
         "assignedTenants": "Assigned companies",
         "deleteAgent": "Delete support agent",
-        "deleteConfirm": "Are you sure? This agent will no longer be able to log in."
+        "deleteConfirm": "Are you sure? This agent will no longer be able to log in.",
+        "deleteFailed": "Could not delete",
+        "metaTitle": "Support agent"
       },
       "message": {
         "title": "Message {name}",
@@ -1415,7 +1711,10 @@
         "subjectPlaceholder": "e.g. New company assigned",
         "body": "Message",
         "bodyPlaceholder": "Write your message…",
-        "send": "Send"
+        "send": "Send",
+        "messageRequired": "Enter a subject (at least 3 characters) and a message",
+        "sendFailed": "Could not send the message",
+        "sent": "Message sent"
       }
     }
   },
@@ -1464,7 +1763,8 @@
     "assignedTenantsHeading": "Companies assigned to you",
     "noAssignedTenants": "No companies have been assigned to you yet",
     "logout": "Log out",
-    "conversationsHeading": "Conversations"
+    "conversationsHeading": "Conversations",
+    "metaDescription": "Falco ERP support-agent portal"
   },
   "supportChat": {
     "myTickets": "My tickets",
@@ -1572,7 +1872,7 @@
         },
         {
           "title": "Password rules",
-          "text": "A new password must be at least 8 characters long and contain an uppercase letter, a lowercase letter and a digit. A digits-only password is rejected."
+          "text": "A new password must be at least 8 characters long. A digits-only password is accepted too."
         },
         {
           "title": "Language and data refresh",
@@ -1891,7 +2191,7 @@
           "Click an employee in the list to see their details and payment history."
         ],
         "tips": [
-          "Passwords need at least 8 characters with an uppercase letter, a lowercase letter and a digit.",
+          "Passwords need at least 8 characters.",
           "Do not delete someone who has left — mark them inactive so their history is kept.",
           "Salary payments are entered as an expense under Finance → Cashbox."
         ]
@@ -1957,7 +2257,7 @@
           },
           {
             "q": "I forgot my password — what now?",
-            "a": "Ask your company administrator: they can set a new password under Settings → Users. The new password must be at least 8 characters with an uppercase letter, a lowercase letter and a digit — a digits-only password is rejected."
+            "a": "Ask your company administrator: they can set a new password under Settings → Users. The new password must be at least 8 characters."
           },
           {
             "q": "How does the quick search work?",
@@ -2280,6 +2580,13 @@
         "profit": "Net profit",
         "quantity": "Units sold"
       }
+    },
+    "typeValue": {
+      "income": "Income",
+      "expense": "Expense",
+      "in": "In",
+      "out": "Out",
+      "adjustment": "Adjustment"
     }
   },
   "offline": {
@@ -2291,5 +2598,80 @@
     "syncFailed": "Sync failed",
     "retry": "Retry",
     "blocked": "{count} changes were rejected and need review"
+  },
+  "errors": {
+    "unauthorized": "Your session has expired. Please sign in again",
+    "forbidden": "You don't have permission to do this",
+    "not_found": "Record not found",
+    "invalid_input": "Some of the entered data is invalid",
+    "value_too_long": "The entered value is too long",
+    "duplicate": "Such a record already exists",
+    "in_use": "This record is used elsewhere and cannot be deleted or changed",
+    "network": "Could not reach the server. Check your internet connection",
+    "server_error": "Something went wrong on the server. Please try again",
+    "weak_password": "Password must be at least 8 characters",
+    "same_password": "The new password must be different from the old one",
+    "too_many_attempts": "Too many attempts. Please try again later",
+    "employee_not_paid": "Only paid employees can be given a system login",
+    "invalid_role_template": "The selected role was not found. Refresh the page and choose again",
+    "phone_taken": "This phone number is already used by another login",
+    "last_admin": "The company must keep at least one active administrator",
+    "cannot_change_own_access": "You cannot change your own role or active status",
+    "cannot_reset_own_password": "Change your own password in the Security tab",
+    "user_not_found": "User not found",
+    "report_failed": "Could not build the report. Please try again",
+    "image_file_missing": "No image file was uploaded",
+    "image_too_large": "The image is too large (max 10 MB)",
+    "image_type_unsupported": "This file type is not supported. Upload a JPG, PNG, WEBP or HEIC image",
+    "image_unreadable": "Could not read any data from the image"
+  },
+  "telegram": {
+    "checking": "Checking…",
+    "opening": "Opening…",
+    "openInTelegram": "Open inside Telegram",
+    "errorTitle": "Error",
+    "worksAsMiniApp": "This page works as a Telegram Mini App.",
+    "hintBrowser": "Open it inside Telegram, not in a browser.",
+    "hintWebAppButton": "The bot's button must be of the <b>Web App</b> type. A plain link (<code>url</code>) button opens the browser and does not count as a Mini App.",
+    "hintBotFather": "The Mini App must be added via BotFather → <code>/newapp</code>.",
+    "notConfigured": "The Mini App is not configured yet (TELEGRAM_MINIAPP_BOT_TOKEN is missing).",
+    "signatureInvalid": "The Telegram signature failed verification.",
+    "tenantInactive": "The organization's account is not active. Contact your administrator.",
+    "serverUnreachable": "Could not connect to the server.",
+    "fillPhonePassword": "Enter your phone and password",
+    "invalidCredentials": "Incorrect phone or password",
+    "tooManyAttempts": "Too many failed attempts. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+    "alreadyLinked": "This account is already linked to another Telegram account",
+    "noTenant": "Your account is not assigned to any organization",
+    "genericError": "Something went wrong",
+    "greeting": "Hi, {name}!",
+    "linkAccount": "Link your account",
+    "linkDescription": "Link your Telegram account to your ERP account once. You won't be asked for a password next time.",
+    "phone": "Phone number",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "linkAndSignIn": "Link and sign in"
+  },
+  "telegramBot": {
+    "newSale": "New sale: <b>{order}</b>",
+    "newOrder": "New order: <b>{order}</b>",
+    "amount": "Amount: <b>{amount}</b>",
+    "payment": "Payment: {method}",
+    "payment_cash": "Cash",
+    "payment_card": "Card",
+    "payment_transfer": "Transfer",
+    "payment_debt": "Debt",
+    "items": "Items: {count}",
+    "customer": "Customer: {name}",
+    "lowStock": "Running low: <b>{product}</b>",
+    "sku": "SKU: {sku}",
+    "stockLeft": "Left: <b>{stock}</b> (minimum: {min})",
+    "debtPaid": "Debt paid: <b>{customer}</b>",
+    "subscriptionToday": "The subscription ends <b>today</b>.",
+    "subscriptionDaysLeft": "{days, plural, one {<b># day</b> left} other {<b># days</b> left}} until the subscription ends.",
+    "subscriptionEndsOn": "End date: <b>{date}</b>",
+    "subscriptionStop": "Without payment, access to the system will be suspended.",
+    "testConnected": "Telegram integration connected successfully."
   }
 }

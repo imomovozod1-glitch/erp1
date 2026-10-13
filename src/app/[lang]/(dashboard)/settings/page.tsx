@@ -4,7 +4,11 @@ import { Building2, ShieldCheck, ReceiptText, Plug, ChevronRight } from 'lucide-
 import { PageHeader } from '@/components/shared/page-header'
 import { canViewModule } from '@/lib/permissions-server'
 
-export const metadata: Metadata = { title: 'Settings' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'nav' })
+  return { title: t('settings') }
+}
 
 /**
  * Settings index.

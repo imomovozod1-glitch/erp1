@@ -7,7 +7,10 @@ import { StatsCard } from '@/components/shared/stats-card'
 import { SecurityLogTable, type LoginAttemptRow } from '@/components/admin/security-log-table'
 import { countCurrentlyLocked } from '@/lib/rate-limit'
 
-export const metadata: Metadata = { title: 'Security' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.security')
+  return { title: t('title') }
+}
 export const dynamic = 'force-dynamic'
 
 const RECENT_LIMIT = 500

@@ -39,7 +39,7 @@ const SOURCE_MODULE = {
 
 export async function POST(request: NextRequest) {
   const ctx = await getTenantContext()
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const parsed = requestSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_input' }, { status: 400 })

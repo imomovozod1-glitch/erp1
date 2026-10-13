@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { postMessage } from '@/lib/support-messaging'
+import { zodErrorCode } from '@/lib/admin-errors'
+import { adminServerError } from '@/lib/admin-errors-server'
 
 const createSchema = z.object({
   agent_id: z.string().uuid(),
@@ -16,11 +18,11 @@ const createSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const parsed = createSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'invalid_input' }, { status: 400 })
+    return NextResponse.json({ error: zodErrorCode(parsed.error) }, { status: 400 })
   }
 
   const supabase = getCacheClient() as any
@@ -43,7 +45,7 @@ export async function POST(request: NextRequest) {
     })
     .select('id')
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) return adminServerError(error)
 
   const result = await postMessage({
     threadId: thread.id,
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
   })
   if (!result.ok) {
     await supabase.from('support_threads').delete().eq('id', thread.id)
-    return NextResponse.json({ error: result.error }, { status: 400 })
+    return adminServerError(result.error)
   }
 
   return NextResponse.json({ id: thread.id }, { status: 201 })

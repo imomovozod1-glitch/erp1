@@ -123,8 +123,8 @@ export function CustomersTable({
               <TableHead>{tCommon('name')}</TableHead>
               <TableHead className="hidden md:table-cell">{tCommon('email')}</TableHead>
               <TableHead>{tCommon('phone')}</TableHead>
-              <TableHead className="hidden md:table-cell">{lang === 'uz' ? 'Toifa' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
-              <TableHead className="text-right tabular-nums">{lang === 'uz' ? "Balans qoldig'i" : lang === 'ru' ? 'Остаток баланса' : 'Balance'}</TableHead>
+              <TableHead className="hidden md:table-cell">{tSales('category')}</TableHead>
+              <TableHead className="text-right tabular-nums">{tSales('balanceRemaining')}</TableHead>
               <TableHead>{tCommon('status')}</TableHead>
               <TableHead className="hidden lg:table-cell">{tCommon('assignedTo')}</TableHead>
               <TableHead className="w-12" />
@@ -202,7 +202,7 @@ export function CustomersTable({
                             }
                           />
                           <TooltipContent side="left">
-                            <p>{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</p>
+                            <p>{tCommon('actions')}</p>
                           </TooltipContent>
                         </Tooltip>
                       <DropdownMenuContent align="end">
@@ -212,7 +212,7 @@ export function CustomersTable({
                         {(customer.address || (customer.latitude && customer.longitude)) && (
                           <DropdownMenuItem onClick={() => setMapCustomer({ name: customer.name, address: customer.address, latitude: customer.latitude, longitude: customer.longitude })}>
                             <MapPin className="mr-2 h-3.5 w-3.5" />
-                            {lang === 'uz' ? 'Xaritada ko\'rish' : lang === 'ru' ? 'Показать на карте' : 'View on map'}
+                            {tSales('viewOnMap')}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem

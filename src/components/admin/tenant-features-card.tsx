@@ -21,6 +21,7 @@ import { Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FEATURE_FLAGS, FEATURE_FLAG_KEYS, type FeatureFlag, type TenantFeatures } from '@/lib/features'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 interface TenantFeaturesCardProps {
   tenantId: string
@@ -28,6 +29,7 @@ interface TenantFeaturesCardProps {
 }
 
 export function TenantFeaturesCard({ tenantId, features }: TenantFeaturesCardProps) {
+  const tErrors = useTranslations('admin.errors')
   const t = useTranslations('admin.tenants.detail')
   const router = useRouter()
   const [selected, setSelected] = useState<TenantFeatures>(features)
@@ -53,7 +55,7 @@ export function TenantFeaturesCard({ tenantId, features }: TenantFeaturesCardPro
       })
       const json = await res.json().catch(() => null)
       if (!res.ok) {
-        toast.error(json?.error || t('featuresError'))
+        toast.error(adminErrorMessage(tErrors, json, t('featuresError')))
         return
       }
       toast.success(t('featuresSaved'))

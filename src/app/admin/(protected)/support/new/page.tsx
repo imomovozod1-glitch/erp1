@@ -3,7 +3,10 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { SupportAgentForm } from '@/components/admin/support-agent-form'
 
-export const metadata: Metadata = { title: 'New support agent' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.support.new')
+  return { title: t('title') }
+}
 
 export default async function NewSupportAgentPage() {
   const [t, tSupport] = await Promise.all([

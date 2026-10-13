@@ -86,7 +86,7 @@ export async function createSaleRpc(supabase: any, input: CreateSaleInput): Prom
 
   if (error) {
     if (error.code === 'PGRST202') return null
-    throw new Error(error.message)
+    throw new Error(error.message, { cause: error })
   }
 
   const result = data as {

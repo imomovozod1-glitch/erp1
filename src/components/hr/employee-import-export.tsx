@@ -1,40 +1,45 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateEmployees } from '@/lib/data/revalidate'
 import { formatDate, generateDocumentNumber } from '@/lib/utils'
 import { ImportExportMenu } from '@/components/shared/import-export-menu'
 import { pickField, type ExcelColumn } from '@/lib/excel-io'
+import { errorMessage } from '@/lib/error-message'
 
 interface EmployeeImportExportProps {
   employees: any[]
   lang: string
 }
 
-const EXPORT_COLUMNS: ExcelColumn[] = [
-  { header: 'Xodim kodi', key: 'employee_code' },
-  { header: "F.I.Sh.", key: 'fullName' },
-  { header: 'Telefon raqami', key: 'phone' },
-  { header: 'Lavozim', key: 'position' },
-  { header: 'Oylik maosh', key: 'salary' },
-  { header: 'Ishga qabul qilingan sana', key: 'hiredAtLabel' },
-  { header: 'Holat', key: 'statusLabel' },
-]
-
-const TEMPLATE_COLUMNS: ExcelColumn[] = [
-  { header: 'Xodim kodi', key: 'employee_code', sample: 'EMP-1001' },
-  { header: "F.I.Sh.", key: 'fullName', sample: '' },
-  { header: "Telefon raqami (ixtiyoriy, mavjud foydalanuvchi bilan bog'lash uchun)", key: 'phone', sample: '+998901234567' },
-  { header: 'Lavozim', key: 'position', sample: 'Sotuvchi' },
-  { header: 'Oylik maosh', key: 'salary', sample: 3000000 },
-  { header: 'Ishga qabul qilingan sana (YYYY-MM-DD)', key: 'hiredAtLabel', sample: '2026-01-15' },
-]
-
-export function EmployeeImportExport({ employees, lang }: EmployeeImportExportProps) {
+export function EmployeeImportExport({ employees }: EmployeeImportExportProps) {
+  const tRoot = useTranslations()
   const supabase = createClient() as any
 
-  const activeLabel = lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed'
-  const inactiveLabel = lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated'
+  // Headers follow the UI language; the import below still accepts the
+  // headers of every language, so a file exported in one reads back in another.
+  const EXPORT_COLUMNS: ExcelColumn[] = [
+    { header: tRoot('hr.employeeCode'), key: 'employee_code' },
+    { header: tRoot('hr.excel.fullName'), key: 'fullName' },
+    { header: tRoot('hr.excel.phone'), key: 'phone' },
+    { header: tRoot('hr.position'), key: 'position' },
+    { header: tRoot('hr.excel.salary'), key: 'salary' },
+    { header: tRoot('hr.excel.hiredAt'), key: 'hiredAtLabel' },
+    { header: tRoot('common.status'), key: 'statusLabel' },
+  ]
+
+  const TEMPLATE_COLUMNS: ExcelColumn[] = [
+    { header: tRoot('hr.employeeCode'), key: 'employee_code', sample: 'EMP-1001' },
+    { header: tRoot('hr.excel.fullName'), key: 'fullName', sample: '' },
+    { header: tRoot('hr.excel.phoneTemplate'), key: 'phone', sample: '+998901234567' },
+    { header: tRoot('hr.position'), key: 'position', sample: 'Sotuvchi' },
+    { header: tRoot('hr.excel.salary'), key: 'salary', sample: 3000000 },
+    { header: tRoot('hr.excel.hiredAtTemplate'), key: 'hiredAtLabel', sample: '2026-01-15' },
+  ]
+
+  const activeLabel = tRoot('hr.statusEmployed')
+  const inactiveLabel = tRoot('hr.statusTerminated')
 
   const exportRows = employees.map((e) => ({
     ...e,
@@ -50,7 +55,15 @@ export function EmployeeImportExport({ employees, lang }: EmployeeImportExportPr
     // "998901234567" match. Importing never creates new login accounts.
     const digits = (v: string | null | undefined) => (v ?? '').replace(/\D/g, '')
     const readPhone = (row: Record<string, any>) =>
-      digits(pickField(row, "Telefon raqami (ixtiyoriy, mavjud foydalanuvchi bilan bog'lash uchun)", 'Telefon raqami', 'Phone', 'Телефон'))
+      digits(pickField(
+        row,
+        tRoot('hr.excel.phoneTemplate'),
+        "Telefon raqami (ixtiyoriy, mavjud foydalanuvchi bilan bog'lash uchun)",
+        'Телефон (необязательно, для привязки к существующему пользователю)',
+        'Phone (optional, to link an existing user)',
+        tRoot('hr.excel.phone'),
+        'Telefon raqami', 'Phone', 'Телефон'
+      ))
 
     let profilesByPhone: Record<string, string> = {}
     if (rows.some((row) => readPhone(row))) {
@@ -62,16 +75,21 @@ export function EmployeeImportExport({ employees, lang }: EmployeeImportExportPr
 
     const newEmployees = rows
       .map((row) => {
-        const employeeCode = pickField(row, 'Xodim kodi', 'Employee Code', 'Код сотрудника')
-        const hiredAt = pickField(row, 'Ishga qabul qilingan sana (YYYY-MM-DD)', 'Ishga qabul qilingan sana', 'Hired At', 'Дата приёма')
+        const employeeCode = pickField(row, tRoot('hr.employeeCode'), 'Xodim kodi', 'Employee Code', 'Код сотрудника')
+        const hiredAt = pickField(
+          row,
+          tRoot('hr.excel.hiredAtTemplate'), tRoot('hr.excel.hiredAt'),
+          'Ishga qabul qilingan sana (YYYY-MM-DD)', 'Дата приёма (YYYY-MM-DD)', 'Hired At (YYYY-MM-DD)',
+          'Ishga qabul qilingan sana', 'Hired At', 'Дата приёма'
+        )
         if (!hiredAt) return null
         const phone = readPhone(row)
-        const salaryRaw = pickField(row, 'Oylik maosh', 'Salary', 'Зарплата')
+        const salaryRaw = pickField(row, tRoot('hr.excel.salary'), 'Oylik maosh', 'Salary', 'Зарплата')
         return {
           // Optional, as in the form: a blank one is generated.
           employee_code: employeeCode || generateDocumentNumber('EMP'),
           profile_id: phone ? profilesByPhone[phone] || null : null,
-          position: pickField(row, 'Lavozim', 'Position', 'Должность') || null,
+          position: pickField(row, tRoot('hr.position'), 'Lavozim', 'Position', 'Должность') || null,
           salary: salaryRaw ? Number(salaryRaw.replace(/[^\d.]/g, '')) || 0 : 0,
           hired_at: hiredAt,
           is_active: true,
@@ -82,7 +100,7 @@ export function EmployeeImportExport({ employees, lang }: EmployeeImportExportPr
     if (newEmployees.length === 0) return { count: 0 }
 
     const { error } = await supabase.from('employees').insert(newEmployees)
-    if (error) return { count: 0, error: error.message }
+    if (error) return { count: 0, error: errorMessage(tRoot, error, tRoot('common.error')) }
     await invalidateEmployees()
     return { count: newEmployees.length }
   }

@@ -4,40 +4,66 @@ import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { resolveTenantOwner } from '@/lib/tenant-owner'
+import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { isDuplicateLoginError } from '@/lib/admin-errors'
+import { adminServerError } from '@/lib/admin-errors-server'
 
 // Same strength policy as every other place a password is SET
 // (src/lib/password-validation.ts) — a 6-digit numeric password used to slip
 // through here even though the UI refuses to submit one.
-const schema = z.object({ password: newPasswordSchema('weak') })
+const schema = z.object({ password: newPasswordSchema('weak_password') })
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   const body = await request.json().catch(() => null)
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Password does not meet strength requirements' }, { status: 400 })
+    return NextResponse.json({ error: 'weak_password' }, { status: 400 })
   }
 
   const supabase = getCacheClient() as any
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, phone, owner_user_id')
+    .select('id, phone, owner_user_id, company_name')
     .eq('id', id)
     .maybeSingle()
-  if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+  if (!tenant) return NextResponse.json({ error: 'tenant_not_found' }, { status: 404 })
 
   // The account the login page signs into for this tenant's phone — see
   // src/lib/tenant-owner.ts. Resetting the password of any other account (the
   // old "first admin profile" fallback could pick one) left the owner locked out.
   const owner = await resolveTenantOwner(supabase, tenant)
   if (!owner) {
-    return NextResponse.json({ error: 'Tenant has no owner login' }, { status: 404 })
+    // No account belongs to this tenant at all (its owner was deleted, or an
+    // older provisioning never created one), so there is nothing to reset —
+    // create the owner login now with this password, exactly as provisioning
+    // does (src/app/api/admin/tenants/route.ts). Answering "no owner" instead
+    // left the company with no way back in short of the database.
+    const loginEmail = phoneToSyntheticEmail(tenant.phone)
+    const { data: created, error: createError } = await supabase.auth.admin.createUser({
+      email: loginEmail,
+      password: parsed.data.password,
+      email_confirm: true,
+      user_metadata: { tenant_id: tenant.id, full_name: tenant.company_name },
+    })
+    if (createError || !created?.user) {
+      // The phone's login email belongs to an account in ANOTHER tenant (a
+      // staff member there) — resetting that one would hand this company
+      // someone else's login. The tenant's phone has to change first.
+      if (isDuplicateLoginError(createError)) return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+      return adminServerError(createError ?? 'createUser returned no user')
+    }
+    await Promise.all([
+      supabase.from('profiles').update({ role: 'admin', phone: tenant.phone }).eq('id', created.user.id),
+      supabase.from('tenants').update({ owner_user_id: created.user.id }).eq('id', id),
+    ])
+    return NextResponse.json({ success: true })
   }
 
   // If the owner's login email drifted from the tenant's phone, put it back in
@@ -47,10 +73,8 @@ export async function POST(
     ...(owner.emailMatches ? {} : { email: owner.loginEmail, email_confirm: true }),
   })
   if (error) {
-    const message = /already.*registered|already exists|email_exists/i.test(error.message)
-      ? 'Another login already uses this phone number'
-      : error.message
-    return NextResponse.json({ error: message }, { status: 400 })
+    if (isDuplicateLoginError(error)) return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+    return adminServerError(error)
   }
 
   await Promise.all([

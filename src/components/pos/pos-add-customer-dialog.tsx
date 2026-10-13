@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { MapPin } from 'lucide-react'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import {
   Dialog,
   DialogContent,
@@ -39,7 +40,6 @@ export function PosAddCustomerDialog({
   open,
   onOpenChange,
   onCreated,
-  lang,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -47,7 +47,9 @@ export function PosAddCustomerDialog({
   onCreated: (customer: any) => void
   lang: string
 }) {
+  const tRoot = useTranslations()
   const tAuth = useTranslations('auth')
+  const tSales = useTranslations('sales')
   const tCommon = useTranslations('common')
   const t = useTranslations('pos')
 
@@ -92,7 +94,7 @@ export function PosAddCustomerDialog({
         .single()
 
       if (error) {
-        toast.error(error.message)
+        toast.error(errorMessage(tRoot, error, tCommon('error')))
         return
       }
 
@@ -122,7 +124,7 @@ export function PosAddCustomerDialog({
                 id="custName"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Sherzod Karimov"
+                placeholder={tSales('customerNamePlaceholder')}
                 required
                 className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg"
               />
@@ -142,11 +144,7 @@ export function PosAddCustomerDialog({
                 {typeof lat === 'number' && typeof lng === 'number' && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-full">
                     <MapPin className="h-2.5 w-2.5" />
-                    {lang === 'uz'
-                      ? 'Xaritada belgilangan'
-                      : lang === 'ru'
-                        ? 'Отмечено на карте'
-                        : 'Pinned'}
+                    {t('pinnedOnMap')}
                   </span>
                 )}
               </Label>
@@ -155,7 +153,7 @@ export function PosAddCustomerDialog({
                   id="custAddress"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Toshkent sh., Chilonzor t."
+                  placeholder={tSales('addressPlaceholder')}
                   className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg flex-1"
                 />
                 <Button
@@ -164,11 +162,7 @@ export function PosAddCustomerDialog({
                   onClick={() => setIsMapOpen(true)}
                   className="h-9 w-9 p-0 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg shrink-0"
                   title={
-                    lang === 'uz'
-                      ? 'Xaritadan belgilash'
-                      : lang === 'ru'
-                        ? 'Отметить на карте'
-                        : 'Pick on map'
+                    t('pickOnMap')
                   }
                 >
                   <MapPin className="h-4 w-4" />
@@ -200,11 +194,7 @@ export function PosAddCustomerDialog({
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-                {lang === 'uz'
-                  ? 'Manzilni xaritadan belgilang'
-                  : lang === 'ru'
-                    ? 'Отметьте адрес на карте'
-                    : 'Pick address on map'}
+                {t('pickAddressOnMap')}
               </DialogTitle>
             </DialogHeader>
             <div className="py-2">

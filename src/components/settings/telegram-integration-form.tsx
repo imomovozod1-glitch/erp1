@@ -13,7 +13,17 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { PasswordInput } from '@/components/ui/password-input'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TELEGRAM_EVENTS, type TelegramEvent } from '@/lib/integrations/telegram-events'
-import type { TelegramStatus } from '@/lib/integrations/telegram-types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { TELEGRAM_LANGUAGES, type TelegramLanguage, type TelegramStatus } from '@/lib/integrations/telegram-types'
+import { errorMessage } from '@/lib/error-message'
+
+// Each language under its own name, as in the header's language switcher —
+// the admin choosing Russian for the group reads "Русский" whatever the UI is in.
+const LANGUAGE_LABELS: Record<TelegramLanguage, string> = {
+  uz: "O'zbekcha",
+  ru: 'Русский',
+  en: 'English',
+}
 
 
 /**
@@ -27,6 +37,7 @@ import type { TelegramStatus } from '@/lib/integrations/telegram-types'
  * current one" unless the admin types a new value.
  */
 export function TelegramIntegrationForm({ initialStatus }: { initialStatus: TelegramStatus }) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('settings.integrations')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
@@ -48,23 +59,25 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
   const [events, setEvents] = useState<Partial<Record<TelegramEvent, boolean>>>(
     initialStatus.events ?? {}
   )
+  const [language, setLanguage] = useState<TelegramLanguage>(initialStatus.language ?? 'uz')
 
   const applyStatus = (data: TelegramStatus) => {
     setStatus(data)
     setChatId(data.chatId ?? '')
     setEnabled(data.enabled)
     setEvents(data.events ?? {})
+    setLanguage(data.language ?? 'uz')
     // Never prefill the token — the API deliberately doesn't return it.
     setBotToken('')
   }
 
 
-  const errorMessage = (code: string | undefined, detail?: string) => {
+  const codeMessage = (code: string | undefined) => {
     switch (code) {
       case 'invalid_token_format':
         return t('errorTokenFormat')
       case 'token_rejected':
-        return detail ? `${t('errorTokenRejected')}: ${detail}` : t('errorTokenRejected')
+        return t('errorTokenRejected')
       case 'invalid_chat_id':
         return t('errorChatIdFormat')
       case 'token_required':
@@ -74,13 +87,13 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
       case 'no_chat_yet':
         return t('errorNoChatYet')
       case 'detect_failed':
-        return detail ? `${t('errorDetectFailed')}: ${detail}` : t('errorDetectFailed')
+        return t('errorDetectFailed')
       case 'awaiting_chat':
         return t('errorNoChatYet')
       case 'send_failed':
-        return detail ? `${t('errorSendFailed')}: ${detail}` : t('errorSendFailed')
+        return t('errorSendFailed')
       default:
-        return tCommon('error')
+        return errorMessage(tRoot, code, tCommon('error'))
     }
   }
 
@@ -105,11 +118,12 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
           ...(chatId.trim() ? { chat_id: chatId.trim() } : {}),
           enabled,
           events,
+          language,
         }),
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(errorMessage(json.error, json.detail))
+        toast.error(codeMessage(json.error))
         return
       }
       toast.success(json.awaitingChat ? t('savedAwaitingChat') : tCommon('saved'))
@@ -130,7 +144,7 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
       const res = await fetch('/api/integrations/telegram/detect-chat', { method: 'POST' })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(errorMessage(json.error, json.detail))
+        toast.error(codeMessage(json.error))
         return
       }
       toast.success(t('chatDetected', { chat: json.chatTitle ?? json.chatId }))
@@ -150,7 +164,7 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
       const res = await fetch('/api/integrations/telegram/test', { method: 'POST' })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(errorMessage(json.error, json.detail))
+        toast.error(codeMessage(json.error))
         return
       }
       toast.success(t('testSent'))
@@ -169,7 +183,8 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
     try {
       const res = await fetch('/api/integrations/telegram', { method: 'DELETE' })
       if (!res.ok) {
-        toast.error(tCommon('error'))
+        const json = await res.json().catch(() => ({}))
+        toast.error(errorMessage(tRoot, json, tCommon('error')))
         return
       }
       toast.success(t('disconnected'))
@@ -333,6 +348,23 @@ export function TelegramIntegrationForm({ initialStatus }: { initialStatus: Tele
               <p className="text-xs text-slate-400 dark:text-slate-500">{t('chatIdOptionalHint')}</p>
             </div>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="telegram_language">{t('botLanguage')}</Label>
+          <Select value={language} onValueChange={(value) => setLanguage(value as TelegramLanguage)}>
+            <SelectTrigger id="telegram_language" className="w-full sm:w-60">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TELEGRAM_LANGUAGES.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {LANGUAGE_LABELS[code]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-slate-400 dark:text-slate-500">{t('botLanguageHint')}</p>
         </div>
 
         <div className="space-y-3">

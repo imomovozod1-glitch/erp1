@@ -27,13 +27,13 @@ function normalise(permissions: Record<string, unknown>) {
 
 export async function POST(request: NextRequest) {
   const ctx = await getTenantContext()
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const body = await request.json().catch(() => null)
   const parsed = bodySchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
 
   const supabase = getCacheClient() as any
@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
     if (error.code === '23505') {
       return NextResponse.json({ error: 'duplicate_name' }, { status: 409 })
     }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    console.error('[tenant/roles] insert failed:', error.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 400 })
   }
 
   await invalidateRoleTemplates()

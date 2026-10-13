@@ -6,17 +6,19 @@ import { getCacheClient } from '@/lib/supabase/cache-client'
 import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
+import { zodErrorCode, isDuplicateLoginError } from '@/lib/admin-errors'
+import { adminServerError } from '@/lib/admin-errors-server'
 
 const updateSupportAgentSchema = z.object({
   full_name: z.string().min(1).optional(),
-  phone: phoneSchema('Invalid phone number').optional(),
+  phone: phoneSchema('invalid_phone').optional(),
   // The edit form always sends this field and sends it EMPTY when the password
   // is being left alone (support-agent-form.tsx) — so an empty string has to be
   // accepted here and understood as "no change". It used to be missing from
   // this schema entirely, and zod strips what it does not declare: a new
   // password was dropped in silence, the console reported success, and the
   // agent was then locked out of a password that had never been set.
-  password: z.union([newPasswordSchema('Password does not meet strength requirements'), z.literal('')]).optional(),
+  password: z.union([newPasswordSchema('weak_password'), z.literal('')]).optional(),
 })
 
 export async function PATCH(
@@ -24,13 +26,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   const body = await request.json().catch(() => null)
   const parsed = updateSupportAgentSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: zodErrorCode(parsed.error) }, { status: 400 })
   }
   const input = parsed.data
 
@@ -41,7 +43,7 @@ export async function PATCH(
     .select('id, phone')
     .eq('id', id)
     .maybeSingle()
-  if (!existing) return NextResponse.json({ error: 'Support agent not found' }, { status: 404 })
+  if (!existing) return NextResponse.json({ error: 'agent_not_found' }, { status: 404 })
 
   const update: Record<string, unknown> = {}
   if (input.full_name !== undefined) update.full_name = input.full_name
@@ -49,8 +51,8 @@ export async function PATCH(
 
   const { data: agent, error } = await supabase.from('support_agents').update(update).eq('id', id).select().single()
   if (error) {
-    const message = error.code === '23505' ? 'Phone already in use' : error.message
-    return NextResponse.json({ error: message }, { status: 409 })
+    if (error.code === '23505') return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+    return adminServerError(error, 409)
   }
 
   // Everything that lives on the auth user rather than on the support_agents
@@ -69,7 +71,8 @@ export async function PATCH(
   if (Object.keys(authUpdate).length > 0) {
     const { error: authError } = await supabase.auth.admin.updateUserById(id, authUpdate)
     if (authError) {
-      return NextResponse.json({ error: authError.message || 'Failed to update the login' }, { status: 400 })
+      if (isDuplicateLoginError(authError)) return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+      return adminServerError(authError)
     }
   }
 
@@ -81,18 +84,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   const supabase = getCacheClient() as any
 
   const { data: agent } = await supabase.from('support_agents').select('id').eq('id', id).maybeSingle()
-  if (!agent) return NextResponse.json({ error: 'Support agent not found' }, { status: 404 })
+  if (!agent) return NextResponse.json({ error: 'agent_not_found' }, { status: 404 })
 
   // tenants.support_agent_id is ON DELETE SET NULL — deleting an agent just
   // unassigns them from whatever tenants they had, it never blocks on it.
   const { error } = await supabase.from('support_agents').delete().eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 409 })
+  if (error) return adminServerError(error, 409)
 
   await supabase.auth.admin.deleteUser(id)
   revalidateTag(`staff-identity:${id}`, { expire: 0 })

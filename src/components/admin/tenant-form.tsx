@@ -30,6 +30,7 @@ import { newPasswordSchema } from '@/lib/password-validation'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { TenantPaymentDialog } from '@/components/admin/tenant-payment-dialog'
 import { formatDate, isoDate } from '@/lib/utils'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 export interface TenantFormInitialData {
   id: string
@@ -57,6 +58,7 @@ interface TenantFormProps {
 }
 
 export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps) {
+  const tErrors = useTranslations('admin.errors')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const tCosting = useTranslations('inventory')
@@ -200,7 +202,7 @@ export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps
       )
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.error || t('genericError'))
+        toast.error(adminErrorMessage(tErrors, json, t('genericError')))
         setIsSubmitting(false)
         return
       }

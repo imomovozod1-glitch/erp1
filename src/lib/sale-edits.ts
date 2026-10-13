@@ -163,10 +163,10 @@ async function updateSaleLinesInBrowser(
       .eq('type', 'income')
       .order('created_at', { ascending: true }),
   ])
-  if (orderError) throw new Error(orderError.message)
-  if (itemsError) throw new Error(itemsError.message)
-  if (invoicesError) throw new Error(invoicesError.message)
-  if (txError) throw new Error(txError.message)
+  if (orderError) throw new Error(orderError.message, { cause: orderError })
+  if (itemsError) throw new Error(itemsError.message, { cause: itemsError })
+  if (invoicesError) throw new Error(invoicesError.message, { cause: invoicesError })
+  if (txError) throw new Error(txError.message, { cause: txError })
   if (order.status === 'cancelled') throw new SaleEditError('order_cancelled')
 
   const editById = new Map(edits.map((edit) => [edit.id, edit]))
@@ -231,7 +231,7 @@ async function updateSaleLinesInBrowser(
         total_price: saleLineTotal(unitPrice, Number(row.quantity) || 0, row.discount_percent),
       })
       .eq('id', row.id)
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message, { cause: error })
   }
 
   if (removed.length > 0) {
@@ -245,14 +245,14 @@ async function updateSaleLinesInBrowser(
       .from('sales_order_items')
       .delete()
       .in('id', removed.map((row) => row.id))
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message, { cause: error })
   }
 
   const { error: orderUpdateError } = await supabase
     .from('sales_orders')
     .update({ total_amount: newTotal, discount_amount: discount })
     .eq('id', orderId)
-  if (orderUpdateError) throw new Error(orderUpdateError.message)
+  if (orderUpdateError) throw new Error(orderUpdateError.message, { cause: orderUpdateError })
 
   let creditAdded = 0
 
@@ -269,14 +269,14 @@ async function updateSaleLinesInBrowser(
         corrected > 0
           ? await supabase.from('transactions').update({ amount: corrected }).eq('id', txs[0].id)
           : await supabase.from('transactions').delete().eq('id', txs[0].id)
-      if (error) throw new Error(error.message)
+      if (error) throw new Error(error.message, { cause: error })
     }
     if (invoice) {
       const { error } = await supabase
         .from('invoices')
         .update({ total_amount: newTotal, paid_amount: newTotal })
         .eq('id', invoice.id)
-      if (error) throw new Error(error.message)
+      if (error) throw new Error(error.message, { cause: error })
     }
   } else if (invoice) {
     // Debt sale: the customer's debt is `total_amount - paid_amount` on this
@@ -296,7 +296,7 @@ async function updateSaleLinesInBrowser(
         paid_at: fullyPaid ? (invoice.paid_at ?? isoDate()) : null,
       })
       .eq('id', invoice.id)
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message, { cause: error })
 
     if (creditAdded > 0 && order.customer_id) {
       const { data: customer, error: readError } = await supabase
@@ -304,12 +304,12 @@ async function updateSaleLinesInBrowser(
         .select('credit_balance')
         .eq('id', order.customer_id)
         .single()
-      if (readError) throw new Error(readError.message)
+      if (readError) throw new Error(readError.message, { cause: readError })
       const { error: creditError } = await supabase
         .from('customers')
         .update({ credit_balance: (Number(customer?.credit_balance) || 0) + creditAdded })
         .eq('id', order.customer_id)
-      if (creditError) throw new Error(creditError.message)
+      if (creditError) throw new Error(creditError.message, { cause: creditError })
     } else {
       creditAdded = 0
     }

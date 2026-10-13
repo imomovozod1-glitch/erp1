@@ -46,7 +46,7 @@ async function requiredSubdomains(): Promise<{ subdomain: string; kind: 'console
 
 export async function GET() {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   if (!isDomainAutomationConfigured()) {
     return NextResponse.json({ configured: false, missing: missingDomainConfig(), rootDomain: ROOT_DOMAIN, hosts: [] })
@@ -54,7 +54,7 @@ export async function GET() {
 
   const [required, registered] = await Promise.all([requiredSubdomains(), listProjectDomains()])
   if (!registered) {
-    return NextResponse.json({ error: 'Could not read the project domains' }, { status: 502 })
+    return NextResponse.json({ error: 'domains_unreadable' }, { status: 502 })
   }
 
   // One wildcard domain covers every tenant host at once, so nothing is
@@ -80,7 +80,7 @@ export async function GET() {
 
 export async function POST() {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   if (!isDomainAutomationConfigured()) {
     return NextResponse.json({ configured: false, missing: missingDomainConfig(), added: 0, failed: [] })
@@ -88,7 +88,7 @@ export async function POST() {
 
   const [required, registered] = await Promise.all([requiredSubdomains(), listProjectDomains()])
   if (!registered) {
-    return NextResponse.json({ error: 'Could not read the project domains' }, { status: 502 })
+    return NextResponse.json({ error: 'domains_unreadable' }, { status: 502 })
   }
 
   // A wildcard domain already serves every tenant host; adding them one by one

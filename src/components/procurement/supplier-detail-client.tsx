@@ -69,38 +69,40 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
     const workbook = XLSX.utils.book_new()
 
     // 1. Supplier Details Sheet
+    const colParameter = t('detail.colParameter')
+    const colValue = t('detail.colValue')
     const supplierData = [
-      { [tc('name')]: supplier.name, Value: supplier.name },
-      { [t('contactPerson')]: supplier.contact_person ?? '—', Value: supplier.contact_person ?? '—' },
-      { [tc('email')]: supplier.email ?? '—', Value: supplier.email ?? '—' },
-      { [tc('phone')]: supplier.phone ?? '—', Value: supplier.phone ?? '—' },
-      { [t('tin')]: supplier.tin ?? '—', Value: supplier.tin ?? '—' },
-      { [tc('address')]: supplier.address ?? '—', Value: supplier.address ?? '—' },
-      { [tc('status')]: supplier.is_active ? tc('active') : tc('inactive'), Value: supplier.is_active ? tc('active') : tc('inactive') }
+      { [colParameter]: tc('name'), [colValue]: supplier.name },
+      { [colParameter]: t('contactPerson'), [colValue]: supplier.contact_person ?? '—' },
+      { [colParameter]: tc('email'), [colValue]: supplier.email ?? '—' },
+      { [colParameter]: tc('phone'), [colValue]: supplier.phone ?? '—' },
+      { [colParameter]: t('tin'), [colValue]: supplier.tin ?? '—' },
+      { [colParameter]: tc('address'), [colValue]: supplier.address ?? '—' },
+      { [colParameter]: tc('status'), [colValue]: supplier.is_active ? tc('active') : tc('inactive') }
     ]
     const supplierWS = XLSX.utils.json_to_sheet(supplierData)
-    XLSX.utils.book_append_sheet(workbook, supplierWS, "Supplier Profile")
+    XLSX.utils.book_append_sheet(workbook, supplierWS, t('supplierProfile'))
 
     // 2. Purchase Orders Sheet
     const poData = purchaseOrders.map(po => ({
-      PONumber: po.po_number,
-      TotalCost: po.total_amount,
-      Status: po.status,
-      Notes: po.notes || '—',
-      Date: formatDateTime(po.created_at)
+      [t('poNumber')]: po.po_number,
+      [t('totalCost')]: po.total_amount,
+      [tc('status')]: t(`status.${po.status}`),
+      [tc('notes')]: po.notes || '—',
+      [tc('date')]: formatDateTime(po.created_at)
     }))
     const poWS = XLSX.utils.json_to_sheet(poData)
-    XLSX.utils.book_append_sheet(workbook, poWS, "Purchase Orders")
+    XLSX.utils.book_append_sheet(workbook, poWS, t('purchaseOrders'))
 
     // 3. Payments Sheet
     const paymentsData = transactions.map(tx => ({
-      Category: tx.category,
-      Amount: tx.amount,
-      Description: tx.description || '—',
-      Date: formatDateTime(tx.created_at)
+      [tc('category')]: tx.category,
+      [tc('amount')]: tx.amount,
+      [tc('description')]: tx.description || '—',
+      [tc('date')]: formatDateTime(tx.created_at)
     }))
     const paymentsWS = XLSX.utils.json_to_sheet(paymentsData)
-    XLSX.utils.book_append_sheet(workbook, paymentsWS, "Payment History")
+    XLSX.utils.book_append_sheet(workbook, paymentsWS, t('paymentHistory'))
 
     XLSX.writeFile(workbook, `${supplier.name.replace(/\s+/g, '_')}_details.xlsx`)
   }
@@ -125,7 +127,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
           <StatusBadge tone={supplier.is_active ? 'emerald' : 'slate'} label={supplier.is_active ? tc('active') : tc('inactive')} />
           <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
-            {tc('export') || 'Eksport'}
+            {tc('export')}
           </Button>
         </div>
       </div>
@@ -168,7 +170,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {supplier.is_active ? tc('active') : tc('inactive')}
             </h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{lang === 'uz' ? 'Kontakt' : lang === 'ru' ? 'Контакты' : 'Contact'}: {supplier.phone || '—'}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('detail.contact')}: {supplier.phone || '—'}</span>
           </CardContent>
         </Card>
       </div>
@@ -226,7 +228,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                     onClick={() => setIsMapOpen(true)}
                     className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
                   >
-                    {lang === 'uz' ? "Kattaroq xaritada ko'rish" : lang === 'ru' ? 'Показать на большой карте' : 'View larger map'}
+                    {t('detail.viewLargerMap')}
                   </button>
                 </div>
               </div>
@@ -235,7 +237,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
               <div className="flex items-start gap-2.5">
                 <Globe className="h-4 w-4 text-slate-400 mt-0.5" />
                 <div>
-                  <span className="text-xs text-slate-400 dark:text-slate-500 block">Website</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 block">{t('detail.website')}</span>
                   <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-violet-600 dark:text-violet-400 text-xs break-all">
                     {supplier.website}
                   </a>

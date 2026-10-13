@@ -43,7 +43,7 @@ export async function callBusinessRpc<T extends object>(
   const { data, error } = await supabase.rpc(fn, args)
   if (error) {
     if (error.code === 'PGRST202') return RPC_MISSING
-    throw new Error(error.message)
+    throw new Error(error.message, { cause: error })
   }
   if (data && data.ok === false) {
     throw new BusinessRpcError(data.code, data)

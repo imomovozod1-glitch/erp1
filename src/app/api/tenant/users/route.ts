@@ -33,17 +33,17 @@ const createUserSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   const user = await getVerifiedUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const callerProfile = await getCachedProfile(user.id) as any
   if (!callerProfile || callerProfile.role !== 'admin' || !callerProfile.tenant_id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
   const body = await request.json().catch(() => null)
   const parsed = createUserSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
   const input = parsed.data
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   // permissions system (admin-only route already gated above), not a new
   // security gap.
   if (!input.is_paid) {
-    return NextResponse.json({ error: 'Only paid employees can be given a system login' }, { status: 403 })
+    return NextResponse.json({ error: 'employee_not_paid' }, { status: 403 })
   }
 
   const supabase = getCacheClient() as any
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       .eq('tenant_id', callerProfile.tenant_id)
       .maybeSingle()
     if (!template) {
-      return NextResponse.json({ error: 'Invalid role template' }, { status: 400 })
+      return NextResponse.json({ error: 'invalid_role_template' }, { status: 400 })
     }
   }
 
@@ -84,10 +84,13 @@ export async function POST(request: NextRequest) {
   })
 
   if (authError || !authData?.user) {
-    const message = authError?.message?.includes('already registered')
-      ? 'This phone number is already in use'
-      : authError?.message || 'Failed to create login'
-    return NextResponse.json({ error: message }, { status: 400 })
+    const taken =
+      authError?.code === 'email_exists' ||
+      authError?.code === 'user_already_exists' ||
+      authError?.message?.includes('already registered')
+    if (taken) return NextResponse.json({ error: 'phone_taken' }, { status: 400 })
+    console.error('[tenant/users] createUser failed:', authError?.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 400 })
   }
 
   // handle_new_user() already set tenant_id/full_name/role='staff' from the
@@ -106,7 +109,8 @@ export async function POST(request: NextRequest) {
     // Roll back the auth user so a failed profile update never leaves an
     // orphaned login with no matching, fully-set-up profile.
     await supabase.auth.admin.deleteUser(authData.user.id)
-    return NextResponse.json({ error: profileError.message }, { status: 400 })
+    console.error('[tenant/users] profile update failed:', profileError.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 400 })
   }
 
   return NextResponse.json(

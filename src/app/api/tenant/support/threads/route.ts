@@ -14,7 +14,7 @@ export async function GET() {
   // allowInactive: a blocked company must still be able to reach support — that
   // conversation is usually how the block gets resolved (src/lib/auth.ts).
   const ctx = await getTenantContext({ allowInactive: true })
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const supabase = getCacheClient() as any
   const { data: threads } = await supabase
@@ -52,11 +52,11 @@ export async function POST(request: NextRequest) {
   // allowInactive: a blocked company must still be able to reach support — that
   // conversation is usually how the block gets resolved (src/lib/auth.ts).
   const ctx = await getTenantContext({ allowInactive: true })
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const parsed = createSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'invalid_input' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid_input' }, { status: 400 })
   }
 
   const supabase = getCacheClient() as any
@@ -78,7 +78,10 @@ export async function POST(request: NextRequest) {
     .select('id')
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    console.error('[support] create thread failed:', error.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 500 })
+  }
 
   const result = await postMessage({
     threadId: thread.id,

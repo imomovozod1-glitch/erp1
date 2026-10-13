@@ -175,15 +175,15 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
             )}
             <DialogDescription className={`text-xs text-muted-foreground ${cashboxes.length > 1 ? 'mt-1.5 pl-3' : ''}`}>
               {value.type === 'income'
-                ? (lang === 'uz' ? 'Kirim operatsiyasini kiritish' : lang === 'ru' ? 'Внести приходную операцию' : 'Register Income')
-                : (lang === 'uz' ? 'Chiqim operatsiyasini kiritish' : lang === 'ru' ? 'Внести расходную операцию' : 'Register Expense')
+                ? t('registerIncome')
+                : t('registerExpense')
               }
             </DialogDescription>
           </div>
         </DialogHeader>
 
         <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100/50 dark:border-slate-700/50 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
-          <span>{lang === 'uz' ? 'Joriy kassa qoldigʻi:' : lang === 'ru' ? 'Текущий остаток:' : 'Current balance:'}</span>
+          <span>{t('currentCashboxBalance')}</span>
           <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{formatCurrency(cashbox.balance)}</span>
         </div>
 
@@ -231,7 +231,7 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
 
           {personType === 'customer' && (
             <div className="space-y-2 animate-in fade-in duration-200">
-              <Label htmlFor="tx_customer" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{lang === 'uz' ? 'Mijoz' : lang === 'ru' ? 'Клиент' : 'Customer'} *</Label>
+              <Label htmlFor="tx_customer" className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t('personTypeCustomer')} *</Label>
               <Select
                 value={value.customerId}
                 onValueChange={(val) => {
@@ -240,10 +240,10 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                 }}
               >
                 <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
-                  <SelectValue placeholder={lang === 'uz' ? 'Mijozni tanlang' : lang === 'ru' ? 'Выберите клиента' : 'Select a customer'}>
+                  <SelectValue placeholder={t('selectCustomerPlaceholder')}>
                     {value.customerId
                       ? (customers.find(c => c.id === value.customerId)?.name || '')
-                      : (lang === 'uz' ? 'Mijozni tanlang' : lang === 'ru' ? 'Выберите клиента' : 'Select a customer')}
+                      : (t('selectCustomerPlaceholder'))}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false} className={SELECT_CONTENT_CLASS}>
@@ -282,17 +282,17 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
           {personType === 'employee' && (
             <div className="space-y-1.5 animate-in fade-in duration-200">
               <Label htmlFor="tx_employee" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                {lang === 'uz' ? 'Xodim' : lang === 'ru' ? 'Сотрудник' : 'Employee'} *
+                {t('personTypeEmployee')} *
               </Label>
               <Select
                 value={value.employeeId}
                 onValueChange={(val) => onChange({ employeeId: val || '' })}
               >
                 <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
-                  <SelectValue placeholder={lang === 'uz' ? 'Xodimni tanlang' : lang === 'ru' ? 'Выберите сотрудника' : 'Select an employee'}>
+                  <SelectValue placeholder={t('selectEmployeePlaceholder')}>
                     {value.employeeId
                       ? (employees.find(e => e.id === value.employeeId)?.name || '')
-                      : (lang === 'uz' ? 'Xodimni tanlang' : lang === 'ru' ? 'Выберите сотрудника' : 'Select an employee')}
+                      : (t('selectEmployeePlaceholder'))}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false} className={SELECT_CONTENT_CLASS}>
@@ -309,7 +309,7 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
           {personType === 'supplier' && (
             <div className="space-y-2 animate-in fade-in duration-200">
               <Label htmlFor="tx_supplier" className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                {lang === 'uz' ? 'Yetkazib beruvchi' : lang === 'ru' ? 'Поставщик' : 'Supplier'} *
+                {t('personTypeSupplier')} *
               </Label>
               <Select
                 value={value.supplierId}
@@ -319,10 +319,10 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                 }}
               >
                 <SelectTrigger className="w-full rounded-xl border-slate-200 dark:border-slate-700">
-                  <SelectValue placeholder={lang === 'uz' ? 'Yetkazib beruvchini tanlang' : lang === 'ru' ? 'Выберите поставщика' : 'Select a supplier'}>
+                  <SelectValue placeholder={t('selectSupplierPlaceholder')}>
                     {value.supplierId
                       ? (suppliers.find(s => s.id === value.supplierId)?.name || '')
-                      : (lang === 'uz' ? 'Yetkazib beruvchini tanlang' : lang === 'ru' ? 'Выберите поставщика' : 'Select a supplier')}
+                      : (t('selectSupplierPlaceholder'))}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false} className={SELECT_CONTENT_CLASS}>
@@ -351,8 +351,8 @@ export function CashboxTransactionDialog<T extends CashboxRow>({
                 >
                   <span className="font-medium">
                     {(supplierDebt ?? 0) < 0
-                      ? (lang === 'uz' ? 'Oldindan to\'langan:' : lang === 'ru' ? 'Переплата:' : 'Overpaid:')
-                      : (lang === 'uz' ? 'Yetkazib beruvchiga qarz:' : lang === 'ru' ? 'Долг поставщику:' : 'Owed to supplier:')}
+                      ? t('supplierOverpaid')
+                      : t('supplierOwed')}
                   </span>
                   <span className="font-extrabold text-sm">
                     {isLoadingSupplierDebt || supplierDebt === null

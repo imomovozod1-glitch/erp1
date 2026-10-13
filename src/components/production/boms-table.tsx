@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -53,6 +54,7 @@ interface BomsTableProps {
  * the page being shown.
  */
 export function BomsTable({ boms, lang, page, pageSize, total, totalPages }: BomsTableProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('production')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
@@ -65,7 +67,7 @@ export function BomsTable({ boms, lang, page, pageSize, total, totalPages }: Bom
     const supabase = createClient() as any
     const { error } = await supabase.from('product_boms').update({ is_active: !currentStatus }).eq('id', id)
     if (error) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } else {
       toast.success(tCommon('success'))
       await invalidateBoms()
@@ -95,7 +97,7 @@ export function BomsTable({ boms, lang, page, pageSize, total, totalPages }: Bom
           await invalidateBoms()
         }
       } else {
-        toast.error(error.message || tCommon('error'))
+        toast.error(errorMessage(tRoot, error, tCommon('error')))
       }
     } else {
       toast.success(tCommon('success'))

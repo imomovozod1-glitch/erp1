@@ -123,7 +123,7 @@ export function MovementsTable({
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <span className="text-sm text-muted-foreground max-w-50 truncate block">
-                      {translateMovementReason(movement.reason, lang)}
+                      {translateMovementReason(movement.reason, t)}
                     </span>
                   </TableCell>
                 </TableRow>

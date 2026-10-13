@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
 import { getCachedTenant } from '@/lib/tenant'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { escapeHtml, notifyTelegram, notifySystemTelegram } from '@/lib/integrations/telegram'
+import { escapeHtml, getBotTranslator, notifyTelegram, notifySystemTelegram } from '@/lib/integrations/telegram'
 import { formatCurrency, formatDate, isoDate } from '@/lib/utils'
 import { SUBSCRIPTION_WARNING_DAYS, daysUntil } from '@/lib/subscription'
 
@@ -59,16 +59,20 @@ const bodySchema = z.discriminatedUnion('event', [
   z.object({ event: z.literal('subscription_expiring') }),
 ])
 
-const PAYMENT_LABEL: Record<string, string> = {
-  cash: 'Naqd',
-  card: 'Karta',
-  transfer: "O'tkazma",
-  debt: 'Qarz',
-}
+const PAYMENT_METHODS = ['cash', 'card', 'transfer', 'debt'] as const
+
+/**
+ * The bot posts into the company's own chat or group, so it writes in the
+ * language the company picked for its bot (`getBotTranslator`), not the
+ * language of whichever user happened to trigger it. `t.markup` keeps
+ * Telegram's `<b>` tags in the message files; every interpolated value is
+ * passed through `escapeHtml` first, since the result is parsed as HTML.
+ */
+const bold = (chunks: string) => `<b>${chunks}</b>`
 
 export async function POST(request: NextRequest) {
   const ctx = await getTenantContext()
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const body = await request.json().catch(() => null)
   const parsed = bodySchema.safeParse(body)
@@ -85,18 +89,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(await warnAboutSubscription(ctx.tenantId, header, tenant?.subscription_ends_at ?? null))
   }
 
+  const t = await getBotTranslator(ctx.tenantId)
   let text: string
   switch (parsed.data.event) {
     case 'sale': {
       const d = parsed.data.data
+      const method = (PAYMENT_METHODS as readonly string[]).includes(d.paymentMethod)
+        ? t(`payment_${d.paymentMethod}`)
+        : d.paymentMethod
       const lines = [
         `🧾 ${header}`,
-        `Yangi sotuv: <b>${escapeHtml(d.orderNumber)}</b>`,
-        `Summa: <b>${escapeHtml(formatCurrency(d.total))}</b>`,
-        `To'lov: ${escapeHtml(PAYMENT_LABEL[d.paymentMethod] ?? d.paymentMethod)}`,
-        `Mahsulotlar: ${d.itemCount} ta`,
+        t.markup('newSale', { b: bold, order: escapeHtml(d.orderNumber) }),
+        t.markup('amount', { b: bold, amount: escapeHtml(formatCurrency(d.total)) }),
+        t.markup('payment', { method: escapeHtml(method) }),
+        t.markup('items', { count: d.itemCount }),
       ]
-      if (d.customerName) lines.push(`Mijoz: ${escapeHtml(d.customerName)}`)
+      if (d.customerName) lines.push(t.markup('customer', { name: escapeHtml(d.customerName) }))
       text = lines.join('\n')
       break
     }
@@ -104,10 +112,10 @@ export async function POST(request: NextRequest) {
       const d = parsed.data.data
       const lines = [
         `📦 ${header}`,
-        `Yangi buyurtma: <b>${escapeHtml(d.orderNumber)}</b>`,
-        `Summa: <b>${escapeHtml(formatCurrency(d.total))}</b>`,
+        t.markup('newOrder', { b: bold, order: escapeHtml(d.orderNumber) }),
+        t.markup('amount', { b: bold, amount: escapeHtml(formatCurrency(d.total)) }),
       ]
-      if (d.customerName) lines.push(`Mijoz: ${escapeHtml(d.customerName)}`)
+      if (d.customerName) lines.push(t.markup('customer', { name: escapeHtml(d.customerName) }))
       text = lines.join('\n')
       break
     }
@@ -115,9 +123,9 @@ export async function POST(request: NextRequest) {
       const d = parsed.data.data
       text = [
         `⚠️ ${header}`,
-        `Zaxira tugayapti: <b>${escapeHtml(d.productName)}</b>`,
-        `SKU: ${escapeHtml(d.sku)}`,
-        `Qoldiq: <b>${escapeHtml(d.stock)}</b> (minimal: ${escapeHtml(d.minStock)})`,
+        t.markup('lowStock', { b: bold, product: escapeHtml(d.productName) }),
+        t.markup('sku', { sku: escapeHtml(d.sku) }),
+        t.markup('stockLeft', { b: bold, stock: escapeHtml(d.stock), min: escapeHtml(d.minStock) }),
       ].join('\n')
       break
     }
@@ -125,8 +133,8 @@ export async function POST(request: NextRequest) {
       const d = parsed.data.data
       text = [
         `💰 ${header}`,
-        `Qarz to'landi: <b>${escapeHtml(d.customerName)}</b>`,
-        `Summa: <b>${escapeHtml(formatCurrency(d.amount))}</b>`,
+        t.markup('debtPaid', { b: bold, customer: escapeHtml(d.customerName) }),
+        t.markup('amount', { b: bold, amount: escapeHtml(formatCurrency(d.amount)) }),
       ].join('\n')
       break
     }
@@ -178,13 +186,14 @@ async function warnAboutSubscription(
   }
   if (!claimed?.length) return { sent: false, reason: 'already_notified' }
 
+  const t = await getBotTranslator(tenantId)
   const text = [
     `⏳ ${header}`,
     daysLeft === 0
-      ? 'Obuna <b>bugun</b> tugaydi.'
-      : `Obuna tugashiga <b>${daysLeft} kun</b> qoldi.`,
-    `Tugash sanasi: <b>${escapeHtml(formatDate(endsAt.slice(0, 10)))}</b>`,
-    "To'lov qilinmasa, tizimdan foydalanish to'xtatiladi.",
+      ? t.markup('subscriptionToday', { b: bold })
+      : t.markup('subscriptionDaysLeft', { b: bold, days: daysLeft }),
+    t.markup('subscriptionEndsOn', { b: bold, date: escapeHtml(formatDate(endsAt.slice(0, 10))) }),
+    t.markup('subscriptionStop', {}),
   ].join('\n')
 
   return notifySystemTelegram(tenantId, 'subscription_expiring', text)

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { Resolver, Controller } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -41,6 +42,7 @@ interface CustomerFormProps {
 }
 
 export function CustomerForm({ initialData, categories = [], lang, assignableUsers }: CustomerFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const tSales = useTranslations('sales')
   const tAuth = useTranslations('auth')
@@ -122,7 +124,7 @@ export function CustomerForm({ initialData, categories = [], lang, assignableUse
       clearPersistedForm('customer-form-v3')
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }
@@ -269,7 +271,7 @@ export function CustomerForm({ initialData, categories = [], lang, assignableUse
                 {hasPreciseLocation && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-full normal-case">
                     <MapPin className="h-2.5 w-2.5" />
-                    {lang === 'uz' ? 'Xaritada belgilangan' : lang === 'ru' ? 'Отмечено на карте' : 'Pinned on map'}
+                    {tSales('pinnedOnMap')}
                   </span>
                 )}
               </Label>

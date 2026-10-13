@@ -24,24 +24,26 @@ async function subdomainOf(id: string): Promise<string | null> {
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const subdomain = await subdomainOf((await params).id)
-  if (!subdomain) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+  if (!subdomain) return NextResponse.json({ error: 'tenant_not_found' }, { status: 404 })
 
   return NextResponse.json(await getTenantDomainStatus(subdomain))
 }
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const subdomain = await subdomainOf((await params).id)
-  if (!subdomain) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+  if (!subdomain) return NextResponse.json({ error: 'tenant_not_found' }, { status: 404 })
 
   const result = await registerTenantDomain(subdomain)
   if (!result.ok && !result.skipped) {
-    return NextResponse.json({ error: result.error || 'Failed to register the domain' }, { status: 502 })
+    // `detail` is Vercel's own explanation (a missing token, a domain held by
+    // another project) — the console shows it after the translated message.
+    return NextResponse.json({ error: 'domain_register_failed', detail: result.error }, { status: 502 })
   }
 
   // The status AFTER registering, so the console shows the certificate still

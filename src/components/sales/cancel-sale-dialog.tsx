@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { toast } from 'sonner'
 import { AlertTriangle, Ban, Loader2, PackageCheck, Undo2, Wallet, UserCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -99,7 +100,7 @@ export function CancelSaleDialog({
           onCancelled?.()
         }
       } else {
-        toast.error(error?.message || t('common.error'))
+        toast.error(errorMessage(t, error, t('common.error')))
       }
     } finally {
       setIsCancelling(false)

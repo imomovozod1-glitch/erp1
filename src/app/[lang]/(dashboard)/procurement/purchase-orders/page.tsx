@@ -12,7 +12,11 @@ const PERIODS: PeriodKey[] = ['today', 'yesterday', 'week', 'month', 'custom', '
 
 export const revalidate = 30
 
-export const metadata: Metadata = { title: 'Purchase Orders' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'procurement' })
+  return { title: t('purchaseOrders') }
+}
 
 export default async function PurchaseOrdersPage({
   params,

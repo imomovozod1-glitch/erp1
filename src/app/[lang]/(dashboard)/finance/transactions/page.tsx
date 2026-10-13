@@ -1,11 +1,16 @@
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import { TransactionsPageClient } from '@/components/finance/transactions-page-client'
 import { getTransactionsPage } from '@/lib/data/queries'
 import { readPageParams, resolvePeriodRange, type PeriodKey } from '@/lib/data/paginate'
 import { getDataScope, getPermissionContext } from '@/lib/permissions-server'
 import { getCurrentTenantId } from '@/lib/tenant'
 
-export const metadata: Metadata = { title: 'Finance' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'finance' })
+  return { title: t('title') }
+}
 
 const PERIODS: PeriodKey[] = ['today', 'yesterday', 'week', 'month', 'custom', 'all']
 

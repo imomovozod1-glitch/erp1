@@ -8,7 +8,11 @@ import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { canEditModule , canDo } from '@/lib/permissions-server'
 
-export const metadata: Metadata = { title: 'Employees' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'hr' })
+  return { title: t('employees') }
+}
 
 export default async function EmployeesPage({
   params,

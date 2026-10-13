@@ -21,22 +21,22 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await getVerifiedUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const callerProfile = await getCachedProfile(user.id) as any
   if (!callerProfile || callerProfile.role !== 'admin' || !callerProfile.tenant_id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
   const { id: targetId } = await params
   if (targetId === user.id) {
-    return NextResponse.json({ error: 'Use the Security tab to change your own password' }, { status: 400 })
+    return NextResponse.json({ error: 'cannot_reset_own_password' }, { status: 400 })
   }
 
   const body = await request.json().catch(() => null)
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Password does not meet strength requirements' }, { status: 400 })
+    return NextResponse.json({ error: 'weak_password' }, { status: 400 })
   }
 
   const supabase = getCacheClient() as any
@@ -47,13 +47,20 @@ export async function POST(
     .maybeSingle()
 
   if (!target || target.tenant_id !== callerProfile.tenant_id) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    return NextResponse.json({ error: 'user_not_found' }, { status: 404 })
   }
 
   const { error } = await supabase.auth.admin.updateUserById(targetId, {
     password: parsed.data.password,
   })
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    // Supabase Auth names a too-weak / unchanged password; anything else is ours.
+    if (error.code === 'weak_password' || error.code === 'same_password') {
+      return NextResponse.json({ error: error.code }, { status: 400 })
+    }
+    console.error('[tenant/users/reset-password] update failed:', error.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 400 })
+  }
 
   // Kick any currently-open session for this user immediately — mirrors
   // the super-admin tenant-owner reset path (see supabase/migration_force_logout.sql).
