@@ -168,6 +168,7 @@ Added by migrations:
 | `integration_settings` | `integrations` | Telegram bot credentials |
 | `telegram_links` | `telegram_miniapp` | Telegram user → profile/tenant |
 | — (columns on `distribution_routes`) | `route_geometry` | Cached Mapbox route shape, distance and duration |
+| — (column on `integration_settings`) | `telegram_language` | `telegram_language`: the language the company's bot writes in (`uz`/`ru`/`en`) |
 | — (column on `production_order_items`) | `production_extra_materials` | `is_extra`: the line was added to this run by hand, not carried in from the composition |
 
 `migration_tenant_features.sql` adds `tenants.features` JSONB (see Feature flags & release flow) — readable by the tenant's own members, writable only with the service role.
@@ -184,7 +185,9 @@ Functions (`migration_business_rpc.sql`): the money/stock entry points listed un
 
 ### i18n
 
-`messages/{uz,ru,en}.json`, 24 namespaces (`common`, `nav`, `auth`, `tenantStatus`, `dashboard`, `inventory`, `sales`, `finance`, `hr`, `procurement`, `analytics`, `settings`, `tools`, `pos`, `support`, `admin`, `pageInfo`, `supportPortal`, `supportChat`, `permissions`, `guide`, `faq`, `reports`, `offline`). Keep all three files in sync (same keys, same line layout). The admin console picks its language from a cookie (`src/lib/admin-locale.ts`), not a URL prefix.
+`messages/{uz,ru,en}.json`, 29 namespaces (`common`, `nav`, `auth`, `tenantStatus`, `dashboard`, `inventory`, `production`, `distribution`, `sales`, `finance`, `hr`, `procurement`, `analytics`, `settings`, `tools`, `pos`, `support`, `admin`, `pageInfo`, `supportPortal`, `supportChat`, `permissions`, `guide`, `faq`, `reports`, `offline`, `errors`, `telegram`, `telegramBot`). Keep all three files in sync (same keys, same line layout). The admin console picks its language from a cookie (`src/lib/admin-locale.ts`), not a URL prefix; the Telegram Mini App loads the `telegram` namespace for all three languages and switches client-side to the Telegram user's `language_code`. Bot notifications (`telegramBot.*`) go to a company chat, not to one user, so they are rendered in the company's chosen bot language (`integration_settings.telegram_language`, `migration_telegram_language.sql`, picked in Settings → Integrations; `getBotTranslator(tenantId)`), `uz` until set.
+
+**Errors are codes, never sentences.** An API route answers `{ error: '<snake_case_code>' }` (raw Supabase/third-party text is `console.error`-ed and answered as `server_error`), and the client shows any failure with `errorMessage(tRoot, error, fallback)` (`src/lib/error-message.ts`, root translator): it resolves `errors.<code>` for an API body, a code-valued `Error`, a Postgres code (23505 → `duplicate`, 23503 → `in_use`, 42501 → `forbidden`, …), a Supabase Auth code, a wrapped `cause`, or a network failure, and falls back to the caller's translated message. Adding a code = answering it + adding `errors.<code>` in all three files. Never `toast.error(error.message)` / `toast.error(json.error)`. The super-admin console has its own `admin.errors.*` set (`src/lib/admin-errors.ts`).
 
 ## Conventions
 

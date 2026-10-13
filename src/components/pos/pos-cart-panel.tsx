@@ -52,7 +52,6 @@ export function PosCartPanel({
   onClear,
   onCheckout,
   isCheckingOut,
-  lang,
 }: {
   cart: PosCart
   customers: any[]
@@ -109,7 +108,7 @@ export function PosCartPanel({
               <div className="space-y-1">
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('emptyCart')}</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {lang === 'uz' ? "Mahsulotni bosing yoki SKU'ni skanerlang" : lang === 'ru' ? 'Нажмите на товар или отсканируйте SKU' : 'Click a product or scan its SKU'}
+                  {t('cartHint')}
                 </p>
               </div>
             </div>
@@ -354,7 +353,7 @@ export function PosCartPanel({
             {paymentMethod === 'debt' && !selectedCustomer && (
               <p className="flex items-center gap-1 pt-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="h-3 w-3 shrink-0" />
-                {lang === 'uz' ? "Noma'lum mijozga qarzga sotib bo'lmaydi — mijozni tanlang" : lang === 'ru' ? 'Нельзя продать в долг неизвестному клиенту — выберите клиента' : "Can't sell on credit to an unknown customer — select a customer"}
+                {t('debtNeedsCustomer')}
               </p>
             )}
           </div>

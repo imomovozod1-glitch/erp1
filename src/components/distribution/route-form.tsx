@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { Resolver, Controller } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -313,7 +314,7 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
       clearPersistedForm(FORM_ID)
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { MoreHorizontal, Pencil, Trash2, ShieldCheck } from 'lucide-react'
 import { invalidateRoleTemplates } from '@/lib/data/revalidate'
+import { errorMessage } from '@/lib/error-message'
 import { Card, CardContent } from '@/components/ui/card'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { Button } from '@/components/ui/button'
@@ -45,6 +46,7 @@ function countEnabledModules(permissions: Permissions | null): number {
 export function RoleTemplatesTable({ roles, lang, page, pageSize, total, totalPages }: RoleTemplatesTableProps) {
   const tCommon = useTranslations('common')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
+  const tRoot = useTranslations()
   const t = useTranslations('hr')
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
@@ -59,12 +61,12 @@ export function RoleTemplatesTable({ roles, lang, page, pageSize, total, totalPa
       const res = await fetch(`/api/tenant/roles/${id}`, { method: 'DELETE' })
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
-        throw new Error(json.error || tCommon('error'))
+        throw new Error(json.error || '')
       }
       toast.success(tCommon('success'))
       await invalidateRoleTemplates()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsDeleting(null)
     }

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProducts } from '@/lib/data/revalidate'
 
@@ -23,8 +24,10 @@ interface UnitRow {
   name: string
 }
 
-export function UnitsList({ lang, initialUnits }: UnitsListProps) {
+export function UnitsList({ initialUnits }: UnitsListProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
+  const t = useTranslations('inventory')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const supabase = createClient() as any
   // The list arrives with the page instead of from a round trip after
@@ -41,7 +44,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
   const paginated = units.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const alreadyExistsMessage =
-    lang === 'uz' ? "Bu o'lchov birligi allaqachon mavjud" : lang === 'ru' ? 'Эта единица измерения уже существует' : 'This unit already exists'
+    t('units.alreadyExists')
 
   // Case/whitespace-insensitive — "Dona" and "dona" are the same unit. The
   // database also enforces this (unique index on LOWER(name)) so a race
@@ -63,7 +66,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
     try {
       const { data, error } = await supabase.from('measurement_units').insert({ name: trimmed }).select('id, name').single()
       if (error) {
-        toast.error(error.code === '23505' ? alreadyExistsMessage : error.message || tCommon('error'))
+        toast.error(error.code === '23505' ? alreadyExistsMessage : errorMessage(tRoot, error, tCommon('error')))
         return
       }
       setUnits((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
@@ -78,7 +81,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
     if (!(await confirmDelete({ name: units.find((u) => u.id === id)?.name }))) return
     const { error } = await supabase.from('measurement_units').delete().eq('id', id)
     if (error) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
       return
     }
     setUnits((prev) => prev.filter((u) => u.id !== id))
@@ -101,7 +104,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
 
     const { error } = await supabase.from('measurement_units').update({ name: trimmed }).eq('id', unit.id)
     if (error) {
-      toast.error(error.code === '23505' ? alreadyExistsMessage : error.message || tCommon('error'))
+      toast.error(error.code === '23505' ? alreadyExistsMessage : errorMessage(tRoot, error, tCommon('error')))
       return
     }
     setUnits((prev) => prev.map((u) => (u.id === unit.id ? { ...u, name: trimmed } : u)).sort((a, b) => a.name.localeCompare(b.name)))
@@ -127,13 +130,13 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
           </div>
           <div className="text-center">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {lang === 'uz' ? 'Jami o\'lchov birliklari' : lang === 'ru' ? 'Всего единиц' : 'Total Units'}
+              {t('units.total')}
             </p>
             <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
               {units.length}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-              {lang === 'uz' ? 'Kompaniya birliklari' : lang === 'ru' ? 'Единицы компании' : 'Company-wide units'}
+              {t('units.companyWide')}
             </p>
           </div>
         </Card>
@@ -142,13 +145,13 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
         <Card className="border-0 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
           <CardHeader className="py-4">
             <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              {lang === 'uz' ? 'Yangi o\'lchov birligi qo\'shish' : lang === 'ru' ? 'Добавить единицу измерения' : 'Add New Unit'}
+              {t('units.addNew')}
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-4">
             <form onSubmit={handleAddUnit} className="flex gap-2">
               <Input
-                placeholder={lang === 'uz' ? 'Masalan: Juft, Quti' : lang === 'ru' ? 'Например: Коробка, Пара' : 'e.g. Pair, Box'}
+                placeholder={t('units.placeholder')}
                 value={newUnit}
                 onChange={(e) => setNewUnit(e.target.value)}
                 className="border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 flex-1"
@@ -174,8 +177,8 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center font-semibold text-slate-600 dark:text-slate-300">#</TableHead>
-                  <TableHead className="font-semibold text-slate-600 dark:text-slate-300">{lang === 'uz' ? 'O\'lchov birligi nomi' : lang === 'ru' ? 'Название единицы' : 'Unit Name'}</TableHead>
-                  <TableHead className="w-[100px] font-semibold text-slate-600 dark:text-slate-300 text-right tabular-nums">{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</TableHead>
+                  <TableHead className="font-semibold text-slate-600 dark:text-slate-300">{t('units.name')}</TableHead>
+                  <TableHead className="w-[100px] font-semibold text-slate-600 dark:text-slate-300 text-right tabular-nums">{tCommon('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -274,7 +277,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
                   disabled={currentPage === 1}
                   className="cursor-pointer"
                 >
-                  {lang === 'uz' ? 'Orqaga' : lang === 'ru' ? 'Назад' : 'Previous'}
+                  {tCommon('previous')}
                 </Button>
                 <span className="text-xs text-muted-foreground font-medium">
                   {currentPage} / {totalPages}
@@ -286,7 +289,7 @@ export function UnitsList({ lang, initialUnits }: UnitsListProps) {
                   disabled={currentPage === totalPages}
                   className="cursor-pointer"
                 >
-                  {lang === 'uz' ? 'Oldinga' : lang === 'ru' ? 'Вперед' : 'Next'}
+                  {tCommon('next')}
                 </Button>
               </div>
             )}

@@ -125,7 +125,13 @@
     "markAs": "\"{status}\" deb belgilash",
     "statusUpdated": "Holat yangilandi",
     "hour": "Soat",
-    "minute": "Daqiqa"
+    "minute": "Daqiqa",
+    "addressNotOnMap": "Manzil xaritada topilmadi",
+    "locatingAddress": "Manzil aniqlanmoqda...",
+    "openInGoogleMaps": "Google Xaritada ochish",
+    "sidebar": "Yon panel",
+    "sidebarDescription": "Mobil yon panelni ko'rsatadi.",
+    "toggleSidebar": "Yon panelni ochish/yopish"
   },
   "nav": {
     "dashboard": "Boshqaruv paneli",
@@ -144,7 +150,25 @@
     "faq": "Savol-javob",
     "help": "Yordam",
     "production": "Sanoat",
-    "distribution": "Distributsiya"
+    "distribution": "Distributsiya",
+    "brandTagline": "Biznes boshqaruvi",
+    "darkMode": "Qorong'i rejim",
+    "helpDesk": "Yordam xizmati",
+    "lightMode": "Yorug' rejim",
+    "notifications": {
+      "allCaughtUp": "Hamma bildirishnomalar o'qildi",
+      "empty": "Hozircha yangi bildirishnomalar yo'q",
+      "lowStockDescription": "\"{name}\" tovaridan {stock} dona qoldi (min: {min})",
+      "lowStockTitle": "Kam qolgan tovar",
+      "markAllRead": "Hammasini o'qilgan qilish",
+      "overdueInvoiceDescription": "\"{customer}\" uchun #{number} faktura muddati o'tdi",
+      "overdueInvoiceTitle": "Muddati o'tgan faktura",
+      "supportReplyTitle": "Qo'llab-quvvatlash javobi",
+      "title": "Bildirishnomalar"
+    },
+    "overdue": "Muddati o'tgan",
+    "platform": "Platforma",
+    "support": "Qo'llab-quvvatlash"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -186,7 +210,8 @@
     "newPassword": "Yangi parol",
     "currentPasswordRequired": "Joriy parolni kiriting",
     "currentPasswordWrong": "Joriy parol noto'g'ri",
-    "passwordChangedSignedOutOthers": "Parol o'zgartirildi. Boshqa qurilmalardagi seanslar yopildi."
+    "passwordChangedSignedOutOthers": "Parol o'zgartirildi. Boshqa qurilmalardagi seanslar yopildi.",
+    "brandSubtitle": "Korxona boshqaruvi"
   },
   "tenantStatus": {
     "notFoundTitle": "Tashkilot topilmadi",
@@ -258,7 +283,9 @@
     "employeesCountText": "{count} ta xodim",
     "suppliersCountText": "{count} ta yetkazib beruvchi",
     "revenueChartTitle": "Daromadlar va xarajatlar tahlili",
-    "soldText": "Sotildi: {count} ta"
+    "soldText": "Sotildi: {count} ta",
+    "expectedFromCustomers": "Mijozlardan kutilayotgan to'lov",
+    "soldOnCredit": "Qarzga sotilgan"
   },
   "inventory": {
     "title": "Ombor",
@@ -343,7 +370,87 @@
     "serviceCode": "Kodi",
     "serviceCostPrice": "Tannarx",
     "serviceCostHint": "Xizmatni ko'rsatish o'zingizga qancha turadi — har bir sotuv shu tannarx bo'yicha hisoblanadi.",
-    "serviceDeactivatedInsteadOfDeleted": "Xizmat sotuvlarda ishlatilgani uchun butunlay o'chirilmaydi. U faolsizlantirildi (arxivlandi)."
+    "serviceDeactivatedInsteadOfDeleted": "Xizmat sotuvlarda ishlatilgani uchun butunlay o'chirilmaydi. U faolsizlantirildi (arxivlandi).",
+    "aiScanner": {
+      "addRow": "Qator qo'shish",
+      "analyzing": "AI tahlil qilmoqda...",
+      "atLeastOne": "Saqlash uchun kamida 1 ta mahsulot bo'lishi kerak",
+      "chooseAnother": "Boshqa rasm tanlash",
+      "defaultProductName": "Mahsulot",
+      "defaultUnit": "dona",
+      "description": "Kelgan tovarlar ro'yxati yoki nakladnoy rasmini yuklang, AI avtomatik jadvalga o'tkazib beradi.",
+      "detected": "{count} ta mahsulot aniqlandi",
+      "editHint": "Jadvaldagi katakchalarni bevosita tahrirlashingiz mumkin.",
+      "extracted": "AI rasmdan {count} ta mahsulotni ajratib oldi!",
+      "formatsHint": "PNG, JPG, WEBP formatlari qo'llab-quvvatlanadi",
+      "howItWorks": "Qanday ishlaydi?",
+      "imageLabel": "Hujjat / Tovarlar rasmi:",
+      "imagesOnly": "Faqat rasm fayllari (JPG, PNG, WEBP, AVIF) qo'llab-quvvatlanadi",
+      "nameAndSkuRequired": "Barcha mahsulotlar nomi va SKU (Artikul) to'ldirilgan bo'lishi shart",
+      "noItemsDetected": "Rasmdan hech qanday mahsulot ma'lumoti aniqlanmadi",
+      "previewAlt": "Skanerlangan hujjat ko'rinishi",
+      "qualityTip": "Rasm sifatli va yorug' joyda olingan bo'lsa, AI ma'lumotlarni aniqroq o'qiydi.",
+      "readWithAi": "Rasmni AI bilan o'qish",
+      "saveAll": "Barcha tovarlarni omborga saqlash",
+      "saveError": "Mahsulotlarni saqlashda xatolik yuz berdi",
+      "saved": "{count} ta mahsulot omborga muvaffaqiyatli saqlandi!",
+      "scanAgain": "Qayta skanerlash",
+      "scanError": "Skanerlashda xatolik yuz berdi",
+      "step1": "Omborga kelgan yuk, nakladnoy yoki ro'yxat rasmini yuklaysiz.",
+      "step2": "Sun'iy intellekt (Gemini Vision AI) rasmdagi barcha tovarlarni tahlil qilib, jadval shaklida o'qib beradi.",
+      "step3": "Hosil bo'lgan jadvaldagi narxlar va miqdorlarni ko'rib chiqasiz hamda bir tugma bilan omborga saqlaysiz.",
+      "title": "AI: ombor rasmidan yuklash (Image-to-Table)",
+      "tooltip": "AI orqali chek/fakturani skanerlash",
+      "unexpectedResponse": "Serverdan kutilmagan javob qaytdi. Qayta urinib ko'ring.",
+      "uploadPrompt": "Rasmni bu yerga yuklang yoki tanlang"
+    },
+    "costLayerSources": {
+      "adjustment": "Qo'lda tuzatish",
+      "aiScan": "AI skaner",
+      "initialStock": "Boshlang'ich zaxira",
+      "openingBalance": "Boshlang'ich qoldiq",
+      "production": "Ishlab chiqarish",
+      "productionCancellation": "Ishlab chiqarish bekor qilindi",
+      "purchaseOrder": "Xarid",
+      "saleCancellation": "Sotuv bekor qilindi"
+    },
+    "excel": {
+      "allowedUnits": "Ruxsat etilgan o'lchov birliklari",
+      "costPrice": "Tannarx",
+      "description": "Tavsif",
+      "emptyUnit": "bo'sh",
+      "generalInfoSheet": "Umumiy ma'lumot",
+      "incomingCost": "Kirim narxi",
+      "minStock": "Minimal zaxira",
+      "name": "Nomi",
+      "price": "Sotuv narxi",
+      "sampleDescription": "Namuna mahsulot tavsifi",
+      "sampleName": "Mahsulot A",
+      "sku": "SKU",
+      "stock": "Zaxira",
+      "unit": "O'lchov birligi",
+      "unitMismatch": "O'lchov birligi tizimdagilarga mos kelmadi: {rows}. Ruxsat etilgan birliklar: {units}",
+      "unitsSheet": "Birliklar"
+    },
+    "movementReasons": {
+      "aiScan": "AI skaner — yangi mahsulot",
+      "excelImport": "Exceldan yuklandi",
+      "initialStock": "Mahsulot yaratilganda boshlang'ich zaxira",
+      "manualAdjustment": "Mahsulot shaklida qo'lda tuzatish",
+      "posSale": "POS sotuvi",
+      "production": "Ishlab chiqarish {number}",
+      "productionCancelled": "Ishlab chiqarish bekor qilindi {number}",
+      "purchase": "Xarid: {supplier}",
+      "sale": "Sotuv {number}"
+    },
+    "units": {
+      "addNew": "Yangi o'lchov birligi qo'shish",
+      "alreadyExists": "Bu o'lchov birligi allaqachon mavjud",
+      "companyWide": "Kompaniya birliklari",
+      "name": "O'lchov birligi nomi",
+      "placeholder": "Masalan: Juft, Quti",
+      "total": "Jami o'lchov birliklari"
+    }
   },
   "production": {
     "title": "Sanoat",
@@ -626,7 +733,61 @@
     "saleEditRefunded": "{cashbox} kassasidan {amount} qaytarib olindi",
     "saleEditCharged": "{cashbox} kassasiga {amount} qo'shildi",
     "noProductsFound": "Mahsulot topilmadi",
-    "clickToAddHint": "Mahsulot ustiga bosing — u darhol ro'yxatga qo'shiladi. Miqdor va narxni quyidagi jadvalda o'zgartirasiz."
+    "clickToAddHint": "Mahsulot ustiga bosing — u darhol ro'yxatga qo'shiladi. Miqdor va narxni quyidagi jadvalda o'zgartirasiz.",
+    "balanceRemaining": "Balans qoldig'i",
+    "credit": "Haqdorlik",
+    "customerDetail": {
+      "totalPurchases": "Jami xaridlar",
+      "salesCount": "{count} ta sotuv",
+      "totalPaid": "Jami to'langan",
+      "invoicesCount": "{count} ta hisob-faktura",
+      "contact": "Kontakt",
+      "profile": "Mijoz ma'lumotlari",
+      "viewLargerMap": "Kattaroq xaritada ko'rish",
+      "tabSales": "Sotuvlar",
+      "tabInvoices": "Hisob-fakturalar",
+      "tabPayments": "To'lov tarixi",
+      "orderCode": "Sotuv kodi",
+      "invoiceCode": "Hisob-faktura",
+      "paid": "To'langan",
+      "due": "Muddat",
+      "note": "Izoh",
+      "income": "Kirim",
+      "expense": "Chiqim",
+      "value": "Qiymat",
+      "issuedDate": "Berilgan sana",
+      "sheetProfile": "Mijoz profili",
+      "sheetOrders": "Sotuvlar",
+      "sheetInvoices": "Hisob-fakturalar",
+      "sheetPayments": "To'lov tarixi"
+    },
+    "viewList": "Ro'yxat",
+    "viewMap": "Xarita",
+    "viewOnMap": "Xaritada ko'rish",
+    "balanceSubtitle": "Qarz: {debt} · Haqdorlik: {credit}",
+    "pinnedOnMap": "Xaritada belgilangan",
+    "selectCustomerForDebtHint": "Qarzga sotish uchun mijozni tanlang",
+    "invoicePaymentCategory": "Faktura to'lovi",
+    "invoiceDetail": {
+      "payViaCashbox": "Kassa orqali to'lash",
+      "acceptPaymentQuick": "To'lovni qabul qilish (Tezkor)",
+      "info": "Faktura ma'lumotlari",
+      "linkedOrder": "Bog'langan buyurtma",
+      "issuedAt": "Yaratilgan sana",
+      "dueAt": "To'lov muddati",
+      "paidAt": "To'langan sana",
+      "totalAmount": "Jami summa:",
+      "paidAmount": "To'langan summa:",
+      "remaining": "Qoldiq:",
+      "noItems": "Ushbu fakturaga bog'liq mahsulotlar topilmadi"
+    },
+    "posSaleNote": "POS sotuvi - to'lov usuli: {method}",
+    "posNoteMethod": {
+      "CASH": "Naqd pul",
+      "CARD": "Karta",
+      "TRANSFER": "O'tkazma",
+      "DEBT": "Qarz"
+    }
   },
   "finance": {
     "title": "Moliya",
@@ -682,7 +843,32 @@
       "other_expense": "Boshqa xarajat"
     },
     "totalBalance": "Umumiy balans",
-    "cashboxCount": "{count} ta kassa"
+    "cashboxCount": "{count} ta kassa",
+    "cashIn": "Kirim",
+    "cashOut": "Chiqim",
+    "cannotDeleteNonEmptyCashbox": "Puli bor kassani o'chirib bo'lmaydi",
+    "insufficientFundsOnly": "Yetarli mablag' yo'q. Kassada faqat {amount} mavjud",
+    "selectEmployeeRequired": "Iltimos, xodimni tanlang",
+    "selectSupplierRequired": "Iltimos, yetkazib beruvchini tanlang",
+    "selectCustomerRequired": "Iltimos, mijozni tanlang",
+    "cashboxTableMissing": "Supabase ma'lumotlar bazasida 'cashboxes' jadvali topilmadi.",
+    "cashboxTableMissingHint": "Ushbu sahifa hozirda brauzerning LocalStorage xotirasidan foydalanmoqda. Ma'lumotlarni doimiy saqlash uchun supabase/schema.sql fayli oxiridagi SQL kodini Supabase SQL Editor orqali ishga tushiring.",
+    "editCashbox": "Kassani tahrirlash",
+    "cashboxDialogSubtitle": "Kassa ma'lumotlarini kiriting",
+    "cashboxNamePlaceholder": "Masalan: Asosiy G'azna",
+    "currentBalance": "Joriy balans",
+    "balanceChangeHint": "Balansni o'zgartirish uchun \"Kirim\" yoki \"Chiqim\" tugmasidan foydalaning",
+    "cashboxTransactionsSubtitle": "Kassalar bo'yicha kirim va chiqim operatsiyalari tarixi",
+    "registerIncome": "Kirim operatsiyasini kiritish",
+    "registerExpense": "Chiqim operatsiyasini kiritish",
+    "currentCashboxBalance": "Joriy kassa qoldig'i:",
+    "selectCustomerPlaceholder": "Mijozni tanlang",
+    "selectEmployeePlaceholder": "Xodimni tanlang",
+    "selectSupplierPlaceholder": "Yetkazib beruvchini tanlang",
+    "supplierOverpaid": "Oldindan to'langan:",
+    "supplierOwed": "Yetkazib beruvchiga qarz:",
+    "categoryHasTransactions": "Bu kategoriyada tranzaksiyalar mavjud, o'chirib bo'lmaydi",
+    "txCategoryNamePlaceholder": "Masalan: Ofis xarajatlari"
   },
   "hr": {
     "title": "Kadrlar bo'limi",
@@ -735,7 +921,38 @@
     "terminatedAtRequired": "Nofaol xodim uchun ishdan bo'shash sanasi kerak",
     "terminatedBeforeHired": "Bo'shash sanasi qabul sanasidan oldin bo'lishi mumkin emas",
     "terminatedAtFuture": "Bo'shash sanasi kelajakda bo'lishi mumkin emas",
-    "selectAccountRequired": "Hisobni tanlang"
+    "selectAccountRequired": "Hisobni tanlang",
+    "statusEmployed": "Ishlamoqda",
+    "statusTerminated": "Bo'shatilgan",
+    "statusNotEmployed": "Ishlamaydi",
+    "detail": {
+      "periodAll": "Barchasi",
+      "periodToday": "Bugun",
+      "periodWeek": "Bu hafta",
+      "periodMonth": "Bu oy",
+      "periodCustom": "Tanlangan davr",
+      "period": "Davr",
+      "tenure": "Ishlagan davri",
+      "tenureMonths": "{count} oy",
+      "processedSales": "Rasmiylashtirgan savdolar",
+      "paidOut": "To'langan maoshlar",
+      "personnelDetails": "Kadr ma'lumotlari",
+      "payoutHistory": "To'lovlar tarixi",
+      "salesList": "Sotuvlar ro'yxati",
+      "note": "Izoh",
+      "saleCode": "Sotuv kodi",
+      "sheetProfile": "Xodim ma'lumotlari",
+      "colParameter": "Ko'rsatkich",
+      "colValue": "Qiymat"
+    },
+    "excel": {
+      "fullName": "F.I.Sh.",
+      "phone": "Telefon raqami",
+      "phoneTemplate": "Telefon raqami (ixtiyoriy, mavjud foydalanuvchi bilan bog'lash uchun)",
+      "salary": "Oylik maosh",
+      "hiredAt": "Ishga qabul qilingan sana",
+      "hiredAtTemplate": "Ishga qabul qilingan sana (YYYY-MM-DD)"
+    }
   },
   "procurement": {
     "payment": {
@@ -808,7 +1025,25 @@
     "balanceOwed": "Balans (Qarzimiz)",
     "supplierProfile": "Hamkor ma'lumotlari",
     "paymentHistory": "To'lovlar tarixi",
-    "purchaseInfo": "Xarid buyurtmasi ma'lumotlari"
+    "purchaseInfo": "Xarid buyurtmasi ma'lumotlari",
+    "scan": {
+      "analyzing": "AI tahlil qilmoqda...",
+      "supplierMatched": "Ta'minotchi aniqlandi: {name}",
+      "supplierNotFound": "Ta'minotchi aniqlandi ({name}), lekin tizimda bunday ta'minotchi topilmadi.",
+      "itemsFound": "{count} ta mahsulot aniqlandi",
+      "unknownProduct": "Noma'lum mahsulot",
+      "unmatchedProduct": "Tizimdagi tovar bilan bog'lanmagan: \"{name}\""
+    },
+    "detail": {
+      "colParameter": "Ko'rsatkich",
+      "colValue": "Qiymat",
+      "contact": "Kontakt",
+      "viewLargerMap": "Kattaroq xaritada ko'rish",
+      "website": "Veb-sayt"
+    },
+    "pinnedOnMap": "Xaritada belgilangan",
+    "viewOnMap": "Xaritada ko'rish",
+    "debtOwed": "Qarzimiz"
   },
   "analytics": {
     "title": "Hisobotlar",
@@ -1011,7 +1246,9 @@
       "advanced": "Qo'shimcha sozlamalar",
       "chatIdOptionalHint": "Ixtiyoriy. Bo'sh qoldiring — tizim botga yozilgan oxirgi chatni o'zi tanlaydi. Qo'lda kiritish uchun: guruh raqami (masalan -1001234567890) yoki @kanal_nomi.",
       "errorNoChatYet": "Hali hech kim botga yozmagan. Botni ochib \"Start\" bosing yoki uni guruhga qo'shing.",
-      "errorDetectFailed": "Manzilni aniqlab bo'lmadi"
+      "errorDetectFailed": "Manzilni aniqlab bo'lmadi",
+      "botLanguage": "Bot tili",
+      "botLanguageHint": "Bot xabarlarni (sotuv, buyurtma, qoldiq, obuna) shu tilda yuboradi. Til butun kompaniya chati uchun bitta."
     },
     "cannotChangeOwnAccess": "O'z rolingiz yoki holatingizni o'zgartira olmaysiz",
     "lastAdminError": "Oxirgi faol administratorni o'zgartirib bo'lmaydi",
@@ -1020,7 +1257,22 @@
   "tools": {
     "title": "Vositalar",
     "scanner": "AI Skaner",
-    "scannerDesc": "Sun'iy intellekt yordamida hujjatlardan ma'lumot ajratib olish"
+    "scannerDesc": "Sun'iy intellekt yordamida hujjatlardan ma'lumot ajratib olish",
+    "aiAnalyzing": "Sun'iy intellekt tahlil qilmoqda...",
+    "analyze": "Tahlil qilish (OCR)",
+    "analyzing": "Tahlil qilinmoqda...",
+    "copied": "Nusxalandi",
+    "copiedToast": "Nusxa olindi",
+    "copy": "Nusxa olish",
+    "documentImage": "Hujjat rasmi",
+    "imagesOnly": "Faqat rasm fayllari (JPG, PNG) qo'llab-quvvatlanadi",
+    "previewAlt": "Rasm ko'rinishi",
+    "result": "Natija",
+    "resultPlaceholder": "Natija bu yerda ko'rsatiladi",
+    "scanSuccess": "Hujjat muvaffaqiyatli tahlil qilindi",
+    "unexpectedResponse": "Serverdan kutilmagan javob qaytdi. Rasm hajmi yoki formati mos kelmadi.",
+    "uploadHint": "PNG, JPG, WEBP (maksimal 10 MB)",
+    "uploadPrompt": "Rasmni yuklang yoki bu yerga tashlang"
   },
   "pos": {
     "title": "POS",
@@ -1060,7 +1312,13 @@
     "thankYou": "Rahmat! Xaridingiz bilan tabriklaymiz.",
     "printedDirectly": "Chek printerga yuborildi",
     "productNotFound": "Mahsulot topilmadi",
-    "selectCustomerForDebt": "Qarzga sotish uchun mijozni tanlang!"
+    "selectCustomerForDebt": "Qarzga sotish uchun mijozni tanlang!",
+    "addedToCart": "\"{name}\" savatga qo'shildi",
+    "cartHint": "Mahsulotni bosing yoki SKU'ni skanerlang",
+    "debtNeedsCustomer": "Noma'lum mijozga qarzga sotib bo'lmaydi — mijozni tanlang",
+    "pickAddressOnMap": "Manzilni xaritadan belgilang",
+    "pickOnMap": "Xaritadan belgilash",
+    "pinnedOnMap": "Xaritada belgilangan"
   },
   "support": {
     "title": "Qo'llab-quvvatlash xizmati",
@@ -1079,9 +1337,43 @@
     "liveStatusDesc": "O'rtacha javob berish vaqti: 5 daqiqa",
     "yourAgent": "Sizning menejeringiz",
     "yourAgentHint": "Savollaringiz bo'yicha to'g'ridan-to'g'ri bog'lanishingiz mumkin",
-    "noAgent": "Sizga hali menejer biriktirilmagan"
+    "noAgent": "Sizga hali menejer biriktirilmagan",
+    "subjectMessageRequired": "Mavzu va xabar to'ldirilishi shart",
+    "copied": "{label} nusxalandi",
+    "ticketFormDesc": "Xabaringizni yozib qoldiring va biz tez orada siz bilan bog'lanamiz.",
+    "ticketReceived": "Murojaat qabul qilindi!",
+    "sendNewTicket": "Yangi murojaat yuborish",
+    "subjectPlaceholder": "Misol: To'lov tizimidagi muammo",
+    "messagePlaceholder": "Batafsil ma'lumot qoldiring...",
+    "sending": "Yuborilmoqda...",
+    "alwaysConnected": "Har doim aloqadamiz",
+    "premiumActive": "Premium qo'llab-quvvatlash faol",
+    "securityTitle": "Xavfsizlik kafolati",
+    "securityDesc": "Sizning barcha ma'lumotlaringiz va murojaatlaringiz shifrlangan holda yuboriladi va uchinchi shaxslarga berilmaydi."
   },
   "admin": {
+    "errors": {
+      "unauthorized": "Sessiya tugagan. Qaytadan kiring",
+      "invalid_input": "Kiritilgan ma'lumotlar noto'g'ri",
+      "weak_password": "Parol kamida 8 ta belgidan iborat bo'lishi kerak",
+      "invalid_phone": "Telefon raqami noto'g'ri",
+      "subdomain_reserved": "Bu subdomen band qilingan, boshqasini tanlang",
+      "tenant_not_found": "Kompaniya topilmadi",
+      "agent_not_found": "Support xodimi topilmadi",
+      "admin_not_found": "Administrator topilmadi",
+      "phone_taken": "Bu telefon raqami boshqa loginda ishlatilmoqda",
+      "email_taken": "Bu email boshqa loginda ishlatilmoqda",
+      "subdomain_or_phone_taken": "Bu subdomen yoki telefon raqami allaqachon band",
+      "service_key_missing": "Server sozlanmagan: SUPABASE_SERVICE_ROLE_KEY kiritilmagan",
+      "domains_unreadable": "Loyiha domenlarini o'qib bo'lmadi",
+      "domain_register_failed": "Domenni ro'yxatdan o'tkazib bo'lmadi",
+      "tenant_recently_active": "Kompaniya oxirgi 180 kun ichida faol bo'lgan, uni o'chirib bo'lmaydi",
+      "tenant_has_data": "Kompaniyada hali ma'lumotlar bor, uni o'chirib bo'lmaydi. Avval ma'lumotlarni o'chiring",
+      "cannot_remove_self": "O'z administrator hisobingizni o'chira olmaysiz",
+      "cannot_remove_last_admin": "Oxirgi qolgan super-adminni o'chirib bo'lmaydi",
+      "same_password": "Yangi parol eskisidan farq qilishi kerak",
+      "server_error": "Serverda xatolik yuz berdi. Qaytadan urinib ko'ring"
+    },
     "login": {
       "brandTitle": "ERP Admin",
       "brandSubtitle": "Super-admin konsoli",
@@ -1108,7 +1400,9 @@
       "payments": "To'lovlar",
       "security": "Xavfsizlik",
       "settings": "Sozlamalar",
-      "support": "Support"
+      "support": "Support",
+      "consoleSubtitle": "Platforma boshqaruvi",
+      "metaDescription": "Falco ERP super-admin konsoli — kompaniya hisoblarini boshqarish"
     },
     "tenants": {
       "title": "Kompaniyalar",
@@ -1254,7 +1548,7 @@
       "submit": "Yangilash",
       "success": "Parol yangilandi",
       "error": "Parolni yangilab bo'lmadi",
-      "tooShort": "Parol kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak"
+      "tooShort": "Parol kamida 8 ta belgidan iborat bo'lishi kerak"
     },
     "delete": {
       "button": "Kompaniyani o'chirish",
@@ -1330,7 +1624,7 @@
         "save": "Yangilash",
         "success": "Parol yangilandi",
         "error": "Parolni yangilab bo'lmadi",
-        "tooShort": "Parol kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak",
+        "tooShort": "Parol kamida 8 ta belgidan iborat bo'lishi kerak",
         "mismatch": "Parollar mos kelmadi",
         "currentPassword": "Joriy parol",
         "currentRequired": "Joriy parolni kiriting",
@@ -1352,7 +1646,7 @@
         "created": "Admin qo'shildi",
         "deleted": "Admin o'chirildi",
         "error": "Amalni bajarib bo'lmadi",
-        "passwordTooWeak": "Parol kamida 8 ta belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak"
+        "passwordTooWeak": "Parol kamida 8 ta belgidan iborat bo'lishi kerak"
       }
     },
     "accountRecovery": {
@@ -1406,7 +1700,9 @@
         "back": "Support ro'yxatiga qaytish",
         "assignedTenants": "Biriktirilgan tashkilotlar",
         "deleteAgent": "Support xodimini o'chirish",
-        "deleteConfirm": "Rostdan ham o'chirmoqchimisiz? Bu xodim login qila olmay qoladi."
+        "deleteConfirm": "Rostdan ham o'chirmoqchimisiz? Bu xodim login qila olmay qoladi.",
+        "deleteFailed": "O'chirib bo'lmadi",
+        "metaTitle": "Qo'llab-quvvatlash xodimi"
       },
       "message": {
         "title": "{name} uchun xabar",
@@ -1415,7 +1711,10 @@
         "subjectPlaceholder": "Masalan: Yangi tashkilot biriktirildi",
         "body": "Xabar matni",
         "bodyPlaceholder": "Xabaringizni yozing…",
-        "send": "Yuborish"
+        "send": "Yuborish",
+        "messageRequired": "Mavzu (kamida 3 belgi) va xabar matnini kiriting",
+        "sendFailed": "Xabarni yuborib bo'lmadi",
+        "sent": "Xabar yuborildi"
       }
     }
   },
@@ -1464,7 +1763,8 @@
     "assignedTenantsHeading": "Sizga biriktirilgan tashkilotlar",
     "noAssignedTenants": "Sizga hali hech qanday tashkilot biriktirilmagan",
     "logout": "Chiqish",
-    "conversationsHeading": "Suhbatlar"
+    "conversationsHeading": "Suhbatlar",
+    "metaDescription": "Falco ERP qo'llab-quvvatlash xodimlari portali"
   },
   "supportChat": {
     "myTickets": "Mening murojaatlarim",
@@ -1572,7 +1872,7 @@
         },
         {
           "title": "Parol talablari",
-          "text": "Yangi parol kamida 8 ta belgidan iborat bo'lishi, katta harf, kichik harf va raqamni o'z ichiga olishi shart. Faqat raqamdan iborat parol qabul qilinmaydi."
+          "text": "Yangi parol kamida 8 ta belgidan iborat bo'lishi shart. Faqat raqamlardan iborat parol ham qabul qilinadi."
         },
         {
           "title": "Til va ma'lumotlarning yangilanishi",
@@ -1891,7 +2191,7 @@
           "Ro'yxatdan xodimga bosib, uning ma'lumotlari va to'lovlar tarixini ko'ring."
         ],
         "tips": [
-          "Parol kamida 8 belgi, katta-kichik harf va raqamdan iborat bo'lishi kerak.",
+          "Parol kamida 8 belgidan iborat bo'lishi kerak.",
           "Ishdan bo'shagan xodimni o'chirmang — nofaol qiling, shunda uning tarixi saqlanadi.",
           "Maosh to'lovlari Moliya → Kassa bo'limida chiqim sifatida kiritiladi."
         ]
@@ -1957,7 +2257,7 @@
           },
           {
             "q": "Parolimni unutdim, nima qilay?",
-            "a": "Kompaniyangiz administratoriga murojaat qiling: u Sozlamalar → Foydalanuvchilar bo'limidan sizga yangi parol o'rnatib beradi. Yangi parol kamida 8 belgi, katta-kichik harf va raqamdan iborat bo'lishi shart — faqat raqamdan iborat parol qabul qilinmaydi."
+            "a": "Kompaniyangiz administratoriga murojaat qiling: u Sozlamalar → Foydalanuvchilar bo'limidan sizga yangi parol o'rnatib beradi. Yangi parol kamida 8 belgidan iborat bo'lishi shart."
           },
           {
             "q": "Tezkor qidiruvdan qanday foydalanaman?",
@@ -2280,6 +2580,13 @@
         "profit": "Sof foyda",
         "quantity": "Sotilgan birliklar"
       }
+    },
+    "typeValue": {
+      "income": "Kirim",
+      "expense": "Chiqim",
+      "in": "Kirim",
+      "out": "Chiqim",
+      "adjustment": "Tuzatish"
     }
   },
   "offline": {
@@ -2291,5 +2598,80 @@
     "syncFailed": "Sinxronlash muvaffaqiyatsiz",
     "retry": "Qayta urinish",
     "blocked": "{count} ta o'zgarish rad etildi, tekshirish kerak"
+  },
+  "errors": {
+    "unauthorized": "Sessiya tugagan. Qaytadan kiring",
+    "forbidden": "Bu amalni bajarishga ruxsatingiz yo'q",
+    "not_found": "Yozuv topilmadi",
+    "invalid_input": "Kiritilgan ma'lumotlar noto'g'ri",
+    "value_too_long": "Kiritilgan qiymat juda uzun",
+    "duplicate": "Bunday yozuv allaqachon mavjud",
+    "in_use": "Bu yozuv boshqa joyda ishlatilmoqda, uni o'chirib yoki o'zgartirib bo'lmaydi",
+    "network": "Serverga ulanib bo'lmadi. Internetni tekshiring",
+    "server_error": "Serverda xatolik yuz berdi. Qaytadan urinib ko'ring",
+    "weak_password": "Parol kamida 8 ta belgidan iborat bo'lishi kerak",
+    "same_password": "Yangi parol eskisidan farq qilishi kerak",
+    "too_many_attempts": "Urinishlar soni juda ko'p. Birozdan keyin qayta urinib ko'ring",
+    "employee_not_paid": "Tizimga kirish faqat pullik xodimlarga beriladi",
+    "invalid_role_template": "Tanlangan rol topilmadi. Sahifani yangilab, qaytadan tanlang",
+    "phone_taken": "Bu telefon raqami boshqa loginda ishlatilmoqda",
+    "last_admin": "Kompaniyada kamida bitta faol administrator qolishi kerak",
+    "cannot_change_own_access": "O'zingizning rolingiz yoki faolligingizni o'zgartira olmaysiz",
+    "cannot_reset_own_password": "O'z parolingizni Xavfsizlik bo'limida o'zgartiring",
+    "user_not_found": "Foydalanuvchi topilmadi",
+    "report_failed": "Hisobotni tuzib bo'lmadi. Qaytadan urinib ko'ring",
+    "image_file_missing": "Rasm fayli yuklanmagan",
+    "image_too_large": "Rasm hajmi juda katta (maksimal 10 MB)",
+    "image_type_unsupported": "Bu fayl turi qo'llab-quvvatlanmaydi. JPG, PNG, WEBP yoki HEIC rasm yuklang",
+    "image_unreadable": "Rasmdan ma'lumotlarni o'qib bo'lmadi"
+  },
+  "telegram": {
+    "checking": "Tekshirilmoqda…",
+    "opening": "Ochilmoqda…",
+    "openInTelegram": "Telegram ichida oching",
+    "errorTitle": "Xatolik",
+    "worksAsMiniApp": "Bu sahifa Telegram Mini App sifatida ishlaydi.",
+    "hintBrowser": "Brauzerda emas, Telegram ichidan oching.",
+    "hintWebAppButton": "Botdagi tugma <b>Web App</b> turida bo'lishi kerak. Oddiy havola (<code>url</code>) tugmasi brauzerni ochadi va Mini App hisoblanmaydi.",
+    "hintBotFather": "BotFather → <code>/newapp</code> orqali Mini App qo'shilgan bo'lishi kerak.",
+    "notConfigured": "Mini App hali sozlanmagan (TELEGRAM_MINIAPP_BOT_TOKEN yo'q).",
+    "signatureInvalid": "Telegram imzosi tekshiruvdan o'tmadi.",
+    "tenantInactive": "Tashkilot hisobi faol emas. Administrator bilan bog'laning.",
+    "serverUnreachable": "Serverga ulanib bo'lmadi.",
+    "fillPhonePassword": "Telefon va parolni to'ldiring",
+    "invalidCredentials": "Telefon yoki parol noto'g'ri",
+    "tooManyAttempts": "Juda ko'p muvaffaqiyatsiz urinish. {minutes} daqiqadan so'ng qayta urinib ko'ring.",
+    "alreadyLinked": "Bu hisob boshqa Telegram akkauntiga bog'langan",
+    "noTenant": "Hisobingiz hech qaysi tashkilotga biriktirilmagan",
+    "genericError": "Xatolik yuz berdi",
+    "greeting": "Salom, {name}!",
+    "linkAccount": "Hisobni bog'lash",
+    "linkDescription": "Telegram akkauntingizni ERP hisobingizga bir marta bog'lang. Keyingi safar parol so'ralmaydi.",
+    "phone": "Telefon raqam",
+    "password": "Parol",
+    "showPassword": "Parolni ko'rsatish",
+    "hidePassword": "Parolni yashirish",
+    "linkAndSignIn": "Bog'lash va kirish"
+  },
+  "telegramBot": {
+    "newSale": "Yangi sotuv: <b>{order}</b>",
+    "newOrder": "Yangi buyurtma: <b>{order}</b>",
+    "amount": "Summa: <b>{amount}</b>",
+    "payment": "To'lov: {method}",
+    "payment_cash": "Naqd",
+    "payment_card": "Karta",
+    "payment_transfer": "O'tkazma",
+    "payment_debt": "Qarz",
+    "items": "Mahsulotlar: {count} ta",
+    "customer": "Mijoz: {name}",
+    "lowStock": "Zaxira tugayapti: <b>{product}</b>",
+    "sku": "SKU: {sku}",
+    "stockLeft": "Qoldiq: <b>{stock}</b> (minimal: {min})",
+    "debtPaid": "Qarz to'landi: <b>{customer}</b>",
+    "subscriptionToday": "Obuna <b>bugun</b> tugaydi.",
+    "subscriptionDaysLeft": "Obuna tugashiga <b>{days} kun</b> qoldi.",
+    "subscriptionEndsOn": "Tugash sanasi: <b>{date}</b>",
+    "subscriptionStop": "To'lov qilinmasa, tizimdan foydalanish to'xtatiladi.",
+    "testConnected": "Telegram integratsiyasi muvaffaqiyatli ulandi."
   }
 }

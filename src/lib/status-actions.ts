@@ -36,7 +36,7 @@ export async function setOrderStatus(
   if (result !== RPC_MISSING) return
   // Pre-migration fallback.
   const { error } = await supabase.from('sales_orders').update({ status }).eq('id', orderId)
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message, { cause: error })
 }
 
 export type SaleCashboxType = 'cash' | 'card' | 'transfer'
@@ -81,7 +81,7 @@ export async function returnLinesToStock(
     .from('products')
     .select('id, stock')
     .in('id', productIds)
-  if (freshError) throw new Error(freshError.message)
+  if (freshError) throw new Error(freshError.message, { cause: freshError })
 
   const stockById = new Map<string, number>(
     (fresh ?? []).map((p: { id: string; stock: number }) => [p.id, Number(p.stock) || 0])
@@ -125,8 +125,8 @@ export async function returnLinesToStock(
             created_by: userId,
           }),
         ])
-        if (stockError) throw new Error(stockError.message)
-        if (movementError) throw new Error(movementError.message)
+        if (stockError) throw new Error(stockError.message, { cause: stockError })
+        if (movementError) throw new Error(movementError.message, { cause: movementError })
 
         if (unitCost != null) {
           await recordCostLayer(supabase, {
@@ -198,7 +198,7 @@ export async function cancelSalesOrder(
     // hand, so a deploy can land before it. Fall back to the browser path
     // until it is applied — then this branch and the function below can go.
     if (error.code === 'PGRST202') return cancelSalesOrderInBrowser(supabase, order, userId)
-    throw new Error(error.message)
+    throw new Error(error.message, { cause: error })
   }
 
   const result = data as {
@@ -258,10 +258,10 @@ async function cancelSalesOrderInBrowser(
       .eq('reference_id', order.id)
       .eq('type', 'income'),
   ])
-  if (orderError) throw new Error(orderError.message)
-  if (itemsError) throw new Error(itemsError.message)
-  if (invoicesError) throw new Error(invoicesError.message)
-  if (txError) throw new Error(txError.message)
+  if (orderError) throw new Error(orderError.message, { cause: orderError })
+  if (itemsError) throw new Error(itemsError.message, { cause: itemsError })
+  if (invoicesError) throw new Error(invoicesError.message, { cause: invoicesError })
+  if (txError) throw new Error(txError.message, { cause: txError })
   if (fullOrder.status === 'cancelled') throw new SaleCancelError('already_cancelled')
 
   const orderNumber = fullOrder.order_number ?? order.order_number ?? ''
@@ -301,7 +301,7 @@ async function cancelSalesOrderInBrowser(
     .eq('id', order.id)
     .neq('status', 'cancelled')
     .select('id')
-  if (statusError) throw new Error(statusError.message)
+  if (statusError) throw new Error(statusError.message, { cause: statusError })
   if (!claimed?.length) throw new SaleCancelError('already_cancelled')
 
   // Money first: it is the one step that can still refuse (someone took money
@@ -314,7 +314,7 @@ async function cancelSalesOrderInBrowser(
       .eq('reference_type', 'sales_orders')
       .eq('reference_id', order.id)
       .eq('type', 'income')
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message, { cause: error })
   }
 
   // The rest don't depend on each other: goods back on the shelf, the
@@ -334,12 +334,12 @@ async function cancelSalesOrderInBrowser(
         .select('credit_balance')
         .eq('id', fullOrder.customer_id)
         .single()
-      if (readError) throw new Error(readError.message)
+      if (readError) throw new Error(readError.message, { cause: readError })
       const { error: creditError } = await supabase
         .from('customers')
         .update({ credit_balance: (Number(customer?.credit_balance) || 0) + creditToRestore })
         .eq('id', fullOrder.customer_id)
-      if (creditError) throw new Error(creditError.message)
+      if (creditError) throw new Error(creditError.message, { cause: creditError })
     })(),
     (async () => {
       if (liveInvoices.length === 0) return
@@ -347,7 +347,7 @@ async function cancelSalesOrderInBrowser(
         .from('invoices')
         .update({ status: 'cancelled' })
         .in('id', liveInvoices.map((inv) => inv.id))
-      if (invoiceError) throw new Error(invoiceError.message)
+      if (invoiceError) throw new Error(invoiceError.message, { cause: invoiceError })
     })(),
   ])
 
@@ -368,5 +368,5 @@ export async function setInvoiceStatus(
   if (result !== RPC_MISSING) return
   // Pre-migration fallback.
   const { error } = await supabase.from('invoices').update({ status }).eq('id', invoiceId)
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(error.message, { cause: error })
 }

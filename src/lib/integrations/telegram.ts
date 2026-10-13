@@ -1,6 +1,7 @@
 import 'server-only'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import type { TelegramStatus } from '@/lib/integrations/telegram-types'
+import { getTranslations } from 'next-intl/server'
+import { normaliseTelegramLanguage, type TelegramLanguage, type TelegramStatus } from '@/lib/integrations/telegram-types'
 
 /**
  * Telegram Bot API integration.
@@ -29,6 +30,8 @@ export interface TelegramSettings {
   telegram_enabled: boolean
   telegram_events: Partial<Record<TelegramEvent, boolean>>
   telegram_linked_at: string | null
+  /** Absent until supabase/migration_telegram_language.sql has run. */
+  telegram_language?: string | null
 }
 
 export interface TelegramBotInfo {
@@ -198,7 +201,10 @@ export async function getTelegramSettings(tenantId: string): Promise<TelegramSet
   const supabase = getCacheClient() as any
   const { data } = await supabase
     .from('integration_settings')
-    .select('telegram_bot_token, telegram_chat_id, telegram_bot_username, telegram_enabled, telegram_events, telegram_linked_at')
+    // `*` rather than a column list: `telegram_language` only exists once
+    // migration_telegram_language.sql has run, and naming a missing column
+    // would make this read — and with it every notification — fail.
+    .select('*')
     .eq('tenant_id', tenantId)
     .maybeSingle()
   return (data as TelegramSettings) ?? null
@@ -229,7 +235,24 @@ export async function getTelegramStatus(tenantId: string): Promise<TelegramStatu
     tokenHint: maskToken(settings?.telegram_bot_token),
     events: settings?.telegram_events ?? {},
     linkedAt: settings?.telegram_linked_at ?? null,
+    language: normaliseTelegramLanguage(settings?.telegram_language),
   }
+}
+
+/** The company's chosen bot language ('uz' when none is set). */
+export async function getTelegramLanguage(tenantId: string): Promise<TelegramLanguage> {
+  const settings = await getTelegramSettings(tenantId)
+  return normaliseTelegramLanguage(settings?.telegram_language)
+}
+
+/**
+ * The translator for the company's bot messages (`telegramBot.*`), in the
+ * language the company picked for its bot — the chat is the company's, so it
+ * is never the language of whichever user triggered the message.
+ */
+export async function getBotTranslator(tenantId: string) {
+  const locale = await getTelegramLanguage(tenantId)
+  return getTranslations({ locale, namespace: 'telegramBot' })
 }
 
 /**

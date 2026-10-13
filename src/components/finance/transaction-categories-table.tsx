@@ -53,7 +53,7 @@ export function TransactionCategoriesTable({ categories, lang, page, pageSize, t
     const { error } = await supabase.from('transaction_categories').delete().eq('id', id)
     if (error) {
       if ((error as any).code === '23503') {
-        toast.error(lang === 'uz' ? "Bu kategoriyada tranzaksiyalar mavjud, o'chirib bo'lmaydi" : lang === 'ru' ? 'В этой категории есть транзакции, удалить нельзя' : 'This category has transactions and cannot be deleted')
+        toast.error(t('categoryHasTransactions'))
       } else {
         toast.error(tCommon('error'))
       }

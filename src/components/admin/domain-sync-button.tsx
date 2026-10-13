@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Globe, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 /**
  * Registers any tenant host the hosting platform is not serving yet.
@@ -20,6 +21,7 @@ import { Button } from '@/components/ui/button'
  * addresses simply do not open until it does (see POST /api/admin/domains).
  */
 export function DomainSyncButton() {
+  const tErrors = useTranslations('admin.errors')
   const t = useTranslations('admin.tenants')
   const [isSyncing, setIsSyncing] = useState(false)
 
@@ -30,7 +32,7 @@ export function DomainSyncButton() {
       const data = await response.json().catch(() => null)
 
       if (!response.ok) {
-        toast.error(data?.error || t('domainsFailed'))
+        toast.error(adminErrorMessage(tErrors, data, t('domainsFailed')))
       } else if (data?.configured === false) {
         // Names the settings that are actually missing — "the token" was the
         // wrong answer whenever it was the project id that had not arrived.

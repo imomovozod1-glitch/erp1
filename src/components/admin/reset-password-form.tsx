@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { isStrongPassword } from '@/lib/password-validation'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 export function ResetPasswordForm({ tenantId }: { tenantId: string }) {
+  const tErrors = useTranslations('admin.errors')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const t = useTranslations('admin.resetPassword')
@@ -33,7 +35,7 @@ export function ResetPasswordForm({ tenantId }: { tenantId: string }) {
       })
       const json = await res.json()
       if (!res.ok) {
-        toast.error(json.error || t('error'))
+        toast.error(adminErrorMessage(tErrors, json, t('error')))
         return
       }
       toast.success(t('success'))

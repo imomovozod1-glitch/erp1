@@ -4,11 +4,13 @@ import { z } from 'zod'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
+import { zodErrorCode, isDuplicateLoginError } from '@/lib/admin-errors'
+import { adminServerError } from '@/lib/admin-errors-server'
 
 const createAdminSchema = z.object({
   full_name: z.string().min(1),
   email: z.string().email(),
-  password: newPasswordSchema('Password does not meet strength requirements'),
+  password: newPasswordSchema('weak_password'),
 })
 
 /**
@@ -19,12 +21,12 @@ const createAdminSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const body = await request.json().catch(() => null)
   const parsed = createAdminSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: zodErrorCode(parsed.error) }, { status: 400 })
   }
   const input = parsed.data
 
@@ -37,10 +39,8 @@ export async function POST(request: NextRequest) {
     user_metadata: { full_name: input.full_name },
   })
   if (authError || !authData?.user) {
-    const message = authError?.message?.includes('already registered')
-      ? 'This email is already in use'
-      : authError?.message || 'Failed to create login'
-    return NextResponse.json({ error: message }, { status: 400 })
+    if (isDuplicateLoginError(authError)) return NextResponse.json({ error: 'email_taken' }, { status: 400 })
+    return adminServerError(authError)
   }
 
   const { data: admin, error: adminError } = await supabase
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     // Roll back the auth user so a failed insert never leaves an orphaned
     // login with no matching super_admins row.
     await supabase.auth.admin.deleteUser(authData.user.id)
-    return NextResponse.json({ error: adminError.message }, { status: 400 })
+    return adminServerError(adminError)
   }
 
   // getStaffIdentity() caches who is staff for five minutes (src/lib/admin-auth.ts)

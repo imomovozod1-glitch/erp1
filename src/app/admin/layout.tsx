@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
-import { getLocale, getMessages } from 'next-intl/server'
+import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ThemeProvider } from '@/components/providers/theme-provider'
@@ -12,12 +12,15 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Admin · Falco ERP',
-    template: '%s | Admin · Falco ERP',
-  },
-  description: 'Falco ERP super-admin console — tenant account management',
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.shell')
+  return {
+    title: {
+      default: 'Admin · Falco ERP',
+      template: '%s | Admin · Falco ERP',
+    },
+    description: t('metaDescription'),
+  }
 }
 
 export default async function AdminRootLayout({

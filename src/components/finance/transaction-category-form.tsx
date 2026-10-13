@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -20,6 +21,7 @@ interface TransactionCategoryFormProps {
 }
 
 export function TransactionCategoryForm({ initialData, lang }: TransactionCategoryFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('finance')
   const exitForm = useRouteModalExit(`/${lang}/finance/categories`)
@@ -69,7 +71,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
       await invalidateTransactionCategories()
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }
@@ -82,7 +84,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
         <Input
           id="name"
           {...register('name')}
-          placeholder={lang === 'uz' ? "Masalan: Ofis xarajatlari" : lang === 'ru' ? 'Например: Офисные расходы' : 'e.g. Office expenses'}
+          placeholder={t('txCategoryNamePlaceholder')}
         />
         {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
       </div>

@@ -4,7 +4,10 @@ import { PageHeader } from '@/components/shared/page-header'
 import { SupportAgentsTable, type SupportAgentRow } from '@/components/admin/support-agents-table'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 
-export const metadata: Metadata = { title: 'Support' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.support')
+  return { title: t('title') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function AdminSupportPage() {

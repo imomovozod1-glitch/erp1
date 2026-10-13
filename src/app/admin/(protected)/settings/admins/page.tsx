@@ -7,7 +7,10 @@ import { PageHeader } from '@/components/shared/page-header'
 import { SettingsTabs } from '@/components/admin/settings-tabs'
 import { SuperAdminsTable, type SuperAdminRow } from '@/components/admin/super-admins-table'
 
-export const metadata: Metadata = { title: 'Admins' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.settings')
+  return { title: t('tabs.admins') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function AdminSettingsAdminsPage() {

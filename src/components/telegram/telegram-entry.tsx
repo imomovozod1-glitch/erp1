@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { NextIntlClientProvider, useTranslations, type AbstractIntlMessages } from 'next-intl'
 import { retryAfterMinutes } from '@/lib/login-lock'
 import { toast } from 'sonner'
 import { Loader2, LogIn, ShieldCheck, TriangleAlert } from 'lucide-react'
@@ -27,6 +28,7 @@ import { PhoneInput } from '@/components/ui/phone-input'
 
 interface TelegramWebApp {
   initData: string
+  initDataUnsafe?: { user?: { language_code?: string } }
   colorScheme?: 'light' | 'dark'
   themeParams?: Record<string, string>
   ready: () => void
@@ -40,6 +42,21 @@ declare global {
 }
 
 type Stage = 'checking' | 'link' | 'redirecting' | 'unavailable' | 'error'
+
+export type TelegramLocale = 'uz' | 'ru' | 'en'
+
+/**
+ * The Mini App has no `[lang]` segment and no cookie of its own, so its
+ * language is the one the user set in Telegram (`language_code`, an IETF tag
+ * such as "ru" or "en-US"). Anything we don't ship falls back to Uzbek, the
+ * app's default locale.
+ */
+function telegramLocale(languageCode: string | undefined): TelegramLocale {
+  const base = languageCode?.toLowerCase().split('-')[0]
+  return base === 'ru' || base === 'en' || base === 'uz' ? base : 'uz'
+}
+
+type ErrorStage = { key: 'notConfigured' | 'signatureInvalid' | 'tenantInactive' | 'serverUnreachable' }
 
 const SDK_URL = 'https://telegram.org/js/telegram-web-app.js'
 
@@ -79,9 +96,24 @@ async function resolveWebApp(timeoutMs = 4000): Promise<TelegramWebApp | null> {
   return window.Telegram?.WebApp?.initData ? window.Telegram.WebApp : null
 }
 
-export function TelegramEntry() {
+/**
+ * Wraps the entry screen in next-intl. The layout hands over the (small)
+ * `telegram` namespace for all three locales, because the language is only
+ * known once the Telegram SDK has loaded in the browser.
+ */
+export function TelegramEntry({ messages }: { messages: Record<TelegramLocale, AbstractIntlMessages> }) {
+  const [locale, setLocale] = useState<TelegramLocale>('uz')
+  return (
+    <NextIntlClientProvider locale={locale} messages={messages[locale]} timeZone="Asia/Tashkent">
+      <TelegramEntryScreen onLocale={setLocale} />
+    </NextIntlClientProvider>
+  )
+}
+
+function TelegramEntryScreen({ onLocale }: { onLocale: (locale: TelegramLocale) => void }) {
+  const t = useTranslations('telegram')
   const [stage, setStage] = useState<Stage>('checking')
-  const [message, setMessage] = useState<string | null>(null)
+  const [message, setMessage] = useState<ErrorStage['key'] | null>(null)
   const [telegramName, setTelegramName] = useState<string | null>(null)
   const [initData, setInitData] = useState('')
 
@@ -137,6 +169,10 @@ export function TelegramEntry() {
         return
       }
 
+      const locale = telegramLocale(webApp.initDataUnsafe?.user?.language_code)
+      onLocale(locale)
+      document.documentElement.lang = locale
+
       webApp.ready()
       webApp.expand()
       if (webApp.colorScheme === 'dark') document.documentElement.classList.add('dark')
@@ -152,16 +188,14 @@ export function TelegramEntry() {
         if (!res.ok) {
           setStage('error')
           setMessage(
-            json.error === 'no_bot_token'
-              ? 'Mini App hali sozlanmagan (TELEGRAM_MINIAPP_BOT_TOKEN yo‘q).'
-              : 'Telegram imzosi tekshiruvdan o‘tmadi.'
+            json.error === 'no_bot_token' ? 'notConfigured' : 'signatureInvalid'
           )
           return
         }
         if (json.linked) {
           if (json.tenantStatus && json.tenantStatus !== 'active') {
             setStage('error')
-            setMessage('Tashkilot hisobi faol emas. Administrator bilan bog‘laning.')
+            setMessage('tenantInactive')
             return
           }
           goToApp(json.subdomain)
@@ -171,20 +205,20 @@ export function TelegramEntry() {
         setStage('link')
       } catch {
         setStage('error')
-        setMessage('Serverga ulanib bo‘lmadi.')
+        setMessage('serverUnreachable')
       }
     }, 0)
     return () => {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [goToApp])
+  }, [goToApp, onLocale])
 
   const handleLink = async (e: React.SubmitEvent) => {
     e.preventDefault()
     if (isSubmitting) return
     if (!phone.trim() || password.length < 6) {
-      toast.error('Telefon va parolni to‘ldiring')
+      toast.error(t('fillPhonePassword'))
       return
     }
     setIsSubmitting(true)
@@ -196,19 +230,27 @@ export function TelegramEntry() {
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const messages: Record<string, string> = {
-          invalid_credentials: 'Telefon yoki parol noto‘g‘ri',
-          too_many_attempts: `Juda ko‘p muvaffaqiyatsiz urinish. ${retryAfterMinutes(json.retryAfterSeconds)} daqiqadan so‘ng qayta urinib ko‘ring.`,
-          already_linked: 'Bu hisob boshqa Telegram akkauntiga bog‘langan',
-          no_tenant: 'Hisobingiz hech qaysi tashkilotga biriktirilmagan',
-          tenant_blocked: 'Tashkilot hisobi faol emas. Administrator bilan bog‘laning.',
+        const messages: Record<string, () => string> = {
+          invalid_credentials: () => t('invalidCredentials'),
+          too_many_attempts: () => t('tooManyAttempts', { minutes: retryAfterMinutes(json.retryAfterSeconds) }),
+          already_linked: () => t('alreadyLinked'),
+          no_tenant: () => t('noTenant'),
+          tenant_blocked: () => t('tenantInactive'),
+          invalid_input: () => t('fillPhonePassword'),
+          // A bad or stale signature is answered before the password is
+          // even checked; the same wording as the first screen.
+          missing: () => t('signatureInvalid'),
+          malformed: () => t('signatureInvalid'),
+          bad_signature: () => t('signatureInvalid'),
+          expired: () => t('signatureInvalid'),
+          no_bot_token: () => t('notConfigured'),
         }
-        toast.error(messages[json.error] ?? 'Xatolik yuz berdi')
+        toast.error(messages[json.error]?.() ?? t('genericError'))
         return
       }
       goToApp(json.subdomain, json.url)
     } catch {
-      toast.error('Serverga ulanib bo‘lmadi')
+      toast.error(t('serverUnreachable'))
     } finally {
       setIsSubmitting(false)
     }
@@ -218,7 +260,7 @@ export function TelegramEntry() {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-muted-foreground">
         <Loader2 className="h-7 w-7 animate-spin text-violet-600" />
-        <p className="text-sm">{stage === 'redirecting' ? 'Ochilmoqda…' : 'Tekshirilmoqda…'}</p>
+        <p className="text-sm">{stage === 'redirecting' ? t('opening') : t('checking')}</p>
       </div>
     )
   }
@@ -228,31 +270,31 @@ export function TelegramEntry() {
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
         <TriangleAlert className="h-9 w-9 text-amber-500" />
         <h1 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-          {stage === 'unavailable' ? 'Telegram ichida oching' : 'Xatolik'}
+          {stage === 'unavailable' ? t('openInTelegram') : t('errorTitle')}
         </h1>
         <div className="max-w-sm space-y-3 text-sm text-muted-foreground">
           {stage === 'unavailable' ? (
             <>
-              <p>Bu sahifa Telegram Mini App sifatida ishlaydi.</p>
+              <p>{t('worksAsMiniApp')}</p>
               {/* The two things that actually cause this, in the order they
                   happen in practice — a plain browser tab, or a bot button of
                   the wrong type. A `url` button opens the system browser and
                   never creates a Mini App context, so initData stays empty. */}
               <ul className="space-y-1.5 text-left text-xs">
-                <li>• Brauzerda emas, Telegram ichidan oching.</li>
+                <li>• {t('hintBrowser')}</li>
                 <li>
-                  • Botdagi tugma <b>Web App</b> turida bo‘lishi kerak. Oddiy
-                  havola (<code>url</code>) tugmasi brauzerni ochadi va Mini App
-                  hisoblanmaydi.
+                  • {t.rich('hintWebAppButton', {
+                    b: (chunks) => <b>{chunks}</b>,
+                    code: (chunks) => <code>{chunks}</code>,
+                  })}
                 </li>
                 <li>
-                  • BotFather → <code>/newapp</code> orqali Mini App qo‘shilgan
-                  bo‘lishi kerak.
+                  • {t.rich('hintBotFather', { code: (chunks) => <code>{chunks}</code> })}
                 </li>
               </ul>
             </>
           ) : (
-            <p>{message}</p>
+            <p>{message ? t(message) : t('genericError')}</p>
           )}
         </div>
       </div>
@@ -267,31 +309,32 @@ export function TelegramEntry() {
             <ShieldCheck className="h-6 w-6" />
           </div>
           <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {telegramName ? `Salom, ${telegramName}!` : 'Hisobni bog‘lash'}
+            {telegramName ? t('greeting', { name: telegramName }) : t('linkAccount')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Telegram akkauntingizni ERP hisobingizga bir marta bog‘lang. Keyingi
-            safar parol so‘ralmaydi.
+            {t('linkDescription')}
           </p>
         </div>
 
         <form onSubmit={handleLink} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="tg-phone">Telefon raqam</Label>
+            <Label htmlFor="tg-phone">{t('phone')}</Label>
             <PhoneInput id="tg-phone" value={phone} onChange={setPhone} placeholder="90 123 45 67" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="tg-password">Parol</Label>
+            <Label htmlFor="tg-password">{t('password')}</Label>
             <PasswordInput
               id="tg-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              showLabel={t('showPassword')}
+              hideLabel={t('hidePassword')}
             />
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-            Bog‘lash va kirish
+            {t('linkAndSignIn')}
           </Button>
         </form>
       </div>

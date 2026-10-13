@@ -7,49 +7,37 @@
  * pattern-match the known templates and localize them, preserving any
  * interpolated order number/supplier name. Shared between product-detail-client.tsx
  * and movements-table.tsx so both stay in sync with the same mapping.
+ *
+ * `t` is the `inventory` translator; the texts live under
+ * `inventory.movementReasons.*`. Anything unrecognised is shown as written.
  */
-export function translateMovementReason(reason: string | null | undefined, lang: string): string {
+type InventoryTranslator = (key: any, values?: any) => string
+
+const FIXED_REASONS: Record<string, string> = {
+  'Manual adjustment in product form': 'movementReasons.manualAdjustment',
+  'Initial stock on product creation': 'movementReasons.initialStock',
+  'POS Sale': 'movementReasons.posSale',
+  'Excel import': 'movementReasons.excelImport',
+  'AI stock scanner — new product': 'movementReasons.aiScan',
+}
+
+export function translateMovementReason(reason: string | null | undefined, t: InventoryTranslator): string {
   if (!reason) return '—'
-  if (reason === 'Manual adjustment in product form') {
-    return lang === 'uz' ? "Mahsulot shaklida qo'lda tuzatish" : lang === 'ru' ? 'Ручная корректировка в форме товара' : reason
-  }
-  if (reason === 'Initial stock on product creation') {
-    return lang === 'uz' ? "Mahsulot yaratilganda boshlang'ich zaxira" : lang === 'ru' ? 'Начальный запас при создании товара' : reason
-  }
-  if (reason === 'POS Sale') {
-    return lang === 'uz' ? 'POS sotuvi' : lang === 'ru' ? 'Продажа через POS' : reason
-  }
-  if (reason === 'Excel import') {
-    return lang === 'uz' ? 'Exceldan yuklandi' : lang === 'ru' ? 'Импорт из Excel' : reason
-  }
-  if (reason === 'AI stock scanner — new product') {
-    return lang === 'uz' ? 'AI skaner — yangi mahsulot' : lang === 'ru' ? 'AI-сканер — новый товар' : reason
-  }
+  const fixed = FIXED_REASONS[reason]
+  if (fixed) return t(fixed)
   if (reason.startsWith('Sale ')) {
-    const orderNumber = reason.slice('Sale '.length)
-    return lang === 'uz' ? `Sotuv ${orderNumber}` : lang === 'ru' ? `Продажа ${orderNumber}` : reason
+    return t('movementReasons.sale', { number: reason.slice('Sale '.length) })
   }
   // Written by cancel_production_order — checked before the 'Production '
   // prefix below, which it also starts with.
   if (reason.startsWith('Production cancelled ')) {
-    const orderNumber = reason.slice('Production cancelled '.length)
-    return lang === 'uz'
-      ? `Ishlab chiqarish bekor qilindi ${orderNumber}`
-      : lang === 'ru'
-      ? `Производство отменено ${orderNumber}`
-      : reason
+    return t('movementReasons.productionCancelled', { number: reason.slice('Production cancelled '.length) })
   }
   if (reason.startsWith('Production ')) {
-    const orderNumber = reason.slice('Production '.length)
-    return lang === 'uz'
-      ? `Ishlab chiqarish ${orderNumber}`
-      : lang === 'ru'
-      ? `Производство ${orderNumber}`
-      : reason
+    return t('movementReasons.production', { number: reason.slice('Production '.length) })
   }
   if (reason.startsWith('Purchase from ')) {
-    const supplier = reason.slice('Purchase from '.length)
-    return lang === 'uz' ? `Xarid: ${supplier}` : lang === 'ru' ? `Закупка: ${supplier}` : reason
+    return t('movementReasons.purchase', { supplier: reason.slice('Purchase from '.length) })
   }
   return reason
 }

@@ -28,28 +28,19 @@ interface ProductDetailClientProps {
   nextSaleCost?: number | null
 }
 
-const SOURCE_TYPE_LABELS: Record<string, { uz: string; ru: string; en: string }> = {
-  purchase_order: { uz: 'Xarid', ru: 'Закупка', en: 'Purchase order' },
-  initial_stock: { uz: "Boshlang'ich zaxira", ru: 'Начальный запас', en: 'Initial stock' },
-  adjustment: { uz: "Qo'lda tuzatish", ru: 'Ручная корректировка', en: 'Adjustment' },
-  ai_scan: { uz: 'AI skaner', ru: 'AI-сканер', en: 'AI scan' },
-  opening_balance: { uz: 'Boshlang\'ich qoldiq', ru: 'Начальный остаток', en: 'Opening balance' },
-  production: { uz: 'Ishlab chiqarish', ru: 'Производство', en: 'Production' },
-  production_cancellation: {
-    uz: 'Ishlab chiqarish bekor qilindi',
-    ru: 'Производство отменено',
-    en: 'Production cancelled',
-  },
-  sale_cancellation: { uz: 'Sotuv bekor qilindi', ru: 'Продажа отменена', en: 'Sale cancelled' },
+/** `inventory_cost_layers.source_type` → its `inventory.costLayerSources.*` key. */
+const SOURCE_TYPE_KEYS: Record<string, string> = {
+  purchase_order: 'costLayerSources.purchaseOrder',
+  initial_stock: 'costLayerSources.initialStock',
+  adjustment: 'costLayerSources.adjustment',
+  ai_scan: 'costLayerSources.aiScan',
+  opening_balance: 'costLayerSources.openingBalance',
+  production: 'costLayerSources.production',
+  production_cancellation: 'costLayerSources.productionCancellation',
+  sale_cancellation: 'costLayerSources.saleCancellation',
 }
 
-function translateSourceType(sourceType: string, lang: string): string {
-  const entry = SOURCE_TYPE_LABELS[sourceType]
-  if (!entry) return sourceType
-  return lang === 'uz' ? entry.uz : lang === 'ru' ? entry.ru : entry.en
-}
-
-export function ProductDetailClient({ lang, product, movements, sales, purchases, costLayers = [], effectiveCostingMethod, nextSaleCost }: ProductDetailClientProps) {
+export function ProductDetailClient({ product, movements, sales, purchases, costLayers = [], effectiveCostingMethod, nextSaleCost }: ProductDetailClientProps) {
   const tc = useTranslations('common')
   const tSales = useTranslations('sales')
   const tProc = useTranslations('procurement')
@@ -68,50 +59,50 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
 
     // 1. Product Info Sheet
     const infoData = [
-      { [tc('name')]: product.name, Value: product.name },
-      { SKU: product.sku, Value: product.sku },
-      { [t('category')]: product.categories?.name ?? '—', Value: product.categories?.name ?? '—' },
-      { [t('costPrice')]: product.cost_price, Value: formatCurrency(product.cost_price) },
-      { [t('price')]: product.price, Value: formatCurrency(product.price) },
-      { [t('stock')]: product.stock, Value: `${formatNumber(product.stock)} ${product.unit}` },
-      { [tc('status')]: product.is_active ? tc('active') : tc('inactive'), Value: product.is_active ? tc('active') : tc('inactive') }
+      { [tc('name')]: product.name, [t('value')]: product.name },
+      { [t('sku')]: product.sku, [t('value')]: product.sku },
+      { [t('category')]: product.categories?.name ?? '—', [t('value')]: product.categories?.name ?? '—' },
+      { [t('costPrice')]: product.cost_price, [t('value')]: formatCurrency(product.cost_price) },
+      { [t('price')]: product.price, [t('value')]: formatCurrency(product.price) },
+      { [t('stock')]: product.stock, [t('value')]: `${formatNumber(product.stock)} ${product.unit}` },
+      { [tc('status')]: product.is_active ? tc('active') : tc('inactive'), [t('value')]: product.is_active ? tc('active') : tc('inactive') }
     ]
     const infoWS = XLSX.utils.json_to_sheet(infoData)
-    XLSX.utils.book_append_sheet(workbook, infoWS, "General Info")
+    XLSX.utils.book_append_sheet(workbook, infoWS, t('excel.generalInfoSheet'))
 
     // 2. Movements Sheet
     const movementsData = movements.map(m => ({
-      Type: m.type === 'incoming' || m.type === 'in' ? t('stockIn') : t('stockOut'),
-      Quantity: m.quantity,
-      Before: m.quantity_before,
-      After: m.quantity_after,
-      Reason: translateMovementReason(m.reason, lang),
-      Date: formatDateTime(m.created_at)
+      [t('movementType')]: m.type === 'incoming' || m.type === 'in' ? t('stockIn') : t('stockOut'),
+      [t('quantity')]: m.quantity,
+      [t('before')]: m.quantity_before,
+      [t('after')]: m.quantity_after,
+      [t('reason')]: translateMovementReason(m.reason, t),
+      [tc('date')]: formatDateTime(m.created_at)
     }))
     const movementsWS = XLSX.utils.json_to_sheet(movementsData)
-    XLSX.utils.book_append_sheet(workbook, movementsWS, "Movements")
+    XLSX.utils.book_append_sheet(workbook, movementsWS, t('movementHistory'))
 
     // 3. Sales Sheet
     const salesData = sales.map(s => ({
-      OrderNumber: s.sales_orders?.order_number ?? '—',
-      Customer: s.sales_orders?.customers?.name ?? '—',
-      Quantity: s.quantity,
-      TotalPrice: s.total_price,
-      Date: s.sales_orders?.created_at ? formatDateTime(s.sales_orders.created_at) : '—'
+      [tSales('orderNumber')]: s.sales_orders?.order_number ?? '—',
+      [tSales('customer')]: s.sales_orders?.customers?.name ?? '—',
+      [t('quantity')]: s.quantity,
+      [tSales('totalPrice')]: s.total_price,
+      [tc('date')]: s.sales_orders?.created_at ? formatDateTime(s.sales_orders.created_at) : '—'
     }))
     const salesWS = XLSX.utils.json_to_sheet(salesData)
-    XLSX.utils.book_append_sheet(workbook, salesWS, "Sales")
+    XLSX.utils.book_append_sheet(workbook, salesWS, t('salesHistory'))
 
     // 4. Purchases Sheet
     const purchasesData = purchases.map(p => ({
-      PONumber: p.purchase_orders?.po_number ?? '—',
-      Supplier: p.purchase_orders?.suppliers?.name ?? '—',
-      Quantity: p.quantity,
-      TotalCost: p.total_cost,
-      Date: p.purchase_orders?.created_at ? formatDateTime(p.purchase_orders.created_at) : '—'
+      [tProc('poNumber')]: p.purchase_orders?.po_number ?? '—',
+      [tProc('supplier')]: p.purchase_orders?.suppliers?.name ?? '—',
+      [t('quantity')]: p.quantity,
+      [tProc('totalCost')]: p.total_cost,
+      [tc('date')]: p.purchase_orders?.created_at ? formatDateTime(p.purchase_orders.created_at) : '—'
     }))
     const purchasesWS = XLSX.utils.json_to_sheet(purchasesData)
-    XLSX.utils.book_append_sheet(workbook, purchasesWS, "Purchases")
+    XLSX.utils.book_append_sheet(workbook, purchasesWS, t('purchaseHistory'))
 
     XLSX.writeFile(workbook, `${product.name.replace(/\s+/g, '_')}_details_report.xlsx`)
   }
@@ -303,7 +294,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                           <span className="text-slate-400 dark:text-slate-500">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-slate-600 dark:text-slate-300 text-sm">{translateMovementReason(m.reason, lang)}</TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-300 text-sm">{translateMovementReason(m.reason, t)}</TableCell>
                       <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(m.created_at)}</TableCell>
                     </TableRow>
                   ))
@@ -410,7 +401,7 @@ export function ProductDetailClient({ lang, product, movements, sales, purchases
                     <TableRow key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                       <TableCell className="text-center text-xs text-slate-500 dark:text-slate-400">{idx + 1}</TableCell>
                       <TableCell className="text-slate-500 dark:text-slate-400 text-xs">{formatDateTime(l.received_at)}</TableCell>
-                      <TableCell className="text-sm text-slate-600 dark:text-slate-300">{translateSourceType(l.source_type, lang)}</TableCell>
+                      <TableCell className="text-sm text-slate-600 dark:text-slate-300">{SOURCE_TYPE_KEYS[l.source_type] ? t(SOURCE_TYPE_KEYS[l.source_type]) : l.source_type}</TableCell>
                       <TableCell className="text-right font-medium">{formatNumber(l.remaining_qty)} / {formatNumber(l.quantity)}</TableCell>
                       <TableCell className="text-right text-slate-700 dark:text-slate-300">{formatCurrency(l.unit_cost)}</TableCell>
                       <TableCell className="text-right font-bold text-slate-900 dark:text-slate-100">{formatCurrency(l.remaining_qty * l.unit_cost)}</TableCell>

@@ -10,7 +10,11 @@ import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permiss
 
 export const revalidate = 30
 
-export const metadata: Metadata = { title: 'Orders' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'sales' })
+  return { title: t('orders') }
+}
 
 export default async function OrdersPage({
   params,

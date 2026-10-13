@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateSuppliers } from '@/lib/data/revalidate'
+import { errorMessage } from '@/lib/error-message'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,6 +43,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
   const tSales = useTranslations('sales')
   const tCommon = useTranslations('common')
   const tAuth = useTranslations('auth')
+  const tRoot = useTranslations()
   const t = useTranslations('procurement')
   const exitForm = useRouteModalExit(`/${lang}/procurement/suppliers`)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -153,7 +155,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
       await invalidateSuppliers()
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }
@@ -286,7 +288,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
             {hasPreciseLocation && (
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-full normal-case">
                 <MapPin className="h-2.5 w-2.5" />
-                {lang === 'uz' ? 'Xaritada belgilangan' : lang === 'ru' ? 'Отмечено на карте' : 'Pinned on map'}
+                {t('pinnedOnMap')}
               </span>
             )}
           </Label>
@@ -294,7 +296,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
             <Input
               id="address"
               {...register('address')}
-              placeholder={tCommon('address') || 'Address'}
+              placeholder={tCommon('address')}
               className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 flex-1"
             />
             <Button
@@ -313,12 +315,12 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="notes" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
             <FileText className="h-3.5 w-3.5 text-slate-400" />
-            {tCommon('notes') || 'Notes'}
+            {tCommon('notes')}
           </Label>
           <Textarea
             id="notes"
             {...register('notes')}
-            placeholder={tCommon('notes') || 'Notes'}
+            placeholder={tCommon('notes')}
             rows={3}
             className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 resize-none"
           />

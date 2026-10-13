@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { invalidateRoleTemplates } from '@/lib/data/revalidate'
+import { errorMessage } from '@/lib/error-message'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
@@ -24,6 +25,7 @@ interface RoleTemplateFormProps {
 export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
+  const tRoot = useTranslations()
   const t = useTranslations('hr')
   const exitForm = useRouteModalExit(`/${lang}/hr/roles`)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -66,7 +68,11 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
 
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(json.error === 'duplicate_name' ? t('roleNameTaken') : json.error || tCommon('error'))
+        if (json.error === 'duplicate_name') {
+          toast.error(t('roleNameTaken'))
+          return
+        }
+        throw new Error(json.error || '')
       }
 
       if (initialData?.id && json.updatedProfiles > 0) {
@@ -78,7 +84,7 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
       await invalidateRoleTemplates()
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

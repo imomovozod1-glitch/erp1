@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ShoppingCart, MoreHorizontal, Pencil, Loader2, ArrowRight, Ban } from 'lucide-react'
@@ -75,7 +76,7 @@ export function OrdersTable({
       toast.error(
         error instanceof BusinessRpcError
           ? businessRpcErrorMessage(tRoot, error)
-          : error?.message || tCommon('error')
+          : errorMessage(tRoot, error, tCommon('error'))
       )
     } finally {
       setPendingId(null)

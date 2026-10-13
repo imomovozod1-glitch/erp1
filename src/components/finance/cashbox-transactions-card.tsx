@@ -54,11 +54,7 @@ export function CashboxTransactionsCard({
           {t('transactions')}
         </CardTitle>
         <CardDescription className="text-xs">
-          {lang === 'uz'
-            ? "Kassalar bo'yicha kirim va chiqim operatsiyalari tarixi"
-            : lang === 'ru'
-            ? "История приходных и расходных операций по кассам"
-            : "History of incoming and outgoing operations across cash registers"}
+          {t('cashboxTransactionsSubtitle')}
         </CardDescription>
       </div>
       <div className="relative max-w-xs w-full">
@@ -81,10 +77,10 @@ export function CashboxTransactionsCard({
               <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('category')}</th>
               <th className="p-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{tCommon('description')}</th>
               <th className="p-4 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-right">
-                {lang === 'uz' ? 'Kirim' : lang === 'ru' ? 'Приход' : 'Income'}
+                {t('cashIn')}
               </th>
               <th className="p-4 pr-6 text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider text-right">
-                {lang === 'uz' ? 'Chiqim' : lang === 'ru' ? 'Расход' : 'Expense'}
+                {t('cashOut')}
               </th>
               {/* No trailing actions column on purpose — there are no row
                   actions. Adding one here without a matching cell in every body

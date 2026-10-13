@@ -7,11 +7,12 @@ import { generateDocumentNumber } from '@/lib/utils'
 import { invalidateSale } from '@/lib/data/revalidate'
 import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import { printReceiptDirect } from '@/lib/printer/print'
 import { getPrinterConfig, DEFAULT_PRINTER_CONFIG, type PrinterConfig } from '@/lib/printer/storage'
 import { DEFAULT_CUSTOM_COLUMNS } from '@/lib/printer/receipt'
 import { usePosCart } from '@/components/pos/use-pos-cart'
-import { submitPosSale } from '@/components/pos/checkout'
+import { submitPosSale, PosSaleError } from '@/components/pos/checkout'
 import { PosReceiptDialog, type ReceiptOrder } from '@/components/pos/pos-receipt-dialog'
 import { PosAddCustomerDialog } from '@/components/pos/pos-add-customer-dialog'
 import { PosProductGrid } from '@/components/pos/pos-product-grid'
@@ -59,6 +60,7 @@ export function POSClient({
   // The screen's own namespace is declared last on purpose — see AGENTS.md
   // § Translations: the editor resolves a bare `t(...)` to whichever
   // `useTranslations()` comes last in the file.
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('pos')
   const sidebarOffset = useSidebarOffset()
@@ -169,7 +171,7 @@ export function POSClient({
       if (matched) {
         cart.add(matched)
         setSearchQuery('')
-        toast.success(`${matched.name} ${tCommon('success')}`)
+        toast.success(t('addedToCart', { name: matched.name }))
       } else {
         toast.error(t('productNotFound'))
       }
@@ -318,7 +320,7 @@ export function POSClient({
         })
       } catch (error: any) {
         setSaleStatus('failed')
-        toast.error(error.message || tCommon('error'))
+        toast.error(error instanceof PosSaleError ? error.message : errorMessage(tRoot, error, tCommon('error')))
         // Put the optimistic stock back: this sale did not happen.
         setProducts((current) =>
           current.map((p) => {

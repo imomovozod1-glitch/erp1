@@ -35,7 +35,11 @@ import {
 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 
-export const metadata: Metadata = { title: 'Guide' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'nav' })
+  return { title: t('guide') }
+}
 
 interface GuideItem {
   /** Key under `guide.modules` holding the purpose/steps/tips for this page. */

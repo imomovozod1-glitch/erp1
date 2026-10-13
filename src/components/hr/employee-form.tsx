@@ -27,6 +27,7 @@ import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
 import { isStrongPassword } from '@/lib/password-validation'
 import { isValidPhone } from '@/lib/phone-validation'
 import { cn, generateDocumentNumber, isoDate } from '@/lib/utils'
+import { errorMessage } from '@/lib/error-message'
 
 
 /** Dropdown contents, fetched on the server — see `getCachedEmployeeFormOptions`. */
@@ -61,10 +62,14 @@ interface CashboxOption {
   name: string
 }
 
+/** The employee code is already taken in this tenant (UNIQUE tenant_id, employee_code). */
+class EmployeeCodeTakenError extends Error {}
+
 export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) {
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
   const tAuth = useTranslations('auth')
+  const tRoot = useTranslations()
   const t = useTranslations('hr')
   const exitForm = useRouteModalExit(`/${lang}/hr/employees`)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -234,7 +239,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
         })
         const json = await res.json().catch(() => ({}))
         if (!res.ok) {
-          toast.error(json.error || t('createAccountError'))
+          toast.error(errorMessage(tRoot, json, t('createAccountError')))
           setIsSubmitting(false)
           return
         }
@@ -274,7 +279,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
       // UNIQUE (tenant_id, employee_code) — surface it as the field problem it
       // is rather than a raw Postgres constraint string.
       const asFriendlyError = (error: { code?: string; message?: string }) =>
-        new Error(error.code === '23505' ? t('employeeCodeTaken') : error.message || tCommon('error'))
+        error.code === '23505' ? new EmployeeCodeTakenError() : error
 
       if (initialData?.id) {
         const { error } = await supabase
@@ -306,7 +311,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
         })
         if (!res.ok) {
           const json = await res.json().catch(() => ({}))
-          throw new Error(json.error || tCommon('error'))
+          throw new Error(json.error || '')
         }
         await invalidateProfile(profileId)
       }
@@ -314,7 +319,11 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
       await invalidateEmployees()
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(
+        error instanceof EmployeeCodeTakenError
+          ? t('employeeCodeTaken')
+          : errorMessage(tRoot, error, tCommon('error'))
+      )
     } finally {
       setIsSubmitting(false)
     }

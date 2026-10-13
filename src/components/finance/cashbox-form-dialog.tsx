@@ -64,7 +64,6 @@ export function CashboxFormDialog({
   cashbox,
   onSubmit,
   isSaving,
-  lang,
 }: {
   onOpenChange: (open: boolean) => void
   /** The cashbox being edited, or null to create a new one. */
@@ -113,19 +112,11 @@ export function CashboxFormDialog({
           <div>
             <DialogTitle className="text-lg font-bold text-slate-800 dark:text-slate-100">
               {cashbox
-                ? lang === 'uz'
-                  ? 'Kassani tahrirlash'
-                  : lang === 'ru'
-                    ? 'Редактировать кассу'
-                    : 'Edit cashbox'
+                ? t('editCashbox')
                 : t('addCashbox')}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              {lang === 'uz'
-                ? "Kassa ma'lumotlarini kiriting"
-                : lang === 'ru'
-                  ? 'Введите параметры кассы'
-                  : 'Enter the cashbox details'}
+              {t('cashboxDialogSubtitle')}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -139,13 +130,7 @@ export function CashboxFormDialog({
               id="cb_name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={
-                lang === 'uz'
-                  ? "Masalan: Asosiy G'azna"
-                  : lang === 'ru'
-                    ? 'Например: Основная Касса'
-                    : 'e.g. Main Cashbox'
-              }
+              placeholder={t('cashboxNamePlaceholder')}
               required
               className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
             />
@@ -171,17 +156,13 @@ export function CashboxFormDialog({
           {cashbox ? (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                {lang === 'uz' ? 'Joriy balans' : lang === 'ru' ? 'Текущий баланс' : 'Current balance'}
+                {t('currentBalance')}
               </Label>
               <div className="h-9 px-3 flex items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold tabular-nums text-slate-500 dark:text-slate-400">
                 {formatCurrency(cashbox.balance)}
               </div>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-snug">
-                {lang === 'uz'
-                  ? 'Balansni o\'zgartirish uchun "Kirim" yoki "Chiqim" tugmasidan foydalaning'
-                  : lang === 'ru'
-                    ? 'Чтобы изменить баланс, используйте кнопку "Приход" или "Расход"'
-                    : 'To change the balance, use the "Income" or "Expense" button'}
+                {t('balanceChangeHint')}
               </p>
             </div>
           ) : (

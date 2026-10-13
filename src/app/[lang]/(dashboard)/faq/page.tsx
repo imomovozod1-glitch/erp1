@@ -3,7 +3,11 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { FaqBrowser, type FaqCategory } from '@/components/support/faq-browser'
 
-export const metadata: Metadata = { title: 'FAQ' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'nav' })
+  return { title: t('faq') }
+}
 
 export default async function FaqPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params

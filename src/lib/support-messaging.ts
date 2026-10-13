@@ -79,7 +79,10 @@ export async function postMessage(input: {
     })
     .select('*')
     .single()
-  if (messageError) return { ok: false, error: messageError.message }
+  if (messageError) {
+    console.error('[support] postMessage failed:', messageError.message)
+    return { ok: false, error: 'server_error' }
+  }
 
   // The thread bump and the realtime signal do not gate the response: the
   // message is committed, and neither the sender nor the reader needs them to

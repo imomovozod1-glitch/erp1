@@ -24,6 +24,7 @@ import {
   PresetPicker,
 } from '@/components/admin/preset-picker'
 import { formatDate, isoDate } from '@/lib/utils'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 export interface TenantSubscription {
   id: string
@@ -49,6 +50,7 @@ export function TenantPaymentDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const tErrors = useTranslations('admin.errors')
   const tForm = useTranslations('admin.form')
   const t = useTranslations('admin.tenants.detail')
   const router = useRouter()
@@ -81,7 +83,7 @@ export function TenantPaymentDialog({
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(json.error || t('paymentError'))
+        toast.error(adminErrorMessage(tErrors, json, t('paymentError')))
         return
       }
       toast.success(t('paymentAdded'))

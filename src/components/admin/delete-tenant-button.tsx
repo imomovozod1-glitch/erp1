@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 const THRESHOLD_MS = 180 * 24 * 60 * 60 * 1000 // 180 days
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -40,6 +41,7 @@ export function DeleteTenantButton({
   createdAt: string
   subscriptionEndsAt: string | null
 }) {
+  const tErrors = useTranslations('admin.errors')
   const t = useTranslations('admin.delete')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const router = useRouter()
@@ -77,7 +79,7 @@ export function DeleteTenantButton({
       const res = await fetch(`/api/admin/tenants/${tenantId}`, { method: 'DELETE' })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(json.error || t('error'))
+        toast.error(adminErrorMessage(tErrors, json, t('error')))
         setIsDeleting(false)
         return
       }

@@ -53,10 +53,10 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   }
 
   const periodLabels: Record<Exclude<Period, 'custom'>, string> = {
-    all: lang === 'uz' ? 'Barchasi' : lang === 'ru' ? 'Все время' : 'All time',
-    today: lang === 'uz' ? 'Bugun' : lang === 'ru' ? 'Сегодня' : 'Today',
-    week: lang === 'uz' ? 'Bu hafta' : lang === 'ru' ? 'Эта неделя' : 'This week',
-    month: lang === 'uz' ? 'Bu oy' : lang === 'ru' ? 'Этот месяц' : 'This month',
+    all: t('detail.periodAll'),
+    today: t('detail.periodToday'),
+    week: t('detail.periodWeek'),
+    month: t('detail.periodMonth'),
   }
 
   const [now] = useState(() => new Date())
@@ -93,7 +93,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   const totalSalesAmount = filteredSalesOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0)
   const totalPaidAmount = filteredTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0)
   const activePeriodLabel = period === 'custom'
-    ? (lang === 'uz' ? 'Tanlangan davr' : lang === 'ru' ? 'Выбранный период' : 'Selected period')
+    ? t('detail.periodCustom')
     : periodLabels[period]
   const periodSuffix = period !== 'all' ? ` · ${activePeriodLabel}` : ''
 
@@ -115,45 +115,45 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
     const workbook = XLSX.utils.book_new()
 
     // 1. Profile Info Sheet
-    const profileData = [
-      { Parameter: tc('name'), Value: employee.full_name ?? '—' },
-      { Parameter: t('phoneNumber'), Value: employee.profiles?.phone ?? '—' },
-      { Parameter: t('employeeCode'), Value: employee.employee_code },
-      { Parameter: t('position'), Value: employee.position },
-      { Parameter: t('department'), Value: employee.profiles?.departments?.name ?? '—' },
-      { Parameter: t('salary'), Value: formatCurrency(employee.salary) },
-      { Parameter: t('hiredAt'), Value: formatDate(employee.hired_at) },
-      { Parameter: t('subscription'), Value: employee.is_paid ? t('subscribed') : t('notSubscribed') },
-      { Parameter: tc('status'), Value: employee.is_active
-        ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
-        : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated') }
+    const colParameter = t('detail.colParameter')
+    const colValue = t('detail.colValue')
+    const profileData: Record<string, unknown>[] = [
+      { [colParameter]: tc('name'), [colValue]: employee.full_name ?? '—' },
+      { [colParameter]: t('phoneNumber'), [colValue]: employee.profiles?.phone ?? '—' },
+      { [colParameter]: t('employeeCode'), [colValue]: employee.employee_code },
+      { [colParameter]: t('position'), [colValue]: employee.position },
+      { [colParameter]: t('department'), [colValue]: employee.profiles?.departments?.name ?? '—' },
+      { [colParameter]: t('salary'), [colValue]: formatCurrency(employee.salary) },
+      { [colParameter]: t('hiredAt'), [colValue]: formatDate(employee.hired_at) },
+      { [colParameter]: t('subscription'), [colValue]: employee.is_paid ? t('subscribed') : t('notSubscribed') },
+      { [colParameter]: tc('status'), [colValue]: employee.is_active ? t('statusEmployed') : t('statusTerminated') }
     ]
     if (!employee.is_active && employee.terminated_at) {
-      profileData.push({ Parameter: t('terminatedAt') || 'Bo\'shatilgan sana', Value: formatDate(employee.terminated_at) })
+      profileData.push({ [colParameter]: t('terminatedAt'), [colValue]: formatDate(employee.terminated_at) })
     }
     const profileWS = XLSX.utils.json_to_sheet(profileData)
-    XLSX.utils.book_append_sheet(workbook, profileWS, "Profile Info")
+    XLSX.utils.book_append_sheet(workbook, profileWS, t('detail.sheetProfile'))
 
     // 2. Payouts Sheet
     const payoutsData = transactions.map(tx => ({
-      Category: tx.category,
-      Amount: tx.amount,
-      Description: tx.description || '—',
-      Date: formatDateTime(tx.created_at)
+      [tc('category')]: tx.category,
+      [tc('amount')]: tx.amount,
+      [tc('description')]: tx.description || '—',
+      [tc('date')]: formatDateTime(tx.created_at)
     }))
     const payoutsWS = XLSX.utils.json_to_sheet(payoutsData)
-    XLSX.utils.book_append_sheet(workbook, payoutsWS, "Payout History")
+    XLSX.utils.book_append_sheet(workbook, payoutsWS, t('detail.payoutHistory'))
 
     // 3. Sales Sheet
     const salesData = salesOrders.map(o => ({
-      OrderNumber: o.order_number,
-      Customer: o.customers?.name ?? '—',
-      TotalAmount: o.total_amount,
-      Status: o.status,
-      Date: formatDateTime(o.created_at)
+      [t('detail.saleCode')]: o.order_number,
+      [tSales('customer')]: o.customers?.name ?? '—',
+      [tc('totalAmount')]: o.total_amount,
+      [tc('status')]: tSales(`status.${o.status}`),
+      [tc('date')]: formatDateTime(o.created_at)
     }))
     const salesWS = XLSX.utils.json_to_sheet(salesData)
-    XLSX.utils.book_append_sheet(workbook, salesWS, "Processed Sales")
+    XLSX.utils.book_append_sheet(workbook, salesWS, t('detail.processedSales'))
 
     XLSX.writeFile(workbook, `${(employee.full_name ?? 'employee').replace(/\s+/g, '_')}_details.xlsx`)
   }
@@ -203,8 +203,8 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             tone={employee.is_active ? 'emerald' : 'rose'}
             pulse={employee.is_active}
             label={employee.is_active
-              ? (lang === 'uz' ? 'Ishlamoqda' : lang === 'ru' ? 'Работает' : 'Employed')
-              : (lang === 'uz' ? "Bo'shatilgan" : lang === 'ru' ? 'Уволен' : 'Terminated')}
+              ? t('statusEmployed')
+              : t('statusTerminated')}
           />
           {/* Paid seat = the employee may hold a system login (employee-form.tsx
               gates system access on `is_paid`), so it belongs next to the
@@ -215,7 +215,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
           />
           <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
-            {tc('export') || 'Eksport'}
+            {tc('export')}
           </Button>
         </div>
       </div>
@@ -232,9 +232,9 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Ishlagan davri' : lang === 'ru' ? 'Срок службы' : 'Tenure'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('detail.tenure')}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
-              {tenureMonths} {lang === 'uz' ? 'oy' : lang === 'ru' ? 'мес.' : 'mo.'}
+              {t('detail.tenureMonths', { count: tenureMonths })}
             </h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('hiredAt')}: {formatDate(employee.hired_at)}</span>
           </CardContent>
@@ -242,19 +242,19 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'Rasmiylashtirgan savdolar' : lang === 'ru' ? 'Оформленные продажи' : 'Processed sales'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('detail.processedSales')}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalSalesAmount)}</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredSalesOrders.length} {tc('count') || 'count'}{periodSuffix}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredSalesOrders.length} {tc('count')}{periodSuffix}</span>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{lang === 'uz' ? 'To\'langan maoshlar' : lang === 'ru' ? 'Выплачено' : 'Paid out'}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('detail.paidOut')}</span>
             <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {formatCurrency(totalPaidAmount)}
             </h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredTransactions.length} {tc('count') || 'count'}{periodSuffix}</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredTransactions.length} {tc('count')}{periodSuffix}</span>
           </CardContent>
         </Card>
       </div>
@@ -264,7 +264,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
         <div className="space-y-6 self-start">
         <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{lang === 'uz' ? 'Kadr ma\'lumotlari' : lang === 'ru' ? 'Личное дело' : 'Personnel details'}</CardTitle>
+            <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-200">{t('detail.personnelDetails')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div>
@@ -281,7 +281,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             </div>
             {!employee.is_active && employee.terminated_at && (
               <div>
-                <span className="text-xs text-rose-500 dark:text-rose-400 block font-semibold">{t('terminatedAt') || 'Bo\'shatilgan sana'}</span>
+                <span className="text-xs text-rose-500 dark:text-rose-400 block font-semibold">{t('terminatedAt')}</span>
                 <span className="font-bold text-rose-600 dark:text-rose-400">{formatDate(employee.terminated_at)}</span>
               </div>
             )}
@@ -350,7 +350,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                 }`}
               >
                 <DollarSign className="h-4 w-4" />
-                {lang === 'uz' ? 'To\'lovlar tarixi' : lang === 'ru' ? 'История выплат' : 'Payout history'}
+                {t('detail.payoutHistory')}
               </button>
               <button
                 onClick={() => setActiveTab('sales')}
@@ -359,7 +359,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                 }`}
               >
                 <ShoppingCart className="h-4 w-4" />
-                {lang === 'uz' ? 'Sotuvlar ro\'yxati' : lang === 'ru' ? 'Список продаж' : 'Sales list'}
+                {t('detail.salesList')}
               </button>
             </div>
 
@@ -368,7 +368,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                 <>
                   <div className="flex flex-wrap items-center gap-3 p-4 border-b bg-slate-50/30 dark:bg-slate-800/30">
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      {lang === 'uz' ? 'Davr' : lang === 'ru' ? 'Период' : 'Period'}:{' '}
+                      {t('detail.period')}:{' '}
                       <span className="font-semibold text-slate-700 dark:text-slate-300">{activePeriodLabel}</span>
                     </span>
                     {period !== 'all' && (
@@ -379,11 +379,11 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                         className="h-7 px-2 text-xs text-slate-500 dark:text-slate-400 gap-1"
                       >
                         <X className="h-3.5 w-3.5" />
-                        {lang === 'uz' ? 'Tozalash' : lang === 'ru' ? 'Сбросить' : 'Clear'}
+                        {tc('clear')}
                       </Button>
                     )}
                     <div className="ml-auto text-xs text-slate-500 dark:text-slate-400 font-medium">
-                      {lang === 'uz' ? 'Jami' : lang === 'ru' ? 'Итого' : 'Total'}:{' '}
+                      {tc('total')}:{' '}
                       <span className="font-bold text-rose-600 dark:text-rose-400">
                         {formatCurrency(totalPaidAmount)}
                       </span>
@@ -393,9 +393,9 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                     <TableHeader>
                       <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                         <TableHead className="w-10 text-center">#</TableHead>
-                        <TableHead>{lang === 'uz' ? 'Kategoriya' : lang === 'ru' ? 'Категория' : 'Category'}</TableHead>
+                        <TableHead>{tc('category')}</TableHead>
                         <TableHead className="text-right">{tc('amount')}</TableHead>
-                        <TableHead>{lang === 'uz' ? 'Izoh' : lang === 'ru' ? 'Комментарий' : 'Note'}</TableHead>
+                        <TableHead>{t('detail.note')}</TableHead>
                         <TableHead>{tc('date')}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -431,8 +431,8 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Sotuv kodi' : lang === 'ru' ? 'Код продажи' : 'Sale code'}</TableHead>
-                      <TableHead>{lang === 'uz' ? 'Mijoz' : lang === 'ru' ? 'Клиент' : 'Customer'}</TableHead>
+                      <TableHead>{t('detail.saleCode')}</TableHead>
+                      <TableHead>{tSales('customer')}</TableHead>
                       <TableHead className="text-right">{tc('amount')}</TableHead>
                       <TableHead>{tc('status')}</TableHead>
                       <TableHead>{tc('date')}</TableHead>

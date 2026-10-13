@@ -18,7 +18,7 @@ export async function GET(
   // allowInactive: a blocked company must still be able to reach support — that
   // conversation is usually how the block gets resolved (src/lib/auth.ts).
   const ctx = await getTenantContext({ allowInactive: true })
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   // Ownership is decided on the thread row alone; the messages and the
@@ -39,7 +39,7 @@ export async function POST(
   // allowInactive: a blocked company must still be able to reach support — that
   // conversation is usually how the block gets resolved (src/lib/auth.ts).
   const ctx = await getTenantContext({ allowInactive: true })
-  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   const parsed = bodySchema.safeParse(await request.json().catch(() => null))

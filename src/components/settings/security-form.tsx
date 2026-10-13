@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -15,6 +16,7 @@ import { newPasswordSchema } from '@/lib/password-validation'
 import { changeOwnPassword } from '@/lib/change-password'
 
 export function SecurityForm() {
+  const tRoot = useTranslations()
   const tAuth = useTranslations('auth')
   const tCommon = useTranslations('common')
   const t = useTranslations('settings')
@@ -50,13 +52,13 @@ export function SecurityForm() {
           setError('currentPassword', { message: tAuth('currentPasswordWrong') })
           return
         }
-        throw new Error(result.message || tCommon('error'))
+        throw new Error(result.reason === 'no-session' ? 'unauthorized' : result.message || '')
       }
 
       toast.success(tAuth('passwordChangedSignedOutOthers'))
       reset()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

@@ -84,8 +84,11 @@ export async function POST(request: NextRequest) {
   if (linkError) {
     // The UNIQUE(profile_id) constraint: this ERP account is already bound to a
     // different Telegram account. Say so rather than leaking a raw SQL error.
-    const message = linkError.code === '23505' ? 'already_linked' : linkError.message
-    return NextResponse.json({ error: message }, { status: 409 })
+    if (linkError.code === '23505') {
+      return NextResponse.json({ error: 'already_linked' }, { status: 409 })
+    }
+    console.error('[telegram] link upsert failed:', linkError.message)
+    return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 
   const { data: tenant } = await service

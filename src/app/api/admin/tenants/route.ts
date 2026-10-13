@@ -6,16 +6,18 @@ import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { registerTenantDomain } from '@/lib/vercel-domains'
+import { zodErrorCode, isDuplicateLoginError } from '@/lib/admin-errors'
+import { adminServerError } from '@/lib/admin-errors-server'
 
 const createTenantSchema = z.object({
   subdomain: z
     .string()
     .min(2)
     .regex(/^[a-z0-9-]+$/)
-    .refine((v) => !isReservedSubdomain(v), { message: 'This subdomain is reserved' }),
+    .refine((v) => !isReservedSubdomain(v), { message: 'subdomain_reserved' }),
   company_name: z.string().min(1),
-  phone: phoneSchema('Invalid phone number'),
-  password: newPasswordSchema('Password does not meet strength requirements'),
+  phone: phoneSchema('invalid_phone'),
+  password: newPasswordSchema('weak_password'),
   costing_method: z.enum(['fifo', 'lifo', 'aveco']),
   license_count: z.number().int().min(1),
   license_months: z.number().int().min(1),
@@ -34,16 +36,16 @@ const createTenantSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 500 })
+    return NextResponse.json({ error: 'service_key_missing' }, { status: 500 })
   }
 
   const body = await request.json().catch(() => null)
   const parsed = createTenantSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: zodErrorCode(parsed.error) }, { status: 400 })
   }
   const input = parsed.data
 
@@ -71,8 +73,8 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (tenantError) {
-    const message = tenantError.code === '23505' ? 'Subdomain or phone already in use' : tenantError.message
-    return NextResponse.json({ error: message }, { status: 409 })
+    if (tenantError.code === '23505') return NextResponse.json({ error: 'subdomain_or_phone_taken' }, { status: 409 })
+    return adminServerError(tenantError, 409)
   }
 
   const email = phoneToSyntheticEmail(input.phone)
@@ -87,7 +89,8 @@ export async function POST(request: NextRequest) {
     // Roll back the tenant row so a failed provisioning attempt never leaves
     // an orphaned account with no owner login.
     await supabase.from('tenants').delete().eq('id', tenant.id)
-    return NextResponse.json({ error: authError?.message || 'Failed to create login' }, { status: 400 })
+    if (isDuplicateLoginError(authError)) return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+    return adminServerError(authError ?? 'createUser returned no user')
   }
 
   // handle_new_user() inserts the profile with role='staff' and no phone —

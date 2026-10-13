@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { newPasswordSchema } from '@/lib/password-validation'
 import Link from 'next/link'
+import { authErrorCode } from '@/lib/admin-errors'
 
 /**
  * Landing page for the email link from `AdminForgotPasswordForm`. Supabase's
@@ -24,6 +25,7 @@ import Link from 'next/link'
  * as an error state after a short grace period rather than hanging forever.
  */
 export function AdminResetPasswordForm() {
+  const tErrors = useTranslations('admin.errors')
   const tAuth = useTranslations('auth')
   const tPassword = useTranslations('admin.password')
   const t = useTranslations('admin.accountRecovery')
@@ -72,7 +74,10 @@ export function AdminResetPasswordForm() {
       toast.success(t('updateSuccess'))
       router.replace('/admin/login')
     } catch (error: any) {
-      toast.error(error?.message || t('invalidOrExpiredLink'))
+      // Supabase's own text is English; only the refusals the operator can act
+      // on get their own message, anything else means the link is unusable.
+      const code = authErrorCode(error)
+      toast.error(code ? tErrors(code) : t('invalidOrExpiredLink'))
     } finally {
       setIsSubmitting(false)
     }

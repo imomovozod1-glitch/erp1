@@ -9,7 +9,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 
-export const metadata: Metadata = { title: 'Support agent' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.support.detail')
+  return { title: t('metaTitle') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function SupportAgentDetailPage({

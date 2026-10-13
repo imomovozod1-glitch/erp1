@@ -1,6 +1,7 @@
 'use client'
 
 import { Moon, Sun } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/providers/theme-provider'
@@ -13,6 +14,7 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ labels, className }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme()
+  const t = useTranslations('nav')
 
   return (
     <Button
@@ -28,8 +30,8 @@ export function ThemeToggle({ labels, className }: ThemeToggleProps) {
       // single frame of staleness costs nothing.
       aria-label={
         resolvedTheme === 'dark'
-          ? labels?.light ?? 'Light mode'
-          : labels?.dark ?? 'Dark mode'
+          ? labels?.light ?? t('lightMode')
+          : labels?.dark ?? t('darkMode')
       }
       className={cn(
         'text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',

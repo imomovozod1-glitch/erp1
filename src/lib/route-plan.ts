@@ -103,6 +103,10 @@ export function routePlanErrorMessage(t: (key: string) => string, error: RoutePl
       return t('distribution.routeErrorTooFewStops')
     case 'forbidden':
       return t('common.noPermission')
+    case 'unauthorized':
+      return t('errors.unauthorized')
+    case 'not_found':
+      return t('common.recordNotFound')
     default:
       return t('distribution.routeErrorFailed')
   }

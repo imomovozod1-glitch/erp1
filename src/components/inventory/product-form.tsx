@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { invalidateProducts, invalidateMovements } from '@/lib/data/revalidate'
 import { recordCostLayer, consumeCostLayers, getEffectiveCostingMethod, type CostingMethod } from '@/lib/inventory-costing'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,6 +41,7 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ initialData, categories, lang, options }: ProductFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('inventory')
   const exitForm = useRouteModalExit(`/${lang}/inventory/products`)
@@ -161,7 +163,8 @@ export function ProductForm({ initialData, categories, lang, options }: ProductF
       if (checkError) throw checkError
 
       if (existing && existing.length > 0) {
-        throw new Error(t('nameExists'))
+        toast.error(t('nameExists'))
+        return
       }
 
       // Resolved before the payload so the creator/assignee stamps below can
@@ -285,7 +288,7 @@ export function ProductForm({ initialData, categories, lang, options }: ProductF
       clearPersistedForm('product-form-v3')
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

@@ -1,43 +1,48 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateSuppliers } from '@/lib/data/revalidate'
 import { ImportExportMenu } from '@/components/shared/import-export-menu'
 import { pickField, type ExcelColumn } from '@/lib/excel-io'
+import { errorMessage } from '@/lib/error-message'
 
 interface SupplierImportExportProps {
   suppliers: any[]
   lang: string
 }
 
-const EXPORT_COLUMNS: ExcelColumn[] = [
-  { header: 'Nomi', key: 'name' },
-  { header: 'Telefon', key: 'phone' },
-  { header: 'Email', key: 'email' },
-  { header: "Bog'lovchi shaxs", key: 'contact_person' },
-  { header: 'Manzil', key: 'address' },
-  { header: 'Shahar', key: 'city' },
-  { header: 'STIR', key: 'tin' },
-  { header: 'Izoh', key: 'notes' },
-  { header: 'Holat', key: 'statusLabel' },
-]
-
-const TEMPLATE_COLUMNS: ExcelColumn[] = [
-  { header: 'Nomi', key: 'name', sample: 'ABC Trading LLC' },
-  { header: 'Telefon', key: 'phone', sample: '+998901234567' },
-  { header: 'Email', key: 'email', sample: 'info@abctrading.uz' },
-  { header: "Bog'lovchi shaxs", key: 'contact_person', sample: 'Jasur Rahimov' },
-  { header: 'Manzil', key: 'address', sample: "Toshkent sh., Yunusobod t." },
-  { header: 'Shahar', key: 'city', sample: 'Toshkent' },
-  { header: 'STIR', key: 'tin', sample: '' },
-  { header: 'Izoh', key: 'notes', sample: '' },
-]
-
-export function SupplierImportExport({ suppliers, lang }: SupplierImportExportProps) {
+export function SupplierImportExport({ suppliers }: SupplierImportExportProps) {
+  const tRoot = useTranslations()
   const supabase = createClient() as any
 
-  const activeLabel = lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active'
-  const inactiveLabel = lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive'
+  // Headers follow the UI language; the import below still accepts the
+  // headers of every language, so a file exported in one reads back in another.
+  const EXPORT_COLUMNS: ExcelColumn[] = [
+    { header: tRoot('common.name'), key: 'name' },
+    { header: tRoot('common.phone'), key: 'phone' },
+    { header: tRoot('common.email'), key: 'email' },
+    { header: tRoot('procurement.contactPerson'), key: 'contact_person' },
+    { header: tRoot('common.address'), key: 'address' },
+    { header: tRoot('common.city'), key: 'city' },
+    { header: tRoot('procurement.tin'), key: 'tin' },
+    { header: tRoot('common.notes'), key: 'notes' },
+    { header: tRoot('common.status'), key: 'statusLabel' },
+  ]
+
+  const TEMPLATE_COLUMNS: ExcelColumn[] = [
+    { header: tRoot('common.name'), key: 'name', sample: 'ABC Trading LLC' },
+    { header: tRoot('common.phone'), key: 'phone', sample: '+998901234567' },
+    { header: tRoot('common.email'), key: 'email', sample: 'info@abctrading.uz' },
+    { header: tRoot('procurement.contactPerson'), key: 'contact_person', sample: 'Jasur Rahimov' },
+    { header: tRoot('common.address'), key: 'address', sample: "Toshkent sh., Yunusobod t." },
+    { header: tRoot('common.city'), key: 'city', sample: 'Toshkent' },
+    { header: tRoot('procurement.tin'), key: 'tin', sample: '' },
+    { header: tRoot('common.notes'), key: 'notes', sample: '' },
+  ]
+
+  const activeLabel = tRoot('common.active')
+  const inactiveLabel = tRoot('common.inactive')
 
   const exportRows = suppliers.map((s) => ({
     ...s,
@@ -47,18 +52,18 @@ export function SupplierImportExport({ suppliers, lang }: SupplierImportExportPr
   const handleImport = async (rows: Record<string, any>[]) => {
     const newSuppliers = rows
       .map((row) => {
-        const name = pickField(row, 'Nomi', 'Name', 'Название')
-        const phone = pickField(row, 'Telefon', 'Phone', 'Телефон')
+        const name = pickField(row, tRoot('common.name'), 'Nomi', 'Name', 'Название')
+        const phone = pickField(row, tRoot('common.phone'), 'Telefon', 'Phone', 'Телефон')
         if (!name || !phone) return null
         return {
           name,
           phone,
-          email: pickField(row, 'Email', 'Почта') || null,
-          contact_person: pickField(row, "Bog'lovchi shaxs", 'Contact Person', 'Контактное лицо') || null,
-          address: pickField(row, 'Manzil', 'Address', 'Адрес') || null,
-          city: pickField(row, 'Shahar', 'City', 'Город') || null,
-          tin: pickField(row, 'STIR', 'TIN', 'ИНН') || null,
-          notes: pickField(row, 'Izoh', 'Notes', 'Комментарий') || null,
+          email: pickField(row, tRoot('common.email'), 'Email', 'Elektron pochta', 'Электронная почта', 'Почта') || null,
+          contact_person: pickField(row, tRoot('procurement.contactPerson'), "Bog'lovchi shaxs", 'Aloqa shaxsi', 'Contact Person', 'Контактное лицо') || null,
+          address: pickField(row, tRoot('common.address'), 'Manzil', 'Address', 'Адрес') || null,
+          city: pickField(row, tRoot('common.city'), 'Shahar', 'City', 'Город') || null,
+          tin: pickField(row, tRoot('procurement.tin'), 'STIR', 'TIN', 'ИНН') || null,
+          notes: pickField(row, tRoot('common.notes'), 'Izoh', 'Izohlar', 'Notes', 'Примечания', 'Комментарий') || null,
           is_active: true,
         }
       })
@@ -67,7 +72,7 @@ export function SupplierImportExport({ suppliers, lang }: SupplierImportExportPr
     if (newSuppliers.length === 0) return { count: 0 }
 
     const { error } = await supabase.from('suppliers').insert(newSuppliers)
-    if (error) return { count: 0, error: error.message }
+    if (error) return { count: 0, error: errorMessage(tRoot, error, tRoot('common.error')) }
     await invalidateSuppliers()
     return { count: newSuppliers.length }
   }

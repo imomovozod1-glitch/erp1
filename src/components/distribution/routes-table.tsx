@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -99,7 +100,7 @@ export function RoutesTable({ routes, lang, page, pageSize, total, totalPages }:
     const supabase = createClient() as any
     const { error } = await supabase.from('distribution_routes').update({ is_active: !currentStatus }).eq('id', id)
     if (error) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } else {
       toast.success(tCommon('success'))
       await invalidateRoutes()
@@ -129,7 +130,7 @@ export function RoutesTable({ routes, lang, page, pageSize, total, totalPages }:
           await invalidateRoutes()
         }
       } else {
-        toast.error(error.message || tCommon('error'))
+        toast.error(errorMessage(tRoot, error, tCommon('error')))
       }
     } else {
       toast.success(tCommon('success'))

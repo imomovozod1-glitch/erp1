@@ -9,7 +9,11 @@ import { getCurrentTenantId } from '@/lib/tenant'
 import { SuppliersTable } from '@/components/procurement/suppliers-table'
 import { canEditModule , canDo, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 
-export const metadata: Metadata = { title: 'Suppliers' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'procurement' })
+  return { title: t('suppliers') }
+}
 
 export default async function SuppliersPage({
   params,

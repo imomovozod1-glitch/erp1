@@ -27,7 +27,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
         title={supplier.name}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
-          { label: t('suppliers', { fallback: 'Yetkazib beruvchilar' }), href: `/${lang}/procurement/suppliers` },
+          { label: t('suppliers'), href: `/${lang}/procurement/suppliers` },
           { label: supplier.name }
         ]}
       />

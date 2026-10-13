@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { Resolver, Controller } from 'react-hook-form'
 import { formatCurrency } from '@/lib/utils'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
@@ -75,6 +76,7 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
   // The draft is keyed by the product it is for, so opening "add composition"
   // from one product never restores a half-written recipe for another.
   const FORM_ID = `bom-form-v1:${initialData?.id ?? presetProductId ?? 'new'}`
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('production')
   const exitForm = useRouteModalExit(`/${lang}/production/boms`)
@@ -213,7 +215,7 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
       clearPersistedForm(FORM_ID)
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

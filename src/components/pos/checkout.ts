@@ -49,6 +49,12 @@ export interface PosSaleInput {
   }
 }
 
+/**
+ * A refusal already worded for the cashier (from `messages`) — the screen
+ * shows its message as is, unlike a raw database or network error.
+ */
+export class PosSaleError extends Error {}
+
 export interface PosSaleResult {
   orderId: string
   invoiceNumber: string
@@ -106,9 +112,9 @@ export async function submitPosSale(input: PosSaleInput): Promise<PosSaleResult>
           items.find((item) => item.product.id === error.details.productId)?.product.name ??
           error.details.productName ??
           ''
-        throw new Error(`${messages.insufficientStock}: ${name}`)
+        throw new PosSaleError(`${messages.insufficientStock}: ${name}`)
       }
-      throw new Error(error.code === 'forbidden' ? messages.forbidden : messages.customerRequired)
+      throw new PosSaleError(error.code === 'forbidden' ? messages.forbidden : messages.customerRequired)
     }
     throw error
   }
@@ -135,7 +141,7 @@ async function submitPosSaleInBrowser(
     data: { session },
   } = await supabase.auth.getSession()
   const user = session?.user
-  if (!user) throw new Error(messages.sessionNotFound)
+  if (!user) throw new PosSaleError(messages.sessionNotFound)
 
   // Current stock and the tenant's costing method. The cashier's name used to
   // be read here too, purely to print on the receipt — it now arrives with the
@@ -159,7 +165,7 @@ async function submitPosSaleInBrowser(
   for (const item of items) {
     const currentStock = stockBefore.get(item.product.id)
     if (currentStock === undefined || currentStock < item.quantity) {
-      throw new Error(`${messages.insufficientStock}: ${item.product.name}`)
+      throw new PosSaleError(`${messages.insufficientStock}: ${item.product.name}`)
     }
   }
 

@@ -6,7 +6,8 @@ import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { invalidatePurchase } from '@/lib/data/revalidate'
 import { recordCostLayer } from '@/lib/inventory-costing'
-import { BusinessRpcError, businessRpcErrorMessage, callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
+import { callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
+import { errorMessage } from '@/lib/error-message'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { NumericInput } from '@/components/ui/numeric-input'
@@ -135,7 +136,7 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
       const data = await res.json()
 
       if (data.error) {
-        toast.error(data.error)
+        toast.error(errorMessage(tRoot, data, tCommon('error')))
         return
       }
 
@@ -147,9 +148,9 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
         )
         if (matchedSupplier) {
           setSupplierId(matchedSupplier.id)
-          toast.success(`Ta'minotchi aniqlandi: ${matchedSupplier.name}`)
+          toast.success(t('scan.supplierMatched', { name: matchedSupplier.name }))
         } else {
-          toast.info(`Ta'minotchi aniqlandi (${data.supplier}), lekin tizimda bunday ta'minotchi topilmadi.`)
+          toast.info(t('scan.supplierNotFound', { name: data.supplier }))
         }
       }
 
@@ -164,14 +165,14 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
           const cost = item.cost_price ?? item.price ?? 0
           return {
             productId: matchedProduct?.id ?? '',
-            productName: item.name ?? 'Unknown',
+            productName: item.name ?? t('scan.unknownProduct'),
             quantity: qty,
             unitCost: cost,
             totalCost: qty * cost,
           }
         })
         setItems(prev => [...prev, ...scannedItems])
-        toast.success(`${scannedItems.length} ta mahsulot aniqlandi`)
+        toast.success(t('scan.itemsFound', { count: scannedItems.length }))
       }
     } catch {
       toast.error(tCommon('error'))
@@ -246,7 +247,7 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
         // Pre-migration fallback.
         // Get current user
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) throw new Error('Not authenticated')
+        if (!user) throw new Error('unauthorized')
 
         // Create purchase order
         const { data: po, error: poError } = await supabase
@@ -341,11 +342,7 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
       toast.success(t('purchaseCreated'))
       exitForm()
     } catch (error: any) {
-      toast.error(
-        error instanceof BusinessRpcError
-          ? businessRpcErrorMessage(tRoot, error)
-          : error.message || tCommon('error')
-      )
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }
@@ -443,12 +440,12 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
               {isScanning ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin text-violet-600 dark:text-violet-400" />
-                  <span className="text-violet-700 dark:text-violet-400">{lang === 'uz' ? 'AI tahlil qilmoqda...' : lang === 'ru' ? 'ИИ анализирует...' : 'AI is analyzing...'}</span>
+                  <span className="text-violet-700 dark:text-violet-400">{t('scan.analyzing')}</span>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1">
                   <Upload className="h-6 w-6 text-violet-500 dark:text-violet-400" />
-                  <span className="text-sm text-violet-700 dark:text-violet-400 font-medium">{lang === 'uz' ? 'Rasm yuklash' : lang === 'ru' ? 'Загрузить изображение' : 'Upload image'}</span>
+                  <span className="text-sm text-violet-700 dark:text-violet-400 font-medium">{tCommon('uploadImage')}</span>
                 </div>
               )}
             </Button>
@@ -505,7 +502,7 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
                         item.productName
                       ) : (
                         <div className="flex flex-col gap-1.5 max-w-md">
-                          <span className="text-red-500 text-xs font-semibold">Tizimdagi tovar bilan bog&apos;lanmagan: &quot;{item.productName}&quot;</span>
+                          <span className="text-red-500 text-xs font-semibold">{t('scan.unmatchedProduct', { name: item.productName })}</span>
                           <Select
                             value={item.productId || undefined}
                             onValueChange={(prodId) => {

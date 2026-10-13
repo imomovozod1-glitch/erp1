@@ -5,6 +5,8 @@ import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { isoDate } from '@/lib/utils'
 import { addMonths, isSubscriptionExpired } from '@/lib/subscription'
+import { zodErrorCode } from '@/lib/admin-errors'
+import { adminServerError } from '@/lib/admin-errors-server'
 
 const paymentSchema = z.object({
   amount: z.number().positive(),
@@ -31,13 +33,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   const body = await request.json().catch(() => null)
   const parsed = paymentSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: zodErrorCode(parsed.error) }, { status: 400 })
   }
   const input = parsed.data
 
@@ -48,7 +50,7 @@ export async function POST(
     .select('id, price_paid, subscription_ends_at, license_months')
     .eq('id', id)
     .maybeSingle()
-  if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+  if (!tenant) return NextResponse.json({ error: 'tenant_not_found' }, { status: 404 })
 
   const today = isoDate()
   // Stack on top of a running subscription, restart from today once it has
@@ -86,10 +88,10 @@ export async function POST(
     // bare row still goes in — delete this fallback once the migration is
     // everywhere.
     if (paymentError.code !== 'PGRST204') {
-      return NextResponse.json({ error: paymentError.message }, { status: 400 })
+      return adminServerError(paymentError)
     }
     const { error: fallbackError } = await supabase.from('tenant_payments').insert(payment)
-    if (fallbackError) return NextResponse.json({ error: fallbackError.message }, { status: 400 })
+    if (fallbackError) return adminServerError(fallbackError)
   }
 
   const { data: updatedTenant, error: updateError } = await supabase
@@ -104,7 +106,7 @@ export async function POST(
     .eq('id', id)
     .select()
     .single()
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 400 })
+  if (updateError) return adminServerError(updateError)
 
   // The company is unblocked the instant this returns, not a cache window
   // later: both the API gate (isTenantActive) and the cached tenant row hang

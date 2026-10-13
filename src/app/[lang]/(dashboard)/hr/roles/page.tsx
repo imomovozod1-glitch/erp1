@@ -7,7 +7,11 @@ import { getRoleTemplatesPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 
-export const metadata: Metadata = { title: 'Roles' }
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const t = await getTranslations({ locale: lang, namespace: 'hr' })
+  return { title: t('roles') }
+}
 
 export default async function RoleTemplatesPage({
   params,

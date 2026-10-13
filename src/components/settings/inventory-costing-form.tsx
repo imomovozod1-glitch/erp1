@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import { Layers } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -22,6 +23,7 @@ import type { CostingMethod } from '@/lib/inventory-costing'
  * already scope every query here to exactly the caller's own tenant row.
  */
 export function InventoryCostingForm() {
+  const tRoot = useTranslations()
   const tInv = useTranslations('inventory')
   const t = useTranslations('settings')
   const [tenantId, setTenantId] = useState<string | null>(null)
@@ -61,7 +63,7 @@ export function InventoryCostingForm() {
       await invalidateTenant(tenantId)
       toast.success(t('costingMethodSaved'))
     } catch (err: any) {
-      toast.error(err.message || t('costingMethodSaveFailed'))
+      toast.error(errorMessage(tRoot, err, t('costingMethodSaveFailed')))
     } finally {
       setIsSaving(false)
     }

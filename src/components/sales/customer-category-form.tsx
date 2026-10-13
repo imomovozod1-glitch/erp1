@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -20,6 +21,7 @@ interface CustomerCategoryFormProps {
 }
 
 export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryFormProps) {
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const exitForm = useRouteModalExit(`/${lang}/customers/categories`)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -60,7 +62,7 @@ export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryForm
       await invalidateCustomerCategories()
       exitForm()
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }

@@ -164,12 +164,8 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       const lowStockAlerts = (products || []).map((p: any) => ({
           id: `low-stock-${p.id}`,
           type: 'low_stock',
-          title: lang === 'uz' ? 'Kam qolgan tovar' : lang === 'ru' ? 'Мало на складе' : 'Low stock alert',
-          description: lang === 'uz' 
-            ? `"${p.name}" tovaridan ${p.stock} dona qoldi (min: ${p.min_stock})`
-            : lang === 'ru'
-            ? `Осталось ${p.stock} шт. товара "${p.name}" (мин: ${p.min_stock})`
-            : `Only ${p.stock} left of "${p.name}" (min: ${p.min_stock})`,
+          title: tNav('notifications.lowStockTitle'),
+          description: tNav('notifications.lowStockDescription', { name: p.name, stock: p.stock, min: p.min_stock }),
           href: `/${lang}/inventory/products`,
           read: readIds.includes(`low-stock-${p.id}`),
           created_at: new Date(p.updated_at || Date.now()),
@@ -178,12 +174,8 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       const overdueAlerts = (invoices || []).map((i: any) => ({
           id: `overdue-invoice-${i.id}`,
           type: 'overdue_invoice',
-          title: lang === 'uz' ? 'Muddati o\'tgan faktura' : lang === 'ru' ? 'Просроченный счет' : 'Overdue invoice',
-          description: lang === 'uz'
-            ? `"${i.customers?.name || ''}" uchun #${i.invoice_number} muddati o'tdi`
-            : lang === 'ru'
-            ? `Счет #${i.invoice_number} для "${i.customers?.name || ''}" просрочен`
-            : `Invoice #${i.invoice_number} for "${i.customers?.name || ''}" is past due`,
+          title: tNav('notifications.overdueInvoiceTitle'),
+          description: tNav('notifications.overdueInvoiceDescription', { number: i.invoice_number, customer: i.customers?.name || '' }),
           href: `/${lang}/sales/invoices`,
           read: readIds.includes(`overdue-invoice-${i.id}`),
           created_at: new Date(i.due_at),
@@ -192,7 +184,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       const supportAlerts = (supportReplies || []).map((m: any) => ({
         id: `support-reply-${m.id}`,
         type: 'support_reply',
-        title: lang === 'uz' ? 'Qo\'llab-quvvatlash javobi' : lang === 'ru' ? 'Ответ поддержки' : 'Support reply',
+        title: tNav('notifications.supportReplyTitle'),
         description: `${m.sender_name}: ${String(m.body).slice(0, 90)}`,
         href: `/${lang}/support`,
         // Always unread: the row itself is the unread marker, and it stops
@@ -220,7 +212,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       clearTimeout(firstFetch)
       clearInterval(interval)
     }
-  }, [lang])
+  }, [lang, tNav])
 
   const initials = getInitials(profile?.full_name) || 'U'
 
@@ -337,10 +329,10 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           // a button that pulses on every page for as long as one invoice is
           // overdue stops meaning "look here" within a day.
           className="h-8 w-8 justify-center gap-1.5 rounded-lg border-rose-200 bg-rose-50 px-0 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-100 hover:text-rose-800 sm:w-auto sm:px-3 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-950/60 dark:hover:text-rose-300"
-          title={lang === 'uz' ? "Muddati o'tgan" : lang === 'ru' ? 'Просрочено' : 'Overdue'}
+          title={tNav('overdue')}
         >
           <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0" />
-          <span className="hidden sm:inline">{lang === 'uz' ? "Muddati o'tgan" : lang === 'ru' ? 'Просрочено' : 'Overdue'}</span>
+          <span className="hidden sm:inline">{tNav('overdue')}</span>
         </Button>
       )}
 
@@ -411,8 +403,8 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       <ThemeToggle
         className={`w-8 ${HEADER_CONTROL}`}
         labels={{
-          light: lang === 'uz' ? "Yorug' rejim" : lang === 'ru' ? 'Светлая тема' : 'Light mode',
-          dark: lang === 'uz' ? "Qorong'i rejim" : lang === 'ru' ? 'Тёмная тема' : 'Dark mode',
+          light: tNav('lightMode'),
+          dark: tNav('darkMode'),
         }}
       />
 
@@ -432,7 +424,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         <DropdownMenuContent align="end" className="w-80 sm:w-96 p-0 border border-slate-200/60 dark:border-slate-700 shadow-lg rounded-xl overflow-hidden">
           <div className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700">
             <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
-              {lang === 'uz' ? 'Bildirishnomalar' : lang === 'ru' ? 'Уведомления' : 'Notifications'}
+              {tNav('notifications.title')}
               {unreadCount > 0 && (
                 <span className="ml-2 px-1.5 py-0.5 text-xs font-medium rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 border border-violet-100 dark:border-violet-900">
                   {unreadCount}
@@ -445,7 +437,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
                 className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-violet-600 transition-colors hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
               >
                 <Check className="h-3 w-3" />
-                {lang === 'uz' ? 'Hammasini o\'qilgan qilish' : lang === 'ru' ? 'Прочитать все' : 'Mark all as read'}
+                {tNav('notifications.markAllRead')}
               </button>
             )}
           </div>
@@ -454,10 +446,10 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
               <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400 dark:text-slate-500">
                 <CheckCircle2 className="h-8 w-8 text-emerald-500 dark:text-emerald-400 mb-2" />
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  {lang === 'uz' ? 'Hamma bildirishnomalar o\'qildi' : lang === 'ru' ? 'Все прочитано' : 'All caught up!'}
+                  {tNav('notifications.allCaughtUp')}
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                  {lang === 'uz' ? 'Hozircha yangi bildirishnomalar yo\'q' : lang === 'ru' ? 'Нет новых уведомлений' : 'No new notifications.'}
+                  {tNav('notifications.empty')}
                 </p>
               </div>
             ) : (

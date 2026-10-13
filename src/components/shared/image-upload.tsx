@@ -6,6 +6,7 @@ import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import Image from 'next/image'
 import { ImagePlus, Loader2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { errorMessage } from '@/lib/error-message'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
@@ -42,6 +43,7 @@ export function ImageUpload({
   label?: string
   disabled?: boolean
 }) {
+  const tRoot = useTranslations()
   const t = useTranslations('common')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const supabase = createClient() as any
@@ -103,7 +105,7 @@ export function ImageUpload({
       onChange(publicUrl.publicUrl)
       await removeStoredObject(previous)
     } catch (error: any) {
-      toast.error(error.message || t('error'))
+      toast.error(errorMessage(tRoot, error, t('error')))
     } finally {
       setIsUploading(false)
       // Let the same file be picked again after a failure/removal.

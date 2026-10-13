@@ -7,7 +7,10 @@ import { SettingsTabs } from '@/components/admin/settings-tabs'
 import { AdminProfileForm } from '@/components/admin/admin-profile-form'
 import { AdminSecurityForm } from '@/components/admin/admin-security-form'
 
-export const metadata: Metadata = { title: 'Settings' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.settings')
+  return { title: t('title') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function AdminSettingsProfilePage() {

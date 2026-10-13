@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDateTime, getInitials } from '@/lib/utils'
 import { isStrongPassword } from '@/lib/password-validation'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 export interface SuperAdminRow {
   id: string
@@ -29,6 +30,7 @@ export function SuperAdminsTable({
   admins: SuperAdminRow[]
   currentAdminId: string
 }) {
+  const tErrors = useTranslations('admin.errors')
   const tPassword = useTranslations('admin.password')
   const tAuth = useTranslations('auth')
   const t = useTranslations('admin.settings.admins')
@@ -58,7 +60,7 @@ export function SuperAdminsTable({
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(json.error || t('error'))
+        toast.error(adminErrorMessage(tErrors, json, t('error')))
         return
       }
       toast.success(t('created'))
@@ -81,7 +83,7 @@ export function SuperAdminsTable({
       const res = await fetch(`/api/admin/admins/${id}`, { method: 'DELETE' })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(json.error || t('error'))
+        toast.error(adminErrorMessage(tErrors, json, t('error')))
         return
       }
       toast.success(t('deleted'))

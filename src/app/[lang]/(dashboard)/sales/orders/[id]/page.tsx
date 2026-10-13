@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { createClient } from '@/lib/supabase/client'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatusBadge } from '@/components/shared/status-badge'
@@ -31,20 +32,11 @@ import { can, dataScope } from '@/lib/permissions'
 // to it (pos-client.tsx) is "POS Sale - Paid via CASH/CARD/TRANSFER/DEBT" — translate
 // that known template, same approach as translateReason on the product detail page.
 // Anything else is either null or text the user typed themselves, so it passes through.
-function translateOrderNotes(notes: string | null | undefined, lang: string): string {
+function translateOrderNotes(notes: string | null | undefined, t: (key: any, values?: any) => string): string {
   if (!notes) return ''
   const posMatch = notes.match(/^POS Sale - Paid via (CASH|CARD|TRANSFER|DEBT)$/)
   if (posMatch) {
-    const methodLabels: Record<string, { uz: string; ru: string }> = {
-      CASH: { uz: 'Naqd pul', ru: 'Наличные' },
-      CARD: { uz: 'Karta', ru: 'Карта' },
-      TRANSFER: { uz: "O'tkazma", ru: 'Перевод' },
-      DEBT: { uz: 'Qarz', ru: 'Долг' },
-    }
-    const method = methodLabels[posMatch[1]]
-    return lang === 'uz'
-      ? `POS sotuvi - to'lov usuli: ${method.uz}`
-      : `Продажа через POS - способ оплаты: ${method.ru}`
+    return t('posSaleNote', { method: t(`posNoteMethod.${posMatch[1]}`) })
   }
   return notes
 }
@@ -55,6 +47,7 @@ export default function OrderDetailPage() {
   const lang = params.lang
   const id = params.id
 
+  const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const tDistribution = useTranslations('distribution')
   const t = useTranslations('sales')
@@ -117,7 +110,7 @@ export default function OrderDetailPage() {
         setItems(itemsData || [])
         setDelivery(deliveryData)
       } catch (err: any) {
-        toast.error(err.message || tCommon('error'))
+        toast.error(errorMessage(tRoot, err, tCommon('error')))
         router.push(`/${lang}/sales/orders`)
       } finally {
         setIsLoading(false)
@@ -127,7 +120,7 @@ export default function OrderDetailPage() {
     if (id) {
       fetchOrderDetails()
     }
-  }, [id, lang, router])
+  }, [id, lang, router, tCommon, tRoot])
 
   if (isLoading) {
     return (
@@ -266,7 +259,7 @@ export default function OrderDetailPage() {
                   <FileText className="h-3.5 w-3.5" />
                   {tCommon('notes')}
                 </span>
-                <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{translateOrderNotes(order.notes, lang)}</p>
+                <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{translateOrderNotes(order.notes, t)}</p>
               </div>
             )}
           </CardContent>

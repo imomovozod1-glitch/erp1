@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { List, Map as MapIcon } from 'lucide-react'
 import { CustomersTable } from './customers-table'
 import { AllCustomersMap } from './all-customers-map'
@@ -35,6 +36,7 @@ export function CustomersViewTabs({
   total,
   totalPages,
 }: CustomersViewTabsProps) {
+  const tSales = useTranslations('sales')
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list')
 
   return (
@@ -50,7 +52,7 @@ export function CustomersViewTabs({
           }`}
         >
           <List className="h-3.5 w-3.5" />
-          {lang === 'uz' ? "Ro'yxat" : lang === 'ru' ? 'Список' : 'List'}
+          {tSales('viewList')}
         </button>
         <button
           type="button"
@@ -62,7 +64,7 @@ export function CustomersViewTabs({
           }`}
         >
           <MapIcon className="h-3.5 w-3.5" />
-          {lang === 'uz' ? 'Xarita' : lang === 'ru' ? 'Карта' : 'Map'}
+          {tSales('viewMap')}
         </button>
       </div>
 

@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { SupportConversation } from '@/components/support/support-conversation'
 import Link from 'next/link'
+import { errorMessage } from '@/lib/error-message'
 
 interface SupportClientProps {
   lang: string
@@ -53,7 +54,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
     e.preventDefault()
     if (isSubmitting) return
     if (subject.trim().length < 3 || !message.trim()) {
-      toast.error(lang === 'uz' ? "Mavzu va xabar to'ldirilishi shart" : lang === 'ru' ? 'Тема и сообщение обязательны для заполнения' : 'Subject and message are required')
+      toast.error(t('support.subjectMessageRequired'))
       return
     }
 
@@ -66,7 +67,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
       })
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
-        throw new Error(json.error || tCommon('error'))
+        throw new Error(json.error || '')
       }
       setIsSubmitted(true)
       toast.success(t('support.ticketSuccess'))
@@ -75,7 +76,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
       // Tell the conversation panel below to pull in the new thread.
       setThreadsVersion((v) => v + 1)
     } catch (error: any) {
-      toast.error(error.message || tCommon('error'))
+      toast.error(errorMessage(t, error, tCommon('error')))
     } finally {
       setIsSubmitting(false)
     }
@@ -83,7 +84,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
-    toast.success(`${label} ${lang === 'uz' ? "nusxalandi" : lang === 'ru' ? "скопировано" : "copied"}`)
+    toast.success(t('support.copied', { label }))
   }
 
   return (
@@ -128,7 +129,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
 
         {/* Phone Card */}
         <div 
-          onClick={() => handleCopy('+998712000000', 'Phone')}
+          onClick={() => handleCopy('+998712000000', tCommon('phone'))}
           className="group relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/65 dark:border-slate-800 hover:border-violet-400 hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer"
         >
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-300" />
@@ -151,7 +152,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
 
         {/* Email Card */}
         <div 
-          onClick={() => handleCopy('support@erpsystem.uz', 'Email')}
+          onClick={() => handleCopy('support@erpsystem.uz', tCommon('email'))}
           className="group relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/65 dark:border-slate-800 hover:border-violet-400 hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer"
         >
           <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/10 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-300" />
@@ -182,7 +183,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
               {t('support.submitTicket')}
             </CardTitle>
             <CardDescription>
-              {lang === 'uz' ? "Xabaringizni yozib qoldiring va biz tez orada siz bilan bog'lanamiz." : lang === 'ru' ? 'Оставьте сообщение, и мы свяжемся с вами в ближайшее время.' : 'Leave a message and we will respond to you shortly.'}
+              {t('support.ticketFormDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -191,13 +192,13 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                 <div className="p-4 bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 rounded-full mb-4 animate-bounce">
                   <CheckCircle2 className="h-10 w-10" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{lang === 'uz' ? "Murojaat qabul qilindi!" : lang === 'ru' ? 'Обращение принято!' : 'Ticket Received!'}</h3>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('support.ticketReceived')}</h3>
                 <p className="text-sm text-muted-foreground max-w-sm mt-2">{t('support.ticketSuccess')}</p>
                 <Button 
                   onClick={() => setIsSubmitted(false)}
                   className="mt-6 bg-violet-600 hover:bg-violet-500"
                 >
-                  {lang === 'uz' ? "Yangi murojaat yuborish" : lang === 'ru' ? 'Отправить новое обращение' : 'Send New Ticket'}
+                  {t('support.sendNewTicket')}
                 </Button>
               </div>
             ) : (
@@ -209,7 +210,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                   <Input 
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    placeholder={lang === 'uz' ? "Misol: To'lov tizimidagi muammo" : lang === 'ru' ? 'Например: Проблема с оплатой' : 'Example: Issue with payment'}
+                    placeholder={t('support.subjectPlaceholder')}
                     className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
                   />
                 </div>
@@ -220,7 +221,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                   <Textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder={lang === 'uz' ? "Batafsil ma'lumot qoldiring..." : lang === 'ru' ? 'Подробно опишите вашу проблему...' : 'Describe your issue in detail...'}
+                    placeholder={t('support.messagePlaceholder')}
                     className="rounded-xl border-slate-200 dark:border-slate-700 min-h-30 focus-visible:ring-violet-500"
                   />
                 </div>
@@ -230,7 +231,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                   className="w-full bg-violet-600 hover:bg-violet-500 font-medium rounded-xl gap-2 h-11"
                 >
                   <Send className="h-4 w-4" />
-                  {isSubmitting ? (lang === 'uz' ? 'Yuborilmoqda...' : lang === 'ru' ? 'Отправка...' : 'Sending...') : t('support.submitTicket')}
+                  {isSubmitting ? t('support.sending') : t('support.submitTicket')}
                 </Button>
               </form>
             )}
@@ -253,13 +254,13 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
                 </span>
               </div>
               <h3 className="text-xl font-extrabold leading-snug">
-                {lang === 'uz' ? 'Har doim aloqadamiz' : lang === 'ru' ? 'Всегда на связи' : 'Always Connected'}
+                {t('support.alwaysConnected')}
               </h3>
               <p className="text-xs text-violet-100/90 leading-relaxed">
                 {t('support.liveStatusDesc')}
               </p>
               <div className="pt-2 flex items-center gap-2 text-xs font-semibold bg-white/15 px-3 py-2 rounded-xl w-fit">
-                <span>Premium Support Active</span>
+                <span>{t('support.premiumActive')}</span>
               </div>
             </div>
           </div>
@@ -268,14 +269,10 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
           <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-6 rounded-2xl space-y-3">
             <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-semibold text-sm">
               <ShieldCheck className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-              <span>{lang === 'uz' ? "Xavfsizlik kafolati" : lang === 'ru' ? 'Гарантия безопасности' : 'Security Guarantee'}</span>
+              <span>{t('support.securityTitle')}</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {lang === 'uz' 
-                ? "Sizning barcha ma'lumotlaringiz va murojaatlaringiz shifrlangan holda yuboriladi va uchinchi shaxslarga berilmaydi." 
-                : lang === 'ru' 
-                ? 'Все ваши данные и обращения отправляются в зашифрованном виде и не передаются третьим лицам.' 
-                : 'All your data and communications are encrypted and are never shared with third parties.'}
+              {t('support.securityDesc')}
             </p>
           </div>
         </div>

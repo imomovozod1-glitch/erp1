@@ -412,17 +412,13 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
         </KpiTile>
 
         <KpiTile
-          label={lang === 'uz' ? 'Qarzga sotilgan' : lang === 'ru' ? 'Продано в долг' : 'Sold on credit'}
+          label={td('soldOnCredit')}
           value={formatCurrency(realReceivables)}
           icon={AlertTriangle}
         >
           <div className="mt-3 flex items-center text-xs text-slate-500 dark:text-slate-400">
             <span>
-              {lang === 'uz'
-                ? "Mijozlardan kutilayotgan to'lov"
-                : lang === 'ru'
-                  ? 'Ожидаемая оплата от клиентов'
-                  : 'Expected from customers'}
+              {td('expectedFromCustomers')}
             </span>
           </div>
         </KpiTile>

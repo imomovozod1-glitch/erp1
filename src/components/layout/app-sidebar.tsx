@@ -288,7 +288,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">Falco ERP</span>
-                <span className="truncate text-xs text-muted-foreground">Enterprise</span>
+                <span className="truncate text-xs text-muted-foreground">{tNav('brandTagline')}</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -300,7 +300,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
           {/* The primitive folds this label away with `-mt-8` in the rail,
               which lifted the entire icon column by another 32px. Keep the
               space, drop only the text. */}
-          <SidebarGroupLabel className="group-data-[collapsible=icon]:mt-0">Platform</SidebarGroupLabel>
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:mt-0">{tNav('platform')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleNavItems.map((item) => {
@@ -394,7 +394,7 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
             {profile?.role === 'admin' ? (
               <SidebarMenuButton
                 size="lg"
-                tooltip={lang === 'uz' ? "Qo'llab-quvvatlash" : lang === 'ru' ? 'Поддержка' : 'Support'}
+                tooltip={tNav('support')}
                 render={<Link href={`/${lang}/support`} prefetch={true} onClick={closeOnMobile} />}
                 className="gap-3 text-slate-700 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
               >
@@ -402,8 +402,8 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                   <LifeBuoy className="size-4 text-violet-600 animate-pulse" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate font-semibold">{lang === 'uz' ? 'Qo\'llab-quvvatlash' : lang === 'ru' ? 'Поддержка' : 'Support'}</span>
-                  <span className="truncate text-xs text-muted-foreground">{lang === 'uz' ? 'Yordam xizmati' : lang === 'ru' ? 'Служба поддержки' : 'Help Desk'}</span>
+                  <span className="truncate font-semibold">{tNav('support')}</span>
+                  <span className="truncate text-xs text-muted-foreground">{tNav('helpDesk')}</span>
                 </div>
               </SidebarMenuButton>
             ) : (

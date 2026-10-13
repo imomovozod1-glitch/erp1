@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
 import { Resolver, Controller, useWatch } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { NumericInput } from '@/components/ui/numeric-input'
@@ -132,7 +133,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang, ass
       toast.error(
         error instanceof BusinessRpcError
           ? businessRpcErrorMessage(t, error)
-          : error.message || t('common.error')
+          : errorMessage(t, error, t('common.error'))
       )
     } finally {
       setIsSubmitting(false)

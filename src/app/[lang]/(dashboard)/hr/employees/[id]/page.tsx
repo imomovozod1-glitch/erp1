@@ -27,7 +27,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
         title={employee?.full_name ?? '—'}
         breadcrumbs={[
           { label: 'ERP', href: `/${lang}/dashboard` },
-          { label: t('employees', { fallback: 'Xodimlar' }), href: `/${lang}/hr/employees` },
+          { label: t('employees'), href: `/${lang}/hr/employees` },
           { label: employee?.full_name ?? '—' }
         ]}
       />

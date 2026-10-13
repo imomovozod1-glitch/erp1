@@ -14,8 +14,10 @@ import {
   AdminFormSection,
   AdminFormShell,
 } from '@/components/admin/admin-form-layout'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 export function AdminProfileForm({ fullName, email }: { fullName: string; email: string }) {
+  const tErrors = useTranslations('admin.errors')
   const t = useTranslations('admin.settings.profile')
   const router = useRouter()
   const [name, setName] = useState(fullName)
@@ -33,7 +35,7 @@ export function AdminProfileForm({ fullName, email }: { fullName: string; email:
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(json.error || t('error'))
+        toast.error(adminErrorMessage(tErrors, json, t('error')))
         return
       }
       toast.success(t('success'))

@@ -5,7 +5,13 @@ import { UploadCloud, FileText, Loader2, Image as ImageIcon, Copy, Check } from 
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
+import { errorMessage } from '@/lib/error-message'
+
 export function ScannerInterface() {
+  const tRoot = useTranslations()
+  const tCommon = useTranslations('common')
+  const t = useTranslations('tools')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -17,7 +23,7 @@ export function ScannerInterface() {
     const selected = e.target.files?.[0]
     if (selected) {
       if (!selected.type.startsWith('image/')) {
-        toast.error("Faqat rasm fayllari (JPG, PNG) qo'llab-quvvatlanadi")
+        toast.error(t('imagesOnly'))
         return
       }
       setFile(selected)
@@ -44,18 +50,19 @@ export function ScannerInterface() {
       try {
         data = JSON.parse(rawText)
       } catch {
-        throw new Error("Serverdan kutilmagan javob qaytdi. Rasm hajmi yoki formati mos kelmadi.")
+        toast.error(t('unexpectedResponse'))
+        return
       }
 
       if (!response.ok) {
-        throw new Error(String(data.error || 'Xatolik yuz berdi'))
+        throw new Error(String(data.error || ''))
       }
 
       setResult(String(data.result || ''))
-      toast.success('Hujjat muvaffaqiyatli tahlil qilindi')
+      toast.success(t('scanSuccess'))
     } catch (error) {
       console.error(error)
-      toast.error(error instanceof Error ? error.message : 'Xatolik yuz berdi')
+      toast.error(errorMessage(tRoot, error, tCommon('error')))
     } finally {
       setIsLoading(false)
     }
@@ -66,7 +73,7 @@ export function ScannerInterface() {
       navigator.clipboard.writeText(result)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-      toast.success('Nusxa olindi')
+      toast.success(t('copiedToast'))
     }
   }
 
@@ -76,7 +83,7 @@ export function ScannerInterface() {
       <Card className="border-0 shadow-sm flex flex-col h-full min-h-125">
         <CardContent className="p-6 flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-lg">Hujjat rasmi</h3>
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-lg">{t('documentImage')}</h3>
             {file && (
               <Button
                 variant="ghost"
@@ -89,7 +96,7 @@ export function ScannerInterface() {
                 }}
                 className="text-red-500 hover:text-red-600"
               >
-                Tozalash
+                {tCommon('clear')}
               </Button>
             )}
           </div>
@@ -100,7 +107,7 @@ export function ScannerInterface() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={preview}
-                  alt="Preview"
+                  alt={t('previewAlt')}
                   className="max-w-full max-h-full object-contain rounded-lg"
                 />
               </div>
@@ -110,10 +117,10 @@ export function ScannerInterface() {
                   <UploadCloud className="h-8 w-8" />
                 </div>
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Rasmni yuklang yoki bu yerga tashlang
+                  {t('uploadPrompt')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  PNG, JPG, WEBP (Maksimal 5MB)
+                  {t('uploadHint')}
                 </p>
                 <input
                   ref={fileInputRef}
@@ -136,7 +143,7 @@ export function ScannerInterface() {
             ) : (
               <ImageIcon className="h-5 w-5" />
             )}
-            {isLoading ? 'Tahlil qilinmoqda...' : 'Tahlil qilish (OCR)'}
+            {isLoading ? t('analyzing') : t('analyze')}
           </Button>
         </CardContent>
       </Card>
@@ -147,12 +154,12 @@ export function ScannerInterface() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-violet-600" />
-              <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-lg">Natija</h3>
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100 text-lg">{t('result')}</h3>
             </div>
             {result && (
               <Button variant="outline" size="sm" onClick={handleCopy} className="gap-1.5 rounded-lg h-8">
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? 'Nusxalandi' : 'Nusxa olish'}
+                {copied ? t('copied') : t('copy')}
               </Button>
             )}
           </div>
@@ -166,7 +173,7 @@ export function ScannerInterface() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 </div>
-                <p className="text-sm font-medium">Sun&apos;iy intellekt tahlil qilmoqda...</p>
+                <p className="text-sm font-medium">{t('aiAnalyzing')}</p>
               </div>
             ) : result ? (
               <div className="prose prose-sm prose-slate max-w-none dark:prose-invert">
@@ -177,7 +184,7 @@ export function ScannerInterface() {
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-60">
                 <FileText className="h-10 w-10 mb-3 text-slate-300" />
-                <p className="text-sm">Natija bu yerda ko&apos;rsatiladi</p>
+                <p className="text-sm">{t('resultPlaceholder')}</p>
               </div>
             )}
           </div>

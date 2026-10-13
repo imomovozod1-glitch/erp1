@@ -8,16 +8,18 @@ import { phoneToSyntheticEmail, isReservedSubdomain } from '@/lib/tenant-auth'
 import { phoneSchema } from '@/lib/phone-validation'
 import { resolveTenantOwner } from '@/lib/tenant-owner'
 import { registerTenantDomain, unregisterTenantDomain } from '@/lib/vercel-domains'
+import { zodErrorCode, isDuplicateLoginError } from '@/lib/admin-errors'
+import { adminServerError } from '@/lib/admin-errors-server'
 
 const updateTenantSchema = z.object({
   subdomain: z
     .string()
     .min(2)
     .regex(/^[a-z0-9-]+$/)
-    .refine((v) => !isReservedSubdomain(v), { message: 'This subdomain is reserved' })
+    .refine((v) => !isReservedSubdomain(v), { message: 'subdomain_reserved' })
     .optional(),
   company_name: z.string().min(1).optional(),
-  phone: phoneSchema('Invalid phone number').optional(),
+  phone: phoneSchema('invalid_phone').optional(),
   // costing_method is deliberately absent: it is fixed when the tenant is
   // created (see supabase/migration_tenant_costing_lock.sql). zod drops the
   // key if a client still sends it.
@@ -43,13 +45,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   const body = await request.json().catch(() => null)
   const parsed = updateTenantSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid input' }, { status: 400 })
+    return NextResponse.json({ error: zodErrorCode(parsed.error) }, { status: 400 })
   }
   const input = parsed.data
 
@@ -60,7 +62,7 @@ export async function PATCH(
     .select('id, phone, owner_user_id, subdomain')
     .eq('id', id)
     .maybeSingle()
-  if (!existing) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+  if (!existing) return NextResponse.json({ error: 'tenant_not_found' }, { status: 404 })
   const phoneChanged = input.phone !== undefined && input.phone !== existing.phone
 
   const update: Record<string, unknown> = {}
@@ -93,17 +95,21 @@ export async function PATCH(
     // The account that signs in with the CURRENT phone (src/lib/tenant-owner.ts).
     const owner = await resolveTenantOwner(supabase, existing)
     const email = phoneToSyntheticEmail(input.phone!)
+    // Without an owner there is no auth update to collide, so check the
+    // number by hand: otherwise the tenant takes a phone whose login belongs
+    // to someone else, and its owner login can never be (re)created.
+    const { data: taken } = owner
+      ? { data: null }
+      : await supabase.from('profiles').select('id').eq('email', email).limit(1).maybeSingle()
     const { error: authError } = owner
       ? await supabase.auth.admin.updateUserById(owner.userId, {
           email,
           email_confirm: true,
         })
-      : { error: null }
+      : { error: taken ? { code: 'email_exists' } : null }
     if (authError) {
-      const message = /already.*registered|already exists|email_exists/i.test(authError.message)
-        ? 'Another login already uses this phone number'
-        : authError.message
-      return NextResponse.json({ error: message }, { status: 409 })
+      if (isDuplicateLoginError(authError)) return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+      return adminServerError(authError, 409)
     }
     if (owner) {
       await supabase.from('profiles').update({ phone: input.phone, email }).eq('id', owner.userId)
@@ -113,8 +119,8 @@ export async function PATCH(
 
   const { data: tenant, error } = await supabase.from('tenants').update(update).eq('id', id).select().single()
   if (error) {
-    const message = error.code === '23505' ? 'Subdomain or phone already in use' : error.message
-    return NextResponse.json({ error: message }, { status: 409 })
+    if (error.code === '23505') return NextResponse.json({ error: 'subdomain_or_phone_taken' }, { status: 409 })
+    return adminServerError(error, 409)
   }
 
   // The company's own workspace reads this row through `getCachedTenant`, which
@@ -141,7 +147,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSuperAdminSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const { id } = await params
   const supabase = getCacheClient() as any
@@ -151,7 +157,7 @@ export async function DELETE(
     .select('id, subdomain, status, last_active_at, created_at, subscription_ends_at, owner_user_id')
     .eq('id', id)
     .maybeSingle()
-  if (!tenant) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+  if (!tenant) return NextResponse.json({ error: 'tenant_not_found' }, { status: 404 })
 
   // Re-check server-side — never trust the client-disabled delete button.
   // Same dual rule as the UI (src/components/admin/delete-tenant-button.tsx):
@@ -164,7 +170,7 @@ export async function DELETE(
       : null
   const eligible = inactivityElapsed > INACTIVITY_THRESHOLD_MS || (blockedElapsed != null && blockedElapsed > INACTIVITY_THRESHOLD_MS)
   if (!eligible) {
-    return NextResponse.json({ error: 'Tenant has been active within the last 180 days' }, { status: 403 })
+    return NextResponse.json({ error: 'tenant_recently_active' }, { status: 403 })
   }
 
   const { error } = await supabase.from('tenants').delete().eq('id', id)
@@ -173,7 +179,7 @@ export async function DELETE(
     // a tenant with remaining business data (products, orders, etc.) fails
     // here instead of silently wiping a company's records.
     return NextResponse.json(
-      { error: 'This tenant still has business data and cannot be deleted. Remove its data first.' },
+      { error: 'tenant_has_data' },
       { status: 409 }
     )
   }

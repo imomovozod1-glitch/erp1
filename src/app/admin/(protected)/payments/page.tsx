@@ -7,7 +7,10 @@ import { StatsCard } from '@/components/shared/stats-card'
 import { AdminPaymentsTable, type AdminPaymentRow } from '@/components/admin/admin-payments-table'
 import { formatCurrency } from '@/lib/utils'
 
-export const metadata: Metadata = { title: 'Payments' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('admin.payments')
+  return { title: t('title') }
+}
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPaymentsPage() {

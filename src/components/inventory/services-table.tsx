@@ -6,6 +6,7 @@ import { useConfirmDelete } from "@/components/shared/confirm-dialog";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { errorMessage } from "@/lib/error-message";
 import { MoreHorizontal, Pencil, Trash2, Power, Download, Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { invalidateProducts } from "@/lib/data/revalidate";
@@ -71,18 +72,16 @@ export function ServicesTable({
     const rows = services.map((s: any) => ({
       ...s,
       categoryName: s.categories?.name || '',
-      statusLabel: s.is_active
-        ? (lang === 'uz' ? 'Faol' : lang === 'ru' ? 'Активен' : 'Active')
-        : (lang === 'uz' ? 'Nofaol' : lang === 'ru' ? 'Неактивен' : 'Inactive'),
+      statusLabel: s.is_active ? t("common.active") : t("common.inactive"),
     }));
     await exportRowsToExcel(rows, [
-      { header: 'Nomi', key: 'name' },
-      { header: 'Kodi', key: 'sku' },
-      { header: 'Kategoriya', key: 'categoryName' },
-      { header: 'Tannarx', key: 'cost_price' },
-      { header: 'Narxi', key: 'price' },
-      { header: "O'lchov birligi", key: 'unit' },
-      { header: 'Holat', key: 'statusLabel' },
+      { header: t("inventory.serviceName"), key: 'name' },
+      { header: t("inventory.serviceCode"), key: 'sku' },
+      { header: t("inventory.category"), key: 'categoryName' },
+      { header: t("inventory.serviceCostPrice"), key: 'cost_price' },
+      { header: t("inventory.price"), key: 'price' },
+      { header: t("inventory.unit"), key: 'unit' },
+      { header: t("common.status"), key: 'statusLabel' },
     ], 'xizmatlar.xlsx');
   };
 
@@ -94,7 +93,7 @@ export function ServicesTable({
       .update({ is_active: !currentStatus })
       .eq("id", id);
     if (error) {
-      toast.error(error.message || t("common.error"));
+      toast.error(errorMessage(t, error, t("common.error")));
     } else {
       toast.success(t("common.success"));
       await invalidateProducts();
@@ -124,7 +123,7 @@ export function ServicesTable({
           await invalidateProducts();
         }
       } else {
-        toast.error(error.message || t("common.error"));
+        toast.error(errorMessage(t, error, t("common.error")));
       }
     } else {
       toast.success(t("common.success"));
@@ -279,7 +278,7 @@ export function ServicesTable({
                               }
                             />
                             <TooltipContent side="left">
-                              <p>{lang === 'uz' ? 'Harakatlar' : lang === 'ru' ? 'Действия' : 'Actions'}</p>
+                              <p>{t("common.actions")}</p>
                             </TooltipContent>
                           </Tooltip>
                           <DropdownMenuContent align="end" className="w-40">
