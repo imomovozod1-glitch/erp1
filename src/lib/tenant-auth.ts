@@ -22,9 +22,30 @@ export function isReservedSubdomain(subdomain: string): boolean {
   return RESERVED_SUBDOMAINS.includes(subdomain.toLowerCase())
 }
 
+export function phoneDigits(phone: string): string {
+  return phone.replace(/\D/g, '')
+}
+
+/**
+ * The GLOBAL login for a phone: a tenant OWNER (the login of the tenant's own
+ * phone), a support agent, and members created before tenant-scoped logins.
+ */
 export function phoneToSyntheticEmail(phone: string): string {
-  const digits = phone.replace(/\D/g, '')
-  return `${digits}@tenant.local`
+  return `${phoneDigits(phone)}@tenant.local`
+}
+
+/**
+ * A tenant MEMBER's login: the same phone, scoped to the company
+ * (`{digits}@{tenantId}.tenant.local`). Auth emails are unique platform-wide,
+ * so with one global address per phone a cashier in one company held the
+ * number another company was then registered with, and that company could
+ * never get an owner login. Scoped, a member's phone may equal any other
+ * company's phone — or their own company's — without the two colliding;
+ * within one company it still has to be unique. See src/lib/phone-login.ts
+ * for how a sign-in finds the right one.
+ */
+export function memberLoginEmail(phone: string, tenantId: string): string {
+  return `${phoneDigits(phone)}@${tenantId}.tenant.local`
 }
 
 /**

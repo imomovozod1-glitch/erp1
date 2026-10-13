@@ -36,15 +36,22 @@ export async function resolveTenantOwner(
   for (const row of admins ?? []) add(row.id)
 
   // Prefer whichever candidate the login page would actually reach.
+  const adoptable: string[] = []
   for (const id of candidates) {
     const { data } = await supabase.auth.admin.getUserById(id)
-    if (data?.user?.email?.toLowerCase() === loginEmail) {
+    const email = data?.user?.email?.toLowerCase()
+    if (email === loginEmail) {
       return { userId: id, loginEmail, emailMatches: true }
     }
+    // A member's tenant-scoped login (`{digits}@{tenantId}.tenant.local`,
+    // src/lib/tenant-auth.ts) is that member's own account, never a drifted
+    // owner login — adopting it would hand the company's login to them and
+    // take theirs away.
+    if (data?.user && !/@[^@]+\.tenant\.local$/.test(email ?? '')) adoptable.push(id)
   }
 
   // None of them signs in with the tenant's phone: fall back to the recorded
   // owner (or the first admin), whose login email the caller then corrects.
-  const fallback = candidates[0]
+  const fallback = adoptable[0]
   return fallback ? { userId: fallback, loginEmail, emailMatches: false } : null
 }

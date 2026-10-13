@@ -4,7 +4,7 @@ import { getVerifiedUser, getCachedProfile } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { phoneSchema } from '@/lib/phone-validation'
-import { phoneToSyntheticEmail } from '@/lib/tenant-auth'
+import { memberLoginEmail, phoneToSyntheticEmail } from '@/lib/tenant-auth'
 const modulePermissionSchema = z.object({ view: z.boolean(), edit: z.boolean() })
 // A partial map keyed by module — z.record() with an enum key requires
 // every enum key to be present (Zod v4), but the client only ever sends
@@ -74,7 +74,29 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const email = phoneToSyntheticEmail(input.phone)
+  // Scoped to this company (src/lib/tenant-auth.ts): the number may equal the
+  // company's own phone, or a phone in any other company, without colliding.
+  // Only a second login with the same number in THIS company is refused.
+  const email = memberLoginEmail(input.phone, callerProfile.tenant_id)
+
+  // A member from before scoped logins holds the GLOBAL address; with the same
+  // number in this company that is still a duplicate. The company's owner
+  // holding it is not — a member may share the company's own phone.
+  const { data: legacy } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('tenant_id', callerProfile.tenant_id)
+    .eq('email', phoneToSyntheticEmail(input.phone))
+  if (legacy?.length) {
+    const { data: tenantRow } = await supabase
+      .from('tenants')
+      .select('owner_user_id')
+      .eq('id', callerProfile.tenant_id)
+      .maybeSingle()
+    if (legacy.some((row: { id: string }) => row.id !== tenantRow?.owner_user_id)) {
+      return NextResponse.json({ error: 'phone_taken' }, { status: 400 })
+    }
+  }
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,

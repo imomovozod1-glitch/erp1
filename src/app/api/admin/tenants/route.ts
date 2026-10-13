@@ -8,6 +8,7 @@ import { newPasswordSchema } from '@/lib/password-validation'
 import { registerTenantDomain } from '@/lib/vercel-domains'
 import { zodErrorCode, isDuplicateLoginError } from '@/lib/admin-errors'
 import { adminServerError } from '@/lib/admin-errors-server'
+import { freeGlobalLogin, tenantPhoneTaken } from '@/lib/phone-login'
 
 const createTenantSchema = z.object({
   subdomain: z
@@ -51,6 +52,13 @@ export async function POST(request: NextRequest) {
 
   const supabase = getCacheClient() as any
 
+  // A company's phone is unique among COMPANIES (compared by digits). A member
+  // of any company having the same number is not a conflict — see
+  // freeGlobalLogin below.
+  if (await tenantPhoneTaken(input.phone, null)) {
+    return NextResponse.json({ error: 'phone_taken' }, { status: 409 })
+  }
+
   // Status is never set manually here — it's always 'active' on creation
   // (the column default) and from then on purely date-derived from
   // subscription_ends_at, see src/lib/tenant-status.ts.
@@ -75,6 +83,14 @@ export async function POST(request: NextRequest) {
   if (tenantError) {
     if (tenantError.code === '23505') return NextResponse.json({ error: 'subdomain_or_phone_taken' }, { status: 409 })
     return adminServerError(tenantError, 409)
+  }
+
+  // The owner signs in with the phone's global login; a member who still holds
+  // it (an older account) moves to their own company-scoped login first.
+  const freed = await freeGlobalLogin(input.phone, tenant.id, null)
+  if (!freed.ok) {
+    await supabase.from('tenants').delete().eq('id', tenant.id)
+    return NextResponse.json({ error: freed.error }, { status: 409 })
   }
 
   const email = phoneToSyntheticEmail(input.phone)
