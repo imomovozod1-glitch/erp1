@@ -113,7 +113,7 @@ export function ScannerInterface() {
               </div>
             ) : (
               <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer p-6">
-                <div className="h-16 w-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-violet-500">
+                <div className="h-16 w-16 bg-card rounded-full shadow-sm flex items-center justify-center mb-4 text-violet-500">
                   <UploadCloud className="h-8 w-8" />
                 </div>
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -169,7 +169,7 @@ export function ScannerInterface() {
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-3">
                 <div className="relative">
                   <div className="absolute inset-0 bg-violet-100 rounded-full animate-ping opacity-75" />
-                  <div className="relative bg-white p-3 rounded-full shadow-sm text-violet-600">
+                  <div className="relative bg-card p-3 rounded-full shadow-sm text-violet-600">
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 </div>

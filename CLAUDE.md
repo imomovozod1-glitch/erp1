@@ -191,6 +191,17 @@ Functions (`migration_business_rpc.sql`): the money/stock entry points listed un
 
 **Errors are codes, never sentences.** An API route answers `{ error: '<snake_case_code>' }` (raw Supabase/third-party text is `console.error`-ed and answered as `server_error`), and the client shows any failure with `errorMessage(tRoot, error, fallback)` (`src/lib/error-message.ts`, root translator): it resolves `errors.<code>` for an API body, a code-valued `Error`, a Postgres code (23505 → `duplicate`, 23503 → `in_use`, 42501 → `forbidden`, …), a Supabase Auth code, a wrapped `cause`, or a network failure, and falls back to the caller's translated message. Adding a code = answering it + adding `errors.<code>` in all three files. Never `toast.error(error.message)` / `toast.error(json.error)`. The super-admin console has its own `admin.errors.*` set (`src/lib/admin-errors.ts`).
 
+## Design system (Figma "ERP")
+
+The look comes from the Figma file "ERP" (light-glass screens, desktop and 390px mobile): deep violet `#5300b7` as the primary, `#6d28d9` as the lighter end of the brand gradient, a lavender page (`#faf8ff`) with white cards, 24px card radii, pill chips and search fields, Manrope (it has Cyrillic; Inter did not fit the design). Everything is a token in `src/app/globals.css` — the `violet-*` ramp, `--background/--card/--primary/…`, `--glow`, `--chrome` — with a full `.dark` set (violet-black page `#0c0818`, cards `#151027`); component files keep using `violet-*` / `slate-*` / semantic tokens, never raw hex. A colour used on a surface needs its dark counterpart (`dark:` pair or a token).
+
+The Android app is the same Next.js UI in a WebView, so **phone layout is a first-class view, not a squeezed desktop**:
+- Below `md` the sidebar is a sheet, the header becomes an app bar (brand mark + current module + search / bell / avatar; theme, language and help move into the avatar menu) and `BottomNav` (`components/layout/bottom-nav.tsx`: dashboard, POS, inventory, orders — each only if the user may view it — plus "More" which opens the sidebar sheet) sits under the content. `(dashboard)/layout.tsx` pads `main` for both, and for the floating action button.
+- `PageHeader`'s `action` is a button on desktop and a floating pill above the bottom nav on phones.
+- **Every server-paginated list renders cards on phones.** Its `<Table>` gets `containerClassName="max-md:hidden"` and a `<MobileCardList>` of `<MobileCard>`s (`components/shared/mobile-list.tsx`) sits beside it; the outer Card and the toolbar go borderless on phones. Reference: `inventory/products-table.tsx`. A new list screen is not finished until it has its card view. The `.app-page` rule that makes only the rows scroll keys on `data-slot="table-container"`, which `MobileCardList` carries on purpose.
+- Status pills (`StatusBadge`) always carry their dot; tap targets are 40px below `md` (Button/Input sizes).
+- The Capacitor status bar follows the in-app theme (`capacitor-provider.tsx`); `theme-color` follows it too (`theme-provider.tsx`).
+
 ## Conventions
 
 - Path alias `@/*` → `src/*`.

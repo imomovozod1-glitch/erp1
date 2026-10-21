@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { MoreHorizontal, Pencil, Truck, MapPin } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { SupplierImportExport } from '@/components/procurement/supplier-import-export'
@@ -59,11 +60,41 @@ export function SuppliersTable({
   const paginated = suppliers
 
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (supplier: any) => (
+                        <DropdownMenu>
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </DropdownMenuTrigger>
+                              }
+                            />
+                            <TooltipContent side="left">
+                              <p>{tCommon('actions')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}/edit`)}>
+                              <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
+                              {tCommon('edit')}
+                            </DropdownMenuItem>
+                            {(supplier.address || (supplier.latitude && supplier.longitude)) && (
+                              <DropdownMenuItem onClick={() => setMapSupplier({ name: supplier.name, address: supplier.address, latitude: supplier.latitude, longitude: supplier.longitude })}>
+                                <MapPin className="mr-2 h-3.5 w-3.5 text-slate-500" />
+                                {t('viewOnMap')}
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+  )
+
   return (
     <TooltipProvider>
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
             <div className="flex flex-wrap items-center gap-3">
               <TableSearch />
             </div>
@@ -71,7 +102,7 @@ export function SuppliersTable({
               {canExport && <SupplierImportExport suppliers={suppliers} lang={lang} />}
             </div>
           </div>
-          <Table>
+          <Table containerClassName="max-md:hidden">
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableHead className="w-10 font-semibold text-center">#</TableHead>
@@ -134,32 +165,7 @@ export function SuppliersTable({
                         {supplier.assignee?.full_name || tCommon('unassigned')}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </DropdownMenuTrigger>
-                              }
-                            />
-                            <TooltipContent side="left">
-                              <p>{tCommon('actions')}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}/edit`)}>
-                              <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                              {tCommon('edit')}
-                            </DropdownMenuItem>
-                            {(supplier.address || (supplier.latitude && supplier.longitude)) && (
-                              <DropdownMenuItem onClick={() => setMapSupplier({ name: supplier.name, address: supplier.address, latitude: supplier.latitude, longitude: supplier.longitude })}>
-                                <MapPin className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                                {t('viewOnMap')}
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {renderActions(supplier)}
                       </TableCell>
                   </TableRow>
                 </React.Fragment>
@@ -167,6 +173,45 @@ export function SuppliersTable({
             )}
           </TableBody>
         </Table>
+          {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+          <MobileCardList
+            isEmpty={paginated.length === 0}
+            empty={
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <Truck className="h-8 w-8 opacity-40" />
+                <p className="text-sm">{tCommon('noData')}</p>
+              </div>
+            }
+          >
+            {paginated.map((supplier) => {
+              const debt = Number(supplier.total_debt) || 0
+              return (
+                <MobileCard
+                  key={supplier.id}
+                  onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}`)}
+                  leading={<MobileThumb fallback={<Truck />} />}
+                  eyebrow={
+                    <>
+                      {supplier.tin && <MobileChip>{supplier.tin}</MobileChip>}
+                      {supplier.contact_person && <span className="truncate">{supplier.contact_person}</span>}
+                    </>
+                  }
+                  title={supplier.name}
+                  status={
+                    <StatusBadge
+                      tone={supplier.is_active ? 'emerald' : 'slate'}
+                      label={supplier.is_active ? tCommon('active') : tCommon('inactive')}
+                    />
+                  }
+                  menu={renderActions(supplier)}
+                  stats={[
+                    { label: tCommon('phone'), value: supplier.phone ?? '—' },
+                    { label: t('debtOwed'), value: debt > 0 ? formatCurrency(supplier.total_debt) : '—', tone: debt > 0 ? 'bad' : 'default' },
+                  ]}
+                />
+              )
+            })}
+          </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>

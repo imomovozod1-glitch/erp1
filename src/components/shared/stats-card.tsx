@@ -25,10 +25,32 @@ export function StatsCard({
 }: StatsCardProps) {
   const isPositiveTrend = trend && trend.value >= 0
 
+  // Figma layout: the icon tile and the trend share the top row, the label sits
+  // under them, then the figure. `iconClassName` (a solid colour) still turns the
+  // tile into a filled one with a white icon, as many pages pass it.
+  const trendPill = trend ? (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold tabular-nums',
+        isPositiveTrend
+          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+          : 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+      )}
+    >
+      {/* An icon, not a bare ↑/↓ glyph, so direction survives font fallbacks. */}
+      {isPositiveTrend ? (
+        <TrendingUp className="h-3 w-3" aria-hidden="true" />
+      ) : (
+        <TrendingDown className="h-3 w-3" aria-hidden="true" />
+      )}
+      {Math.abs(trend.value)}%
+    </span>
+  ) : null
+
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden border-slate-200/70 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800',
+        'group relative overflow-hidden border-border/60 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
         className
       )}
     >
@@ -36,58 +58,35 @@ export function StatsCard({
           hover — enough to make the tile feel alive without animating a number. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-violet-500/10 blur-2xl transition-opacity duration-300 group-hover:bg-violet-500/20 dark:bg-violet-500/10"
+        className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-violet-500/10 blur-2xl transition-opacity duration-300 group-hover:bg-violet-500/20"
       />
 
-      <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          {title}
-        </CardTitle>
+      <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-0">
         <div
           className={cn(
-            'rounded-xl p-2 shadow-xs transition-transform duration-200 group-hover:scale-105',
-            iconClassName ?? 'bg-violet-100 dark:bg-violet-950/50'
+            'rounded-2xl p-2.5 shadow-xs transition-transform duration-200 group-hover:scale-105',
+            iconClassName ?? 'bg-violet-100 dark:bg-violet-500/15'
           )}
         >
           <Icon
-            className={cn('h-4 w-4', iconClassName ? 'text-white' : 'text-violet-600 dark:text-violet-400')}
+            className={cn('h-5 w-5', iconClassName ? 'text-white' : 'text-violet-700 dark:text-violet-300')}
           />
         </div>
+        {trendPill}
       </CardHeader>
 
       <CardContent className="relative">
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <div
           className={cn(
-            'text-2xl font-bold tracking-tight text-slate-900 tabular-nums dark:text-slate-100',
+            'mt-1 text-2xl font-extrabold tracking-tight text-foreground tabular-nums',
             valueClassName
           )}
         >
           {value}
         </div>
         {subtitle && <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>}
-        {trend && (
-          <div className="mt-2 flex items-center gap-1.5">
-            {/* The arrow is an icon, not a bare ↑/↓ glyph, so direction survives
-                font fallbacks — and the trend reads as a pill rather than
-                loose text. */}
-            <span
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums',
-                isPositiveTrend
-                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                  : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
-              )}
-            >
-              {isPositiveTrend ? (
-                <TrendingUp className="h-3 w-3" aria-hidden="true" />
-              ) : (
-                <TrendingDown className="h-3 w-3" aria-hidden="true" />
-              )}
-              {Math.abs(trend.value)}%
-            </span>
-            <span className="text-xs text-muted-foreground">{trend.label}</span>
-          </div>
-        )}
+        {trend && <p className="mt-1 text-xs text-muted-foreground">{trend.label}</p>}
       </CardContent>
     </Card>
   )

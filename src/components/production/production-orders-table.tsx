@@ -13,6 +13,7 @@ import { cancelProductionOrder, productionErrorMessage } from '@/lib/production-
 import { businessRpcErrorMessage } from '@/lib/business-rpc'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { Card, CardContent } from '@/components/ui/card'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import {
   DropdownMenu,
@@ -102,97 +103,11 @@ export function ProductionOrdersTable({
     setBusyId(null)
   }
 
-  return (
-    <TooltipProvider>
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
-            <TableSearch />
-            <TableFilterChips
-              param="status"
-              value={status}
-              options={[
-                { value: 'all', label: t('common.all') },
-                { value: 'draft', label: t('production.status_draft') },
-                { value: 'completed', label: t('production.status_completed') },
-                { value: 'cancelled', label: t('production.status_cancelled') },
-              ]}
-            />
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-                <TableHead className="w-10 text-center font-semibold">#</TableHead>
-                <TableHead className="font-semibold">{t('production.orderNumber')}</TableHead>
-                <TableHead>{t('production.finishedProduct')}</TableHead>
-                <TableHead className="text-right tabular-nums">{t('common.quantity')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('production.plannedDate')}</TableHead>
-                <TableHead className="hidden lg:table-cell text-right tabular-nums">
-                  {t('production.totalCost')}
-                </TableHead>
-                <TableHead className="hidden lg:table-cell text-right tabular-nums">
-                  {t('production.unitCost')}
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">{t('common.assignedTo')}</TableHead>
-                <TableHead>{t('common.status')}</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Factory className="h-8 w-8 opacity-40" />
-                      <p className="text-sm">{t('common.noData')}</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                orders.map((order, index) => {
-                  const detailHref = `/${lang}/production/orders/${order.id}`
-                  const isDraft = order.status === 'draft'
-                  return (
-                    <TableRow
-                      key={order.id}
-                      className="cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/80"
-                      onClick={() => router.push(detailHref)}
-                    >
-                      <TableCell className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {(page - 1) * pageSize + index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <Link
-                          href={detailHref}
-                          className="font-semibold text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
-                        >
-                          {order.order_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{order.product?.name ?? '—'}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatNumber(Number(order.quantity) || 0)} {order.product?.unit}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {order.planned_date ? formatDate(order.planned_date) : '—'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-right tabular-nums">
-                        {order.status === 'completed' ? formatCurrency(Number(order.total_cost) || 0) : '—'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-right font-semibold tabular-nums text-violet-600 dark:text-violet-400">
-                        {order.status === 'completed' ? formatCurrency(Number(order.unit_cost) || 0) : '—'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        {order.assignee?.full_name || t('common.unassigned')}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge
-                          tone={STATUS_TONE[order.status as keyof typeof STATUS_TONE] ?? 'slate'}
-                          label={t(`production.status_${order.status}`)}
-                        />
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (order: any) => {
+    const detailHref = `/${lang}/production/orders/${order.id}`
+    const isDraft = order.status === 'draft'
+    return (
                         <DropdownMenu>
                           <Tooltip>
                             <TooltipTrigger
@@ -241,6 +156,100 @@ export function ProductionOrdersTable({
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
+    )
+  }
+
+  return (
+    <TooltipProvider>
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
+        <CardContent className="p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
+            <TableSearch />
+            <TableFilterChips
+              param="status"
+              value={status}
+              options={[
+                { value: 'all', label: t('common.all') },
+                { value: 'draft', label: t('production.status_draft') },
+                { value: 'completed', label: t('production.status_completed') },
+                { value: 'cancelled', label: t('production.status_cancelled') },
+              ]}
+            />
+          </div>
+
+          <Table containerClassName="max-md:hidden">
+            <TableHeader>
+              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+                <TableHead className="w-10 text-center font-semibold">#</TableHead>
+                <TableHead className="font-semibold">{t('production.orderNumber')}</TableHead>
+                <TableHead>{t('production.finishedProduct')}</TableHead>
+                <TableHead className="text-right tabular-nums">{t('common.quantity')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('production.plannedDate')}</TableHead>
+                <TableHead className="hidden lg:table-cell text-right tabular-nums">
+                  {t('production.totalCost')}
+                </TableHead>
+                <TableHead className="hidden lg:table-cell text-right tabular-nums">
+                  {t('production.unitCost')}
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">{t('common.assignedTo')}</TableHead>
+                <TableHead>{t('common.status')}</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {orders.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Factory className="h-8 w-8 opacity-40" />
+                      <p className="text-sm">{t('common.noData')}</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                orders.map((order, index) => {
+                  const detailHref = `/${lang}/production/orders/${order.id}`
+                  return (
+                    <TableRow
+                      key={order.id}
+                      className="cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/80"
+                      onClick={() => router.push(detailHref)}
+                    >
+                      <TableCell className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {(page - 1) * pageSize + index + 1}
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={detailHref}
+                          className="font-semibold text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
+                        >
+                          {order.order_number}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{order.product?.name ?? '—'}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatNumber(Number(order.quantity) || 0)} {order.product?.unit}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        {order.planned_date ? formatDate(order.planned_date) : '—'}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-right tabular-nums">
+                        {order.status === 'completed' ? formatCurrency(Number(order.total_cost) || 0) : '—'}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-right font-semibold tabular-nums text-violet-600 dark:text-violet-400">
+                        {order.status === 'completed' ? formatCurrency(Number(order.unit_cost) || 0) : '—'}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {order.assignee?.full_name || t('common.unassigned')}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          tone={STATUS_TONE[order.status as keyof typeof STATUS_TONE] ?? 'slate'}
+                          label={t(`production.status_${order.status}`)}
+                        />
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {renderActions(order)}
                       </TableCell>
                     </TableRow>
                   )
@@ -248,6 +257,43 @@ export function ProductionOrdersTable({
               )}
             </TableBody>
           </Table>
+          {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+          <MobileCardList
+            isEmpty={orders.length === 0}
+            empty={
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <Factory className="h-8 w-8 opacity-40" />
+                <p className="text-sm">{t('common.noData')}</p>
+              </div>
+            }
+          >
+            {orders.map((order) => (
+              <MobileCard
+                key={order.id}
+                onClick={() => router.push(`/${lang}/production/orders/${order.id}`)}
+                leading={<MobileThumb fallback={<Factory />} />}
+                eyebrow={
+                  <>
+                    <MobileChip>{order.order_number}</MobileChip>
+                    {order.planned_date && <span className="truncate">{formatDate(order.planned_date)}</span>}
+                  </>
+                }
+                title={order.product?.name ?? '—'}
+                status={
+                  <StatusBadge
+                    tone={STATUS_TONE[order.status as keyof typeof STATUS_TONE] ?? 'slate'}
+                    label={t(`production.status_${order.status}`)}
+                  />
+                }
+                menu={renderActions(order)}
+                stats={[
+                  { label: t('common.quantity'), value: `${formatNumber(Number(order.quantity) || 0)} ${order.product?.unit ?? ''}`, tone: 'brand' },
+                  { label: t('production.totalCost'), value: order.status === 'completed' ? formatCurrency(Number(order.total_cost) || 0) : '—' },
+                  { label: t('production.unitCost'), value: order.status === 'completed' ? formatCurrency(Number(order.unit_cost) || 0) : '—' },
+                ]}
+              />
+            ))}
+          </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
         </CardContent>
       </Card>

@@ -7,6 +7,7 @@ import { servesTenantHosts } from '@/lib/tenant-host'
 import { HANDOFF_SKIP_COOKIE } from '@/lib/tenant-handoff'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
+import { BottomNav } from '@/components/layout/bottom-nav'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { FeaturesProvider } from '@/components/providers/features-provider'
 import { OfflineBanner } from '@/components/shared/offline-banner'
@@ -116,7 +117,12 @@ export default async function DashboardLayout({
           <AppHeader profile={profile} lang={lang} />
           {/* `app-main` / `app-page` (globals.css): the window never scrolls —
               a list page fits the screen and only its rows scroll. */}
-          <main className="app-main p-6 pt-[calc(5.5rem+env(safe-area-inset-top))] bg-slate-50/50 dark:bg-slate-950">
+          {/* Phones: a 56px app bar on top and the bottom navigation underneath,
+              so the page gets room for both (the bar's height plus the status
+              bar inset above, the nav's plus the home-indicator inset below).
+              The bottom room also clears the floating action button that sits
+              above the nav (PageHeader), so it never covers a pager. */}
+          <main className="app-main app-surface p-4 pt-[calc(4.5rem+env(safe-area-inset-top))] pb-[calc(8.75rem+env(safe-area-inset-bottom))] md:p-6 md:pt-[calc(5.5rem+env(safe-area-inset-top))] md:pb-6">
             <OfflineBanner />
             {showSubscriptionWarning && (
               <SubscriptionBanner daysLeft={daysLeft} endsAt={endsAt.slice(0, 10)} />
@@ -124,6 +130,7 @@ export default async function DashboardLayout({
             <div className="app-page">{children}</div>
             {modal}
           </main>
+          <BottomNav lang={lang} profile={profile} />
         </SidebarInset>
       </SidebarProvider>
     </FeaturesProvider>

@@ -71,8 +71,8 @@ export function PosCartPanel({
   const t = useTranslations('pos')
 
   return (
-    <div className="md:col-span-1 md:h-full md:flex md:flex-col md:min-h-0 overflow-hidden">
-      <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white pt-0 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div id="pos-cart" className="scroll-mt-20 md:col-span-1 md:h-full md:flex md:flex-col md:min-h-0 overflow-hidden">
+      <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card pt-0 shadow-sm">
         {/* Cart Header */}
         <CardHeader className="flex shrink-0 flex-row items-center justify-between space-y-0 border-b border-slate-200 p-4 dark:border-slate-800">
           <div className="flex items-center gap-3">

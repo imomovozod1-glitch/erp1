@@ -168,7 +168,9 @@
     },
     "overdue": "Overdue",
     "platform": "Platform",
-    "support": "Support"
+    "support": "Support",
+    "more": "More",
+    "dashboardShort": "Home"
   },
   "auth": {
     "loading": "Signing in...",
@@ -450,7 +452,8 @@
       "name": "Unit Name",
       "placeholder": "e.g. Pair, Box",
       "total": "Total Units"
-    }
+    },
+    "stockLow": "Low stock"
   },
   "production": {
     "title": "Industry",

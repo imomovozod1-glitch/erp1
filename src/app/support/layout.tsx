@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Manrope } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import { Toaster } from '@/components/ui/sonner'
@@ -7,9 +7,9 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import '../globals.css'
 
-const inter = Inter({
+const appFont = Manrope({
   subsets: ['latin', 'cyrillic'],
-  variable: '--font-inter',
+  variable: '--font-app',
 })
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,7 +40,7 @@ export default async function SupportRootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${appFont.variable} font-sans antialiased`}>
         <ThemeProvider>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <TooltipProvider>

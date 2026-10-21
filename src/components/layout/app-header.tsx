@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
-import { Bell, LogOut, Settings, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { Bell, Building2, Moon, Sun, LogOut, Settings, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
@@ -18,6 +19,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
+import { useTheme } from '@/components/providers/theme-provider'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { useFeature } from '@/components/providers/features-provider'
 import { useConfirm } from '@/components/shared/confirm-dialog'
@@ -43,13 +45,34 @@ interface AppHeaderProps {
  * buttons with none — which read as unrelated widgets rather than one toolbar.
  */
 const HEADER_CONTROL =
-  'h-8 rounded-lg border border-slate-200 bg-white text-slate-500 shadow-2xs transition-colors ' +
-  'hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 ' +
-  'dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 ' +
-  'dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200'
+  'h-9 rounded-xl border border-border bg-card text-muted-foreground shadow-2xs transition-colors ' +
+  'hover:bg-accent hover:text-accent-foreground ' +
+  // On a phone the controls are bare icons on the bar, as in the app design.
+  'max-md:border-transparent max-md:bg-transparent max-md:shadow-none'
+
+/** Pathname segment → the `nav` label shown as the page title in the phone app bar. */
+const TITLE_KEYS: Record<string, string> = {
+  dashboard: 'dashboard',
+  reports: 'reports',
+  pos: 'pos',
+  inventory: 'inventory',
+  sales: 'sales',
+  customers: 'customers',
+  procurement: 'procurement',
+  finance: 'finance',
+  hr: 'hr',
+  production: 'production',
+  distribution: 'distribution',
+  settings: 'settings',
+  guide: 'guide',
+  faq: 'faq',
+  support: 'support',
+}
 
 export function AppHeader({ profile, lang }: AppHeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const { resolvedTheme, setTheme } = useTheme()
   const tSettings = useTranslations('settings')
   const tNav = useTranslations('nav')
   const tCommon = useTranslations('common')
@@ -298,16 +321,43 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
   const currentLocale = LOCALES.find((l) => l.code === lang)
 
+  // The module the phone app bar names — `/uz/inventory/products` → "Ombor".
+  const section = pathname.split('/')[2]
+  const titleKey = section ? TITLE_KEYS[section] : undefined
+  const pageTitle = titleKey ? tNav(titleKey) : 'Falco'
+
   // Count active overdue invoice alerts in notifications
   const hasOverdueInvoices = notifications.some((n) => n.type === 'overdue_invoice')
 
   return (
     <header
-      className={`flex min-h-16 shrink-0 items-center gap-1.5 sm:gap-2 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-3 sm:px-4 pt-[env(safe-area-inset-top)] fixed top-0 right-0 z-30 ${sidebarOffset}`}
+      className={`flex min-h-14 shrink-0 items-center gap-1.5 border-b border-border/60 bg-[var(--chrome)] px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl sm:gap-2 md:min-h-16 fixed top-0 right-0 z-30 ${sidebarOffset}`}
     >
-      <SidebarTrigger className="-ml-1" />
+      {/* Desktop: the sidebar toggle. Phones have the bottom navigation's "More". */}
+      <SidebarTrigger className="-ml-1 hidden md:order-first md:inline-flex" />
 
-      {/* Quick search — ⌘K from anywhere, click here on touch devices. */}
+      {/* Phones: brand mark, and the module the user is in. */}
+      <div className="flex min-w-0 items-center gap-2.5 md:hidden">
+        <Link
+          href={`/${lang}/dashboard`}
+          aria-label="Falco"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand"
+        >
+          <Building2 className="h-4 w-4" />
+        </Link>
+        <div className="min-w-0 leading-tight">
+          <p className="text-[10px] font-extrabold tracking-[0.16em] text-violet-700 uppercase dark:text-violet-300">Falco</p>
+          <p className="truncate text-lg font-bold tracking-tight">{pageTitle}</p>
+        </div>
+      </div>
+
+      {isTestCompany && <StatusBadge label={tCommon('testCompany')} tone="amber" />}
+
+      <div className="flex-1" />
+
+      {/* Quick search — ⌘K from anywhere, click here on touch devices. Placed after
+          the spacer so the phone's search icon sits at the right edge; on desktop
+          its field is `md:order-first`, which puts it next to the sidebar toggle. */}
       <GlobalSearch
         lang={lang}
         role={profile?.role}
@@ -315,9 +365,6 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         userId={profile?.id ?? null}
       />
 
-      {isTestCompany && <StatusBadge label={tCommon('testCompany')} tone="amber" />}
-
-      <div className="flex-1" />
 
       {/* Overdue Invoices Alert Notification */}
       {hasOverdueInvoices && (
@@ -336,6 +383,9 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         </Button>
       )}
 
+      {/* Help, language and theme live in the bar on desktop; on a phone they
+          move into the avatar menu (below) so the bar stays uncluttered. */}
+      <div className="hidden items-center gap-1.5 sm:gap-2 md:contents">
       {/* Help: the guide used to sit in the sidebar, which pushed it out of
           sight on the pages people actually get stuck on. */}
       <DropdownMenu>
@@ -345,7 +395,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
               type="button"
               aria-label={tNav('help')}
               title={tNav('help')}
-              className={`flex w-8 cursor-pointer items-center justify-center ${HEADER_CONTROL}`}
+              className={`flex w-9 cursor-pointer items-center justify-center ${HEADER_CONTROL}`}
             />
           }
         >
@@ -375,7 +425,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           render={
             <button
               type="button"
-              className={`flex w-8 cursor-pointer items-center justify-center gap-1.5 px-0 sm:w-auto sm:pr-2 sm:pl-1.5 ${HEADER_CONTROL}`}
+              className={`flex w-9 cursor-pointer items-center justify-center gap-1.5 px-0 sm:w-auto sm:pr-2 sm:pl-1.5 ${HEADER_CONTROL}`}
             />
           }
         >
@@ -401,20 +451,21 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       </DropdownMenu>
 
       <ThemeToggle
-        className={`w-8 ${HEADER_CONTROL}`}
+        className={`w-9 ${HEADER_CONTROL}`}
         labels={{
           light: tNav('lightMode'),
           dark: tNav('darkMode'),
         }}
       />
+      </div>
 
       {/* Notifications */}
       <DropdownMenu open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
         <DropdownMenuTrigger render={
-          <Button variant="ghost" size="icon" className={`relative w-8 ${HEADER_CONTROL}`}>
+          <Button variant="ghost" size="icon" className={`relative w-9 ${HEADER_CONTROL}`}>
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 flex h-2 w-2">
+              <span className="absolute top-2 right-2 flex h-2 w-2 max-md:top-1.5 max-md:right-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
               </span>
@@ -502,9 +553,9 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
       {/* User Menu */}
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" className="gap-2 pl-2" />}>
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-violet-100 text-violet-700 text-xs font-semibold">
+        <DropdownMenuTrigger render={<Button variant="ghost" className="h-10 gap-2 rounded-full pl-1.5 max-md:px-1.5 md:h-9" />}>
+            <Avatar className="h-9 w-9 ring-2 ring-violet-200 dark:ring-violet-500/40">
+              <AvatarFallback className="bg-violet-100 text-violet-700 text-xs font-bold dark:bg-violet-500/20 dark:text-violet-200">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -521,6 +572,29 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
             <p className="text-sm font-medium">{profile?.full_name}</p>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {/* Phones only: what the bar shows on desktop (theme, language, help). */}
+          <div className="md:hidden">
+            <DropdownMenuItem onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}>
+              {resolvedTheme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+              {resolvedTheme === 'dark' ? tNav('lightMode') : tNav('darkMode')}
+            </DropdownMenuItem>
+            {LOCALES.map((locale) => (
+              <DropdownMenuItem key={locale.code} onClick={() => handleLocaleChange(locale.code)}>
+                <Languages className="mr-2 h-4 w-4" />
+                <span className="flex-1">{locale.label}</span>
+                {locale.code === lang && <Check className="h-4 w-4 text-violet-600 dark:text-violet-300" />}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuItem onClick={() => router.push(`/${lang}/guide`)}>
+              <BookOpen className="mr-2 h-4 w-4" />
+              {tNav('guide')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push(`/${lang}/faq`)}>
+              <HelpCircle className="mr-2 h-4 w-4" />
+              {tNav('faq')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </div>
           {/* router.push, not window.location: a full document reload here
               threw away the whole client cache to move one route. */}
           <DropdownMenuItem onClick={() => router.push(`/${lang}/settings`)}>

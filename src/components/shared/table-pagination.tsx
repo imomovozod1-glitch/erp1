@@ -77,13 +77,13 @@ export function TableSearch({ placeholder }: { placeholder?: string }) {
   }, [value, urlQuery, setParams])
 
   return (
-    <div className="relative flex-1 max-w-sm">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="relative max-w-sm flex-1 max-md:w-full max-md:max-w-none">
+      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-600 dark:text-violet-300" />
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder ?? `${tCommon('search')}...`}
-        className="pl-9"
+        className="rounded-full pl-10"
       />
       {isPending && (
         <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
@@ -112,7 +112,7 @@ export function TablePagination({
   const last = Math.min(page * pageSize, total)
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t p-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t p-4 max-md:border-0 max-md:px-0">
       <p className="text-xs text-muted-foreground tabular-nums">
         {tCommon('showingRange', { first, last, total })}
       </p>
@@ -158,12 +158,15 @@ export function TableFilterChips({
 }) {
   const { setParams, isPending } = useUrlState()
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    // Phones: one row that scrolls sideways (the app design's chip strip) rather
+    // than a block that wraps onto three lines and pushes the list down.
+    <div className="flex items-center gap-1.5 max-md:-mx-4 max-md:w-[calc(100%+2rem)] max-md:flex-nowrap max-md:overflow-x-auto max-md:px-4 max-md:pb-0.5 max-md:[scrollbar-width:none] md:flex-wrap">
       {options.map((option) => (
         <Button
           key={option.value}
           variant={value === option.value ? 'default' : 'outline'}
           size="sm"
+          className="shrink-0 rounded-full max-md:h-9 max-md:px-4 max-md:text-sm"
           disabled={isPending}
           onClick={() => setParams({ [param]: option.value === 'all' ? null : option.value, page: null })}
         >

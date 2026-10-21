@@ -29,6 +29,7 @@ import {
 } from "@/lib/inventory-costing";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from "@/components/shared/mobile-list";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AIStockScannerModal } from "@/components/inventory/ai-stock-scanner-modal";
 import {
@@ -472,12 +473,59 @@ export function ProductsTable({
   };
 
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (product: any) => (
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <DropdownMenuTrigger
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                  }
+                />
+                <TooltipContent side="left">
+                  <p>{t("common.actions")}</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  render={
+                    <Link
+                      href={`/${lang}/inventory/products/${product.id}/edit`}
+                      prefetch={true}
+                    />
+                  }
+                >
+                  <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleToggleStatus(product.id, product.is_active)}
+                  disabled={isUpdatingStatus === product.id}
+                >
+                  <Power className="mr-2 h-3.5 w-3.5" />{" "}
+                  {product.is_active ? t("common.inactive") : t("common.active")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleDelete(product.id)}
+                  disabled={isDeleting === product.id}
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("common.delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+  );
+
   return (
     <TooltipProvider>
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
         <CardContent className="p-0">
           {/* Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
             <div className="flex flex-wrap items-center gap-3">
               <TableSearch />
               <TableFilterChips
@@ -497,10 +545,10 @@ export function ProductsTable({
                 size="sm"
                 onClick={handleExportProducts}
                 disabled={products.length === 0}
-                className="h-9 gap-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium text-xs rounded-lg"
+                className="h-9 gap-2 max-md:w-9 max-md:px-0 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium text-xs rounded-lg"
               >
                 <Download className="h-4 w-4" />
-                {t("common.export", { fallback: "Eksport" })}
+                <span className="max-md:sr-only">{t("common.export", { fallback: "Eksport" })}</span>
               </Button>
               <input
                 type="file"
@@ -516,12 +564,12 @@ export function ProductsTable({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-2 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors font-medium text-xs rounded-lg animate-pulse"
+                      className="h-9 gap-2 max-md:w-9 max-md:px-0 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors font-medium text-xs rounded-lg animate-pulse"
                     />
                   }
                 >
                   <Upload className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  {t("inventory.importExcel")}
+                  <span className="max-md:sr-only">{t("inventory.importExcel")}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-900 rounded-lg shadow-md border p-1">
                   <DropdownMenuItem
@@ -547,10 +595,10 @@ export function ProductsTable({
                       onClick={() => setIsScanModalOpen(true)}
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-2 border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-100/70 dark:hover:bg-violet-950/50 hover:text-violet-800 dark:hover:text-violet-300 transition-colors font-medium text-xs rounded-lg cursor-pointer"
+                      className="h-9 gap-2 max-md:w-9 max-md:px-0 border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-100/70 dark:hover:bg-violet-950/50 hover:text-violet-800 dark:hover:text-violet-300 transition-colors font-medium text-xs rounded-lg cursor-pointer"
                     >
                       <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-                      {t("inventory.importAI")}
+                      <span className="max-md:sr-only">{t("inventory.importAI")}</span>
                     </Button>
                   }
                 />
@@ -561,7 +609,7 @@ export function ProductsTable({
             </div>
           </div>
 
-          <Table>
+          <Table containerClassName="max-md:hidden">
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableHead className="w-10 font-semibold text-center">#</TableHead>
@@ -667,55 +715,59 @@ export function ProductsTable({
                       />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <DropdownMenuTrigger
-                                onClick={(e) => e.stopPropagation()}
-                                className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </DropdownMenuTrigger>
-                            }
-                          />
-                          <TooltipContent side="left">
-                            <p>{t("common.actions")}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            render={
-                              <Link
-                                href={`/${lang}/inventory/products/${product.id}/edit`}
-                                prefetch={true}
-                              />
-                            }
-                          >
-                            <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleToggleStatus(product.id, product.is_active)}
-                            disabled={isUpdatingStatus === product.id}
-                          >
-                            <Power className="mr-2 h-3.5 w-3.5" />{" "}
-                            {product.is_active ? t("common.inactive") : t("common.active")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(product.id)}
-                            disabled={isDeleting === product.id}
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                          >
-                            <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("common.delete")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {renderActions(product)}
                     </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+          {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+          <MobileCardList
+            isEmpty={paginated.length === 0}
+            empty={
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <Package className="h-8 w-8 opacity-40" />
+                <p className="text-sm">{t("common.noData")}</p>
+              </div>
+            }
+          >
+            {paginated.map((product) => {
+              const out = product.stock <= 0;
+              const low = !out && product.stock <= product.min_stock;
+              const stockTone = out ? "bad" : low ? "warn" : "good";
+              return (
+                <MobileCard
+                  key={product.id}
+                  onClick={() => router.push(`/${lang}/inventory/products/${product.id}`)}
+                  leading={<MobileThumb src={product.image_url} alt={product.name} fallback={<Package />} />}
+                  eyebrow={
+                    <>
+                      <MobileChip>{product.sku}</MobileChip>
+                      {product.categories?.name && <span className="truncate">{product.categories.name}</span>}
+                    </>
+                  }
+                  title={product.name}
+                  status={
+                    !product.is_active ? (
+                      <StatusBadge tone="slate" label={t("common.inactive")} />
+                    ) : (
+                      <StatusBadge
+                        tone={out ? "rose" : low ? "amber" : "emerald"}
+                        label={out ? t("inventory.outOfStock") : low ? t("inventory.stockLow") : t("inventory.inStock")}
+                      />
+                    )
+                  }
+                  menu={renderActions(product)}
+                  stats={[
+                    { label: t("inventory.price"), value: formatCurrency(product.price), tone: "brand" },
+                    { label: t("inventory.costPrice"), value: formatCurrency(product.cost_price) },
+                    { label: t("inventory.stock"), value: `${formatNumber(product.stock)} ${product.unit}`, tone: stockTone },
+                  ]}
+                />
+              );
+            })}
+          </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
         </CardContent>
       </Card>

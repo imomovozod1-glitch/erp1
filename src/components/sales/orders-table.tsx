@@ -16,6 +16,7 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
@@ -85,19 +86,51 @@ export function OrdersTable({
 
 
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (order: any) => (
+                     canEdit && order.status !== 'cancelled' ? (
+                     <DropdownMenu>
+                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
+                         <MoreHorizontal className="h-4 w-4" />
+                       </DropdownMenuTrigger>
+                       <DropdownMenuContent align="end" className="w-52">
+                         <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}>
+                           <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" /> {tCommon('edit')}
+                         </DropdownMenuItem>
+                         {nextOrderStatuses(order.status).map((next) => (
+                           <DropdownMenuItem
+                             key={next}
+                             disabled={pendingId === order.id}
+                             onClick={() => changeStatus(order, next)}
+                             className={next === 'cancelled' ? 'text-rose-600 focus:text-rose-600' : ''}
+                           >
+                             {pendingId === order.id ? (
+                               <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                             ) : next === 'cancelled' ? (
+                               <Ban className="mr-2 h-3.5 w-3.5" />
+                             ) : (
+                               <ArrowRight className="mr-2 h-3.5 w-3.5 text-slate-500" />
+                             )}
+                             {next === 'cancelled' ? t('cancelSale') : tCommon('markAs', { status: t(`status.${next}`) })}
+                           </DropdownMenuItem>
+                         ))}
+                       </DropdownMenuContent>
+                     </DropdownMenu>
+  ) : null)
+
   // No client-side filtering or slicing: `orders` IS the current page.
   const paginated = orders
 
   return (
     <>
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
           <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
           </div>
         </div>
-        <Table>
+        <Table containerClassName="max-md:hidden">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
@@ -151,41 +184,44 @@ export function OrdersTable({
                    <TableCell onClick={(e) => e.stopPropagation()}>
                      {/* A cancelled sale has nothing left to edit or move on to, and
                          without edit rights every action here would be refused. */}
-                     {canEdit && order.status !== 'cancelled' && (
-                     <DropdownMenu>
-                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
-                         <MoreHorizontal className="h-4 w-4" />
-                       </DropdownMenuTrigger>
-                       <DropdownMenuContent align="end" className="w-52">
-                         <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}>
-                           <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" /> {tCommon('edit')}
-                         </DropdownMenuItem>
-                         {nextOrderStatuses(order.status).map((next) => (
-                           <DropdownMenuItem
-                             key={next}
-                             disabled={pendingId === order.id}
-                             onClick={() => changeStatus(order, next)}
-                             className={next === 'cancelled' ? 'text-rose-600 focus:text-rose-600' : ''}
-                           >
-                             {pendingId === order.id ? (
-                               <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                             ) : next === 'cancelled' ? (
-                               <Ban className="mr-2 h-3.5 w-3.5" />
-                             ) : (
-                               <ArrowRight className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                             )}
-                             {next === 'cancelled' ? t('cancelSale') : tCommon('markAs', { status: t(`status.${next}`) })}
-                           </DropdownMenuItem>
-                         ))}
-                       </DropdownMenuContent>
-                     </DropdownMenu>
-                     )}
+                     {renderActions(order)}
                    </TableCell>
                  </TableRow>
               ))
             )}
           </TableBody>
         </Table>
+        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+        <MobileCardList
+          isEmpty={paginated.length === 0}
+          empty={
+            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+              <ShoppingCart className="h-8 w-8 opacity-40" />
+              <p className="text-sm">{tCommon('noData')}</p>
+            </div>
+          }
+        >
+          {paginated.map((order) => (
+            <MobileCard
+              key={order.id}
+              onClick={() => router.push(`/${lang}/sales/orders/${order.id}`)}
+              leading={<MobileThumb fallback={<ShoppingCart />} />}
+              eyebrow={
+                <>
+                  <MobileChip>{order.order_number}</MobileChip>
+                  <span className="truncate">{formatDateTime(order.created_at)}</span>
+                </>
+              }
+              title={order.customers?.name ?? '—'}
+              status={<StatusBadge tone={orderStatusTone(order.status)} label={t(`status.${order.status}`)} />}
+              menu={renderActions(order)}
+              stats={[
+                { label: tCommon('total'), value: formatCurrency(order.total_amount), tone: 'brand' },
+                { label: tCommon('assignedTo'), value: order.assignee?.full_name || tCommon('unassigned') },
+              ]}
+            />
+          ))}
+        </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>

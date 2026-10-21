@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { invalidateCustomers } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination, TableFilterChips } from '@/components/shared/table-pagination'
 import { CustomerImportExport } from '@/components/sales/customer-import-export'
@@ -90,12 +91,51 @@ export function CustomersTable({
     setIsDeleting(null)
   }
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (customer: any) => (
+                      <DropdownMenu>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <DropdownMenuTrigger
+                                render={
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                }
+                              />
+                            }
+                          />
+                          <TooltipContent side="left">
+                            <p>{tCommon('actions')}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.push(`/${lang}/customers/${customer.id}/edit`)}>
+                          <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
+                        </DropdownMenuItem>
+                        {(customer.address || (customer.latitude && customer.longitude)) && (
+                          <DropdownMenuItem onClick={() => setMapCustomer({ name: customer.name, address: customer.address, latitude: customer.latitude, longitude: customer.longitude })}>
+                            <MapPin className="mr-2 h-3.5 w-3.5" />
+                            {tSales('viewOnMap')}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(customer.id)}
+                          disabled={isDeleting === customer.id}
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+  )
 
   return (
     <TooltipProvider>
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
             <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
             {/* Who owes us, who is in credit, who is square. Server-side like
@@ -116,7 +156,7 @@ export function CustomersTable({
               {canExport && <CustomerImportExport customers={customers} lang={lang} />}
             </div>
           </div>
-        <Table>
+        <Table containerClassName="max-md:hidden">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
@@ -188,48 +228,58 @@ export function CustomersTable({
                         {customer.assignee?.full_name || tCommon('unassigned')}
                       </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <DropdownMenuTrigger
-                                render={
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                }
-                              />
-                            }
-                          />
-                          <TooltipContent side="left">
-                            <p>{tCommon('actions')}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/${lang}/customers/${customer.id}/edit`)}>
-                          <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
-                        </DropdownMenuItem>
-                        {(customer.address || (customer.latitude && customer.longitude)) && (
-                          <DropdownMenuItem onClick={() => setMapCustomer({ name: customer.name, address: customer.address, latitude: customer.latitude, longitude: customer.longitude })}>
-                            <MapPin className="mr-2 h-3.5 w-3.5" />
-                            {tSales('viewOnMap')}
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(customer.id)}
-                          disabled={isDeleting === customer.id}
-                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                        >
-                          <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {renderActions(customer)}
                   </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
+          {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+          <MobileCardList
+            isEmpty={paginated.length === 0}
+            empty={
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <Users className="h-8 w-8 opacity-40" />
+                <p className="text-sm">{tCommon('noData')}</p>
+              </div>
+            }
+          >
+            {paginated.map((customer) => {
+              const net = (Number(customer.credit_balance) || 0) - (Number(customer.total_debt) || 0)
+              return (
+                <MobileCard
+                  key={customer.id}
+                  onClick={() => router.push(`/${lang}/customers/${customer.id}`)}
+                  leading={<MobileThumb fallback={<Users />} />}
+                  eyebrow={
+                    <>
+                      <MobileChip>{customer.phone ?? '—'}</MobileChip>
+                      {customer.customer_categories?.name && (
+                        <span className="truncate">{customer.customer_categories.name}</span>
+                      )}
+                    </>
+                  }
+                  title={customer.name}
+                  status={
+                    <StatusBadge
+                      tone={customer.is_active ? 'emerald' : 'slate'}
+                      label={customer.is_active ? tCommon('active') : tCommon('inactive')}
+                    />
+                  }
+                  menu={renderActions(customer)}
+                  stats={[
+                    {
+                      label: tSales('balanceRemaining'),
+                      value: net === 0 ? formatCurrency(0) : `${net > 0 ? '+' : '-'}${formatCurrency(Math.abs(net))}`,
+                      tone: net === 0 ? 'default' : net > 0 ? 'good' : 'bad',
+                    },
+                    { label: tCommon('assignedTo'), value: customer.assignee?.full_name || tCommon('unassigned') },
+                  ]}
+                />
+              )
+            })}
+          </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>

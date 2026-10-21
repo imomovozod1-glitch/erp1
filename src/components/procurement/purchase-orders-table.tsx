@@ -17,6 +17,7 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination, useUrlState } from '@/components/shared/table-pagination'
 import { PeriodFilter, type Period } from '@/components/shared/period-filter'
@@ -59,11 +60,43 @@ export function PurchaseOrdersTable({
   // No client-side filtering or slicing: `orders` IS the current page.
   const paginated = orders
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (order: any) =>
+    order.status !== 'cancelled' ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                // The row navigates on click; the menu must not
+                                // also open the purchase behind it.
+                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                              />
+                            }
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation()
+                                setCancelling({ id: order.id, po_number: order.po_number, status: order.status })
+                              }}
+                              className="text-rose-600 focus:text-rose-600 dark:text-rose-400"
+                            >
+                              <Ban className="mr-2 h-4 w-4" />
+                              {t('cancel.action')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+    ) : null
+
   return (
     <>
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
             <div className="flex flex-wrap items-center gap-3">
               <TableSearch />
               {/* Server-side like the search beside it: changing the period
@@ -82,7 +115,7 @@ export function PurchaseOrdersTable({
               />
             </div>
           </div>
-          <Table>
+          <Table containerClassName="max-md:hidden">
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableHead className="w-10 font-semibold text-center">#</TableHead>
@@ -134,41 +167,44 @@ export function PurchaseOrdersTable({
                       <StatusBadge tone={purchaseStatusTone(order.status)} label={t(`status.${order.status}`)} />
                     </TableCell>
                     <TableCell className="w-12">
-                      {order.status !== 'cancelled' && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                // The row navigates on click; the menu must not
-                                // also open the purchase behind it.
-                                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                              />
-                            }
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation()
-                                setCancelling({ id: order.id, po_number: order.po_number, status: order.status })
-                              }}
-                              className="text-rose-600 focus:text-rose-600 dark:text-rose-400"
-                            >
-                              <Ban className="mr-2 h-4 w-4" />
-                              {t('cancel.action')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                      {renderActions(order)}
                     </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+          {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+          <MobileCardList
+            isEmpty={paginated.length === 0}
+            empty={
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <ShoppingCart className="h-8 w-8 opacity-40" />
+                <p className="text-sm">{tCommon('noData')}</p>
+              </div>
+            }
+          >
+            {paginated.map((order) => (
+              <MobileCard
+                key={order.id}
+                onClick={() => router.push(`/${lang}/procurement/purchase-orders/${order.id}`)}
+                leading={<MobileThumb fallback={<ShoppingCart />} />}
+                eyebrow={
+                  <>
+                    <MobileChip>{order.po_number}</MobileChip>
+                    <span className="truncate">{formatDateTime(order.created_at)}</span>
+                  </>
+                }
+                title={order.suppliers?.name ?? '—'}
+                status={<StatusBadge tone={purchaseStatusTone(order.status)} label={t(`status.${order.status}`)} />}
+                menu={renderActions(order)}
+                stats={[
+                  { label: tCommon('total'), value: formatCurrency(order.total_amount), tone: 'brand' },
+                  { label: tCommon('assignedTo'), value: order.assignee?.full_name || tCommon('unassigned') },
+                ]}
+              />
+            ))}
+          </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>

@@ -16,6 +16,7 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
@@ -78,21 +79,66 @@ export function InvoicesTable({
 
 
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (invoice: any) => (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)}>
+                              <Pencil className="h-4 w-4 mr-2 text-slate-500" />
+                              {tCommon('edit')}
+                            </DropdownMenuItem>
+                          )}
+                          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+                            <DropdownMenuItem
+                              onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
+                              className="text-violet-600 focus:text-violet-700 font-medium"
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                              {t('acceptPayment')}
+                            </DropdownMenuItem>
+                          )}
+                          {nextInvoiceStatuses(effectiveInvoiceStatus(invoice))
+                            .filter((next) => canEdit && next !== 'paid')
+                            .map((next) => (
+                              <DropdownMenuItem
+                                key={next}
+                                disabled={pendingId === invoice.id}
+                                onClick={() => changeStatus(invoice.id, next)}
+                                className={next === 'cancelled' ? 'text-rose-600 focus:text-rose-600' : ''}
+                              >
+                                {pendingId === invoice.id ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : next === 'cancelled' ? (
+                                  <Ban className="h-4 w-4 mr-2" />
+                                ) : (
+                                  <ArrowRight className="h-4 w-4 mr-2 text-slate-500" />
+                                )}
+                                {tCommon('markAs', { status: t(`status.${next}`) })}
+                              </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+  )
+
   // No client-side filtering or slicing: `invoices` IS the current page.
   const paginated = invoices
 
   return (
     <>
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
           <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <Table>
+        <div className="overflow-x-auto max-md:hidden">
+          <Table containerClassName="max-md:hidden">
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                 <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
@@ -180,47 +226,7 @@ export function InvoicesTable({
                         {invoice.creator?.full_name || '—'}
                       </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
-                          {canEdit && (
-                            <DropdownMenuItem onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)}>
-                              <Pencil className="h-4 w-4 mr-2 text-slate-500" />
-                              {tCommon('edit')}
-                            </DropdownMenuItem>
-                          )}
-                          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-                            <DropdownMenuItem
-                              onClick={() => router.push(`/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`)}
-                              className="text-violet-600 focus:text-violet-700 font-medium"
-                            >
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
-                              {t('acceptPayment')}
-                            </DropdownMenuItem>
-                          )}
-                          {nextInvoiceStatuses(effectiveInvoiceStatus(invoice))
-                            .filter((next) => canEdit && next !== 'paid')
-                            .map((next) => (
-                              <DropdownMenuItem
-                                key={next}
-                                disabled={pendingId === invoice.id}
-                                onClick={() => changeStatus(invoice.id, next)}
-                                className={next === 'cancelled' ? 'text-rose-600 focus:text-rose-600' : ''}
-                              >
-                                {pendingId === invoice.id ? (
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : next === 'cancelled' ? (
-                                  <Ban className="h-4 w-4 mr-2" />
-                                ) : (
-                                  <ArrowRight className="h-4 w-4 mr-2 text-slate-500" />
-                                )}
-                                {tCommon('markAs', { status: t(`status.${next}`) })}
-                              </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {renderActions(invoice)}
                     </TableCell>
                   </TableRow>
                 ))
@@ -228,6 +234,43 @@ export function InvoicesTable({
           </TableBody>
         </Table>
       </div>
+        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+        <MobileCardList
+          isEmpty={paginated.length === 0}
+          empty={
+            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+              <FileText className="h-8 w-8 opacity-40" />
+              <p className="text-sm">{tCommon('noData')}</p>
+            </div>
+          }
+        >
+          {paginated.map((invoice) => {
+            const status = effectiveInvoiceStatus(invoice)
+            return (
+              <MobileCard
+                key={invoice.id}
+                onClick={() => router.push(`/${lang}/sales/invoices/${invoice.id}`)}
+                leading={<MobileThumb fallback={<FileText />} />}
+                eyebrow={
+                  <>
+                    <MobileChip>{invoice.invoice_number}</MobileChip>
+                    {invoice.sales_orders?.order_number && (
+                      <span className="truncate">{invoice.sales_orders.order_number}</span>
+                    )}
+                  </>
+                }
+                title={invoice.customers?.name || '-'}
+                status={<StatusBadge tone={invoiceStatusTone(status)} label={t(`status.${status}`)} />}
+                menu={renderActions(invoice)}
+                stats={[
+                  { label: tCommon('total'), value: formatCurrency(invoice.total_amount), tone: 'brand' },
+                  { label: t('paidAmount'), value: formatCurrency(invoice.paid_amount), tone: 'good' },
+                  { label: tCommon('date'), value: formatDateTime(invoice.created_at) },
+                ]}
+              />
+            )
+          })}
+        </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>

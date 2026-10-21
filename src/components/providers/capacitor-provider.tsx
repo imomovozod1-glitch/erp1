@@ -18,6 +18,7 @@ export function CapacitorProvider() {
 
     let backListener: { remove: () => void } | undefined
     let stateListener: { remove: () => void } | undefined
+    let themeObserver: MutationObserver | undefined
     let cancelled = false
 
     ;(async () => {
@@ -68,8 +69,17 @@ export function CapacitorProvider() {
       // depending on CSS insets to do it.
       await StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
 
-      const isDark = document.documentElement.classList.contains('dark')
-      await StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {})
+      // The status bar tracks the app theme for the whole session, not just at
+      // launch: switching to dark in the app must not leave a white bar with
+      // white icons above it. Colours are the app bar's (--card on each theme).
+      const paintStatusBar = () => {
+        const isDark = document.documentElement.classList.contains('dark')
+        StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {})
+        StatusBar.setBackgroundColor({ color: isDark ? '#151027' : '#ffffff' }).catch(() => {})
+      }
+      paintStatusBar()
+      themeObserver = new MutationObserver(paintStatusBar)
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 
       await SplashScreen.hide().catch(() => {})
     })()
@@ -78,6 +88,7 @@ export function CapacitorProvider() {
       cancelled = true
       backListener?.remove()
       stateListener?.remove()
+      themeObserver?.disconnect()
     }
   }, [router])
 

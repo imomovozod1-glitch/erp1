@@ -13,6 +13,7 @@ import { invalidateRoutes } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { Button } from '@/components/ui/button'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -139,16 +140,52 @@ export function RoutesTable({ routes, lang, page, pageSize, total, totalPages }:
     setIsDeleting(null)
   }
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (route: any) => (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem
+                          render={<Link href={`/${lang}/distribution/routes/${route.id}/edit`} prefetch={true} />}
+                        >
+                          <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleOptimize(route.id)}
+                          disabled={isOptimizing === route.id}
+                        >
+                          <Waypoints className="mr-2 h-3.5 w-3.5" /> {t('optimize')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleToggleStatus(route.id, route.is_active)}
+                          disabled={isUpdatingStatus === route.id}
+                        >
+                          <Power className="mr-2 h-3.5 w-3.5" />{' '}
+                          {route.is_active ? tCommon('inactive') : tCommon('active')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(route.id)}
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
+                          disabled={isDeleting === route.id}
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+  );
+
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
           <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
           </div>
         </div>
 
-        <Table>
+        <Table containerClassName="max-md:hidden">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
@@ -212,44 +249,54 @@ export function RoutesTable({ routes, lang, page, pageSize, total, totalPages }:
                     />
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem
-                          render={<Link href={`/${lang}/distribution/routes/${route.id}/edit`} prefetch={true} />}
-                        >
-                          <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleOptimize(route.id)}
-                          disabled={isOptimizing === route.id}
-                        >
-                          <Waypoints className="mr-2 h-3.5 w-3.5" /> {t('optimize')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleToggleStatus(route.id, route.is_active)}
-                          disabled={isUpdatingStatus === route.id}
-                        >
-                          <Power className="mr-2 h-3.5 w-3.5" />{' '}
-                          {route.is_active ? tCommon('inactive') : tCommon('active')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(route.id)}
-                          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
-                          disabled={isDeleting === route.id}
-                        >
-                          <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {renderActions(route)}
                   </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
+        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+        <MobileCardList
+          isEmpty={routes.length === 0}
+          empty={
+            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+              <RouteIcon className="h-8 w-8 opacity-40" />
+              <p className="text-sm">{tCommon('noData')}</p>
+            </div>
+          }
+        >
+          {routes.map((route) => (
+            <MobileCard
+              key={route.id}
+              onClick={() => router.push(`/${lang}/distribution/routes/${route.id}/edit`)}
+              leading={<MobileThumb fallback={<RouteIcon />} />}
+              eyebrow={
+                <>
+                  <MobileChip>{route.weekday ? t(WEEKDAY_KEYS[route.weekday - 1]) : t('noWeekday')}</MobileChip>
+                  <span className="truncate">{route.agent?.full_name || t('noAgent')}</span>
+                </>
+              }
+              title={route.name}
+              status={
+                <StatusBadge
+                  tone={route.is_active ? 'emerald' : 'slate'}
+                  label={route.is_active ? tCommon('active') : tCommon('inactive')}
+                />
+              }
+              menu={renderActions(route)}
+              stats={[
+                { label: t('stops'), value: t('routeStopsCount', { count: route.stops?.length ?? 0 }), tone: 'brand' },
+                {
+                  label: t('routeSummary'),
+                  value: route.optimized_at
+                    ? `${t('routeDistance', { km: routeKm(route.distance_m ?? 0) })} · ${t('routeDuration', routeHoursMinutes(route.duration_s ?? 0))}`
+                    : '—',
+                },
+              ]}
+            />
+          ))}
+        </MobileCardList>
         <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
       {confirmDialog}

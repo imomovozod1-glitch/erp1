@@ -5,6 +5,16 @@ import { PageInfoButton } from '@/components/shared/page-info-button'
 import { BackButton } from '@/components/shared/back-button'
 import Link from 'next/link'
 
+/**
+ * The page's primary action. On desktop it is a button in the header; on a
+ * phone it floats above the bottom navigation as a pill (the app design's
+ * "+ Yangi …" button), where the thumb already is. The pages' content has room
+ * under it — the dashboard layout pads `main` by the nav plus this.
+ */
+const ACTION_CLASS =
+  'gap-1.5 max-md:fixed max-md:right-4 max-md:bottom-[calc(5.25rem+env(safe-area-inset-bottom))] max-md:z-30 ' +
+  'max-md:h-12 max-md:rounded-full max-md:px-5 max-md:text-sm max-md:font-semibold max-md:shadow-brand-lg'
+
 interface PageHeaderProps {
   title: string
   subtitle?: string
@@ -78,7 +88,7 @@ export function PageHeader({
               size="sm"
               nativeButton={false}
               render={<Link href={action.href} prefetch={true} />}
-              className="bg-violet-600 hover:bg-violet-500 text-white gap-1.5"
+              className={ACTION_CLASS}
             >
               {ActionIcon && <ActionIcon className="h-4 w-4" />}
               {action.label}
@@ -87,7 +97,7 @@ export function PageHeader({
             <Button
               size="sm"
               onClick={action.onClick}
-              className="bg-violet-600 hover:bg-violet-500 text-white gap-1.5"
+              className={ACTION_CLASS}
             >
               {ActionIcon && <ActionIcon className="h-4 w-4" />}
               {action.label}
