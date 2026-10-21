@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDateTime } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import { MobileCard, MobileCardList, MobileChip } from '@/components/shared/mobile-list'
 
 export interface LoginAttemptRow {
   id: number
@@ -49,8 +50,8 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
   return (
     <div className="rounded-xl border-0 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-slate-900">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 dark:border-slate-800">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full max-w-xs">
+        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
+          <div className="relative w-full md:max-w-xs md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder={t('searchPlaceholder')}
@@ -62,7 +63,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
               className="pl-9"
             />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="-mx-1 flex max-w-full items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] max-md:w-full">
             {outcomeFilters.map((f) => (
               <button
                 key={f.value}
@@ -72,7 +73,7 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
                   setCurrentPage(1)
                 }}
                 className={cn(
-                  'px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
+                  'shrink-0 whitespace-nowrap px-3 py-2 md:py-1.5 text-xs font-semibold rounded-full border transition-colors',
                   outcomeFilter === f.value
                     ? 'bg-violet-600 border-violet-600 text-white'
                     : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
@@ -88,7 +89,28 @@ export function SecurityLogTable({ attempts }: { attempts: LoginAttemptRow[] }) 
         </span>
       </div>
 
-      <Table>
+      <MobileCardList
+        className="p-3"
+        isEmpty={paginated.length === 0}
+        empty={
+          <div className="flex flex-col items-center gap-2 py-10 text-slate-400 dark:text-slate-500">
+            <ShieldAlert className="h-8 w-8 opacity-40" />
+            <p className="text-sm">{tCommon('noData')}</p>
+          </div>
+        }
+      >
+        {paginated.map((a) => (
+          <MobileCard
+            key={a.id}
+            eyebrow={<MobileChip>{a.ip}</MobileChip>}
+            title={<span className="break-all">{a.identifier}</span>}
+            subtitle={formatDateTime(a.created_at)}
+            status={<StatusBadge label={a.success ? t('success') : t('failed')} tone={a.success ? 'emerald' : 'rose'} />}
+          />
+        ))}
+      </MobileCardList>
+
+      <Table containerClassName="max-md:hidden">
         <TableHeader>
           <TableRow>
             <TableHead className="w-10 text-center">#</TableHead>

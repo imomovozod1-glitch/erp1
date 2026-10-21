@@ -16,6 +16,7 @@ import { invalidateDepartments } from '@/lib/data/revalidate'
 import { errorMessage } from '@/lib/error-message'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { FormFooter } from '@/components/shared/form-footer'
 type FormData = {
   name: string
   description?: string
@@ -96,7 +97,7 @@ export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
             )}
           </div>
 
-          <div className="flex justify-end gap-2 border-t pt-4">
+          <FormFooter>
             <Button 
               type="button" 
               variant="outline" 
@@ -109,7 +110,7 @@ export function DepartmentForm({ initialData, lang }: DepartmentFormProps) {
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {tCommon('save')}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </CardContent>
     </Card>

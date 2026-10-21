@@ -28,6 +28,7 @@ import { isStrongPassword } from '@/lib/password-validation'
 import { isValidPhone } from '@/lib/phone-validation'
 import { cn, generateDocumentNumber, isoDate } from '@/lib/utils'
 import { errorMessage } from '@/lib/error-message'
+import { FormFooter } from '@/components/shared/form-footer'
 
 
 /** Dropdown contents, fetched on the server — see `getCachedEmployeeFormOptions`. */
@@ -618,7 +619,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
             </div>
           )}
 
-          <div className="flex justify-end gap-2 border-t pt-4">
+          <FormFooter>
             <Button 
               type="button" 
               variant="outline" 
@@ -631,7 +632,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {tCommon('save')}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </CardContent>
     </Card>

@@ -123,7 +123,7 @@ export function ItemPicker({
           onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
           placeholder={placeholder}
-          className="h-9 pl-9"
+          className="h-10 rounded-xl pl-9 md:h-9"
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
@@ -135,7 +135,7 @@ export function ItemPicker({
              because box-sizing is border-box. Fixed-height rows are what makes
              that arithmetic hold — with rows that size themselves to their
              text, "three rows" would drift with every long name. */
-          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[172px] overflow-y-auto rounded-lg border bg-white shadow-lg dark:bg-slate-900">
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[172px] overflow-y-auto overscroll-contain rounded-xl border bg-white shadow-lg dark:bg-slate-900">
             {visible.length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">{emptyLabel}</p>
             ) : (

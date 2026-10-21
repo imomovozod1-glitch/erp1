@@ -22,6 +22,7 @@ import { User, Mail, Phone, MapPin, FileText, CreditCard, Loader2, Tags } from '
 import { PhoneInput } from '@/components/ui/phone-input'
 import { optionalPhoneSchema } from '@/lib/phone-validation'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { FormFooter } from '@/components/shared/form-footer'
 
 // Load MapPicker dynamically for Next.js SSR compatibility
 const MapPicker = dynamic(() => import('./map-picker').then(mod => mod.MapPicker), {
@@ -320,7 +321,7 @@ export function CustomerForm({ initialData, categories = [], lang, assignableUse
         />
       </div>
 
-        <div className="flex justify-end gap-2 border-t pt-4">
+        <FormFooter>
           <Button 
             type="button" 
             variant="outline" 
@@ -332,7 +333,7 @@ export function CustomerForm({ initialData, categories = [], lang, assignableUse
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? tCommon('saving') : tCommon('save')}
           </Button>
-        </div>
+        </FormFooter>
       </form>
 
       {/* Dynamic Map Dialog */}

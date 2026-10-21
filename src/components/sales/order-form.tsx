@@ -27,6 +27,7 @@ import {
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
 import { formatCurrency, isoDate } from '@/lib/utils'
+import { FormFooter } from '@/components/shared/form-footer'
 
 interface OrderFormProps {
   initialData?: any
@@ -256,7 +257,7 @@ export function OrderForm({ initialData, items = [], customers, assignableUsers,
   const customerIdValue = useWatch({ control, name: 'customer_name' })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="order_number">{t('orderNumber')} *</Label>
@@ -383,7 +384,7 @@ export function OrderForm({ initialData, items = [], customers, assignableUsers,
         />
       )}
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button 
           type="button" 
           variant="outline" 
@@ -395,7 +396,7 @@ export function OrderForm({ initialData, items = [], customers, assignableUsers,
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? tCommon('saving') : tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   )
 }

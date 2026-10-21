@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { formatCurrency, isoDate } from '@/lib/utils'
+import { FormFooter } from '@/components/shared/form-footer'
 
 export interface DeliverableOrder {
   id: string
@@ -294,7 +295,7 @@ export function DeliveryForm({
             <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
           </div>
 
-          <div className="flex justify-end gap-2 border-t pt-4">
+          <FormFooter>
             <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
               {tCommon('cancel')}
             </Button>
@@ -302,7 +303,7 @@ export function DeliveryForm({
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {tCommon('save')}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </CardContent>
     </Card>

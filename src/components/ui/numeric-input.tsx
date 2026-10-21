@@ -84,6 +84,7 @@ export function NumericInput({ value, defaultValue, onChange, allowDecimals = tr
   return (
     <Input
       type="text"
+      inputMode={allowDecimals ? "decimal" : "numeric"}
       value={displayValue}
       onChange={handleChange}
       onFocus={(e) => {

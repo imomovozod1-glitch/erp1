@@ -30,6 +30,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { isService } from '@/lib/product-kind'
+import { FormFooter } from '@/components/shared/form-footer'
 
 export interface ProductionProductOption {
   id: string
@@ -403,7 +404,80 @@ export function ProductionOrderForm({
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="space-y-3 md:hidden">
+          {lines.length === 0 ? (
+            <p className="rounded-2xl border border-dashed py-8 text-center text-sm text-muted-foreground">
+              {t('noComponents')}
+            </p>
+          ) : (
+            (grouped
+              ? [
+                  { key: 'recipe', label: t('fromBom'), rows: recipeLines },
+                  { key: 'extra', label: t('extraMaterials'), rows: extraLines },
+                ]
+              : [{ key: 'all', label: null as string | null, rows: lines }]
+            ).map((group) => (
+              <div key={group.key} className="space-y-3">
+                {group.label && (
+                  <p className="px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {group.label}
+                  </p>
+                )}
+                {group.rows.map((line) => {
+                  const product = productById.get(line.componentId)
+                  const service = isService(product)
+                  const short = !service && (Number(product?.stock) || 0) < line.quantity
+                  return (
+                    <div key={line.componentId} className="rounded-2xl border bg-card p-3 shadow-sm">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="min-w-0 break-words text-sm font-semibold">{product?.name ?? '—'}</p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={tCommon('delete')}
+                          onClick={() => setLines((c) => c.filter((l) => l.componentId !== line.componentId))}
+                          className="-mr-1 -mt-1 h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="mt-2 flex items-end gap-2">
+                        <label className="flex-1 space-y-1 text-xs text-muted-foreground">
+                          {t('required')}
+                          <div className="flex items-center gap-1.5">
+                            <NumericInput
+                              value={line.quantity}
+                              onChange={(val) =>
+                                setLines((current) =>
+                                  current.map((l) =>
+                                    l.componentId === line.componentId
+                                      ? { ...l, quantity: Number(val) || 0 }
+                                      : l
+                                  )
+                                )
+                              }
+                              className="text-right"
+                            />
+                            <span className="shrink-0 text-xs">{product?.unit}</span>
+                          </div>
+                        </label>
+                        <div className="flex-1 text-right text-xs text-muted-foreground">
+                          {t('available')}
+                          <p className={`text-sm tabular-nums ${short ? 'font-semibold text-rose-600 dark:text-rose-400' : 'text-foreground'}`}>
+                            {service ? '—' : formatNumber(Number(product?.stock) || 0)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="overflow-x-auto rounded-lg border max-md:hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -519,7 +593,7 @@ export function ProductionOrderForm({
         <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
       </div>
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
           {tCommon('cancel')}
         </Button>
@@ -535,7 +609,7 @@ export function ProductionOrderForm({
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {t('saveAndComplete')}
         </Button>
-      </div>
+      </FormFooter>
         </form>
       </CardContent>
     </Card>

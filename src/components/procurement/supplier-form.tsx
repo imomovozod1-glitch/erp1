@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import dynamic from 'next/dynamic'
 import { Truck, Mail, Phone, MapPin, CreditCard, FileText, User, Loader2 } from 'lucide-react'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { FormFooter } from '@/components/shared/form-footer'
 
 // Load MapPicker dynamically for Next.js SSR compatibility
 const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod => mod.MapPicker), {
@@ -163,7 +164,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
 
   return (
     <>
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
       <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div className="h-10 w-10 rounded-lg bg-violet-50 dark:bg-violet-950/50 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
           <Truck className="h-5 w-5" />
@@ -335,7 +336,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
         />
       </div>
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button
           type="button"
           variant="outline"
@@ -347,7 +348,7 @@ export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFor
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
 
     {isMapOpen && (

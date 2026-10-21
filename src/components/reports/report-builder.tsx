@@ -318,7 +318,7 @@ export function ReportBuilder({ today }: { today: string }) {
       type="button"
       onClick={() => setView(mode)}
       aria-pressed={view === mode}
-      className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+      className={`flex items-center gap-1.5 rounded-md px-3.5 py-2 md:px-3 md:py-1.5 text-xs font-semibold transition-all ${
         view === mode
           ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm'
           : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
@@ -388,7 +388,7 @@ export function ReportBuilder({ today }: { today: string }) {
           </div>
 
           <div className="flex flex-wrap items-end gap-3">
-            <div className="space-y-2 flex-1 min-w-56">
+            <div className="space-y-2 flex-1 min-w-0 md:min-w-56 max-md:basis-full">
               <Label>{tCommon('search')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -473,7 +473,7 @@ export function ReportBuilder({ today }: { today: string }) {
                         if (!(await confirmDelete({ name: entry.name }))) return
                         persist(saved.filter((item) => item.name !== entry.name))
                       }}
-                      className="rounded p-0.5 text-slate-400 hover:text-rose-600"
+                      className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:text-rose-600 md:h-auto md:w-auto md:p-0.5"
                       aria-label={tCommon('delete')}
                     >
                       <Trash2 className="h-3 w-3" />
@@ -503,9 +503,9 @@ export function ReportBuilder({ today }: { today: string }) {
                 </div>
 
                 {view === 'chart' && (
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="grid w-full grid-cols-2 items-center gap-2 md:flex md:w-auto md:flex-wrap">
                     <Select value={chartType} onValueChange={(value) => setChartType(value as ChartType)}>
-                      <SelectTrigger className="h-9 w-32">
+                      <SelectTrigger className="h-10 w-full md:h-9 md:w-32">
                         <SelectValue>{t(`chartType.${chartType}`)}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -518,7 +518,7 @@ export function ReportBuilder({ today }: { today: string }) {
                     </Select>
 
                     <Select value={activeDimension} onValueChange={(value) => setDimension(value ?? '')}>
-                      <SelectTrigger className="h-9 w-40">
+                      <SelectTrigger className="h-10 w-full md:h-9 md:w-40">
                         <SelectValue>
                           {activeDimension ? t(`col.${activeDimension}`) : t('dimension')}
                         </SelectValue>
@@ -580,7 +580,11 @@ export function ReportBuilder({ today }: { today: string }) {
                           return (
                             <TableHead
                               key={column.key}
-                              className={numeric ? 'text-right tabular-nums' : ''}
+                              className={`${numeric ? 'text-right tabular-nums' : ''} ${
+                                column.key === visibleColumns[0]?.key
+                                  ? 'max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-slate-50 max-md:dark:bg-slate-800'
+                                  : ''
+                              }`}
                             >
                               <button
                                 type="button"
@@ -611,11 +615,15 @@ export function ReportBuilder({ today }: { today: string }) {
                           {visibleColumns.map((column) => (
                             <TableCell
                               key={column.key}
-                              className={
+                              className={`${
                                 column.type === 'money' || column.type === 'number'
                                   ? 'text-right tabular-nums'
                                   : ''
-                              }
+                              } ${
+                                column.key === visibleColumns[0]?.key
+                                  ? 'max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-white max-md:dark:bg-slate-900'
+                                  : ''
+                              }`}
                             >
                               {renderCell(row[column.key], column.type, column.key)}
                             </TableCell>
@@ -626,11 +634,15 @@ export function ReportBuilder({ today }: { today: string }) {
                         {visibleColumns.map((column, index) => (
                           <TableCell
                             key={column.key}
-                            className={
+                            className={`${
                               column.type === 'money' || column.type === 'number'
                                 ? 'text-right tabular-nums'
                                 : ''
-                            }
+                            } ${
+                              index === 0
+                                ? 'max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-slate-50 max-md:dark:bg-slate-800'
+                                : ''
+                            }`}
                           >
                             {index === 0
                               ? tCommon('total')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   Area,
@@ -166,7 +166,7 @@ export function DailySalesChart({
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
           {subtitle && (
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
@@ -200,7 +200,11 @@ export function DailySalesChart({
             {tc('noData')}
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={height}>
+          <div
+            className="h-[min(var(--chart-h),240px)] w-full md:h-(--chart-h)"
+            style={{ '--chart-h': `${height}px` } as CSSProperties}
+          >
+          <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="reportDailyFill" x1="0" y1="0" x2="0" y2="1">
@@ -273,6 +277,7 @@ export function DailySalesChart({
               )}
             </ComposedChart>
           </ResponsiveContainer>
+          </div>
         )}
       </CardContent>
     </Card>

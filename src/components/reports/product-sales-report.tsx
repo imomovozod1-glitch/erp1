@@ -214,15 +214,15 @@ function Body({
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">{t('slowMovers.desc')}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
+            <div className="flex max-w-full overflow-x-auto rounded-full border border-slate-200 bg-slate-100 p-0.5 md:rounded-lg dark:border-slate-700 dark:bg-slate-800">
               {MOVEMENT_THRESHOLDS.map((value) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setThreshold(value)}
                   className={cn(
-                    'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
+                    'shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-colors md:rounded-md md:px-3 md:py-1.5',
                     threshold === value
                       ? 'bg-white text-violet-600 dark:bg-slate-700 dark:text-violet-400'
                       : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'

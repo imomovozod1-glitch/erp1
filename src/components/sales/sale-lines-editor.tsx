@@ -59,7 +59,80 @@ export function SaleLinesEditor({
         <p className="text-xs text-muted-foreground">{t('sales.soldItemsHint')}</p>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="space-y-3 p-3 md:hidden">
+        {lines.map((line) => {
+          const draft = drafts[line.id]
+          const removed = !!draft?.remove
+          const price = draft && draft.unitPrice !== '' ? Number(draft.unitPrice) : Number(line.unit_price)
+          const priceChanged = price !== Number(line.unit_price)
+          const isLastKept = !removed && keptCount === 1
+          return (
+            <div
+              key={line.id}
+              className={`rounded-2xl border p-3 shadow-sm ${removed ? 'border-rose-200 bg-rose-50/60 dark:border-rose-900/50 dark:bg-rose-950/20' : 'bg-card'}`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className={`break-words text-sm font-semibold ${removed ? 'text-slate-400 line-through dark:text-slate-500' : ''}`}>
+                    {line.products?.name ?? '—'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatNumber(line.quantity)} {line.products?.unit ?? ''}
+                    {!!line.discount_percent && !removed && ` · −${formatNumber(line.discount_percent)}%`}
+                  </p>
+                  {removed && (
+                    <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">{t('sales.lineRemoved')}</p>
+                  )}
+                </div>
+                {removed ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={disabled}
+                    onClick={() => onChange(line.id, { remove: false })}
+                    aria-label={t('sales.restoreLine')}
+                    className="-mr-1 -mt-1 h-10 w-10 shrink-0 text-slate-500"
+                  >
+                    <Undo2 className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={disabled || isLastKept}
+                    onClick={() => onChange(line.id, { remove: true })}
+                    aria-label={t('sales.removeLine')}
+                    className="-mr-1 -mt-1 h-10 w-10 shrink-0 text-rose-500 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <div className="mt-2 flex items-end gap-2">
+                <label className="flex-1 space-y-1 text-xs text-muted-foreground">
+                  {t('sales.unitPrice')}
+                  <NumericInput
+                    value={draft ? draft.unitPrice : Number(line.unit_price)}
+                    onChange={(value) => onChange(line.id, { unitPrice: value })}
+                    disabled={disabled || removed}
+                    className={`text-right tabular-nums ${priceChanged && !removed ? 'border-amber-300 bg-amber-50/50 dark:border-amber-700 dark:bg-amber-950/20' : ''}`}
+                  />
+                </label>
+                <div className="flex-1 text-right text-xs text-muted-foreground">
+                  {t('sales.totalPrice')}
+                  <p className={`text-sm font-bold tabular-nums ${removed ? 'text-slate-400 line-through dark:text-slate-500' : 'text-foreground'}`}>
+                    {formatCurrency(saleLineTotal(price, Number(line.quantity), line.discount_percent))}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="overflow-x-auto max-md:hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/30 dark:bg-slate-800/30">

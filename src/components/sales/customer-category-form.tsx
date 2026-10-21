@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { FormFooter } from '@/components/shared/form-footer'
 
 interface CustomerCategoryFormProps {
   initialData?: any
@@ -69,7 +70,7 @@ export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryForm
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-xl border shadow-sm">
       <div className="space-y-2">
         <Label htmlFor="name">{tCommon('name')} *</Label>
         <Input id="name" {...register('name')} placeholder={tCommon('name')} />
@@ -82,7 +83,7 @@ export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryForm
         {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
       </div>
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button
           type="button"
           variant="outline"
@@ -94,7 +95,7 @@ export function CustomerCategoryForm({ initialData, lang }: CustomerCategoryForm
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   )
 }

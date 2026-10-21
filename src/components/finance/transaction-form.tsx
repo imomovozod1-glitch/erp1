@@ -24,6 +24,7 @@ import {
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
+import { FormFooter } from '@/components/shared/form-footer'
 
 interface TransactionFormProps {
   /** Active tenant members who can be made responsible for this record. */
@@ -143,7 +144,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang, ass
   const typeValue = useWatch({ control, name: 'type' })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="type">{t('finance.type')} *</Label>
@@ -222,7 +223,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang, ass
       </div>
 
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button 
           type="button" 
           variant="outline" 
@@ -234,7 +235,7 @@ export function TransactionForm({ initialData, defaultType = 'income', lang, ass
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? t('common.saving') : t('common.save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   )
 }

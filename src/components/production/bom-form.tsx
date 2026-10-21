@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { FormFooter } from '@/components/shared/form-footer'
 
 
 export interface BomProductOption {
@@ -320,7 +321,54 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
           hint={t('clickToAddComponentHint')}
         />
 
-        <div className="rounded-lg border overflow-x-auto">
+        <div className="space-y-3 md:hidden">
+          {lines.length === 0 ? (
+            <p className="rounded-2xl border border-dashed py-8 text-center text-sm text-muted-foreground">
+              {t('noComponents')}
+            </p>
+          ) : (
+            lines.map((line) => (
+              <div key={line.componentId} className="rounded-2xl border bg-card p-3 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="min-w-0 break-words text-sm font-semibold">{line.name}</p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={tCommon('delete')}
+                    onClick={() => setLines((c) => c.filter((l) => l.componentId !== line.componentId))}
+                    className="-mr-1 -mt-1 h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="mt-2 flex items-end gap-2">
+                  <label className="flex-1 space-y-1 text-xs text-muted-foreground">
+                    {tCommon('quantity')}
+                    <div className="flex items-center gap-1.5">
+                      <NumericInput
+                        value={line.quantity}
+                        onChange={(val) => setLineQuantity(line.componentId, Number(val) || 0)}
+                        className="text-right"
+                      />
+                      <span className="shrink-0 text-xs">{line.unit}</span>
+                    </div>
+                  </label>
+                  <div className="flex-1 text-right text-xs text-muted-foreground">
+                    {t('unitCost')}
+                    <p className="text-sm tabular-nums text-foreground">{formatCurrency(line.costPrice)}</p>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center justify-between border-t pt-2 text-sm">
+                  <span className="text-muted-foreground">{tCommon('total')}</span>
+                  <span className="font-bold tabular-nums">{formatCurrency(line.costPrice * line.quantity)}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="rounded-lg border overflow-x-auto max-md:hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -410,7 +458,7 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
         <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
       </div>
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
           {tCommon('cancel')}
         </Button>
@@ -418,7 +466,7 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
         </form>
       </CardContent>
     </Card>

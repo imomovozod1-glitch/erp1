@@ -7,6 +7,7 @@ import { Plus, Trash2, Scale, Pencil, Check, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { MobileCard, MobileCardList, MobileThumb } from '@/components/shared/mobile-list'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
 import { errorMessage } from '@/lib/error-message'
@@ -122,9 +123,9 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
   return (
     <div className="space-y-6">
       {/* Stats and Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {/* Statistics Card */}
-        <Card className="border-0 shadow-sm flex items-center p-6 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
+        <Card className="border-0 shadow-sm flex items-center p-4 md:p-6 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
           <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
             <Scale className="h-6 w-6" />
           </div>
@@ -159,7 +160,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
               <Button
                 type="submit"
                 disabled={!newUnit.trim() || isAdding}
-                className="bg-violet-600 hover:bg-violet-700 text-white shrink-0 cursor-pointer disabled:cursor-not-allowed"
+                className="h-10 bg-violet-600 hover:bg-violet-700 text-white shrink-0 cursor-pointer disabled:cursor-not-allowed md:h-auto"
               >
                 <Plus className="h-4 w-4 mr-1" />
                 {tCommon('add') || 'Add'}
@@ -173,7 +174,78 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
       <Card className="border-0 shadow-sm animate-in fade-in duration-300">
         <CardContent className="p-0">
           <div>
-            <Table>
+            <MobileCardList
+              className="p-3"
+              isEmpty={units.length === 0}
+              empty={
+                <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
+                  <Scale className="h-8 w-8 opacity-40" />
+                  <p className="text-sm">{tCommon('noData')}</p>
+                </div>
+              }
+            >
+              {paginated.map((u) => {
+                const isEditing = editingId === u.id
+                return (
+                  <MobileCard
+                    key={u.id}
+                    leading={<MobileThumb fallback={<Scale />} />}
+                    title={
+                      isEditing ? (
+                        <Input
+                          value={editingValue}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          className="h-10 text-sm"
+                          autoFocus
+                        />
+                      ) : (
+                        u.name
+                      )
+                    }
+                    menu={
+                      isEditing ? (
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleSaveEdit(u)} className="h-10 w-10 text-emerald-600 dark:text-emerald-400" title={tCommon('save') || 'Save'}>
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditingId(null)
+                              setEditingValue('')
+                            }}
+                            className="h-10 w-10 text-slate-400 dark:text-slate-500"
+                            title={tCommon('cancel') || 'Cancel'}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditingId(u.id)
+                              setEditingValue(u.name)
+                            }}
+                            className="h-10 w-10 text-violet-600 dark:text-violet-400"
+                            title={tCommon('edit') || 'Edit'}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteUnit(u.id)} className="h-10 w-10 text-rose-600 dark:text-rose-400" title={tCommon('delete') || 'Delete'}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )
+                    }
+                  />
+                )
+              })}
+            </MobileCardList>
+            <Table containerClassName="max-md:hidden">
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center font-semibold text-slate-600 dark:text-slate-300">#</TableHead>
@@ -204,7 +276,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                             <Input
                               value={editingValue}
                               onChange={(e) => setEditingValue(e.target.value)}
-                              className="h-8 py-1 px-2 text-sm border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 max-w-50"
+                              className="h-10 md:h-8 py-1 px-2 text-sm border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 max-w-50"
                               autoFocus
                             />
                           ) : (
@@ -218,7 +290,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleSaveEdit(u)}
-                                className="h-8 w-8 text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer"
+                                className="h-10 w-10 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer"
                                 title={tCommon('save') || 'Save'}
                               >
                                 <Check className="h-4 w-4" />
@@ -230,7 +302,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                                   setEditingId(null)
                                   setEditingValue('')
                                 }}
-                                className="h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                                className="h-10 w-10 md:h-8 md:w-8 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                                 title={tCommon('cancel') || 'Cancel'}
                               >
                                 <X className="h-4 w-4" />
@@ -245,7 +317,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                                   setEditingId(u.id)
                                   setEditingValue(u.name)
                                 }}
-                                className="h-8 w-8 text-violet-600 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/30 cursor-pointer"
+                                className="h-10 w-10 md:h-8 md:w-8 text-violet-600 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/30 cursor-pointer"
                                 title={tCommon('edit') || 'Edit'}
                               >
                                 <Pencil className="h-4 w-4" />
@@ -254,7 +326,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleDeleteUnit(u.id)}
-                                className="h-8 w-8 text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                                className="h-10 w-10 md:h-8 md:w-8 text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
                                 title={tCommon('delete') || 'Delete'}
                               >
                                 <Trash2 className="h-4 w-4" />

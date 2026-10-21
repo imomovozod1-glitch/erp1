@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { adminErrorMessage } from '@/lib/admin-errors'
 import { formatDateTime, cn } from '@/lib/utils'
+import { MobileCard, MobileCardList } from '@/components/shared/mobile-list'
 
 export type LeadStatus = 'new' | 'contacted' | 'closed'
 
@@ -83,8 +84,8 @@ export function LeadsTable({ leads }: { leads: LeadRow[] }) {
   return (
     <div className="rounded-xl border-0 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-slate-900">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 dark:border-slate-800">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full max-w-xs">
+        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
+          <div className="relative w-full md:max-w-xs md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder={t('searchPlaceholder')}
@@ -96,7 +97,7 @@ export function LeadsTable({ leads }: { leads: LeadRow[] }) {
               className="pl-9"
             />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="-mx-1 flex max-w-full items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] max-md:w-full">
             {filters.map((f) => (
               <button
                 key={f.value}
@@ -106,7 +107,7 @@ export function LeadsTable({ leads }: { leads: LeadRow[] }) {
                   setCurrentPage(1)
                 }}
                 className={cn(
-                  'px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
+                  'shrink-0 whitespace-nowrap px-3 py-2 md:py-1.5 text-xs font-semibold rounded-full border transition-colors',
                   statusFilter === f.value
                     ? 'bg-violet-600 border-violet-600 text-white'
                     : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
@@ -122,7 +123,55 @@ export function LeadsTable({ leads }: { leads: LeadRow[] }) {
         </span>
       </div>
 
-      <Table>
+      <MobileCardList
+        className="p-3"
+        isEmpty={paginated.length === 0}
+        empty={
+          <div className="flex flex-col items-center gap-2 py-10 text-slate-400 dark:text-slate-500">
+            <Inbox className="h-8 w-8 opacity-40" />
+            <p className="text-sm">{tCommon('noData')}</p>
+          </div>
+        }
+      >
+        {paginated.map((lead) => (
+          <MobileCard
+            key={lead.id}
+            eyebrow={<span className="tabular-nums">{formatDateTime(lead.created_at)}</span>}
+            title={lead.name}
+            subtitle={lead.company}
+            status={
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  disabled={saving === lead.id}
+                  className="flex min-h-10 items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 disabled:opacity-50"
+                >
+                  <StatusBadge label={t(`status.${lead.status}`)} tone={TONES[lead.status]} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {STATUSES.map((s) => (
+                    <DropdownMenuItem key={s} onClick={() => setStatus(lead, s)}>
+                      {t(`status.${s}`)}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            }
+            footer={
+              <div className="space-y-2">
+                <a
+                  href={`tel:${lead.phone}`}
+                  className="flex h-11 items-center justify-center rounded-xl bg-violet-50 text-sm font-semibold tabular-nums text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                >
+                  {lead.phone}
+                </a>
+                {lead.comment && <p className="break-words text-xs text-slate-500 dark:text-slate-400">{lead.comment}</p>}
+              </div>
+            }
+          />
+        ))}
+      </MobileCardList>
+
+      <Table containerClassName="max-md:hidden">
         <TableHeader>
           <TableRow>
             <TableHead>{t('colName')}</TableHead>

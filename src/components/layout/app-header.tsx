@@ -1,5 +1,6 @@
 'use client'
 
+import { BackButton } from '@/components/shared/back-button'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
@@ -338,13 +339,19 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
       {/* Phones: brand mark, and the module the user is in. */}
       <div className="flex min-w-0 items-center gap-2.5 md:hidden">
-        <Link
-          href={`/${lang}/dashboard`}
-          aria-label="Falco"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand"
-        >
-          <Building2 className="h-4 w-4" />
-        </Link>
+        {/* Inside a module's sub-page (`/uz/inventory/products`) the mark gives way to a
+            back chip, as in the app design; module roots and the dashboard keep the brand. */}
+        {pathname.split('/').filter(Boolean).length > 2 ? (
+          <BackButton className="h-9 w-9 rounded-xl border-border/60 bg-card text-foreground shadow-sm hover:bg-violet-50 dark:bg-card" />
+        ) : (
+          <Link
+            href={`/${lang}/dashboard`}
+            aria-label="Falco"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand"
+          >
+            <Building2 className="h-4 w-4" />
+          </Link>
+        )}
         <div className="min-w-0 leading-tight">
           <p className="text-[10px] font-extrabold tracking-[0.16em] text-violet-700 uppercase dark:text-violet-300">Falco</p>
           <p className="truncate text-lg font-bold tracking-tight">{pageTitle}</p>

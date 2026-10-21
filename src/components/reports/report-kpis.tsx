@@ -27,11 +27,11 @@ export function ReportKpis({ items }: { items: ReportKpi[] }) {
   if (items.length === 0) return null
 
   return (
-    <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))]">
+    <div className="grid gap-3 max-md:grid-cols-2 md:[grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))]">
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+          className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:rounded-xl md:p-4 md:shadow-none dark:border-slate-800 dark:bg-slate-900"
         >
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {item.label}

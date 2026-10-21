@@ -8,6 +8,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { MobileCard, MobileCardList } from '@/components/shared/mobile-list'
 import { purchaseStatusTone } from '@/lib/statuses'
 import dynamic from 'next/dynamic'
 
@@ -110,22 +111,22 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm">
-        <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl md:rounded-xl border shadow-sm">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <div className="shrink-0 p-3 bg-violet-50 dark:bg-violet-950/50 rounded-xl text-violet-600 dark:text-violet-400">
             <Truck className="h-7 w-7" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{supplier.name}</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight break-words">{supplier.name}</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {supplier.contact_person ? `${t('contactPerson')}: ${supplier.contact_person}` : ''}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
           <StatusBadge tone={supplier.is_active ? 'emerald' : 'slate'} label={supplier.is_active ? tc('active') : tc('inactive')} />
-          <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
+          <Button onClick={handleExport} size="sm" className="gap-2 max-md:h-10 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
             {tc('export')}
           </Button>
@@ -133,11 +134,11 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('totalPurchases')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalPurchases)}</h3>
+            <h3 className="text-xl md:text-2xl font-extrabold break-words tabular-nums text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalPurchases)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{purchaseOrders.length} {t('purchaseOrders')}</span>
           </CardContent>
         </Card>
@@ -145,7 +146,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('totalPaid')}</span>
-            <h3 className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight mt-1">{formatCurrency(totalPayments)}</h3>
+            <h3 className="text-xl md:text-2xl font-extrabold break-words tabular-nums text-emerald-700 dark:text-emerald-400 tracking-tight mt-1">{formatCurrency(totalPayments)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('paymentsCount', { count: payments.length })}</span>
           </CardContent>
         </Card>
@@ -155,7 +156,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">
               {isAdvance ? t('advancePaid') : t('balanceOwed')}
             </span>
-            <h3 className={`text-2xl font-extrabold tracking-tight mt-1 ${balance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+            <h3 className={`text-xl md:text-2xl font-extrabold break-words tabular-nums tracking-tight mt-1 ${balance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
               {formatCurrency(Math.abs(balance))}
             </h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">
@@ -167,7 +168,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tc('status')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
+            <h3 className="text-xl md:text-2xl font-extrabold break-words tabular-nums text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {supplier.is_active ? tc('active') : tc('inactive')}
             </h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('detail.contact')}: {supplier.phone || '—'}</span>
@@ -185,7 +186,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
             {supplier.phone && (
               <div className="flex items-start gap-2.5">
                 <Phone className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('phone')}</span>
                   <span className="font-medium text-slate-800 dark:text-slate-200">{supplier.phone}</span>
                 </div>
@@ -194,16 +195,16 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
             {supplier.email && (
               <div className="flex items-start gap-2.5">
                 <Mail className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('email')}</span>
-                  <span className="font-medium text-slate-800 dark:text-slate-200">{supplier.email}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200 break-all">{supplier.email}</span>
                 </div>
               </div>
             )}
             {supplier.tin && (
               <div className="flex items-start gap-2.5">
                 <Landmark className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">{t('tin')}</span>
                   <span className="font-medium text-slate-800 dark:text-slate-200">{supplier.tin}</span>
                 </div>
@@ -226,7 +227,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
                   <button
                     type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
+                    className="block py-2 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
                   >
                     {t('detail.viewLargerMap')}
                   </button>
@@ -236,7 +237,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
             {supplier.website && (
               <div className="flex items-start gap-2.5">
                 <Globe className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">{t('detail.website')}</span>
                   <a href={supplier.website.startsWith('http') ? supplier.website : `https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="font-medium text-violet-600 dark:text-violet-400 text-xs break-all">
                     {supplier.website}
@@ -250,10 +251,10 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
         {/* Tabbed Activity / Documents */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white dark:bg-slate-900 rounded-xl border shadow-sm">
-            <div className="flex border-b overflow-x-auto">
+            <div className="flex gap-1 overflow-x-auto border-b px-2 max-md:[scrollbar-width:none]">
               <button
                 onClick={() => setActiveTab('purchases')}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex shrink-0 items-center gap-2 px-4 md:px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'purchases' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -262,7 +263,7 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
               </button>
               <button
                 onClick={() => setActiveTab('payments')}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex shrink-0 items-center gap-2 px-4 md:px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'payments' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -273,7 +274,22 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
 
             <div className="p-0">
               {activeTab === 'purchases' && (
-                <Table>
+                <MobileCardList className="p-3" isEmpty={purchaseOrders.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tc('noData')}</p>}>
+                  {purchaseOrders.map((po) => (
+                    <MobileCard
+                      key={po.id}
+                      onClick={() => router.push(`/${lang}/procurement/purchase-orders/${po.id}`)}
+                      eyebrow={<span>{formatDateTime(po.created_at)}</span>}
+                      title={po.po_number}
+                      status={<StatusBadge tone={purchaseStatusTone(po.status)} label={t(`status.${po.status}`)} />}
+                      stats={[{ label: tc('amount'), value: formatCurrency(po.total_amount), tone: 'bad' }]}
+                    />
+                  ))}
+                </MobileCardList>
+              )}
+
+              {activeTab === 'purchases' && (
+                <Table containerClassName="max-md:hidden">
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
@@ -314,7 +330,22 @@ export function SupplierDetailClient({ lang, supplier, purchaseOrders, transacti
               )}
 
               {activeTab === 'payments' && (
-                <Table>
+                <MobileCardList className="p-3" isEmpty={payments.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tc('noData')}</p>}>
+                  {payments.map((tx) => (
+                    <MobileCard
+                      key={tx.id}
+                      onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}`)}
+                      eyebrow={<span>{formatDateTime(tx.created_at)}</span>}
+                      title={tx.category}
+                      subtitle={tx.description || undefined}
+                      stats={[{ label: tc('amount'), value: `-${formatCurrency(tx.amount)}`, tone: 'bad' }]}
+                    />
+                  ))}
+                </MobileCardList>
+              )}
+
+              {activeTab === 'payments' && (
+                <Table containerClassName="max-md:hidden">
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>

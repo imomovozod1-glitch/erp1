@@ -38,6 +38,7 @@ import {
   routePlanErrorMessage,
   type RouteGeometry,
 } from '@/lib/route-plan'
+import { FormFooter } from '@/components/shared/form-footer'
 
 export interface RouteCustomerOption {
   id: string
@@ -450,7 +451,73 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
               hint={t('clickToAddStopHint')}
             />
 
-            <div className="overflow-x-auto rounded-lg border">
+            <div className="space-y-2 md:hidden">
+              {stops.length === 0 ? (
+                <p className="rounded-2xl border border-dashed py-8 text-center text-sm text-muted-foreground">
+                  {t('noStops')}
+                </p>
+              ) : (
+                stops.map((stop, index) => (
+                  <div key={stop.customerId} className="rounded-2xl border bg-card p-3 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-sm font-semibold">{stop.name}</p>
+                        {stop.phone && <p className="text-xs text-muted-foreground">{stop.phone}</p>}
+                        {typeof stop.latitude === 'number' && typeof stop.longitude === 'number' ? (
+                          stop.address && <p className="text-xs text-muted-foreground">{stop.address}</p>
+                        ) : (
+                          <p className="inline-flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                            <MapPinOff className="h-3.5 w-3.5" />
+                            {t('stopNotLocated')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-end gap-1 border-t pt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t('moveUp')}
+                        onClick={() => move(index, -1)}
+                        disabled={index === 0}
+                        className="h-10 w-10"
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t('moveDown')}
+                        onClick={() => move(index, 1)}
+                        disabled={index === stops.length - 1}
+                        className="h-10 w-10"
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={tCommon('delete')}
+                        onClick={() =>
+                          editStops((c) => c.filter((s) => s.customerId !== stop.customerId))
+                        }
+                        className="h-10 w-10 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border max-md:hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -571,7 +638,7 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
                     longitude: stop.longitude ?? null,
                   }))}
                   geometry={plan?.geometry ?? null}
-                  className="w-full h-96"
+                  className="w-full h-72 md:h-96"
                 />
               </div>
             )}
@@ -586,7 +653,7 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
             <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
           </div>
 
-          <div className="flex justify-end gap-2 border-t pt-4">
+          <FormFooter>
             <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
               {tCommon('cancel')}
             </Button>
@@ -594,7 +661,7 @@ export function RouteForm({ initialData, initialStops, customers, lang, assignab
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {tCommon('save')}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </CardContent>
     </Card>

@@ -15,7 +15,7 @@ export function SettingsTabs() {
   const router = useRouter()
 
   return (
-    <div className="flex items-center gap-1.5 rounded-lg border bg-slate-50 p-1 w-fit dark:bg-slate-800/50 dark:border-slate-700">
+    <div className="flex max-w-full items-center gap-1.5 overflow-x-auto rounded-lg border bg-slate-50 p-1 w-fit dark:bg-slate-800/50 dark:border-slate-700">
       {TABS.map((tab) => {
         const isActive = pathname === tab.href
         return (
@@ -24,7 +24,7 @@ export function SettingsTabs() {
             type="button"
             onClick={() => router.push(tab.href)}
             className={cn(
-              'px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+              'shrink-0 whitespace-nowrap px-3 py-2 md:py-1.5 text-sm font-medium rounded-md transition-colors',
               isActive
                 ? 'bg-white text-violet-700 shadow-2xs dark:bg-slate-900 dark:text-violet-400'
                 : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'

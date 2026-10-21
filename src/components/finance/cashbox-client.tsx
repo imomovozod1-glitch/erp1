@@ -804,14 +804,14 @@ export function CashboxClient({
           { label: t('cashbox') },
         ]}
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 shadow-inner border">
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
+          <div className="flex max-w-full overflow-x-auto rounded-full md:rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 shadow-inner border [scrollbar-width:none]">
             {(['today', 'yesterday', 'week', 'month', 'all'] as const).map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => handlePeriodChange(p)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
+                className={`shrink-0 whitespace-nowrap px-3.5 py-2 md:px-3 md:py-1.5 text-xs font-semibold rounded-full md:rounded-md transition-all duration-200 cursor-pointer ${
                   period === p ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -847,7 +847,7 @@ export function CashboxClient({
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
               {/* A handful of cashboxes at most — filtered in memory, not paged. */}
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -855,12 +855,104 @@ export function CashboxClient({
                   placeholder={`${tCommon('search')}...`}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 h-9"
+                  className="pl-9 h-10 md:h-9"
                 />
               </div>
             </div>
           </div>
-          <Table>
+          {/* Phone view: each cashbox is a gradient card with full-width 44px actions. */}
+          <div data-slot="table-container" className="space-y-3 p-3 md:hidden">
+            {isLoading && cashboxes.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
+                <div className="h-6 w-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm">{tCommon('loading')}...</span>
+              </div>
+            ) : filteredCashboxes.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
+                <Wallet className="h-8 w-8 opacity-40" />
+                <p className="text-sm">{tCommon('noData')}</p>
+              </div>
+            ) : (
+              <>
+                {filteredCashboxes.map((cb) => {
+                  const typeInfo = CASHBOX_TYPES.find((ct) => ct.key === (cb.type || 'cash'))
+                  const TypeIcon = typeInfo?.icon ?? Landmark
+                  return (
+                    <article
+                      key={cb.id}
+                      className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm"
+                    >
+                      <div className="relative bg-gradient-to-br from-violet-700 to-violet-500 p-4 text-white dark:from-violet-800 dark:to-violet-600">
+                        <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10" />
+                        <div className="relative flex items-start gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+                            <TypeIcon className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="truncate font-semibold leading-snug">{cb.name}</h3>
+                            {typeInfo && (
+                              <span className="text-[10px] font-semibold uppercase tracking-wide text-white/75">{typeInfo.label}</span>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditModal(cb)}
+                              aria-label={tCommon('edit')}
+                              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 active:bg-white/25"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(cb.id)}
+                              aria-label={tCommon('delete')}
+                              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 active:bg-white/25"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="relative mt-4 text-[11px] text-white/70">{t('balance')}</p>
+                        <p className="relative truncate text-2xl font-extrabold tabular-nums">{formatCurrency(cb.balance)}</p>
+                        {cb.description && <p className="relative mt-1 truncate text-xs text-white/70">{cb.description}</p>}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 p-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => handleOpenTransactionModal(cb, 'income')}
+                          className="h-11 border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 font-semibold"
+                        >
+                          <Plus className="mr-1 h-4 w-4" />
+                          {t('cashIn')}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleOpenTransactionModal(cb, 'expense')}
+                          className="h-11 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 font-semibold"
+                        >
+                          <Minus className="mr-1 h-4 w-4" />
+                          {t('cashOut')}
+                        </Button>
+                      </div>
+                    </article>
+                  )
+                })}
+                <div className="flex items-center justify-between gap-3 rounded-2xl bg-violet-50 px-4 py-3 dark:bg-violet-500/15">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold">{t('totalBalance')}</p>
+                    <p className="text-[10px] font-semibold uppercase text-muted-foreground">
+                      {t('cashboxCount', { count: filteredCashboxes.length })}
+                    </p>
+                  </div>
+                  <p className="truncate text-lg font-extrabold tabular-nums text-violet-700 dark:text-violet-300">
+                    {formatCurrency(totalCashboxBalance)}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          <Table containerClassName="max-md:hidden">
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableHead>{t('cashboxName')}</TableHead>

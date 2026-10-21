@@ -8,6 +8,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { MobileCard, MobileCardList } from '@/components/shared/mobile-list'
 import { effectiveInvoiceStatus, invoiceStatusTone, orderStatusTone } from '@/lib/statuses'
 import dynamic from 'next/dynamic'
 
@@ -117,24 +118,24 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm">
-        <div className="flex items-center gap-3.5">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl md:rounded-xl border shadow-sm">
+        <div className="flex min-w-0 items-center gap-3.5">
           <Avatar className="h-14 w-14">
             <AvatarFallback className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 text-lg font-bold">
               {getInitials(customer.name)}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{customer.name}</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight break-words">{customer.name}</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {customer.phone || customer.email || ''}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
           <StatusBadge tone={customer.is_active ? 'emerald' : 'slate'} label={customer.is_active ? tc('active') : tc('inactive')} />
-          <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
+          <Button onClick={handleExport} size="sm" className="gap-2 max-md:h-10 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
             {tc('export')}
           </Button>
@@ -142,7 +143,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{tcd('totalPurchases')}</span>
@@ -203,7 +204,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
             {customer.customer_categories?.name && (
               <div className="flex items-start gap-2.5">
                 <Tags className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">{tSales('category')}</span>
                   <span className="font-medium text-slate-800 dark:text-slate-200">{customer.customer_categories.name}</span>
                 </div>
@@ -212,7 +213,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
             {customer.phone && (
               <div className="flex items-start gap-2.5">
                 <Phone className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('phone')}</span>
                   <span className="font-medium text-slate-800 dark:text-slate-200">{customer.phone}</span>
                 </div>
@@ -221,16 +222,16 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
             {customer.email && (
               <div className="flex items-start gap-2.5">
                 <Mail className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">{tc('email')}</span>
-                  <span className="font-medium text-slate-800 dark:text-slate-200">{customer.email}</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200 break-all">{customer.email}</span>
                 </div>
               </div>
             )}
             {customer.tin && (
               <div className="flex items-start gap-2.5">
                 <Landmark className="h-4 w-4 text-slate-400 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs text-slate-400 dark:text-slate-500 block">{tSales('tin')}</span>
                   <span className="font-medium text-slate-800 dark:text-slate-200">{customer.tin}</span>
                 </div>
@@ -253,7 +254,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
                   <button
                     type="button"
                     onClick={() => setIsMapOpen(true)}
-                    className="block text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
+                    className="block py-2 text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 cursor-pointer"
                   >
                     {tcd('viewLargerMap')}
                   </button>
@@ -272,10 +273,10 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
         {/* Tabbed Activity / Documents */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white dark:bg-slate-900 rounded-xl border shadow-sm">
-            <div className="flex border-b overflow-x-auto">
+            <div className="flex gap-1 overflow-x-auto border-b px-2 max-md:[scrollbar-width:none]">
               <button
                 onClick={() => setActiveTab('orders')}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex shrink-0 items-center gap-2 px-4 md:px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'orders' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -284,7 +285,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               </button>
               <button
                 onClick={() => setActiveTab('invoices')}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex shrink-0 items-center gap-2 px-4 md:px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'invoices' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -293,7 +294,7 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               </button>
               <button
                 onClick={() => setActiveTab('transactions')}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex shrink-0 items-center gap-2 px-4 md:px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'transactions' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -304,7 +305,22 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
 
             <div className="p-0">
               {activeTab === 'orders' && (
-                <Table>
+                <MobileCardList className="p-3" isEmpty={salesOrders.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tc('noData')}</p>}>
+                  {salesOrders.map((o) => (
+                    <MobileCard
+                      key={o.id}
+                      onClick={() => router.push(`/${lang}/sales/orders/${o.id}`)}
+                      eyebrow={<span>{formatDateTime(o.created_at)}</span>}
+                      title={o.order_number}
+                      status={<StatusBadge tone={orderStatusTone(o.status)} label={tSales(`status.${o.status}`)} />}
+                      stats={[{ label: tc('amount'), value: formatCurrency(o.total_amount), tone: 'good' }]}
+                    />
+                  ))}
+                </MobileCardList>
+              )}
+
+              {activeTab === 'orders' && (
+                <Table containerClassName="max-md:hidden">
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
@@ -343,7 +359,30 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               )}
 
               {activeTab === 'invoices' && (
-                <Table>
+                <MobileCardList className="p-3" isEmpty={invoices.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tc('noData')}</p>}>
+                  {invoices.map((inv) => (
+                    <MobileCard
+                      key={inv.id}
+                      onClick={() => router.push(`/${lang}/sales/invoices/${inv.id}`)}
+                      eyebrow={<span>{tcd('due')}: {formatDate(inv.due_at)}</span>}
+                      title={inv.invoice_number}
+                      status={
+                        <StatusBadge
+                          tone={invoiceStatusTone(effectiveInvoiceStatus(inv))}
+                          label={tSales(`status.${effectiveInvoiceStatus(inv)}`)}
+                        />
+                      }
+                      stats={[
+                        { label: tc('amount'), value: formatCurrency(inv.total_amount) },
+                        { label: tcd('paid'), value: formatCurrency(inv.paid_amount), tone: 'good' },
+                      ]}
+                    />
+                  ))}
+                </MobileCardList>
+              )}
+
+              {activeTab === 'invoices' && (
+                <Table containerClassName="max-md:hidden">
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
@@ -387,7 +426,31 @@ export function CustomerDetailClient({ lang, customer, salesOrders, invoices, tr
               )}
 
               {activeTab === 'transactions' && (
-                <Table>
+                <MobileCardList className="p-3" isEmpty={transactions.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tc('noData')}</p>}>
+                  {transactions.map((tx) => {
+                    const isIncome = tx.type === 'income'
+                    return (
+                      <MobileCard
+                        key={tx.id}
+                        eyebrow={<span>{formatDateTime(tx.created_at)}</span>}
+                        title={tx.category}
+                        subtitle={tx.description || undefined}
+                        status={<StatusBadge tone={isIncome ? 'emerald' : 'rose'} label={isIncome ? tcd('income') : tcd('expense')} />}
+                        stats={[
+                          {
+                            label: tc('amount'),
+                            value: `${isIncome ? '+' : '-'}${formatCurrency(tx.amount)}`,
+                            tone: isIncome ? 'good' : 'bad',
+                          },
+                        ]}
+                      />
+                    )
+                  })}
+                </MobileCardList>
+              )}
+
+              {activeTab === 'transactions' && (
+                <Table containerClassName="max-md:hidden">
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>
