@@ -4,13 +4,15 @@ import {
   AddressBook,
   ArrowDown,
   ArrowRight,
-  Barcode,
+  AndroidLogo,
+  AppleLogo,
   Brain,
   ChartLineUp,
   Check,
   CheckCircle,
   ChatsCircle,
   CloudCheck,
+  DownloadSimple,
   Cube,
   CurrencyCircleDollar,
   DeviceMobile,
@@ -26,7 +28,6 @@ import {
   Storefront,
   TelegramLogo,
   Translate,
-  TrendUp,
   Truck,
   UsersThree,
   Wallet,
@@ -127,14 +128,10 @@ const NAV: { href: string; key: 'navModules' | 'navFeatures' | 'navFaq' | 'navSt
   { href: '#start', key: 'navStart' },
 ]
 
-const STATS: { value: string; label: 'statModules' | 'statLanguages' | 'statDevices' }[] = [
+const STATS_FIXED = [
   { value: String(MODULES.length), label: 'statModules' },
   { value: '3', label: 'statLanguages' },
-  { value: '3', label: 'statDevices' },
-]
-
-// Decorative chart heights in the hero mock-up.
-const PREVIEW_BARS = [38, 56, 44, 72, 52, 88, 66, 94]
+] as const
 
 // Stuck top of the first stacked card, and the offset between cards — the
 // offset must match STEP in stacked-cards.tsx.
@@ -150,6 +147,11 @@ function contactLinks() {
   const phone = process.env.LANDING_CONTACT_PHONE?.trim() || DEFAULT_PHONE
   return {
     telegram: telegram ? `https://t.me/${telegram}` : null,
+    // The Android build (APK or Play link). Nothing is shown until an address is
+    // set — a dead download button is worse than none.
+    apk: process.env.LANDING_APK_URL?.trim() || null,
+    // The App Store / TestFlight address of the iOS build, likewise.
+    ios: process.env.LANDING_IOS_URL?.trim() || null,
     phone: `tel:${phone.replace(/[^\d+]/g, '')}`,
     // Grouped (+998 99 818 20 04) so it can be read and dialled by eye.
     phoneLabel: formatPhoneInput(phone) || phone,
@@ -189,10 +191,23 @@ export async function LandingPage({ lang }: { lang: string }) {
   const t = await getTranslations('landing')
   const contact = contactLinks()
   const loginHref = `/${lang}/login`
+  // What the page may claim about mobile apps follows from what can actually be
+  // downloaded: no address set, no claim (see contactLinks()).
+  const platforms = contact.apk && contact.ios ? 'both' : contact.apk ? 'android' : contact.ios ? 'ios' : 'none'
+  const stats = [...STATS_FIXED, { value: platforms === 'both' ? '3' : '2', label: 'statDevices' as const }]
   const navLinks = NAV.map(({ href, key }) => ({ href, label: t(key) }))
 
   return (
     <div className={`lp relative min-h-screen ${TEXT_STRONG}`}>
+      {/* In the Android app the landing page is not for the person holding it —
+          they installed the app to sign in. This runs as the HTML is parsed, so
+          the page is never painted; NativeAppRedirect is the fallback for a
+          WebView that injects Capacitor only after the document has started. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var c=window.Capacitor;if(c&&c.isNativePlatform&&c.isNativePlatform())location.replace(${JSON.stringify(loginHref)})}catch(e){}})()`,
+        }}
+      />
       <NativeAppRedirect href={loginHref} />
 
       {/* ── Floating glass header ──────────────────────────────────────── */}
@@ -265,25 +280,39 @@ export async function LandingPage({ lang }: { lang: string }) {
               </Reveal>
               <Reveal delay={400}>
                 <ul className={`mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-sm ${TEXT_MUTED}`}>
-                  {(['heroPointLanguages', 'heroPointMobile', 'heroPointCloud'] as const).map((key) => (
-                    <li key={key} className="flex items-center gap-2">
+                  {[t('heroPointLanguages'), t('heroPointMobile', { platforms }), t('heroPointCloud')].map((text) => (
+                    <li key={text} className="flex items-center gap-2">
                       <Check weight="bold" className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
-                      {t(key)}
+                      {text}
                     </li>
                   ))}
                 </ul>
+                {(contact.apk || contact.ios) && (
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                    {contact.apk && (
+                      <a href={contact.apk} className={`inline-flex items-center gap-2 text-sm font-semibold underline-offset-4 hover:underline ${ACCENT}`}>
+                        <AndroidLogo weight="fill" className="h-4 w-4" />
+                        {t('appDownloadAndroid')}
+                        <DownloadSimple weight="bold" className="h-4 w-4" />
+                      </a>
+                    )}
+                    {contact.ios && (
+                      <a href={contact.ios} className={`inline-flex items-center gap-2 text-sm font-semibold underline-offset-4 hover:underline ${ACCENT}`}>
+                        <AppleLogo weight="fill" className="h-4 w-4" />
+                        {t('appDownloadIos')}
+                        <DownloadSimple weight="bold" className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+                )}
               </Reveal>
             </div>
 
             <Reveal delay={500} className="mt-20">
               <HeroPreview
-                labels={{
-                  title: t('previewTitle'),
-                  revenue: t('previewRevenue'),
-                  orders: t('previewOrders'),
-                  stock: t('previewStock'),
-                  chart: t('previewChart'),
-                }}
+                title={t('previewTitle')}
+                chips={{ app: t('chipApp', { platforms }), languages: t('chipLanguages') }}
+                tiles={MODULES.map(({ key, icon, from, to }) => ({ key, icon, from, to, label: t(`modules.${key}.title`) }))}
               />
             </Reveal>
           </div>
@@ -292,10 +321,10 @@ export async function LandingPage({ lang }: { lang: string }) {
         {/* ── Stats ────────────────────────────────────────────────────── */}
         <section className="relative px-4 pb-8 sm:px-6">
           <Reveal className="lp-glass mx-auto grid max-w-5xl grid-cols-1 gap-px overflow-hidden rounded-3xl bg-slate-900/5 sm:grid-cols-3 dark:bg-white/5">
-            {STATS.map(({ value, label }) => (
+            {stats.map(({ value, label }) => (
               <div key={label} className="bg-white/70 px-6 py-8 text-center dark:bg-[#0a0b18]/70">
                 <p className="lp-text-gradient text-4xl font-extrabold tracking-tight sm:text-5xl">{value}</p>
-                <p className={`mt-2 text-sm ${TEXT_MUTED}`}>{t(label)}</p>
+                <p className={`mt-2 text-sm ${TEXT_MUTED}`}>{t(label, { platforms })}</p>
               </div>
             ))}
           </Reveal>
@@ -481,7 +510,7 @@ export async function LandingPage({ lang }: { lang: string }) {
                       {t(`faq.${key}.q`)}
                       <Plus weight="bold" className={`h-5 w-5 shrink-0 transition-transform duration-300 group-open:rotate-45 ${ACCENT}`} />
                     </summary>
-                    <p className={`px-5 pb-5 text-sm leading-relaxed ${TEXT_MUTED}`}>{t(`faq.${key}.a`)}</p>
+                    <p className={`px-5 pb-5 text-sm leading-relaxed ${TEXT_MUTED}`}>{t(`faq.${key}.a`, { platforms })}</p>
                   </details>
                 </Reveal>
               ))}
@@ -497,7 +526,7 @@ export async function LandingPage({ lang }: { lang: string }) {
                 mainEntity: FAQ.map((key) => ({
                   '@type': 'Question',
                   name: t(`faq.${key}.q`),
-                  acceptedAnswer: { '@type': 'Answer', text: t(`faq.${key}.a`) },
+                  acceptedAnswer: { '@type': 'Answer', text: t(`faq.${key}.a`, { platforms }) },
                 })),
               }).replace(/</g, '\\u003c'),
             }}
@@ -572,6 +601,18 @@ export async function LandingPage({ lang }: { lang: string }) {
                 Telegram
               </a>
             )}
+            {contact.apk && (
+              <a href={contact.apk} className="flex w-fit items-center gap-2 transition-colors hover:text-slate-900 dark:hover:text-white">
+                <AndroidLogo weight="duotone" className={`h-4 w-4 ${ACCENT}`} />
+                {t('appDownloadAndroid')}
+              </a>
+            )}
+            {contact.ios && (
+              <a href={contact.ios} className="flex w-fit items-center gap-2 transition-colors hover:text-slate-900 dark:hover:text-white">
+                <AppleLogo weight="duotone" className={`h-4 w-4 ${ACCENT}`} />
+                {t('appDownloadIos')}
+              </a>
+            )}
           </div>
         </div>
         <div className={`border-t ${HAIRLINE}`}>
@@ -609,24 +650,27 @@ function ModuleVisual({ icon: ModuleIcon, from, to }: { icon: Icon; from: string
   )
 }
 
-/** A static, decorative miniature of the dashboard — no data, no client JS. */
+/**
+ * The product at a glance: a window holding every module as an app-launcher
+ * tile, with two chips for what surrounds it. Deliberately no figures or
+ * charts — a mock-up with invented numbers says nothing true, while the nine
+ * sections of the system are exactly what a visitor is deciding about.
+ */
 function HeroPreview({
-  labels,
+  title,
+  chips,
+  tiles,
 }: {
-  labels: { title: string; revenue: string; orders: string; stock: string; chart: string }
+  title: string
+  chips: { app: string; languages: string }
+  tiles: { key: string; label: string; icon: Icon; from: string; to: string }[]
 }) {
-  const tiles: { label: string; value: string; icon: Icon; tone: string }[] = [
-    { label: labels.revenue, value: '48.2M', icon: TrendUp, tone: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300' },
-    { label: labels.orders, value: '1 284', icon: ShoppingCart, tone: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300' },
-    { label: labels.stock, value: '12', icon: Barcode, tone: 'bg-amber-500/15 text-amber-600 dark:text-amber-300' },
-  ]
-
   return (
-    <div aria-hidden className="relative mx-auto max-w-4xl">
+    <div aria-hidden className="relative mx-auto max-w-3xl">
       <div className="absolute -inset-4 rounded-[2.5rem] bg-linear-to-r from-violet-500/30 via-fuchsia-500/20 to-cyan-500/30 blur-3xl" />
 
-      <div className="lp-glass relative rounded-3xl p-3 sm:p-4">
-        <div className="mb-3 flex items-center justify-between px-2 pt-1">
+      <div className="lp-glass relative rounded-3xl p-3 sm:p-5">
+        <div className="mb-4 flex items-center justify-between px-2 pt-1">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
@@ -634,65 +678,37 @@ function HeroPreview({
           </div>
           <span className={`flex items-center gap-1.5 text-xs font-medium ${TEXT_MUTED}`}>
             <CloudCheck weight="duotone" className="h-4 w-4" />
-            {labels.title}
+            {title}
           </span>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-[11rem_1fr]">
-          <div className={`hidden space-y-2 rounded-2xl p-3 sm:block ${INSET}`}>
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 ${i === 0 ? 'bg-violet-500/20 dark:bg-violet-500/25' : ''}`}>
-                <span className={`h-4 w-4 rounded-md ${i === 0 ? 'bg-violet-500 dark:bg-violet-300' : 'bg-slate-900/15 dark:bg-white/20'}`} />
-                <span className={`h-2 flex-1 rounded-full ${SKELETON}`} />
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
-              {tiles.map(({ label, value, icon: TileIcon, tone }) => (
-                <div key={label} className={`rounded-2xl p-3 sm:p-4 ${INSET}`}>
-                  <span className={`inline-flex rounded-lg p-1.5 ${tone}`}>
-                    <TileIcon weight="duotone" className="h-4 w-4" />
-                  </span>
-                  <p className={`mt-2 truncate text-[11px] ${TEXT_MUTED}`}>{label}</p>
-                  <p className="text-lg font-bold sm:text-2xl">{value}</p>
-                </div>
-              ))}
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+          {tiles.map(({ key, label, icon: TileIcon, from, to }, i) => (
+            <div
+              key={key}
+              className={`lp-pop flex flex-col items-center gap-2.5 rounded-2xl px-2 py-4 text-center sm:gap-3 sm:py-6 ${INSET}`}
+              style={{ animationDelay: `${0.5 + i * 0.07}s` }}
+            >
+              <span className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br text-white shadow-lg sm:h-14 sm:w-14 ${from} ${to}`}>
+                <TileIcon weight="duotone" className="h-6 w-6 sm:h-7 sm:w-7" />
+              </span>
+              <span className="text-xs font-semibold leading-tight sm:text-sm">{label}</span>
             </div>
-            <div className={`rounded-2xl p-4 ${INSET}`}>
-              <p className={`mb-3 text-xs font-medium ${TEXT_MUTED}`}>{labels.chart}</p>
-              <div className="flex h-32 items-end gap-2 sm:h-40 sm:gap-3">
-                {PREVIEW_BARS.map((h, i) => (
-                  <div
-                    key={i}
-                    className="lp-bar flex-1 rounded-t-lg bg-linear-to-t from-violet-600 via-fuchsia-500 to-pink-400"
-                    style={{ height: `${h}%`, animationDelay: `${0.7 + i * 0.08}s` }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="lp-glass lp-float absolute -left-3 top-24 hidden items-center gap-3 rounded-2xl px-4 py-3 md:flex lg:-left-10">
+      <div className="lp-glass lp-float absolute -left-40 top-24 hidden items-center gap-3 rounded-2xl px-4 py-3 xl:flex">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">
-          <TrendUp weight="bold" className="h-5 w-5" />
+          <DeviceMobile weight="duotone" className="h-5 w-5" />
         </span>
-        <div>
-          <p className={`text-[11px] ${TEXT_MUTED}`}>{labels.revenue}</p>
-          <p className="text-sm font-bold text-emerald-600 dark:text-emerald-300">+12.4%</p>
-        </div>
+        <p className="text-sm font-semibold">{chips.app}</p>
       </div>
-      <div className="lp-glass lp-float-slow absolute -right-3 bottom-16 hidden items-center gap-3 rounded-2xl px-4 py-3 md:flex lg:-right-10">
+      <div className="lp-glass lp-float-slow absolute -right-40 bottom-24 hidden items-center gap-3 rounded-2xl px-4 py-3 xl:flex">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/20 text-violet-600 dark:text-violet-200">
-          <ShoppingCart weight="duotone" className="h-5 w-5" />
+          <Translate weight="duotone" className="h-5 w-5" />
         </span>
-        <div>
-          <p className={`text-[11px] ${TEXT_MUTED}`}>{labels.orders}</p>
-          <p className="text-sm font-bold">#1285</p>
-        </div>
+        <p className="text-sm font-semibold">{chips.languages}</p>
       </div>
     </div>
   )

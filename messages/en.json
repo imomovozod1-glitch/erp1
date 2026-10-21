@@ -2710,13 +2710,9 @@
     "heroSubtitle": "Falco is a cloud ERP that runs inventory, sales, POS, procurement, finance and staff from one place. Instead of paper and spreadsheets — accurate numbers, in real time.",
     "ctaLogin": "Sign in",
     "heroPointLanguages": "3 languages: Uzbek, Russian, English",
-    "heroPointMobile": "Android and iOS app",
+    "heroPointMobile": "{platforms, select, both {Android and iOS app} android {Android app} ios {iOS app} other {Works from your phone too}}",
     "heroPointCloud": "Nothing to install — it's in the cloud",
     "previewTitle": "Dashboard",
-    "previewRevenue": "Revenue",
-    "previewOrders": "Sales",
-    "previewStock": "Low stock",
-    "previewChart": "Weekly sales",
     "modulesTitle": "Everything you need — in one place",
     "modulesSubtitle": "Every module is connected: a sale takes stock out of the warehouse, lands in the cashbox and shows up in the reports straight away.",
     "modules": {
@@ -2765,8 +2761,8 @@
         "desc": "Everyone works in the language they prefer — Uzbek, Russian or English."
       },
       "mobile": {
-        "title": "Mobile app",
-        "desc": "Run the till, the warehouse and the reports from a phone or tablet."
+        "title": "On phone and tablet",
+        "desc": "Run the till, the warehouse and the reports from any device."
       },
       "telegram": {
         "title": "Telegram notifications",
@@ -2815,7 +2811,7 @@
     "footerRights": "All rights reserved.",
     "statModules": "modules in one system",
     "statLanguages": "languages: UZ · RU · EN",
-    "statDevices": "Android, iOS and web",
+    "statDevices": "{platforms, select, both {Web, Android and iOS} android {Web and Android app} ios {Web and iOS app} other {Computer and phone}}",
     "navStart": "Get started",
     "formEyebrow": "Get started",
     "formTitle": "Leave a request",
@@ -2912,7 +2908,7 @@
       },
       "mobile": {
         "q": "Does it work from a phone?",
-        "a": "Yes. Falco runs in the browser, and there is also an Android and iOS app."
+        "a": "{platforms, select, both {Yes. Falco runs in a phone's browser, and there is also an Android and iOS app.} android {Yes. Falco runs in a phone's browser, and there is also an Android app.} ios {Yes. Falco runs in a phone's browser, and there is also an iOS app.} other {Yes. Falco runs in the browser of a phone or tablet.}}"
       },
       "roles": {
         "q": "Can I give my staff different permissions?",
@@ -2930,6 +2926,10 @@
         "q": "How do I get started?",
         "a": "Leave a request. We'll get in touch and open a separate address and accounts for your company."
       }
-    }
+    },
+    "chipApp": "{platforms, select, both {Android and iOS app} android {Android app} ios {iOS app} other {On your phone too}}",
+    "chipLanguages": "3 languages",
+    "appDownloadAndroid": "Download for Android",
+    "appDownloadIos": "Download for iOS"
   }
 }
