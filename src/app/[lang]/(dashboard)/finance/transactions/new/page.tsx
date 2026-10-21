@@ -37,7 +37,7 @@ export default async function NewTransactionPage({
       <PageHeader
         title={t('addTransaction')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/finance` },
           { label: t('transactions'), href: `/${lang}/finance/transactions` },
           { label: tCommon('add') },

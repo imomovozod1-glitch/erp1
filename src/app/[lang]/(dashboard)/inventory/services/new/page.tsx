@@ -35,7 +35,7 @@ export default async function NewServicePage({
       <PageHeader
         title={t('addService')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/inventory` },
           { label: t('services'), href: `/${lang}/inventory/services` },
           { label: tCommon('add') },

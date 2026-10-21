@@ -50,7 +50,7 @@ export default async function EmployeesPage({
         info={tInfo('employees')}
         action={canEdit ? { label: t('addEmployee'), href: `/${lang}/hr/employees/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('employees') },
         ]}

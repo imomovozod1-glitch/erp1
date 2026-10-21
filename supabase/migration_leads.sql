@@ -1,4 +1,4 @@
--- Sign-up requests ("zayavka") from the public landing page (falco.business).
+-- Sign-up requests ("ariza") from the public landing page (falco.business).
 -- Anyone can submit one, so rows are written only by POST /api/leads with the
 -- service-role key, and read/updated only by the super-admin console
 -- (/admin/leads). RLS is on with NO policy for `anon` or `authenticated`, so the

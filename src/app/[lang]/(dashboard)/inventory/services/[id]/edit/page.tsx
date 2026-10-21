@@ -48,7 +48,7 @@ export default async function EditServicePage({
       <PageHeader
         title={t('editService')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/inventory` },
           { label: t('services'), href: `/${lang}/inventory/services` },
           { label: tCommon('edit') },

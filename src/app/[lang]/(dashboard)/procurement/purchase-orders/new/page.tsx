@@ -37,7 +37,7 @@ export default async function NewPurchaseOrderPage({ params }: { params: Promise
         title={t('addPurchase')}
         subtitle={t('title')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('purchases'), href: `/${lang}/procurement/purchase-orders` },
           { label: t('addPurchase') },

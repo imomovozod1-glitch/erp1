@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
   const tenant = (await getCachedTenant(ctx.tenantId)) as
     | { company_name?: string; subscription_ends_at?: string | null }
     | null
-  const header = `<b>${escapeHtml(tenant?.company_name || 'ERP')}</b>`
+  const header = `<b>${escapeHtml(tenant?.company_name || 'Falco')}</b>`
 
   if (parsed.data.event === 'subscription_expiring') {
     return NextResponse.json(await warnAboutSubscription(ctx.tenantId, header, tenant?.subscription_ends_at ?? null))

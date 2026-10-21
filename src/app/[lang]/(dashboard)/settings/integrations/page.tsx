@@ -53,7 +53,7 @@ export default async function IntegrationsSettingsPage({
         title={t('integrationsTitle')}
         subtitle={t('integrationsCardDesc')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/settings` },
           { label: t('integrationsTitle') },
         ]}

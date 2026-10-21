@@ -45,7 +45,7 @@ export default async function ServicesPage({
         info={tInfo('services')}
         action={canEdit ? { label: t('addService'), href: `/${lang}/inventory/services/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('services') },
         ]}

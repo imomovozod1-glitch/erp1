@@ -35,7 +35,7 @@ export default async function NewProductionOrderPage({ params }: { params: Promi
       <PageHeader
         title={t('addOrder')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/production` },
           { label: t('orders'), href: `/${lang}/production/orders` },
           { label: tCommon('add') },

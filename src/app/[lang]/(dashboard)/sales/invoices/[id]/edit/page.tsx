@@ -55,7 +55,7 @@ export default async function EditInvoicePage({
       <PageHeader
         title={t('editInvoice')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/sales` },
           { label: t('invoices'), href: `/${lang}/sales/invoices` },
           { label: tCommon('edit') },

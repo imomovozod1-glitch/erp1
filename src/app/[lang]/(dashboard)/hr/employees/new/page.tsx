@@ -33,7 +33,7 @@ export default async function NewEmployeePage({
       <PageHeader
         title={t('addEmployee')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/hr` },
           { label: t('employees'), href: `/${lang}/hr/employees` },
           { label: tCommon('add') },

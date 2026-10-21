@@ -33,7 +33,7 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
       <PageHeader
         title={customer.name}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: tNav('customers'), href: `/${lang}/customers` },
           { label: t('customers', { fallback: 'Mijozlar' }), href: `/${lang}/customers` },
           { label: customer.name }

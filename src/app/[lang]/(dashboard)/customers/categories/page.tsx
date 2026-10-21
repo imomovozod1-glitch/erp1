@@ -46,7 +46,7 @@ export default async function CustomerCategoriesPage({
           icon: Plus,
         } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: tNav('customers'), href: `/${lang}/customers` },
           { label: t('customerCategories') },
         ]}

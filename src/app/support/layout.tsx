@@ -16,8 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('supportPortal')
   return {
     title: {
-      default: `${t('brandTitle')} · Falco ERP`,
-      template: `%s | ${t('brandTitle')} · Falco ERP`,
+      default: `${t('brandTitle')} · Falco`,
+      template: `%s | ${t('brandTitle')} · Falco`,
     },
     description: t('metaDescription'),
   }

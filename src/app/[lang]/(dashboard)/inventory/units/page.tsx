@@ -38,7 +38,7 @@ export default async function UnitsPage({
         title={t('unit')}
         info={tInfo('units')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/inventory/products` },
           { label: t('unit') },
         ]}

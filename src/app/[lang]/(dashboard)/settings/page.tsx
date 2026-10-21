@@ -57,7 +57,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
       <PageHeader
         title={t('title')}
         info={tInfo('settings')}
-        breadcrumbs={[{ label: 'ERP', href: `/${lang}/dashboard` }, { label: t('title') }]}
+        breadcrumbs={[{ label: 'Falco', href: `/${lang}/dashboard` }, { label: t('title') }]}
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {visibleCards.map((item) => {

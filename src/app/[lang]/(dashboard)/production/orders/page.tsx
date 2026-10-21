@@ -46,7 +46,7 @@ export default async function ProductionOrdersPage({
         info={tInfo('productionOrders')}
         action={canEdit ? { label: t('addOrder'), href: `/${lang}/production/orders/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('orders') },
         ]}

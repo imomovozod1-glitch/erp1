@@ -54,7 +54,7 @@ export default async function ProductsPage({
           icon: Plus,
         } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('products') },
         ]}

@@ -124,7 +124,7 @@ export function ReportLayout({
         title={title}
         info={info}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/reports` },
           { label: title },
         ]}

@@ -55,7 +55,7 @@ export function ReportsTabs({ today, lang }: { today: string; lang: string }) {
       <PageHeader
         title={t('title')}
         info={tInfo('analytics')}
-        breadcrumbs={[{ label: 'ERP', href: `/${lang}/dashboard` }, { label: t('title') }]}
+        breadcrumbs={[{ label: 'Falco', href: `/${lang}/dashboard` }, { label: t('title') }]}
       >
         <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
           <button type="button" onClick={() => setTab('catalog')} className={tabClass(tab === 'catalog')}>

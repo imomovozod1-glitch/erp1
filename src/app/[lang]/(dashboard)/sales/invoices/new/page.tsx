@@ -34,7 +34,7 @@ export default async function NewInvoicePage({
       <PageHeader
         title={t('addInvoice')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/sales` },
           { label: t('invoices'), href: `/${lang}/sales/invoices` },
           { label: tCommon('add') },

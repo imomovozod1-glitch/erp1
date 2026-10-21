@@ -178,7 +178,7 @@ export default function InvoiceDetailPage() {
       <PageHeader
         title={`${t("invoices")}: ${invoice.invoice_number}`}
         breadcrumbs={[
-          { label: "ERP", href: `/${lang}/dashboard` },
+          { label: "Falco", href: `/${lang}/dashboard` },
           { label: t("invoices"), href: `/${lang}/sales/invoices` },
           { label: invoice.invoice_number },
         ]}

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import type { AbstractIntlMessages } from 'next-intl'
 import { TelegramEntry, type TelegramLocale } from '@/components/telegram/telegram-entry'
 
-export const metadata: Metadata = { title: 'Falco ERP' }
+export const metadata: Metadata = { title: 'Falco' }
 export const dynamic = 'force-dynamic'
 
 /**

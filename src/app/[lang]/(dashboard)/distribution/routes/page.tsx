@@ -39,7 +39,7 @@ export default async function RoutesPage({
         info={tInfo('routes')}
         action={canEdit ? { label: t('addRoute'), href: `/${lang}/distribution/routes/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('routes') },
         ]}

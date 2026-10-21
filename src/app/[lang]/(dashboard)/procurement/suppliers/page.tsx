@@ -76,7 +76,7 @@ export default async function SuppliersPage({
         info={tInfo('suppliers')}
         action={canEdit ? { label: t('addSupplier'), href: `/${lang}/procurement/suppliers/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('suppliers') },
         ]}

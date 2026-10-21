@@ -26,7 +26,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
       <PageHeader
         title={employee?.full_name ?? '—'}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('employees'), href: `/${lang}/hr/employees` },
           { label: employee?.full_name ?? '—' }
         ]}

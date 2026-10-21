@@ -45,7 +45,7 @@ export default async function EditOrderPage({
       <PageHeader
         title={t('editOrder')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/sales` },
           { label: t('orders'), href: `/${lang}/sales/orders` },
           { label: tCommon('edit') },

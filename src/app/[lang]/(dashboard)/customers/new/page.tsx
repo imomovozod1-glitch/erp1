@@ -34,7 +34,7 @@ export default async function NewCustomerPage({
       <PageHeader
         title={t('addCustomer')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: tNav('customers'), href: `/${lang}/customers` },
           { label: t('customers'), href: `/${lang}/customers` },
           { label: tCommon('add') },

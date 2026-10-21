@@ -50,7 +50,7 @@ export default async function OrdersPage({
         info={tInfo('salesOrders')}
         action={canEdit ? { label: t('addSale'), href: `/${lang}/sales/orders/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('orders') },
         ]}

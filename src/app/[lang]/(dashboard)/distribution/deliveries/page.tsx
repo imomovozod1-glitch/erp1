@@ -52,7 +52,7 @@ export default async function DeliveriesPage({
           canEdit ? { label: t('addDelivery'), href: `/${lang}/distribution/deliveries/new`, icon: Plus } : undefined
         }
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('deliveries') },
         ]}

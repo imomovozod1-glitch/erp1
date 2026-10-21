@@ -28,7 +28,7 @@ export default async function NewRoleTemplatePage({
       <PageHeader
         title={t('addRole')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/hr` },
           { label: t('roles'), href: `/${lang}/hr/roles` },
           { label: tCommon('add') },

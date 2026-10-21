@@ -36,7 +36,7 @@ export default async function DeliveryPage({
         title={delivery.delivery_number}
         subtitle={t('delivery')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/distribution` },
           { label: t('deliveries'), href: `/${lang}/distribution/deliveries` },
           { label: delivery.delivery_number },
