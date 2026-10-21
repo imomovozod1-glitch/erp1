@@ -1398,6 +1398,7 @@
       "navGroup": "Boshqaruv",
       "badge": "Super-admin",
       "payments": "To'lovlar",
+      "leads": "Zayavkalar",
       "security": "Xavfsizlik",
       "settings": "Sozlamalar",
       "support": "Support",
@@ -1581,6 +1582,29 @@
       "colNote": "Izoh",
       "colDate": "Sana",
       "empty": "To'lovlar topilmadi"
+    },
+    "leads": {
+      "title": "Zayavkalar",
+      "subtitle": "Landing sahifasi orqali qoldirilgan zayavkalar",
+      "statNew": "Yangi",
+      "statContacted": "Bog'lanilgan",
+      "statClosed": "Yopilgan",
+      "statTotal": "Jami zayavkalar",
+      "searchPlaceholder": "Ism, kompaniya yoki telefon bo'yicha qidirish...",
+      "showing": "{total} tadan {start}-{end} ko'rsatilmoqda",
+      "filterAll": "Barchasi",
+      "colName": "Ism",
+      "colCompany": "Kompaniya",
+      "colPhone": "Telefon",
+      "colComment": "Izoh",
+      "colStatus": "Holat",
+      "colDate": "Sana",
+      "status": {
+        "new": "Yangi",
+        "contacted": "Bog'lanilgan",
+        "closed": "Yopilgan"
+      },
+      "updateFailed": "Holatni o'zgartirib bo'lmadi"
     },
     "security": {
       "title": "Xavfsizlik jurnali",
@@ -2673,5 +2697,149 @@
     "subscriptionEndsOn": "Tugash sanasi: <b>{date}</b>",
     "subscriptionStop": "To'lov qilinmasa, tizimdan foydalanish to'xtatiladi.",
     "testConnected": "Telegram integratsiyasi muvaffaqiyatli ulandi."
+  },
+  "landing": {
+    "metaTitle": "Falco — biznesingiz uchun ERP tizimi",
+    "metaDescription": "Ombor, savdo, kassa, xaridlar, moliya, xodimlar va hisobotlar — barchasi bitta bulutli tizimda. O'zbek, rus va ingliz tillarida.",
+    "navModules": "Modullar",
+    "navFeatures": "Imkoniyatlar",
+    "navHow": "Qanday ishlaydi",
+    "login": "Kirish",
+    "heroBadge": "O'zbekiston bizneslari uchun yaratilgan",
+    "heroTitle": "Butun biznesingiz",
+    "heroTitleAccent": "bitta tizimda",
+    "heroSubtitle": "Falco — ombor, savdo, kassa, xaridlar, moliya va xodimlarni bir joyda boshqaradigan bulutli ERP. Qog'oz va Excel jadvallar o'rniga — aniq raqamlar, real vaqtda.",
+    "ctaLogin": "Tizimga kirish",
+    "heroPointLanguages": "3 tilda: o'zbek, rus, ingliz",
+    "heroPointMobile": "Android va iOS ilova",
+    "heroPointCloud": "O'rnatish shart emas — bulutda",
+    "previewTitle": "Boshqaruv paneli",
+    "previewRevenue": "Daromad",
+    "previewOrders": "Sotuvlar",
+    "previewStock": "Kam zaxira",
+    "previewChart": "Haftalik savdo",
+    "modulesTitle": "Kerakli hamma narsa — bir joyda",
+    "modulesSubtitle": "Har bir bo'lim boshqalari bilan bog'langan: sotuv omborni kamaytiradi, kassaga tushadi va hisobotda darhol ko'rinadi.",
+    "modules": {
+      "inventory": {
+        "title": "Ombor",
+        "desc": "Mahsulotlar, qoldiqlar, kirim-chiqim va FIFO / LIFO / o'rtacha tannarx hisobi."
+      },
+      "sales": {
+        "title": "Savdo va POS",
+        "desc": "Tezkor kassa, chek chop etish, buyurtmalar, hisob-fakturalar va qarzdorlik."
+      },
+      "procurement": {
+        "title": "Xaridlar",
+        "desc": "Ta'minotchilar, xarid buyurtmalari va tovarni omborga qabul qilish."
+      },
+      "finance": {
+        "title": "Moliya",
+        "desc": "Kassalar, kirim va chiqimlar, pul oqimi va xarajat toifalari."
+      },
+      "customers": {
+        "title": "Mijozlar",
+        "desc": "Mijozlar bazasi, toifalar, balans va xaritada joylashuv."
+      },
+      "hr": {
+        "title": "Xodimlar",
+        "desc": "Xodimlar, bo'limlar, rollar va har bir modul bo'yicha ruxsatlar."
+      },
+      "production": {
+        "title": "Ishlab chiqarish",
+        "desc": "Retseptlar (tarkib), ishlab chiqarish buyurtmalari va xomashyo sarfi."
+      },
+      "distribution": {
+        "title": "Yetkazib berish",
+        "desc": "Marshrutlar, xaritada eng qisqa yo'lni hisoblash va agentlar nazorati."
+      },
+      "reports": {
+        "title": "Hisobotlar",
+        "desc": "Savdo tahlili, foyda, eng ko'p sotilganlar va o'zingiz yig'adigan hisobotlar."
+      }
+    },
+    "featuresTitle": "Nega aynan Falco",
+    "featuresSubtitle": "Mahalliy biznes ehtiyojlarini hisobga olib qurilgan zamonaviy tizim.",
+    "features": {
+      "languages": {
+        "title": "Uch tilda",
+        "desc": "Har bir xodim o'ziga qulay tilda ishlaydi — o'zbek, rus yoki ingliz."
+      },
+      "mobile": {
+        "title": "Mobil ilova",
+        "desc": "Telefon va planshetdan kassa, ombor va hisobotlar bilan ishlang."
+      },
+      "telegram": {
+        "title": "Telegram bildirishnomalar",
+        "desc": "Yangi sotuv, kam qolgan tovar va to'lovlar haqida guruhingizga xabar."
+      },
+      "ai": {
+        "title": "Sun'iy intellekt",
+        "desc": "Hujjatlarni rasmdan o'qish va omborni kamera orqali sanash."
+      },
+      "roles": {
+        "title": "Rollar va ruxsatlar",
+        "desc": "Kim nimani ko'rishi va o'zgartirishi mumkinligini aniq belgilang."
+      },
+      "security": {
+        "title": "Xavfsiz va ishonchli",
+        "desc": "Har bir kompaniya ma'lumoti alohida saqlanadi, kirishlar himoyalangan."
+      }
+    },
+    "stepsTitle": "Qanday boshlanadi",
+    "steps": {
+      "contact": {
+        "title": "Zayavka qoldiring",
+        "desc": "Ismingiz, kompaniyangiz va telefon raqamingizni yozing."
+      },
+      "setup": {
+        "title": "Hisob ochamiz",
+        "desc": "Biz siz bilan bog'lanib, kompaniyangiz uchun alohida manzil (kompaniya.falco.business) va hisoblarni ochamiz."
+      },
+      "start": {
+        "title": "2 hafta bepul sinang",
+        "desc": "Mahsulotlarni Excel'dan yuklang, xodimlarni qo'shing va sotishni boshlang. Yoqsa — obuna sotib olasiz."
+      }
+    },
+    "footerRights": "Barcha huquqlar himoyalangan.",
+    "statModules": "modul — bitta tizimda",
+    "statLanguages": "til: UZ · RU · EN",
+    "statDevices": "Android, iOS va veb",
+    "statCloud": "bulutda, har doim ishlaydi",
+    "marqueeLabel": "Barcha bo'limlar o'zaro bog'langan",
+    "navStart": "Boshlash",
+    "ctaTrial": "14 kun bepul sinab ko'ring",
+    "heroTrialNote": "2 hafta bepul sinov. Keyin tizimdan foydalanish uchun obuna sotib olinadi.",
+    "trialEyebrow": "Bepul sinov",
+    "trialTitle": "2 hafta bepul — avval sinab ko'ring",
+    "trialSubtitle": "Zayavka qoldiring — biz siz uchun tizimni ochamiz. 14 kun davomida Falco'ni o'z biznesingizda bepul sinab ko'rasiz.",
+    "trialDays": "14",
+    "trialDaysLabel": "kun bepul",
+    "trialPoint1": "Sinov muddati — 2 hafta (14 kun)",
+    "trialPoint2": "Shu vaqt ichida to'lov talab qilinmaydi",
+    "trialPoint3": "O'z mahsulotlaringiz, xodimlaringiz va sotuvlaringiz bilan ishlab ko'ring",
+    "afterTitle": "Sinovdan keyin",
+    "afterText": "Sinov muddati tugagach, tizimdan foydalanishni davom ettirish uchun obunani sotib olish kerak bo'ladi. Obuna shartlari haqida biz siz bilan bog'langanda batafsil aytamiz.",
+    "formEyebrow": "Boshlash",
+    "formTitle": "Zayavka qoldiring",
+    "formSubtitle": "Ma'lumotlaringizni qoldiring — biz siz bilan bog'lanib, bepul sinov uchun tizimni ochamiz.",
+    "formName": "Ismingiz",
+    "formNamePlaceholder": "Ism va familiya",
+    "formCompany": "Kompaniya nomi",
+    "formCompanyPlaceholder": "Kompaniyangiz nomi",
+    "formPhone": "Telefon raqam",
+    "formComment": "Izoh (ixtiyoriy)",
+    "formCommentPlaceholder": "Biznesingiz haqida qisqacha yoki savolingiz",
+    "formSubmit": "Zayavka yuborish",
+    "formSending": "Yuborilmoqda...",
+    "formSuccessTitle": "Zayavkangiz qabul qilindi!",
+    "formSuccessText": "Tez orada siz bilan bog'lanamiz.",
+    "formSendAnother": "Yana bir zayavka yuborish",
+    "formErrorName": "Ismingizni kiriting",
+    "formErrorCompany": "Kompaniya nomini kiriting",
+    "formErrorPhone": "Telefon raqamni to'g'ri kiriting",
+    "formErrorGeneric": "Yuborib bo'lmadi. Qaytadan urinib ko'ring yoki bizga qo'ng'iroq qiling.",
+    "formErrorLimit": "Urinishlar juda ko'p. Birozdan keyin qayta urinib ko'ring.",
+    "formOrCall": "Yoki qo'ng'iroq qiling:"
   }
 }

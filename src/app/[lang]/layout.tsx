@@ -45,10 +45,10 @@ export default async function RootLayout({
   params: Promise<{ lang: string }>
 }) {
   const { lang } = await params
-  // Namespaces only server components read (guide, faq) or that belong to the
+  // Namespaces only server components read (guide, faq, landing) or that belong to the
   // admin/support consoles, which have their own layouts and providers. Sending
   // them anyway put ~35 KB of unused text into every tenant page's payload.
-  const SERVER_ONLY_NAMESPACES = new Set(['guide', 'faq', 'admin', 'supportPortal'])
+  const SERVER_ONLY_NAMESPACES = new Set(['guide', 'faq', 'admin', 'supportPortal', 'landing'])
   const messages = Object.fromEntries(
     Object.entries(await getMessages()).filter(([namespace]) => !SERVER_ONLY_NAMESPACES.has(namespace))
   )
