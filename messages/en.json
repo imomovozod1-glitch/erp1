@@ -1398,6 +1398,7 @@
       "navGroup": "Management",
       "badge": "Super admin",
       "payments": "Payments",
+      "leads": "Requests",
       "security": "Security",
       "settings": "Settings",
       "support": "Support",
@@ -1581,6 +1582,29 @@
       "colNote": "Note",
       "colDate": "Date",
       "empty": "No payments found"
+    },
+    "leads": {
+      "title": "Requests",
+      "subtitle": "Sign-up requests left through the landing page",
+      "statNew": "New",
+      "statContacted": "Contacted",
+      "statClosed": "Closed",
+      "statTotal": "Total requests",
+      "searchPlaceholder": "Search by name, company or phone...",
+      "showing": "Showing {start}-{end} of {total}",
+      "filterAll": "All",
+      "colName": "Name",
+      "colCompany": "Company",
+      "colPhone": "Phone",
+      "colComment": "Comment",
+      "colStatus": "Status",
+      "colDate": "Date",
+      "status": {
+        "new": "New",
+        "contacted": "Contacted",
+        "closed": "Closed"
+      },
+      "updateFailed": "Could not change the status"
     },
     "security": {
       "title": "Security log",
@@ -2673,5 +2697,149 @@
     "subscriptionEndsOn": "End date: <b>{date}</b>",
     "subscriptionStop": "Without payment, access to the system will be suspended.",
     "testConnected": "Telegram integration connected successfully."
+  },
+  "landing": {
+    "metaTitle": "Falco — ERP for your business",
+    "metaDescription": "Inventory, sales, POS, procurement, finance, staff and reports — all in one cloud system. In Uzbek, Russian and English.",
+    "navModules": "Modules",
+    "navFeatures": "Features",
+    "navHow": "How it works",
+    "login": "Sign in",
+    "heroBadge": "Built for businesses in Uzbekistan",
+    "heroTitle": "Your whole business",
+    "heroTitleAccent": "in one system",
+    "heroSubtitle": "Falco is a cloud ERP that runs inventory, sales, POS, procurement, finance and staff from one place. Instead of paper and spreadsheets — accurate numbers, in real time.",
+    "ctaLogin": "Sign in",
+    "heroPointLanguages": "3 languages: Uzbek, Russian, English",
+    "heroPointMobile": "Android and iOS app",
+    "heroPointCloud": "Nothing to install — it's in the cloud",
+    "previewTitle": "Dashboard",
+    "previewRevenue": "Revenue",
+    "previewOrders": "Sales",
+    "previewStock": "Low stock",
+    "previewChart": "Weekly sales",
+    "modulesTitle": "Everything you need — in one place",
+    "modulesSubtitle": "Every module is connected: a sale takes stock out of the warehouse, lands in the cashbox and shows up in the reports straight away.",
+    "modules": {
+      "inventory": {
+        "title": "Inventory",
+        "desc": "Products, stock levels, movements and FIFO / LIFO / average costing."
+      },
+      "sales": {
+        "title": "Sales & POS",
+        "desc": "Fast checkout, receipt printing, orders, invoices and customer debt."
+      },
+      "procurement": {
+        "title": "Procurement",
+        "desc": "Suppliers, purchase orders and receiving goods into stock."
+      },
+      "finance": {
+        "title": "Finance",
+        "desc": "Cashboxes, income and expenses, cash flow and expense categories."
+      },
+      "customers": {
+        "title": "Customers",
+        "desc": "Customer base, categories, balances and locations on the map."
+      },
+      "hr": {
+        "title": "Staff",
+        "desc": "Employees, departments, roles and per-module permissions."
+      },
+      "production": {
+        "title": "Production",
+        "desc": "Bills of materials, production orders and raw-material usage."
+      },
+      "distribution": {
+        "title": "Distribution",
+        "desc": "Delivery routes, shortest-path planning on the map and agent tracking."
+      },
+      "reports": {
+        "title": "Reports",
+        "desc": "Sales analytics, profit, best sellers and reports you build yourself."
+      }
+    },
+    "featuresTitle": "Why Falco",
+    "featuresSubtitle": "A modern system built around how local businesses actually work.",
+    "features": {
+      "languages": {
+        "title": "Three languages",
+        "desc": "Everyone works in the language they prefer — Uzbek, Russian or English."
+      },
+      "mobile": {
+        "title": "Mobile app",
+        "desc": "Run the till, the warehouse and the reports from a phone or tablet."
+      },
+      "telegram": {
+        "title": "Telegram notifications",
+        "desc": "Your group gets a message on new sales, low stock and payments."
+      },
+      "ai": {
+        "title": "AI built in",
+        "desc": "Read documents from a photo and count stock with the camera."
+      },
+      "roles": {
+        "title": "Roles & permissions",
+        "desc": "Decide exactly who can see and change what."
+      },
+      "security": {
+        "title": "Secure and reliable",
+        "desc": "Every company's data is kept separate, and sign-ins are protected."
+      }
+    },
+    "stepsTitle": "How to get started",
+    "steps": {
+      "contact": {
+        "title": "Leave a request",
+        "desc": "Tell us your name, company and phone number."
+      },
+      "setup": {
+        "title": "We set up your account",
+        "desc": "We'll get in touch and open a separate address (company.falco.business) and accounts for your company."
+      },
+      "start": {
+        "title": "Try it free for 2 weeks",
+        "desc": "Import products from Excel, add your staff and start selling. Like it? Then subscribe."
+      }
+    },
+    "footerRights": "All rights reserved.",
+    "statModules": "modules in one system",
+    "statLanguages": "languages: UZ · RU · EN",
+    "statDevices": "Android, iOS and web",
+    "statCloud": "in the cloud, always on",
+    "marqueeLabel": "Every module is connected",
+    "navStart": "Get started",
+    "ctaTrial": "Try free for 14 days",
+    "heroTrialNote": "2 weeks free. After that, a subscription is needed to keep using the system.",
+    "trialEyebrow": "Free trial",
+    "trialTitle": "2 weeks free — try it first",
+    "trialSubtitle": "Leave a request and we'll open the system for you. For 14 days you can try Falco on your own business, free.",
+    "trialDays": "14",
+    "trialDaysLabel": "days free",
+    "trialPoint1": "Trial period — 2 weeks (14 days)",
+    "trialPoint2": "No payment is required during that time",
+    "trialPoint3": "Work with your own products, staff and sales",
+    "afterTitle": "After the trial",
+    "afterText": "When the trial ends, you will need to buy a subscription to keep using the system. We'll explain the subscription terms in detail when we get in touch.",
+    "formEyebrow": "Get started",
+    "formTitle": "Leave a request",
+    "formSubtitle": "Leave your details — we'll get in touch and open the system for your free trial.",
+    "formName": "Your name",
+    "formNamePlaceholder": "First and last name",
+    "formCompany": "Company name",
+    "formCompanyPlaceholder": "Your company's name",
+    "formPhone": "Phone number",
+    "formComment": "Comment (optional)",
+    "formCommentPlaceholder": "A few words about your business, or a question",
+    "formSubmit": "Send request",
+    "formSending": "Sending...",
+    "formSuccessTitle": "Request received!",
+    "formSuccessText": "We'll get in touch with you shortly.",
+    "formSendAnother": "Send another request",
+    "formErrorName": "Enter your name",
+    "formErrorCompany": "Enter the company name",
+    "formErrorPhone": "Enter a valid phone number",
+    "formErrorGeneric": "Couldn't send it. Try again or give us a call.",
+    "formErrorLimit": "Too many attempts. Please try again in a little while.",
+    "formOrCall": "Or call us:"
   }
 }

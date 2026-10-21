@@ -279,7 +279,11 @@ export async function proxy(request: NextRequest) {
     ? pathname.replace(`/${pathnameLocale}`, '') || '/'
     : pathname
 
-  const isPublicRoute = PUBLIC_ROUTES.some(
+  // `/<lang>` on the bare host is the public landing page (src/app/[lang]/page.tsx);
+  // on a tenant subdomain it is still the redirect to the dashboard.
+  const isLandingPage = !tenantSubdomain && pathWithoutLocale === '/'
+
+  const isPublicRoute = isLandingPage || PUBLIC_ROUTES.some(
     (route) => pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
   )
 
