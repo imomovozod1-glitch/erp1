@@ -137,7 +137,7 @@ export default function OrderDetailPage() {
       <PageHeader
         title={`${t('orders')}: ${order.order_number}`}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('orders'), href: `/${lang}/sales/orders` },
           { label: order.order_number }
         ]}

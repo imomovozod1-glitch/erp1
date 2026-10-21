@@ -1178,7 +1178,7 @@
       "testPrintFailed": "Chop etib bo'lmadi — ulanishni tekshiring",
       "testPrintSystemHint": "\"Tizim orqali\" tanlangan — test uchun POS'da haqiqiy sotuvni yakunlab ko'ring",
       "testItemName": "Test mahsuloti",
-      "testCompanyName": "Falco ERP",
+      "testCompanyName": "Falco",
       "testThankYou": "Bu test cheki",
       "labelReceipt": "Chek",
       "labelCashier": "Kassir",
@@ -1375,7 +1375,7 @@
       "server_error": "Serverda xatolik yuz berdi. Qaytadan urinib ko'ring"
     },
     "login": {
-      "brandTitle": "ERP Admin",
+      "brandTitle": "Falco Admin",
       "brandSubtitle": "Super-admin konsoli",
       "heading": "Tizimga kirish",
       "subheading": "Kompaniya hisoblarini boshqarish uchun vendor darajasidagi kirish",
@@ -1398,12 +1398,12 @@
       "navGroup": "Boshqaruv",
       "badge": "Super-admin",
       "payments": "To'lovlar",
-      "leads": "Zayavkalar",
+      "leads": "Arizalar",
       "security": "Xavfsizlik",
       "settings": "Sozlamalar",
       "support": "Support",
       "consoleSubtitle": "Platforma boshqaruvi",
-      "metaDescription": "Falco ERP super-admin konsoli — kompaniya hisoblarini boshqarish"
+      "metaDescription": "Falco super-admin konsoli — kompaniya hisoblarini boshqarish"
     },
     "tenants": {
       "title": "Kompaniyalar",
@@ -1584,12 +1584,12 @@
       "empty": "To'lovlar topilmadi"
     },
     "leads": {
-      "title": "Zayavkalar",
-      "subtitle": "Landing sahifasi orqali qoldirilgan zayavkalar",
+      "title": "Arizalar",
+      "subtitle": "Landing sahifasi orqali qoldirilgan arizalar",
       "statNew": "Yangi",
       "statContacted": "Bog'lanilgan",
       "statClosed": "Yopilgan",
-      "statTotal": "Jami zayavkalar",
+      "statTotal": "Jami arizalar",
       "searchPlaceholder": "Ism, kompaniya yoki telefon bo'yicha qidirish...",
       "showing": "{total} tadan {start}-{end} ko'rsatilmoqda",
       "filterAll": "Barchasi",
@@ -1788,7 +1788,7 @@
     "noAssignedTenants": "Sizga hali hech qanday tashkilot biriktirilmagan",
     "logout": "Chiqish",
     "conversationsHeading": "Suhbatlar",
-    "metaDescription": "Falco ERP qo'llab-quvvatlash xodimlari portali"
+    "metaDescription": "Falco qo'llab-quvvatlash xodimlari portali"
   },
   "supportChat": {
     "myTickets": "Mening murojaatlarim",
@@ -1868,7 +1868,7 @@
       "items": [
         {
           "title": "Navigatsiya",
-          "text": "Chap tomondagi menyu — asosiy bo'limlar ro'yxati. Menyu bandini bosganda ichki sahifalar ochiladi. Sahifa tepasidagi \"non ushoqlari\" (ERP → Ombor → Mahsulotlar) orqali ortga qaytish mumkin. Telefonda menyu yuqori chap burchakdagi tugma bilan ochiladi."
+          "text": "Chap tomondagi menyu — asosiy bo'limlar ro'yxati. Menyu bandini bosganda ichki sahifalar ochiladi. Sahifa tepasidagi \"non ushoqlari\" (Falco → Ombor → Mahsulotlar) orqali ortga qaytish mumkin. Telefonda menyu yuqori chap burchakdagi tugma bilan ochiladi."
         },
         {
           "title": "Qidiruv va filtrlar",
@@ -2703,7 +2703,6 @@
     "metaDescription": "Ombor, savdo, kassa, xaridlar, moliya, xodimlar va hisobotlar — barchasi bitta bulutli tizimda. O'zbek, rus va ingliz tillarida.",
     "navModules": "Modullar",
     "navFeatures": "Imkoniyatlar",
-    "navHow": "Qanday ishlaydi",
     "login": "Kirish",
     "heroBadge": "O'zbekiston bizneslari uchun yaratilgan",
     "heroTitle": "Butun biznesingiz",
@@ -2751,7 +2750,7 @@
       },
       "distribution": {
         "title": "Yetkazib berish",
-        "desc": "Marshrutlar, xaritada eng qisqa yo'lni hisoblash va agentlar nazorati."
+        "desc": "Marshrutlar, yetkazib berishlar va xaritada eng qisqa yo'lni hisoblash."
       },
       "reports": {
         "title": "Hisobotlar",
@@ -2784,62 +2783,153 @@
       "security": {
         "title": "Xavfsiz va ishonchli",
         "desc": "Har bir kompaniya ma'lumoti alohida saqlanadi, kirishlar himoyalangan."
+      },
+      "excel": {
+        "title": "Excel'dan o'tish oson",
+        "desc": "Mahsulot, mijoz, ta'minotchi va xodimlarni Excel fayldan bir zumda yuklang."
+      },
+      "pos": {
+        "title": "Chek chop etish",
+        "desc": "Kassada 58 va 80 mm printerlarda chek chiqaring — USB yoki Bluetooth orqali."
+      },
+      "support": {
+        "title": "Yordam tizim ichida",
+        "desc": "Savol tug'ilsa — tizimdagi chat orqali jamoamizga yozing."
       }
     },
     "stepsTitle": "Qanday boshlanadi",
     "steps": {
       "contact": {
-        "title": "Zayavka qoldiring",
+        "title": "Ariza qoldiring",
         "desc": "Ismingiz, kompaniyangiz va telefon raqamingizni yozing."
       },
       "setup": {
         "title": "Hisob ochamiz",
-        "desc": "Biz siz bilan bog'lanib, kompaniyangiz uchun alohida manzil (kompaniya.falco.business) va hisoblarni ochamiz."
+        "desc": "Biz siz bilan bog'lanib, obuna shartlarini kelishamiz va kompaniyangiz uchun alohida manzil (kompaniya.falco.business) hamda hisoblarni ochamiz."
       },
       "start": {
-        "title": "2 hafta bepul sinang",
-        "desc": "Mahsulotlarni Excel'dan yuklang, xodimlarni qo'shing va sotishni boshlang. Yoqsa — obuna sotib olasiz."
+        "title": "Ishni boshlang",
+        "desc": "Mahsulotlarni Excel'dan yuklang, xodimlarni qo'shing va sotishni boshlang."
       }
     },
     "footerRights": "Barcha huquqlar himoyalangan.",
     "statModules": "modul — bitta tizimda",
     "statLanguages": "til: UZ · RU · EN",
     "statDevices": "Android, iOS va veb",
-    "statCloud": "bulutda, har doim ishlaydi",
-    "marqueeLabel": "Barcha bo'limlar o'zaro bog'langan",
     "navStart": "Boshlash",
-    "ctaTrial": "14 kun bepul sinab ko'ring",
-    "heroTrialNote": "2 hafta bepul sinov. Keyin tizimdan foydalanish uchun obuna sotib olinadi.",
-    "trialEyebrow": "Bepul sinov",
-    "trialTitle": "2 hafta bepul — avval sinab ko'ring",
-    "trialSubtitle": "Zayavka qoldiring — biz siz uchun tizimni ochamiz. 14 kun davomida Falco'ni o'z biznesingizda bepul sinab ko'rasiz.",
-    "trialDays": "14",
-    "trialDaysLabel": "kun bepul",
-    "trialPoint1": "Sinov muddati — 2 hafta (14 kun)",
-    "trialPoint2": "Shu vaqt ichida to'lov talab qilinmaydi",
-    "trialPoint3": "O'z mahsulotlaringiz, xodimlaringiz va sotuvlaringiz bilan ishlab ko'ring",
-    "afterTitle": "Sinovdan keyin",
-    "afterText": "Sinov muddati tugagach, tizimdan foydalanishni davom ettirish uchun obunani sotib olish kerak bo'ladi. Obuna shartlari haqida biz siz bilan bog'langanda batafsil aytamiz.",
     "formEyebrow": "Boshlash",
-    "formTitle": "Zayavka qoldiring",
-    "formSubtitle": "Ma'lumotlaringizni qoldiring — biz siz bilan bog'lanib, bepul sinov uchun tizimni ochamiz.",
+    "formTitle": "Ariza qoldiring",
+    "formSubtitle": "Ma'lumotlaringizni qoldiring — biz siz bilan bog'lanib, tizim bilan tanishtiramiz va obuna shartlarini aytamiz.",
     "formName": "Ismingiz",
     "formNamePlaceholder": "Ism va familiya",
     "formCompany": "Kompaniya nomi",
-    "formCompanyPlaceholder": "Kompaniyangiz nomi",
+    "formCompanyPlaceholder": "Masalan: Baraka Savdo",
     "formPhone": "Telefon raqam",
     "formComment": "Izoh (ixtiyoriy)",
     "formCommentPlaceholder": "Biznesingiz haqida qisqacha yoki savolingiz",
-    "formSubmit": "Zayavka yuborish",
+    "formSubmit": "Ariza yuborish",
     "formSending": "Yuborilmoqda...",
-    "formSuccessTitle": "Zayavkangiz qabul qilindi!",
+    "formSuccessTitle": "Arizangiz qabul qilindi!",
     "formSuccessText": "Tez orada siz bilan bog'lanamiz.",
-    "formSendAnother": "Yana bir zayavka yuborish",
+    "formSendAnother": "Yana bir ariza yuborish",
     "formErrorName": "Ismingizni kiriting",
     "formErrorCompany": "Kompaniya nomini kiriting",
     "formErrorPhone": "Telefon raqamni to'g'ri kiriting",
     "formErrorGeneric": "Yuborib bo'lmadi. Qaytadan urinib ko'ring yoki bizga qo'ng'iroq qiling.",
     "formErrorLimit": "Urinishlar juda ko'p. Birozdan keyin qayta urinib ko'ring.",
-    "formOrCall": "Yoki qo'ng'iroq qiling:"
+    "formOrCall": "Yoki qo'ng'iroq qiling:",
+    "footerTagline": "Biznesingiz uchun bulutli boshqaruv tizimi",
+    "menuLabel": "Menyu",
+    "formConsent": "Tugmani bosish orqali siz biz bilan bog'lanishimizga rozilik bildirasiz. Ma'lumotlaringiz faqat siz bilan bog'lanish uchun ishlatiladi.",
+    "formRequired": "majburiy maydon",
+    "ctaStart": "Ariza qoldiring",
+    "navFaq": "Savollar",
+    "ctaCall": "Qo'ng'iroq qiling",
+    "painEyebrow": "Muammo va yechim",
+    "painTitle": "Bu sizga tanishmi?",
+    "painSubtitle": "Ko'p biznes egalari bir xil muammolarga duch keladi. Falco aynan shularni hal qilish uchun yaratilgan.",
+    "painNow": "Hozir",
+    "painWith": "Falco bilan",
+    "pain": {
+      "stock": {
+        "problem": "Qoldiq Excel'da bir xil, omborda boshqacha",
+        "solution": "Har bir sotuv va kirim ombor qoldig'ini avtomatik yangilaydi."
+      },
+      "cash": {
+        "problem": "Kassada qancha pul borligi aniq emas",
+        "solution": "Kassalar, kirim va chiqimlar real vaqtda bitta joyda ko'rinadi."
+      },
+      "debt": {
+        "problem": "Qarzlar daftarda yo'qolib ketadi",
+        "solution": "Mijozning qarzi va balansi sotuv bilan birga hisoblanadi."
+      },
+      "staff": {
+        "problem": "Har bir xodim hamma narsani ko'ra oladi",
+        "solution": "Har bir xodimga alohida rol: kim nimani ko'rishi va o'zgartirishini siz belgilaysiz."
+      },
+      "reports": {
+        "problem": "Hisobotni kutish kunlar oladi",
+        "solution": "Savdo va foyda hisobotlari tayyor, kerakli hisobotni o'zingiz ham yig'asiz."
+      }
+    },
+    "flowEyebrow": "Hammasi bog'langan",
+    "flowTitle": "Bitta sotuv — butun biznesga ta'sir qiladi",
+    "flowSubtitle": "Sotuvni bir marta kiritasiz — qolganini Falco o'zi qiladi. Ma'lumotni qayta-qayta yozish shart emas.",
+    "flow": {
+      "sale": "Sotuv kiritiladi",
+      "stock": "Ombor qoldig'i kamayadi",
+      "cash": "Pul kassaga tushadi",
+      "debt": "Nasiya bo'lsa — mijoz balansiga yoziladi",
+      "report": "Hisobotda darhol ko'rinadi"
+    },
+    "segmentsEyebrow": "Kimlar uchun",
+    "segmentsTitle": "Qaysi biznes uchun mos",
+    "segmentsSubtitle": "Falco savdo, ombor va ishlab chiqarish bilan ishlaydigan har xil biznesga moslashadi.",
+    "segments": {
+      "retail": {
+        "title": "Chakana savdo va do'konlar",
+        "desc": "Kassa, chek, ombor va pul — bitta oynada."
+      },
+      "wholesale": {
+        "title": "Ulgurji savdo va distribyutorlar",
+        "desc": "Buyurtmalar, qarzdorlik, marshrutlar va yetkazib berish."
+      },
+      "production": {
+        "title": "Ishlab chiqarish",
+        "desc": "Retseptlar, ishlab chiqarish buyurtmalari va xomashyo sarfi."
+      },
+      "services": {
+        "title": "Xizmat ko'rsatish",
+        "desc": "Xizmatlar, mijozlar bazasi, hisob-fakturalar va to'lovlar."
+      }
+    },
+    "faqEyebrow": "Savollar",
+    "faqTitle": "Ko'p so'raladigan savollar",
+    "faq": {
+      "import": {
+        "q": "Hozirgi ma'lumotlarimni ko'chirib o'tkazsam bo'ladimi?",
+        "a": "Ha. Mahsulotlar, mijozlar, ta'minotchilar va xodimlarni Excel fayldan yuklash mumkin, shablonni tizimning o'zidan yuklab olasiz."
+      },
+      "mobile": {
+        "q": "Telefondan ishlaydimi?",
+        "a": "Ha. Falco brauzerda ishlaydi, shuningdek Android va iOS ilovasi bor."
+      },
+      "roles": {
+        "q": "Xodimlarimga turli huquq bersam bo'ladimi?",
+        "a": "Ha. Har bir xodimga rol beriladi, har bir bo'lim bo'yicha ko'rish, yaratish, o'zgartirish va o'chirish ruxsatlari alohida belgilanadi."
+      },
+      "security": {
+        "q": "Ma'lumotlarim xavfsizmi?",
+        "a": "Har bir kompaniyaning ma'lumoti boshqalardan ajratilgan holda saqlanadi. Tizimga kirish telefon raqam va parol bilan himoyalangan, noto'g'ri urinishlar cheklanadi."
+      },
+      "price": {
+        "q": "Narxi qancha?",
+        "a": "Narx foydalanuvchilar soni va obuna muddatiga bog'liq. Ariza qoldiring — biz siz uchun mos shartlarni aytamiz."
+      },
+      "start": {
+        "q": "Qanday boshlayman?",
+        "a": "Ariza qoldiring. Biz siz bilan bog'lanib, kompaniyangiz uchun alohida manzil va hisoblarni ochamiz."
+      }
+    }
   }
 }

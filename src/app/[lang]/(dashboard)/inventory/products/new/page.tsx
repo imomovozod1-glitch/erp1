@@ -34,7 +34,7 @@ export default async function NewProductPage({
       <PageHeader
         title={t('addProduct')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/inventory` },
           { label: t('products'), href: `/${lang}/inventory/products` },
           { label: tCommon('add') },

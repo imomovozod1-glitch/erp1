@@ -30,7 +30,7 @@ export default async function SecuritySettingsPage({
       <PageHeader
         title={t('security')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/settings` },
           { label: t('security') },
         ]}

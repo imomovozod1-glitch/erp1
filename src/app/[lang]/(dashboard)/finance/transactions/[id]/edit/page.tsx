@@ -39,7 +39,7 @@ export default async function EditTransactionPage({
       <PageHeader
         title={tCommon('edit')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/finance` },
           { label: t('transactions'), href: `/${lang}/finance/transactions` },
           { label: tCommon('edit') },

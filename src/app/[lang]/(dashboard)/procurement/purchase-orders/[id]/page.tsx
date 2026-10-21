@@ -89,7 +89,7 @@ export default function PurchaseOrderDetailPage() {
       <PageHeader
         title={`${t('purchaseOrders')}: ${order.po_number}`}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('purchaseOrders'), href: `/${lang}/procurement/purchase-orders` },
           { label: order.po_number }
         ]}

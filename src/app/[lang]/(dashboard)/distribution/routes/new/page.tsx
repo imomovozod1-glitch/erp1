@@ -28,7 +28,7 @@ export default async function NewRoutePage({ params }: { params: Promise<{ lang:
       <PageHeader
         title={t('addRoute')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/distribution` },
           { label: t('routes'), href: `/${lang}/distribution/routes` },
           { label: tCommon('add') },

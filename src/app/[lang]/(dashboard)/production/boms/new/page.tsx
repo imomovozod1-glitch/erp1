@@ -38,7 +38,7 @@ export default async function NewBomPage({
       <PageHeader
         title={t('addBom')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/production` },
           { label: t('boms'), href: `/${lang}/production/boms` },
           { label: tCommon('add') },

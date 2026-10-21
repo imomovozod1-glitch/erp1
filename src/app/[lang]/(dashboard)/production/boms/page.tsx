@@ -39,7 +39,7 @@ export default async function BomsPage({
         info={tInfo('boms')}
         action={canEdit ? { label: t('addBom'), href: `/${lang}/production/boms/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('boms') },
         ]}

@@ -94,7 +94,7 @@ export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps)
         subtitle={t('support.description')}
         info={tInfo('support')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('support.title') },
         ]}
       />

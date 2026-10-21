@@ -42,7 +42,7 @@ export default async function CompanySettingsPage({
       <PageHeader
         title={t('company')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/settings` },
           { label: t('company') },
         ]}

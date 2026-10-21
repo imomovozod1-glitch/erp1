@@ -82,7 +82,7 @@ export function TransactionsPageClient({
         subtitle={t('title')}
         info={tInfo('transactions')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('transactions') },
         ]}

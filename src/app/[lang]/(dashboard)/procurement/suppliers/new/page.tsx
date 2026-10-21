@@ -26,7 +26,7 @@ export default async function NewSupplierPage({ params }: { params: Promise<{ la
         title={t('addSupplier')}
         subtitle={t('title')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('suppliers'), href: `/${lang}/procurement/suppliers` },
           { label: t('addSupplier') },

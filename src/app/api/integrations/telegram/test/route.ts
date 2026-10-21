@@ -43,7 +43,7 @@ export async function POST() {
   }
 
   const tenant = (await getCachedTenant(ctx.tenantId)) as { company_name?: string } | null
-  const company = escapeHtml(tenant?.company_name || 'ERP')
+  const company = escapeHtml(tenant?.company_name || 'Falco')
 
   // Same language as every other bot message (see the notify route): the one
   // the company picked for its bot, not the admin's — the test shows exactly

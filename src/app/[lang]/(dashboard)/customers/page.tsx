@@ -65,7 +65,7 @@ export default async function CustomersPage({
         info={tInfo('customers')}
         action={canEdit ? { label: t('addCustomer'), href: `/${lang}/customers/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: tNav('customers'), href: `/${lang}/customers` },
           { label: t('customers') },
         ]}

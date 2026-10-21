@@ -38,7 +38,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       <PageHeader
         title={product.name}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title', { fallback: 'Ombor' }), href: `/${lang}/inventory/products` },
           { label: product.name }
         ]}

@@ -60,7 +60,7 @@ export default async function PurchaseOrdersPage({
         info={tInfo('purchaseOrders')}
         action={canEdit ? { label: t('addPurchase'), href: `/${lang}/procurement/purchase-orders/new`, icon: Plus } : undefined}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('purchases') },
         ]}

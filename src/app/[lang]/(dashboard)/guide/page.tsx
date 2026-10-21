@@ -177,7 +177,7 @@ export default async function GuidePage({ params }: { params: Promise<{ lang: st
       <PageHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        breadcrumbs={[{ label: 'ERP', href: `/${lang}/dashboard` }, { label: t('title') }]}
+        breadcrumbs={[{ label: 'Falco', href: `/${lang}/dashboard` }, { label: t('title') }]}
       />
 
       <div className="flex items-start gap-3 rounded-xl border-0 shadow-sm bg-violet-50 dark:bg-violet-950/30 p-4">

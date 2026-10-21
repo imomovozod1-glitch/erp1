@@ -22,7 +22,7 @@ export default async function FaqPage({ params }: { params: Promise<{ lang: stri
       <PageHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        breadcrumbs={[{ label: 'ERP', href: `/${lang}/dashboard` }, { label: t('title') }]}
+        breadcrumbs={[{ label: 'Falco', href: `/${lang}/dashboard` }, { label: t('title') }]}
       />
 
       <FaqBrowser

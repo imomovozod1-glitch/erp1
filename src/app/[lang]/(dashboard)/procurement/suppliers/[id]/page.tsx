@@ -26,7 +26,7 @@ export default async function SupplierDetailPage({ params }: SupplierDetailPageP
       <PageHeader
         title={supplier.name}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('suppliers'), href: `/${lang}/procurement/suppliers` },
           { label: supplier.name }
         ]}

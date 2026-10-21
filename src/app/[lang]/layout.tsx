@@ -23,8 +23,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Falco ERP',
-    template: '%s | Falco ERP',
+    default: 'Falco',
+    template: '%s | Falco',
   },
   description: 'Enterprise Resource Planning System for modern businesses',
 }

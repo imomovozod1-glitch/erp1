@@ -37,7 +37,7 @@ export default async function NewSalePage({ params }: { params: Promise<{ lang: 
         title={t('addSale')}
         subtitle={t('title')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('orders'), href: `/${lang}/sales/orders` },
           { label: t('addSale') },

@@ -35,7 +35,7 @@ export default async function RoleTemplatesPage({
         subtitle={t('title')}
         action={{ label: t('addRole'), href: `/${lang}/hr/roles/new`, icon: Plus }}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('roles') },
         ]}

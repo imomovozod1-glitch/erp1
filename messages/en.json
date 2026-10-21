@@ -1178,7 +1178,7 @@
       "testPrintFailed": "Print failed — check the connection",
       "testPrintSystemHint": "\"Via system\" is selected — complete a real POS sale to test printing",
       "testItemName": "Test item",
-      "testCompanyName": "Falco ERP",
+      "testCompanyName": "Falco",
       "testThankYou": "This is a test receipt",
       "labelReceipt": "Receipt",
       "labelCashier": "Cashier",
@@ -1375,7 +1375,7 @@
       "server_error": "Something went wrong on the server. Please try again"
     },
     "login": {
-      "brandTitle": "ERP Admin",
+      "brandTitle": "Falco Admin",
       "brandSubtitle": "Super-admin console",
       "heading": "Sign in",
       "subheading": "Vendor-level access to company accounts",
@@ -1403,7 +1403,7 @@
       "settings": "Settings",
       "support": "Support",
       "consoleSubtitle": "Vendor console",
-      "metaDescription": "Falco ERP super-admin console — company account management"
+      "metaDescription": "Falco super-admin console — company account management"
     },
     "tenants": {
       "title": "Companies",
@@ -1788,7 +1788,7 @@
     "noAssignedTenants": "No companies have been assigned to you yet",
     "logout": "Log out",
     "conversationsHeading": "Conversations",
-    "metaDescription": "Falco ERP support-agent portal"
+    "metaDescription": "Falco support-agent portal"
   },
   "supportChat": {
     "myTickets": "My tickets",
@@ -1868,7 +1868,7 @@
       "items": [
         {
           "title": "Navigation",
-          "text": "The left menu lists the main sections; selecting one reveals its pages. The breadcrumbs at the top (ERP → Inventory → Products) take you back. On a phone the menu opens from the button in the top-left corner."
+          "text": "The left menu lists the main sections; selecting one reveals its pages. The breadcrumbs at the top (Falco → Inventory → Products) take you back. On a phone the menu opens from the button in the top-left corner."
         },
         {
           "title": "Search and filters",
@@ -2703,7 +2703,6 @@
     "metaDescription": "Inventory, sales, POS, procurement, finance, staff and reports — all in one cloud system. In Uzbek, Russian and English.",
     "navModules": "Modules",
     "navFeatures": "Features",
-    "navHow": "How it works",
     "login": "Sign in",
     "heroBadge": "Built for businesses in Uzbekistan",
     "heroTitle": "Your whole business",
@@ -2751,7 +2750,7 @@
       },
       "distribution": {
         "title": "Distribution",
-        "desc": "Delivery routes, shortest-path planning on the map and agent tracking."
+        "desc": "Delivery routes, deliveries and shortest-path planning on the map."
       },
       "reports": {
         "title": "Reports",
@@ -2784,6 +2783,18 @@
       "security": {
         "title": "Secure and reliable",
         "desc": "Every company's data is kept separate, and sign-ins are protected."
+      },
+      "excel": {
+        "title": "Easy to move from Excel",
+        "desc": "Import products, customers, suppliers and employees from an Excel file in moments."
+      },
+      "pos": {
+        "title": "Receipt printing",
+        "desc": "Print receipts on 58 and 80 mm printers straight from the till — over USB or Bluetooth."
+      },
+      "support": {
+        "title": "Help inside the system",
+        "desc": "Got a question — write to our team through the chat in the system."
       }
     },
     "stepsTitle": "How to get started",
@@ -2794,39 +2805,25 @@
       },
       "setup": {
         "title": "We set up your account",
-        "desc": "We'll get in touch and open a separate address (company.falco.business) and accounts for your company."
+        "desc": "We'll get in touch, agree the subscription terms, and open a separate address (company.falco.business) and accounts for your company."
       },
       "start": {
-        "title": "Try it free for 2 weeks",
-        "desc": "Import products from Excel, add your staff and start selling. Like it? Then subscribe."
+        "title": "Start working",
+        "desc": "Import products from Excel, add your staff and start selling."
       }
     },
     "footerRights": "All rights reserved.",
     "statModules": "modules in one system",
     "statLanguages": "languages: UZ · RU · EN",
     "statDevices": "Android, iOS and web",
-    "statCloud": "in the cloud, always on",
-    "marqueeLabel": "Every module is connected",
     "navStart": "Get started",
-    "ctaTrial": "Try free for 14 days",
-    "heroTrialNote": "2 weeks free. After that, a subscription is needed to keep using the system.",
-    "trialEyebrow": "Free trial",
-    "trialTitle": "2 weeks free — try it first",
-    "trialSubtitle": "Leave a request and we'll open the system for you. For 14 days you can try Falco on your own business, free.",
-    "trialDays": "14",
-    "trialDaysLabel": "days free",
-    "trialPoint1": "Trial period — 2 weeks (14 days)",
-    "trialPoint2": "No payment is required during that time",
-    "trialPoint3": "Work with your own products, staff and sales",
-    "afterTitle": "After the trial",
-    "afterText": "When the trial ends, you will need to buy a subscription to keep using the system. We'll explain the subscription terms in detail when we get in touch.",
     "formEyebrow": "Get started",
     "formTitle": "Leave a request",
-    "formSubtitle": "Leave your details — we'll get in touch and open the system for your free trial.",
+    "formSubtitle": "Leave your details — we'll get in touch, show you the system and explain the subscription terms.",
     "formName": "Your name",
     "formNamePlaceholder": "First and last name",
     "formCompany": "Company name",
-    "formCompanyPlaceholder": "Your company's name",
+    "formCompanyPlaceholder": "E.g. Baraka Trade",
     "formPhone": "Phone number",
     "formComment": "Comment (optional)",
     "formCommentPlaceholder": "A few words about your business, or a question",
@@ -2840,6 +2837,99 @@
     "formErrorPhone": "Enter a valid phone number",
     "formErrorGeneric": "Couldn't send it. Try again or give us a call.",
     "formErrorLimit": "Too many attempts. Please try again in a little while.",
-    "formOrCall": "Or call us:"
+    "formOrCall": "Or call us:",
+    "footerTagline": "A cloud management system for your business",
+    "menuLabel": "Menu",
+    "formConsent": "By pressing the button you agree that we may contact you. Your details are used only to get in touch with you.",
+    "formRequired": "required field",
+    "ctaStart": "Leave a request",
+    "navFaq": "FAQ",
+    "ctaCall": "Call us",
+    "painEyebrow": "Problem and solution",
+    "painTitle": "Sound familiar?",
+    "painSubtitle": "Many business owners run into the same problems. Falco was built to solve exactly these.",
+    "painNow": "Today",
+    "painWith": "With Falco",
+    "pain": {
+      "stock": {
+        "problem": "Stock says one thing in Excel and another on the shelf",
+        "solution": "Every sale and delivery updates stock levels automatically."
+      },
+      "cash": {
+        "problem": "You're not sure how much cash is in the till",
+        "solution": "Cashboxes, income and expenses are in one place, in real time."
+      },
+      "debt": {
+        "problem": "Customer debts get lost in a notebook",
+        "solution": "A customer's debt and balance are worked out together with the sale."
+      },
+      "staff": {
+        "problem": "Every employee can see everything",
+        "solution": "Each employee gets their own role: you decide who can see and change what."
+      },
+      "reports": {
+        "problem": "Waiting for a report takes days",
+        "solution": "Sales and profit reports are ready, and you can build the report you need yourself."
+      }
+    },
+    "flowEyebrow": "Everything is connected",
+    "flowTitle": "One sale — and the whole business updates",
+    "flowSubtitle": "Enter the sale once and Falco does the rest. No re-typing the same data again and again.",
+    "flow": {
+      "sale": "The sale is entered",
+      "stock": "Stock goes down",
+      "cash": "Money lands in the cashbox",
+      "debt": "On credit — it goes onto the customer's balance",
+      "report": "It shows in reports straight away"
+    },
+    "segmentsEyebrow": "Who it's for",
+    "segmentsTitle": "Which businesses it fits",
+    "segmentsSubtitle": "Falco adapts to different kinds of business that work with sales, stock and production.",
+    "segments": {
+      "retail": {
+        "title": "Retail and shops",
+        "desc": "Till, receipt, stock and cash — in one window."
+      },
+      "wholesale": {
+        "title": "Wholesale and distributors",
+        "desc": "Orders, customer debt, routes and delivery."
+      },
+      "production": {
+        "title": "Production",
+        "desc": "Bills of materials, production orders and raw-material usage."
+      },
+      "services": {
+        "title": "Services",
+        "desc": "Services, customer base, invoices and payments."
+      }
+    },
+    "faqEyebrow": "FAQ",
+    "faqTitle": "Frequently asked questions",
+    "faq": {
+      "import": {
+        "q": "Can I move my current data over?",
+        "a": "Yes. Products, customers, suppliers and employees can be imported from an Excel file, and you download the template from the system itself."
+      },
+      "mobile": {
+        "q": "Does it work from a phone?",
+        "a": "Yes. Falco runs in the browser, and there is also an Android and iOS app."
+      },
+      "roles": {
+        "q": "Can I give my staff different permissions?",
+        "a": "Yes. Each employee gets a role, and permissions to view, create, edit and delete are set separately for every module."
+      },
+      "security": {
+        "q": "Is my data safe?",
+        "a": "Each company's data is stored separately from everyone else's. Sign-in is protected by phone number and password, and repeated wrong attempts are blocked."
+      },
+      "price": {
+        "q": "How much does it cost?",
+        "a": "The price depends on the number of users and the length of the subscription. Leave a request and we'll tell you the terms that fit."
+      },
+      "start": {
+        "q": "How do I get started?",
+        "a": "Leave a request. We'll get in touch and open a separate address and accounts for your company."
+      }
+    }
   }
 }

@@ -173,7 +173,7 @@ export function PrinterSettings() {
                 <p className="mt-1 text-center font-mono tracking-widest text-slate-400">|| | |||| | || |||</p>
               )}
               {config.showPoweredBy && (
-                <p className="mt-1 text-center text-[9px] font-bold text-slate-400">powered by Falco ERP</p>
+                <p className="mt-1 text-center text-[9px] font-bold text-slate-400">powered by Falco</p>
               )}
             </div>
           </div>

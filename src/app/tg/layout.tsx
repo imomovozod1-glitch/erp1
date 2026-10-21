@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Toaster } from '@/components/ui/sonner'
 import '../globals.css'
 
-export const metadata: Metadata = { title: 'Falco ERP' }
+export const metadata: Metadata = { title: 'Falco' }
 
 // Telegram renders the Mini App in a WebView sized to the chat sheet;
 // viewportFit lets it draw under the device's safe areas like the native shell.

@@ -39,7 +39,7 @@ export default async function EditCategoryPage({
       <PageHeader
         title={tCommon('edit')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/inventory` },
           { label: t('categories'), href: `/${lang}/inventory/categories` },
           { label: tCommon('edit') },

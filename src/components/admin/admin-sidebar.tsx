@@ -57,7 +57,7 @@ export function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
                 <ShieldCheck className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">ERP Admin</span>
+                <span className="truncate font-semibold">Falco Admin</span>
                 <span className="truncate text-xs text-muted-foreground">{t('consoleSubtitle')}</span>
               </div>
             </SidebarMenuButton>

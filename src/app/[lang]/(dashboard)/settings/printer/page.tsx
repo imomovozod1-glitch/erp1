@@ -35,7 +35,7 @@ export default async function PrinterSettingsPage({
       <PageHeader
         title={t('printerTitle')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/settings` },
           { label: t('printerTitle') },
         ]}

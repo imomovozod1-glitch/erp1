@@ -799,7 +799,7 @@ export function CashboxClient({
         info={tInfo('cashbox')}
         action={{ label: t('addCashbox'), onClick: handleOpenAddModal, icon: Plus }}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
           { label: t('cashbox') },
         ]}

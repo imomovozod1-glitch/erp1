@@ -51,7 +51,7 @@ export default async function EditEmployeePage({
       <PageHeader
         title={tCommon('edit')}
         breadcrumbs={[
-          { label: 'ERP', href: `/${lang}/dashboard` },
+          { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title'), href: `/${lang}/hr` },
           { label: t('employees'), href: `/${lang}/hr/employees` },
           { label: tCommon('edit') },
