@@ -184,12 +184,12 @@ export default function InvoiceDetailPage() {
         ]}
       />
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button
             variant="outline"
             onClick={() => router.push(`/${lang}/sales/invoices`)}
-            className="w-full md:w-auto h-9 gap-2 text-xs"
+            className="w-full md:w-auto h-10 md:h-9 gap-2 text-xs"
           >
             <ArrowLeft className="h-4 w-4" />
             {tCommon("back")}
@@ -199,7 +199,7 @@ export default function InvoiceDetailPage() {
             onClick={() =>
               router.push(`/${lang}/sales/invoices/${invoice.id}/edit`)
             }
-            className="w-full md:w-auto h-9 gap-2 text-xs text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 border-violet-100 dark:border-violet-900/50 hover:bg-violet-100 dark:hover:bg-violet-950/60"
+            className="w-full md:w-auto h-10 md:h-9 gap-2 text-xs text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 border-violet-100 dark:border-violet-900/50 hover:bg-violet-100 dark:hover:bg-violet-950/60"
           >
             <Pencil className="h-4 w-4" />
             {tCommon("edit")}
@@ -208,14 +208,14 @@ export default function InvoiceDetailPage() {
         </div>
 
         {isUnpaid && (
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row md:items-center gap-2 sm:gap-3 w-full md:w-auto">
             <Button
               onClick={() =>
                 router.push(
                   `/${lang}/finance/cashbox?action=kirim&type=debt_collection&customerId=${invoice.customer_id}`,
                 )
               }
-              className="w-full md:w-auto h-9 text-xs border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-100/70 dark:hover:bg-violet-950/50"
+              className="w-full md:w-auto h-10 md:h-9 text-xs border-violet-200 dark:border-violet-900/50 text-violet-700 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-100/70 dark:hover:bg-violet-950/50"
             >
               {tDetail("payViaCashbox")}
             </Button>
@@ -223,7 +223,7 @@ export default function InvoiceDetailPage() {
             <Button
               disabled={isProcessingPayment}
               onClick={handleAcceptPayment}
-              className="w-full md:w-auto h-9 gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+              className="w-full md:w-auto h-10 md:h-9 gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
             >
               {isProcessingPayment ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -354,8 +354,22 @@ export default function InvoiceDetailPage() {
                 {tDetail("noItems")}
               </div>
             ) : (
-              <div className="overflow-x-auto w-full">
-                <Table>
+              <>
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800 md:hidden">
+                {items.map((item) => (
+                  <li key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="break-words font-medium text-slate-800 dark:text-slate-200">{item.products?.name ?? "—"}</p>
+                      <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+                        {item.quantity} × {formatCurrency(item.unit_price)}
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-right font-bold tabular-nums text-slate-900 dark:text-slate-100">{formatCurrency(item.total_price)}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="w-full">
+                <Table containerClassName="max-md:hidden">
                   <TableHeader>
                     <TableRow className="bg-slate-50/30 dark:bg-slate-800/30">
                       <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10">
@@ -392,6 +406,7 @@ export default function InvoiceDetailPage() {
                   </TableBody>
                 </Table>
               </div>
+              </>
             )}
           </CardContent>
         </Card>

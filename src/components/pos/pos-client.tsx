@@ -20,6 +20,7 @@ import { PosCartPanel } from '@/components/pos/pos-cart-panel'
 import { PosCheckoutBar } from '@/components/pos/pos-checkout-bar'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { isService } from '@/lib/product-kind'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 /**
  * The till.
@@ -110,12 +111,17 @@ export function POSClient({
         : 80
 
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false)
+  // Phones: the basket lives in a bottom sheet the checkout bar opens.
+  const [cartOpen, setCartOpen] = useState(false)
+  const quantities = useMemo(() => new Map(cart.items.map((i) => [i.product.id, i.quantity])), [cart.items])
 
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Focus search input on mount for barcode scanner readiness
+  // Focus search input on mount for barcode scanner readiness — only where there is a
+  // keyboard to scan with. On a touch screen it would raise the on-screen keyboard over
+  // the product grid the moment the till opens.
   useEffect(() => {
-    if (searchInputRef.current) {
+    if (searchInputRef.current && window.matchMedia('(pointer: fine)').matches) {
       searchInputRef.current.focus()
     }
   }, [])
@@ -475,6 +481,7 @@ export function POSClient({
           onCategoryChange={setSelectedCategory}
           onSelect={cart.add}
           inputRef={searchInputRef}
+          quantities={quantities}
         />
 
         <PosCartPanel
@@ -492,7 +499,31 @@ export function POSClient({
         />
       </div>
 
-      <PosCheckoutBar count={cart.items.length} total={cart.total} />
+      <PosCheckoutBar count={cart.items.length} total={cart.total} onOpen={() => setCartOpen(true)} />
+
+      <Dialog open={cartOpen} onOpenChange={setCartOpen}>
+        <DialogContent className="no-print gap-0 p-0 max-sm:min-h-[70dvh] md:hidden" showCloseButton>
+          <DialogTitle className="sr-only">{t('cart')}</DialogTitle>
+          <PosCartPanel
+            variant="sheet"
+            onAddMore={() => setCartOpen(false)}
+            cart={cart}
+            customers={customers}
+            selectedCustomer={selectedCustomer}
+            onSelectCustomer={setSelectedCustomer}
+            onAddCustomer={() => setIsAddCustomerOpen(true)}
+            paymentMethod={paymentMethod}
+            onPaymentMethodChange={setPaymentMethod}
+            onClear={clearTill}
+            onCheckout={() => {
+              setCartOpen(false)
+              handleCheckout()
+            }}
+            isCheckingOut={false}
+            lang={lang}
+          />
+        </DialogContent>
+      </Dialog>
 
       <PosAddCustomerDialog
         open={isAddCustomerOpen}

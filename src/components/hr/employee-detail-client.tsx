@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { MobileCard, MobileCardList } from '@/components/shared/mobile-list'
 import { orderStatusTone } from '@/lib/statuses'
 import { CustomDateRangePicker } from '@/components/shared/custom-date-range-picker'
 import {
@@ -161,27 +162,27 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-4 md:p-5 rounded-2xl md:rounded-xl border shadow-sm">
+        <div className="flex min-w-0 items-center gap-4">
           <Avatar className="h-14 w-14">
             <AvatarFallback className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 text-lg font-bold">
               {employee.full_name?.[0] ?? 'E'}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{employee.full_name ?? '—'}</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1">{employee.position} &bull; {employee.profiles?.departments?.name ?? '—'}</p>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight break-words">{employee.full_name ?? '—'}</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1 break-words">{employee.position} &bull; {employee.profiles?.departments?.name ?? '—'}</p>
           </div>
         </div>
 
         {/* Period Filter — drives salary/payout & sales figures below */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 shadow-inner border">
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
+          <div className="flex max-w-full overflow-x-auto rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 shadow-inner border">
             {(['all', 'today', 'week', 'month'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
+                className={`shrink-0 px-3 py-2 md:py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer ${
                   period === p ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -198,7 +199,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
           <StatusBadge
             tone={employee.is_active ? 'emerald' : 'rose'}
             pulse={employee.is_active}
@@ -213,7 +214,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
             tone={employee.is_paid ? 'indigo' : 'slate'}
             label={employee.is_paid ? t('subscribed') : t('notSubscribed')}
           />
-          <Button onClick={handleExport} size="sm" className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
+          <Button onClick={handleExport} size="sm" className="gap-2 max-md:h-10 bg-violet-600 hover:bg-violet-700 text-white shadow-sm font-medium">
             <Download className="h-4 w-4" />
             {tc('export')}
           </Button>
@@ -221,11 +222,11 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('salary')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(employee.salary)}</h3>
+            <h3 className="text-xl md:text-2xl font-extrabold break-words tabular-nums text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(employee.salary)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('employeeCode')}: {employee.employee_code}</span>
           </CardContent>
         </Card>
@@ -233,7 +234,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('detail.tenure')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
+            <h3 className="text-xl md:text-2xl font-extrabold break-words tabular-nums text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {t('detail.tenureMonths', { count: tenureMonths })}
             </h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{t('hiredAt')}: {formatDate(employee.hired_at)}</span>
@@ -243,7 +244,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('detail.processedSales')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalSalesAmount)}</h3>
+            <h3 className="text-xl md:text-2xl font-extrabold break-words tabular-nums text-slate-900 dark:text-slate-100 tracking-tight mt-1">{formatCurrency(totalSalesAmount)}</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredSalesOrders.length} {tc('count')}{periodSuffix}</span>
           </CardContent>
         </Card>
@@ -251,7 +252,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
         <Card className="border-0 shadow-sm">
           <CardContent className="p-5 flex flex-col justify-between">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">{t('detail.paidOut')}</span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
+            <h3 className="text-xl md:text-2xl font-extrabold break-words tabular-nums text-slate-900 dark:text-slate-100 tracking-tight mt-1">
               {formatCurrency(totalPaidAmount)}
             </h3>
             <span className="text-xs text-slate-400 dark:text-slate-500 mt-2">{filteredTransactions.length} {tc('count')}{periodSuffix}</span>
@@ -342,10 +343,10 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
         {/* Tabbed Activity / Documents */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white dark:bg-slate-900 rounded-xl border shadow-sm">
-            <div className="flex border-b overflow-x-auto">
+            <div className="flex gap-1 overflow-x-auto border-b px-2 max-md:[scrollbar-width:none]">
               <button
                 onClick={() => setActiveTab('payouts')}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex shrink-0 items-center gap-2 px-4 md:px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'payouts' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -354,7 +355,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
               </button>
               <button
                 onClick={() => setActiveTab('sales')}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex shrink-0 items-center gap-2 px-4 md:px-5 py-3.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'sales' ? 'border-violet-600 text-violet-600 dark:text-violet-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
@@ -376,7 +377,7 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                         variant="ghost"
                         size="sm"
                         onClick={() => { setPeriod('all'); setCustomStart(''); setCustomEnd('') }}
-                        className="h-7 px-2 text-xs text-slate-500 dark:text-slate-400 gap-1"
+                        className="h-9 md:h-7 px-2 text-xs text-slate-500 dark:text-slate-400 gap-1"
                       >
                         <X className="h-3.5 w-3.5" />
                         {tc('clear')}
@@ -389,7 +390,18 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
                       </span>
                     </div>
                   </div>
-                  <Table>
+                  <MobileCardList className="p-3" isEmpty={filteredTransactions.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tc('noData')}</p>}>
+                    {filteredTransactions.map((tx) => (
+                      <MobileCard
+                        key={tx.id}
+                        eyebrow={<span>{formatDateTime(tx.created_at)}</span>}
+                        title={tx.category}
+                        subtitle={tx.description || undefined}
+                        stats={[{ label: tc('amount'), value: `-${formatCurrency(tx.amount)}`, tone: 'bad' }]}
+                      />
+                    ))}
+                  </MobileCardList>
+                  <Table containerClassName="max-md:hidden">
                     <TableHeader>
                       <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                         <TableHead className="w-10 text-center">#</TableHead>
@@ -427,7 +439,22 @@ export function EmployeeDetailClient({ lang, employee, transactions, salesOrders
               )}
 
               {activeTab === 'sales' && (
-                <Table>
+                <MobileCardList className="p-3" isEmpty={filteredSalesOrders.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tc('noData')}</p>}>
+                  {filteredSalesOrders.map((o) => (
+                    <MobileCard
+                      key={o.id}
+                      eyebrow={<span>{formatDateTime(o.created_at)}</span>}
+                      title={o.order_number}
+                      subtitle={o.customers?.name ?? undefined}
+                      status={<StatusBadge tone={orderStatusTone(o.status)} label={tSales(`status.${o.status}`)} />}
+                      stats={[{ label: tc('amount'), value: formatCurrency(o.total_amount), tone: 'good' }]}
+                    />
+                  ))}
+                </MobileCardList>
+              )}
+
+              {activeTab === 'sales' && (
+                <Table containerClassName="max-md:hidden">
                   <TableHeader>
                     <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                       <TableHead className="w-10 text-center">#</TableHead>

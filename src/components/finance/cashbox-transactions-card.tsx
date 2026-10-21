@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { MobileCard, MobileCardList, MobileChip } from '@/components/shared/mobile-list'
 
 interface Cashbox {
   id: string
@@ -47,7 +48,7 @@ export function CashboxTransactionsCard({
 
   return (
   <Card className="border border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-3xl overflow-hidden">
-    <CardHeader className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <CardHeader className="p-4 md:p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div className="space-y-1">
         <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
           <Receipt className="h-5 w-5 text-violet-600 dark:text-violet-400" />
@@ -57,18 +58,70 @@ export function CashboxTransactionsCard({
           {t('cashboxTransactionsSubtitle')}
         </CardDescription>
       </div>
-      <div className="relative max-w-xs w-full">
+      <div className="relative w-full md:max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           placeholder={`${tCommon('search')}...`}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 h-9 border-slate-200 dark:border-slate-700 rounded-xl text-xs"
+          className="pl-9 h-10 md:h-9 border-slate-200 dark:border-slate-700 rounded-xl text-xs"
         />
       </div>
     </CardHeader>
     <CardContent className="p-0">
-      <div className="overflow-x-auto">
+      <MobileCardList
+        className="p-3"
+        isEmpty={transactions.length === 0}
+        empty={
+          <div className="flex flex-col items-center gap-2 py-10 text-slate-400 dark:text-slate-500">
+            <TrendingUp className="h-10 w-10 opacity-30" />
+            <p className="text-sm font-semibold">{tCommon('noData')}</p>
+          </div>
+        }
+      >
+        {transactions.map((tx) => {
+          const cbName = cashboxes.find((c) => c.id === tx.reference_id)?.name || 'Kassa'
+          const isIncome = tx.type === 'income'
+          return (
+            <MobileCard
+              key={tx.id}
+              onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
+              eyebrow={
+                <>
+                  <MobileChip>{tx.category}</MobileChip>
+                  <span>{formatDateTime(tx.created_at)}</span>
+                </>
+              }
+              title={cbName}
+              subtitle={tx.description || undefined}
+              stats={[
+                {
+                  label: isIncome ? t('cashIn') : t('cashOut'),
+                  value: `${isIncome ? '+' : '−'}${formatCurrency(tx.amount)}`,
+                  tone: isIncome ? 'good' : 'bad',
+                },
+              ]}
+            />
+          )
+        })}
+        {transactions.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-50 p-3 text-sm font-bold dark:bg-slate-800/60">
+            <div className="min-w-0">
+              <p className="text-[11px] font-normal text-muted-foreground">{t('cashIn')}</p>
+              <p className="truncate text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(transactions.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + Number(tx.amount), 0))}
+              </p>
+            </div>
+            <div className="min-w-0 text-right">
+              <p className="text-[11px] font-normal text-muted-foreground">{t('cashOut')}</p>
+              <p className="truncate text-rose-600 dark:text-rose-400">
+                {formatCurrency(transactions.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + Number(tx.amount), 0))}
+              </p>
+            </div>
+          </div>
+        )}
+      </MobileCardList>
+      <div className="overflow-x-auto max-md:hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/70 dark:bg-slate-800/70 border-b border-slate-100 dark:border-slate-800">

@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
 import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
+import { FormFooter } from '@/components/shared/form-footer'
 
 interface RoleTemplateFormProps {
   initialData?: { id: string; name: string; permissions: unknown }
@@ -108,7 +109,7 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
             <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
           </div>
 
-          <div className="flex justify-end gap-2 border-t pt-4">
+          <FormFooter>
             <Button
               type="button"
               variant="outline"
@@ -121,7 +122,7 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {tCommon('save')}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </CardContent>
     </Card>

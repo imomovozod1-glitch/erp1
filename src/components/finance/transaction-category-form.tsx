@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { FormFooter } from '@/components/shared/form-footer'
 
 interface TransactionCategoryFormProps {
   initialData?: any
@@ -78,7 +79,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-xl border shadow-sm">
       <div className="space-y-2">
         <Label htmlFor="name">{tCommon('name')} *</Label>
         <Input
@@ -126,7 +127,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
         <p className="text-xs text-muted-foreground">{t('personTypeHint')}</p>
       </div>
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button
           type="button"
           variant="outline"
@@ -138,7 +139,7 @@ export function TransactionCategoryForm({ initialData, lang }: TransactionCatego
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? tCommon('saving') : tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   )
 }

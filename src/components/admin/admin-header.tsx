@@ -13,9 +13,9 @@ export function AdminHeader() {
 
   return (
     <header
-      className={`flex h-16 shrink-0 items-center gap-3 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-4 fixed top-0 right-0 z-30 ${sidebarOffset}`}
+      className={`flex h-16 shrink-0 items-center gap-2 md:gap-3 border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-4 fixed top-0 right-0 z-30 ${sidebarOffset}`}
     >
-      <SidebarTrigger className="-ml-1" />
+      <SidebarTrigger className="-ml-1 size-10 md:size-7" />
       <div className="flex-1" />
       <ThemeToggle />
       <LocaleSwitcher mode="cookie" />

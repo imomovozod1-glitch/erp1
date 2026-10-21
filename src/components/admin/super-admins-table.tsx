@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatDateTime, getInitials } from '@/lib/utils'
 import { isStrongPassword } from '@/lib/password-validation'
 import { adminErrorMessage } from '@/lib/admin-errors'
+import { MobileCard, MobileCardList, MobileChip } from '@/components/shared/mobile-list'
 
 export interface SuperAdminRow {
   id: string
@@ -100,7 +101,7 @@ export function SuperAdminsTable({
       <CardContent className="pt-6 space-y-6">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{t('count', { count: admins.length })}</p>
-          <Button onClick={() => setShowForm((v) => !v)} variant="outline" size="sm" className="gap-1.5">
+          <Button onClick={() => setShowForm((v) => !v)} variant="outline" size="sm" className="h-10 gap-1.5 md:h-auto">
             <Plus className="h-3.5 w-3.5" /> {t('addAdmin')}
           </Button>
         </div>
@@ -139,7 +140,43 @@ export function SuperAdminsTable({
           </form>
         )}
 
-        <Table>
+        <MobileCardList className="px-0">
+          {admins.map((admin) => (
+            <MobileCard
+              key={admin.id}
+              leading={
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+                  {getInitials(admin.full_name)}
+                </div>
+              }
+              eyebrow={
+                admin.id === currentAdminId ? (
+                  <MobileChip>
+                    <ShieldCheck className="mr-1 h-3 w-3" /> {t('you')}
+                  </MobileChip>
+                ) : undefined
+              }
+              title={admin.full_name}
+              subtitle={admin.email}
+              menu={
+                admin.id !== currentAdminId ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={deletingId === admin.id}
+                    onClick={() => handleDelete(admin.id, admin.full_name)}
+                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30"
+                  >
+                    {deletingId === admin.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </Button>
+                ) : undefined
+              }
+              stats={[{ label: t('colSince'), value: formatDateTime(admin.created_at) }]}
+            />
+          ))}
+        </MobileCardList>
+
+        <Table containerClassName="max-md:hidden">
           <TableHeader>
             <TableRow>
               <TableHead className="w-10 text-center">#</TableHead>

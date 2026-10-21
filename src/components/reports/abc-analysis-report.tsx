@@ -130,14 +130,14 @@ function Body({ period, items }: { period: ReportPeriod; items: SalesItemRow[] }
         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
           {t('abc.metricLabel')}:
         </span>
-        <div className="flex rounded-lg border bg-slate-100 p-0.5 shadow-inner dark:bg-slate-800">
+        <div className="flex max-w-full overflow-x-auto rounded-full border bg-slate-100 p-0.5 shadow-inner md:rounded-lg dark:bg-slate-800">
           {ABC_METRICS.map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => setMetric(option)}
               className={cn(
-                'rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200',
+                'shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-all duration-200 md:rounded-md md:px-3 md:py-1.5',
                 metric === option
                   ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-700 dark:text-violet-400'
                   : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'

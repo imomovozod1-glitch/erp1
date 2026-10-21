@@ -55,7 +55,7 @@ export function ReportFilters({
         <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           <Filter className="h-3.5 w-3.5" /> {t('filters')}
         </p>
-        <Button type="button" variant="outline" size="sm" onClick={addRule} className="h-7 gap-1.5 text-xs">
+        <Button type="button" variant="outline" size="sm" onClick={addRule} className="h-10 gap-1.5 text-xs md:h-7">
           <Plus className="h-3.5 w-3.5" />
           {t('addFilter')}
         </Button>
@@ -69,9 +69,9 @@ export function ReportFilters({
             const type = typeOf(rule.column)
             const operators = OPERATORS_BY_TYPE[type]
             return (
-              <div key={index} className="flex flex-wrap items-center gap-2">
+              <div key={index} className="grid grid-cols-2 items-center gap-2 max-md:rounded-2xl max-md:border max-md:p-2.5 md:flex md:flex-wrap">
                 <Select value={rule.column} onValueChange={(value) => value && updateRule(index, { column: value })}>
-                  <SelectTrigger className="h-9 w-44">
+                  <SelectTrigger className="h-10 w-full md:h-9 md:w-44">
                     <SelectValue>{t(`col.${rule.column}`)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -87,7 +87,7 @@ export function ReportFilters({
                   value={rule.operator}
                   onValueChange={(value) => updateRule(index, { operator: value as FilterOperator })}
                 >
-                  <SelectTrigger className="h-9 w-36">
+                  <SelectTrigger className="h-10 w-full md:h-9 md:w-36">
                     <SelectValue>{t(`op.${rule.operator}`)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -104,14 +104,14 @@ export function ReportFilters({
                   onChange={(event) => updateRule(index, { value: event.target.value })}
                   placeholder={t('filterValue')}
                   inputMode={type === 'number' || type === 'money' ? 'decimal' : undefined}
-                  className="h-9 w-40 flex-1 min-w-32"
+                  className="h-10 w-full min-w-32 flex-1 md:h-9 md:w-40"
                 />
 
                 <button
                   type="button"
                   onClick={() => onChange(rules.filter((_, i) => i !== index))}
                   aria-label={t('removeFilter')}
-                  className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                  className="flex h-10 w-10 items-center justify-center justify-self-end rounded-md p-1.5 text-slate-400 md:h-auto md:w-auto transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
                 >
                   <X className="h-4 w-4" />
                 </button>

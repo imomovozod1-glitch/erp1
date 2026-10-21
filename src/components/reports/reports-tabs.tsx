@@ -44,7 +44,7 @@ export function ReportsTabs({ today, lang }: { today: string; lang: string }) {
   const [tab, setTab] = useState<'catalog' | 'custom'>('catalog')
 
   const tabClass = (active: boolean) =>
-    `flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+    `flex shrink-0 items-center gap-1.5 rounded-full md:rounded-md px-3.5 py-2 md:px-3 md:py-1.5 text-xs font-semibold transition-colors ${
       active
         ? 'bg-white text-violet-600 shadow-sm dark:bg-slate-700 dark:text-violet-400'
         : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'
@@ -57,7 +57,7 @@ export function ReportsTabs({ today, lang }: { today: string; lang: string }) {
         info={tInfo('analytics')}
         breadcrumbs={[{ label: 'Falco', href: `/${lang}/dashboard` }, { label: t('title') }]}
       >
-        <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
+        <div className="inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-full md:rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
           <button type="button" onClick={() => setTab('catalog')} className={tabClass(tab === 'catalog')}>
             <BarChart3 className="h-3.5 w-3.5" />
             {t('catalog')}
@@ -70,7 +70,7 @@ export function ReportsTabs({ today, lang }: { today: string; lang: string }) {
       </PageHeader>
 
       {tab === 'catalog' ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {REPORT_CARDS.map((card) => {
             const Icon = card.icon
             return (
@@ -78,7 +78,7 @@ export function ReportsTabs({ today, lang }: { today: string; lang: string }) {
                 key={card.key}
                 href={`/${lang}/${card.href}`}
                 prefetch={false}
-                className="group flex flex-col justify-between gap-6 rounded-xl border border-slate-200 bg-white p-5 transition-colors duration-200 hover:border-violet-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-violet-600"
+                className="group flex flex-col justify-between gap-4 md:gap-6 rounded-2xl md:rounded-xl border border-slate-200 bg-white p-4 md:p-5 shadow-sm md:shadow-none transition-colors duration-200 hover:border-violet-400 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-violet-600"
               >
                 <div className="flex items-start gap-4">
                   <span className="shrink-0 rounded-lg bg-slate-100 p-2.5 text-slate-600 transition-colors group-hover:bg-violet-50 group-hover:text-violet-600 dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-violet-950/40 dark:group-hover:text-violet-400">

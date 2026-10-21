@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { AssignableUser } from '@/components/shared/assignee-select'
 import { ImageUpload } from '@/components/shared/image-upload'
+import { FormFooter } from '@/components/shared/form-footer'
 
 /** Tenant-level settings the form needs — see `getCachedProductFormOptions`. */
 export interface ProductFormOptions {
@@ -295,7 +296,7 @@ export function ProductForm({ initialData, categories, lang, options }: ProductF
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">{t('productName')} *</Label>
@@ -609,7 +610,7 @@ export function ProductForm({ initialData, categories, lang, options }: ProductF
       </div>
 
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button
           type="button"
           variant="outline"
@@ -621,7 +622,7 @@ export function ProductForm({ initialData, categories, lang, options }: ProductF
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   )
 }

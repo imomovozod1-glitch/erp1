@@ -16,7 +16,7 @@ export function AdminShell({
       <AdminSidebar adminName={adminName} adminEmail={adminEmail} />
       <SidebarInset>
         <AdminHeader />
-        <main className="flex-1 p-6 pt-22 bg-slate-50/50 dark:bg-slate-950/50 min-h-[calc(100vh-4rem)]">
+        <main className="min-w-0 flex-1 p-4 pt-20 md:p-6 md:pt-22 bg-slate-50/50 dark:bg-slate-950/50 min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </SidebarInset>

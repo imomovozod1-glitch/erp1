@@ -26,6 +26,7 @@ import {
   SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
 import { isoDate } from '@/lib/utils'
+import { FormFooter } from '@/components/shared/form-footer'
 
 
 interface InvoiceFormProps {
@@ -180,7 +181,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
   const orderIdValue = useWatch({ control, name: 'order_id' })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-6 rounded-xl border shadow-sm">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-xl border shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="invoice_number">{t('invoiceNumber')} *</Label>
@@ -331,7 +332,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button 
           type="button" 
           variant="outline" 
@@ -343,7 +344,7 @@ export function InvoiceForm({ initialData, customers, orders = [], assignableUse
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? tCommon('saving') : tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   )
 }

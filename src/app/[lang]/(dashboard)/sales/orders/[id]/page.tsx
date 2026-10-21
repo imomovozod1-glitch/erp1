@@ -143,11 +143,11 @@ export default function OrderDetailPage() {
         ]}
       />
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
         <Button
           variant="outline"
           onClick={() => router.push(`/${lang}/sales/orders`)}
-          className="w-full md:w-auto h-9 gap-2 text-xs"
+          className="w-full md:w-auto h-10 md:h-9 gap-2 text-xs"
         >
           <ArrowLeft className="h-4 w-4" />
           {tCommon('back')}
@@ -157,7 +157,7 @@ export default function OrderDetailPage() {
             <Button
               variant="outline"
               onClick={() => setIsCancelOpen(true)}
-              className="w-full md:w-auto h-9 gap-2 text-xs border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/40"
+              className="w-full md:w-auto h-10 md:h-9 gap-2 text-xs border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/40"
             >
               <Ban className="h-4 w-4" />
               {t('cancelSale')}
@@ -167,7 +167,7 @@ export default function OrderDetailPage() {
           {order.status !== 'cancelled' && access.canEdit && (
             <Button
               onClick={() => router.push(`/${lang}/sales/orders/${order.id}/edit`)}
-              className="w-full md:w-auto h-9 gap-2 text-xs bg-violet-600 hover:bg-violet-700 text-white"
+              className="w-full md:w-auto h-10 md:h-9 gap-2 text-xs bg-violet-600 hover:bg-violet-700 text-white"
             >
               <Pencil className="h-4 w-4" />
               {tCommon('edit')}
@@ -271,8 +271,21 @@ export default function OrderDetailPage() {
             <CardTitle className="text-sm font-bold text-slate-800 dark:text-slate-200">{t('items')}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto w-full">
-              <Table>
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800 md:hidden">
+              {items.map((item) => (
+                <li key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="break-words font-medium text-slate-800 dark:text-slate-200">{item.products?.name ?? '—'}</p>
+                    <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+                      {item.quantity} × {formatCurrency(item.unit_price)}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-right font-bold tabular-nums text-slate-900 dark:text-slate-100">{formatCurrency(item.total_price)}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="w-full">
+              <Table containerClassName="max-md:hidden">
                 <TableHeader>
                   <TableRow className="bg-slate-50/30 dark:bg-slate-800/30">
                     <TableHead className="font-bold text-slate-400 dark:text-slate-500 h-10">{t('productName')}</TableHead>

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { Wallet } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
+import { MobileCard, MobileCardList } from '@/components/shared/mobile-list'
 
 export interface PaymentRow {
   id: string
@@ -39,7 +40,24 @@ export function PaymentHistory({
         {t('totalPaid')}: <span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(totalPaid)}</span>
       </div>
 
-      <Table>
+      <MobileCardList
+        isEmpty={payments.length === 0}
+        empty={<p className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">{t('noPayments')}</p>}
+      >
+        {payments.map((p) => (
+          <MobileCard
+            key={p.id}
+            eyebrow={<span className="tabular-nums">{formatDateTime(p.created_at)}</span>}
+            title={p.license_months ? t('termMonths', { months: p.license_months }) : formatCurrency(p.amount)}
+            subtitle={
+              p.period_start && p.period_end ? `${formatDate(p.period_start)} – ${formatDate(p.period_end)}` : p.note || undefined
+            }
+            stats={[{ label: t('amount'), value: formatCurrency(p.amount), tone: 'good' }]}
+          />
+        ))}
+      </MobileCardList>
+
+      <Table containerClassName="max-md:hidden">
         <TableHeader>
           <TableRow>
             <TableHead className="w-10 text-center">#</TableHead>

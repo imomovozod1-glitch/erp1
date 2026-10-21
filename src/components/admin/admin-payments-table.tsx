@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatCurrency, formatDateTime, getInitials } from '@/lib/utils'
+import { MobileCard, MobileCardList, MobileChip } from '@/components/shared/mobile-list'
 
 export interface AdminPaymentRow {
   id: string
@@ -64,7 +65,37 @@ export function AdminPaymentsTable({ payments }: { payments: AdminPaymentRow[] }
         </span>
       </div>
 
-      <Table>
+      <MobileCardList
+        className="p-3"
+        isEmpty={paginated.length === 0}
+        empty={
+          <div className="flex flex-col items-center gap-2 py-10 text-slate-400 dark:text-slate-500">
+            <Wallet className="h-8 w-8 opacity-40" />
+            <p className="text-sm">{t('empty')}</p>
+          </div>
+        }
+      >
+        {paginated.map((p) => (
+          <MobileCard
+            key={p.id}
+            onClick={() => router.push(`/admin/tenants/${p.tenant_id}`)}
+            leading={
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-sm font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+                {getInitials(p.tenant_company_name)}
+              </div>
+            }
+            eyebrow={<MobileChip>{p.tenant_subdomain}</MobileChip>}
+            title={p.tenant_company_name}
+            subtitle={p.note || undefined}
+            stats={[
+              { label: t('colAmount'), value: formatCurrency(p.amount), tone: 'good' },
+              { label: t('colDate'), value: formatDateTime(p.created_at) },
+            ]}
+          />
+        ))}
+      </MobileCardList>
+
+      <Table containerClassName="max-md:hidden">
         <TableHeader>
           <TableRow>
             <TableHead className="w-10 text-center">#</TableHead>

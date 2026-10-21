@@ -116,16 +116,17 @@ export function ReportChart({
   )
 
   return (
-    <div className="p-4">
-      <ResponsiveContainer width="100%" height={360}>
+    <div className="p-2 md:p-4">
+      <div className="h-[260px] w-full md:h-[360px]">
+      <ResponsiveContainer width="100%" height="100%">
         {chartType === 'pie' ? (
           <PieChart>
             <Pie
               data={data}
               dataKey={measures[0]}
               nameKey="__label"
-              innerRadius={60}
-              outerRadius={130}
+              innerRadius="45%"
+              outerRadius="75%"
               paddingAngle={2}
             >
               {data.map((_, index) => (
@@ -197,6 +198,7 @@ export function ReportChart({
           </BarChart>
         )}
       </ResponsiveContainer>
+      </div>
 
       {capped && (
         <p className="pt-3 text-center text-xs text-amber-600 dark:text-amber-500">

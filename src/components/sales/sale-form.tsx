@@ -24,6 +24,7 @@ import { AssigneeSelect, type AssignableUser } from '@/components/shared/assigne
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { isService } from '@/lib/product-kind'
 import { ItemPicker } from '@/components/shared/item-picker'
+import { FormFooter } from '@/components/shared/form-footer'
 
 interface SaleFormProps {
   products: { id: string; name: string; price: number; cost_price: number; stock: number; unit: string; sku: string; is_service?: boolean }[]
@@ -450,6 +451,19 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
     }
   }
 
+  const changeQty = (idx: number, val: number | '') => {
+    const item = items[idx]
+    if (!item) return
+    const next = Number(val) || 0
+    const product = products.find((p) => p.id === item.productId)
+    // The shelf is still the limit; a service has none.
+    if (product && !isService(product) && next > product.stock) {
+      toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
+      return
+    }
+    updateItem(idx, { quantity: next })
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Customer Selection */}
@@ -564,7 +578,55 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
       {items.length > 0 ? (
         <Card className="border shadow-sm">
           <CardContent className="p-0">
-            <Table>
+            <div className="space-y-3 p-3 md:hidden">
+              {items.map((item, idx) => (
+                <div key={idx} className="rounded-2xl border bg-card p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="min-w-0 break-words text-sm font-semibold">{item.productName}</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={tCommon('delete')}
+                      className="-mr-1 -mt-1 h-10 w-10 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30"
+                      onClick={() => removeItem(idx)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <label className="space-y-1 text-xs text-muted-foreground">
+                      {t('unitPrice')}
+                      <NumericInput
+                        value={item.unitPrice}
+                        onChange={(val) => updateItem(idx, { unitPrice: Number(val) || 0 })}
+                        className="text-right"
+                      />
+                    </label>
+                    <label className="space-y-1 text-xs text-muted-foreground">
+                      {t('quantity')}
+                      <NumericInput
+                        value={item.quantity}
+                        onChange={(val) => changeQty(idx, val)}
+                        allowDecimals={unitAllowsDecimals(
+                          products.find((p) => p.id === item.productId)?.unit
+                        )}
+                        className="text-right"
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t pt-2 text-sm">
+                    <span className="text-muted-foreground">{t('totalPrice')}</span>
+                    <span className="font-bold tabular-nums">{formatCurrency(item.totalPrice)}</span>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-between rounded-2xl bg-violet-50 px-4 py-3 dark:bg-violet-950/40">
+                <span className="text-sm font-semibold">{tCommon('total')}</span>
+                <span className="text-lg font-black tabular-nums text-violet-700 dark:text-violet-300">{formatCurrency(totalAmount)}</span>
+              </div>
+            </div>
+            <Table containerClassName="max-md:hidden">
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
@@ -596,16 +658,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
                       <div className="ml-auto w-24">
                         <NumericInput
                           value={item.quantity}
-                          onChange={(val) => {
-                            const next = Number(val) || 0
-                            const product = products.find((p) => p.id === item.productId)
-                            // The shelf is still the limit; a service has none.
-                            if (product && !isService(product) && next > product.stock) {
-                              toast.error(`${t('availableStock')}: ${product.stock} ${product.unit}`)
-                              return
-                            }
-                            updateItem(idx, { quantity: next })
-                          }}
+                          onChange={(val) => changeQty(idx, val)}
                           allowDecimals={unitAllowsDecimals(
                             products.find((p) => p.id === item.productId)?.unit
                           )}
@@ -646,7 +699,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
       )}
 
       {/* Actions */}
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button
           type="button"
           variant="outline"
@@ -661,7 +714,7 @@ export function SaleForm({ products, customers, assignableUsers, lang }: SaleFor
         >
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   )
 }

@@ -23,6 +23,7 @@ import { formatCurrency, formatNumber, generateDocumentNumber, isoDate } from '@
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { ItemPicker } from '@/components/shared/item-picker'
 import { unitAllowsDecimals } from '@/lib/units'
+import { FormFooter } from '@/components/shared/form-footer'
 
 interface PurchaseOrderFormProps {
   /** Active tenant members who can be made responsible for the purchase order. */
@@ -348,6 +349,34 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
     }
   }
 
+  const unmatchedPicker = (item: (typeof items)[number], idx: number) => (
+        <div className="flex flex-col gap-1.5 max-w-md">
+          <span className="text-red-500 text-xs font-semibold">{t('scan.unmatchedProduct', { name: item.productName })}</span>
+          <Select
+            value={item.productId || undefined}
+            onValueChange={(prodId) => {
+              const prod = products.find(p => p.id === prodId)
+              if (prod) {
+                setItems(prev => prev.map((it, i) => i === idx ? {
+                  ...it,
+                  productId: prod.id,
+                  productName: prod.name,
+                } : it))
+              }
+            }}
+          >
+            <SelectTrigger className="w-full border-red-300 dark:border-red-800">
+              <SelectValue placeholder={`${t('selectProduct')}...`} />
+            </SelectTrigger>
+            <SelectContent>
+              {products.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+  )
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Supplier + AI Scan */}
@@ -482,7 +511,57 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
       {items.length > 0 && (
         <Card className="border shadow-sm">
           <CardContent className="p-0">
-            <Table>
+            <div className="space-y-3 p-3 md:hidden">
+              {items.map((item, idx) => (
+                <div key={idx} className="rounded-2xl border bg-card p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1 break-words text-sm font-semibold">
+                      {item.productId ? item.productName : unmatchedPicker(item, idx)}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={tCommon('delete')}
+                      className="-mr-1 -mt-1 h-10 w-10 shrink-0 text-red-500 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30"
+                      onClick={() => removeItem(idx)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <label className="space-y-1 text-xs text-muted-foreground">
+                      {t('quantity')}
+                      <NumericInput
+                        value={item.quantity}
+                        onChange={(val) => updateItem(idx, { quantity: Number(val) || 0 })}
+                        allowDecimals={unitAllowsDecimals(
+                          products.find((p) => p.id === item.productId)?.unit
+                        )}
+                        className="text-right"
+                      />
+                    </label>
+                    <label className="space-y-1 text-xs text-muted-foreground">
+                      {t('unitCost')}
+                      <NumericInput
+                        value={item.unitCost}
+                        onChange={(val) => updateItem(idx, { unitCost: Number(val) || 0 })}
+                        className="text-right"
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t pt-2 text-sm">
+                    <span className="text-muted-foreground">{t('totalCost')}</span>
+                    <span className="font-bold tabular-nums">{formatCurrency(item.totalCost)}</span>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-between rounded-2xl bg-violet-50 px-4 py-3 dark:bg-violet-950/40">
+                <span className="text-sm font-semibold">{tCommon('total')}</span>
+                <span className="text-lg font-black tabular-nums text-violet-700 dark:text-violet-300">{formatCurrency(totalAmount)}</span>
+              </div>
+            </div>
+            <Table containerClassName="max-md:hidden">
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-10 text-center">#</TableHead>
@@ -501,31 +580,7 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
                       {item.productId ? (
                         item.productName
                       ) : (
-                        <div className="flex flex-col gap-1.5 max-w-md">
-                          <span className="text-red-500 text-xs font-semibold">{t('scan.unmatchedProduct', { name: item.productName })}</span>
-                          <Select
-                            value={item.productId || undefined}
-                            onValueChange={(prodId) => {
-                              const prod = products.find(p => p.id === prodId)
-                              if (prod) {
-                                setItems(prev => prev.map((it, i) => i === idx ? {
-                                  ...it,
-                                  productId: prod.id,
-                                  productName: prod.name,
-                                } : it))
-                              }
-                            }}
-                          >
-                            <SelectTrigger className="w-full border-red-300 dark:border-red-800">
-                              <SelectValue placeholder={`${t('selectProduct')}...`} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {products.map((p) => (
-                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        unmatchedPicker(item, idx)
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -578,7 +633,7 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
       )}
 
       {/* Actions */}
-      <div className="flex justify-end gap-2 border-t pt-4">
+      <FormFooter>
         <Button
           type="button"
           variant="outline"
@@ -593,7 +648,7 @@ export function PurchaseOrderForm({ suppliers, products, cashboxes = [], lang, a
         >
           {isSubmitting ? tCommon('loading') : tCommon('save')}
         </Button>
-      </div>
+      </FormFooter>
     </form>
   )
 }

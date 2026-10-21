@@ -14,6 +14,7 @@ import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { MobileCard, MobileCardList } from '@/components/shared/mobile-list'
 import {
   Dialog,
   DialogContent,
@@ -111,22 +112,22 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
   return (
     <div className="space-y-6">
       <Card className="border-0 shadow-sm">
-        <CardContent className="space-y-6 p-6">
+        <CardContent className="space-y-6 p-4 md:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400">
                 <Factory className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <div className="min-w-0">
+                <p className="break-words text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {order.product?.name ?? '—'}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="break-words text-sm text-muted-foreground">
                   {formatNumber(Number(order.quantity))} {order.product?.unit} · {order.order_number}
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 md:w-auto [&_[data-slot=button]]:max-md:h-10">
               <StatusBadge tone={STATUS_TONE[order.status as keyof typeof STATUS_TONE] ?? 'slate'} label={t(`status_${order.status}`)} />
               {canEdit && isDraft && (
                 <>
@@ -201,7 +202,46 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
           <div className="border-b p-4">
             <h2 className="font-semibold text-slate-800 dark:text-slate-200">{t('components')}</h2>
           </div>
-          <div className="overflow-x-auto">
+          <MobileCardList className="p-3" isEmpty={items.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tCommon('noData')}</p>}>
+            {items.map((item) => {
+              const service = isService(item.component)
+              const available = Number(item.component?.stock) || 0
+              const short = !service && available < Number(item.quantity)
+              const unitCost = isCompleted ? Number(item.unit_cost) || 0 : Number(item.component?.cost_price) || 0
+              return (
+                <MobileCard
+                  key={item.id}
+                  title={item.component?.name ?? '—'}
+                  subtitle={`${formatNumber(Number(item.quantity))} ${item.component?.unit ?? ''}`}
+                  status={
+                    item.is_extra ? (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                        {t('extraMaterialShort')}
+                      </span>
+                    ) : undefined
+                  }
+                  stats={[
+                    ...(isDraft
+                      ? [
+                          {
+                            label: t('available'),
+                            value: service ? '—' : formatNumber(available),
+                            tone: short ? ('bad' as const) : ('default' as const),
+                          },
+                        ]
+                      : []),
+                    { label: t('unitCost'), value: formatCurrency(unitCost) },
+                    {
+                      label: tCommon('total'),
+                      value: formatCurrency(isCompleted ? Number(item.total_cost) || 0 : unitCost * Number(item.quantity)),
+                      tone: 'brand' as const,
+                    },
+                  ]}
+                />
+              )
+            })}
+          </MobileCardList>
+          <div className="max-md:hidden overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
@@ -319,13 +359,13 @@ function Field({
   accent?: boolean
 }) {
   return (
-    <div className="space-y-1">
-      <span className="block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+    <div className="min-w-0 space-y-1">
+      <span className="block break-words text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {label}
         {hint && <span className="ml-1 normal-case text-slate-400 dark:text-slate-500">· {hint}</span>}
       </span>
       <span
-        className={`text-sm font-semibold tabular-nums ${
+        className={`break-words text-sm font-semibold tabular-nums ${
           accent ? 'text-violet-600 dark:text-violet-400' : 'text-slate-900 dark:text-slate-100'
         }`}
       >

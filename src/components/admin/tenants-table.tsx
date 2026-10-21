@@ -18,6 +18,7 @@ import {
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { formatPhoneInput } from '@/lib/tenant-auth'
 import { cn } from '@/lib/utils'
+import { MobileCard, MobileCardList, MobileChip } from '@/components/shared/mobile-list'
 
 export interface TenantRow {
   id: string
@@ -89,8 +90,8 @@ export function TenantsTable({
   return (
     <div className="rounded-xl border-0 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-slate-900">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 dark:border-slate-800">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full max-w-xs">
+        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
+          <div className="relative w-full md:max-w-xs md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder={t('searchPlaceholder')}
@@ -102,7 +103,7 @@ export function TenantsTable({
               className="pl-9"
             />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="-mx-1 flex max-w-full items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] max-md:w-full">
             {statusFilters.map((f) => (
               <button
                 key={f.value}
@@ -112,7 +113,7 @@ export function TenantsTable({
                   setCurrentPage(1)
                 }}
                 className={cn(
-                  'px-3 py-1.5 text-xs font-semibold rounded-full border transition-colors',
+                  'shrink-0 whitespace-nowrap px-3 py-2 md:py-1.5 text-xs font-semibold rounded-full border transition-colors',
                   statusFilter === f.value
                     ? 'bg-violet-600 border-violet-600 text-white'
                     : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'
@@ -123,17 +124,45 @@ export function TenantsTable({
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-3 md:w-auto">
           <span className="hidden sm:inline text-xs text-slate-400 dark:text-slate-500 font-medium whitespace-nowrap">
             {t('showing', { start: startItem, end: endItem, total: filtered.length })}
           </span>
-          <Button onClick={() => router.push('/admin/tenants/new')} className="gap-2 bg-violet-600 hover:bg-violet-500">
+          <Button onClick={() => router.push('/admin/tenants/new')} className="h-11 w-full gap-2 bg-violet-600 hover:bg-violet-500 md:h-auto md:w-auto">
             <Plus className="h-4 w-4" /> {t('newTenant')}
           </Button>
         </div>
       </div>
 
-      <Table>
+      <MobileCardList
+        className="p-3"
+        isEmpty={paginated.length === 0}
+        empty={<p className="py-10 text-center text-sm text-slate-400 dark:text-slate-500">{t('empty')}</p>}
+      >
+        {paginated.map((tenant) => (
+          <MobileCard
+            key={tenant.id}
+            onClick={() => router.push(`/admin/tenants/${tenant.id}`)}
+            eyebrow={
+              <>
+                <MobileChip>{tenant.subdomain}</MobileChip>
+                {unregistered.has(tenant.subdomain) && (
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-500" aria-label={t('domainNotServed')} />
+                )}
+              </>
+            }
+            title={tenant.company_name}
+            subtitle={formatPhoneInput(tenant.phone)}
+            status={<StatusBadge label={t(`status${capitalize(tenant.status)}`)} tone={STATUS_TONE[tenant.status]} />}
+            stats={[
+              { label: t('colSubscriptionEnds'), value: tenant.subscription_ends_at ? formatDate(tenant.subscription_ends_at) : '—' },
+              { label: t('colPricePaid'), value: tenant.price_paid != null ? formatCurrency(tenant.price_paid) : '—', tone: 'brand' },
+            ]}
+          />
+        ))}
+      </MobileCardList>
+
+      <Table containerClassName="max-md:hidden">
         <TableHeader>
           <TableRow>
             <TableHead className="w-10 text-center">#</TableHead>

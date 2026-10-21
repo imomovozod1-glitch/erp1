@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatPhoneInput } from '@/lib/tenant-auth'
+import { MobileCard, MobileCardList, MobileChip } from '@/components/shared/mobile-list'
 
 export interface SupportAgentRow {
   id: string
@@ -44,7 +45,7 @@ export function SupportAgentsTable({ agents }: { agents: SupportAgentRow[] }) {
   return (
     <div className="rounded-xl border-0 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-slate-900">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 dark:border-slate-800">
-        <div className="relative w-full max-w-xs">
+        <div className="relative w-full md:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder={t('searchPlaceholder')}
@@ -56,12 +57,41 @@ export function SupportAgentsTable({ agents }: { agents: SupportAgentRow[] }) {
             className="pl-9"
           />
         </div>
-        <Button onClick={() => router.push('/admin/support/new')} className="gap-2 bg-violet-600 hover:bg-violet-500">
+        <Button onClick={() => router.push('/admin/support/new')} className="h-11 w-full gap-2 bg-violet-600 hover:bg-violet-500 md:h-auto md:w-auto">
           <Plus className="h-4 w-4" /> {t('newAgent')}
         </Button>
       </div>
 
-      <Table>
+      <MobileCardList
+        className="p-3"
+        isEmpty={paginated.length === 0}
+        empty={<p className="py-10 text-center text-sm text-slate-400 dark:text-slate-500">{t('empty')}</p>}
+      >
+        {paginated.map((agent) => (
+          <MobileCard
+            key={agent.id}
+            onClick={() => router.push(`/admin/support/${agent.id}`)}
+            title={agent.full_name}
+            subtitle={formatPhoneInput(agent.phone)}
+            footer={
+              <div className="space-y-1.5">
+                <p className="text-[11px] text-muted-foreground">{t('colAssignedTenants')}</p>
+                {agent.tenants.length === 0 ? (
+                  <span className="text-sm text-slate-400 dark:text-slate-500">{t('noneAssigned')}</span>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {agent.tenants.map((tenant) => (
+                      <MobileChip key={tenant.id}>{tenant.company_name}</MobileChip>
+                    ))}
+                  </div>
+                )}
+              </div>
+            }
+          />
+        ))}
+      </MobileCardList>
+
+      <Table containerClassName="max-md:hidden">
         <TableHeader>
           <TableRow>
             <TableHead className="w-10 text-center">#</TableHead>

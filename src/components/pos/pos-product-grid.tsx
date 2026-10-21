@@ -35,6 +35,7 @@ export function PosProductGrid({
   onCategoryChange,
   onSelect,
   inputRef,
+  quantities,
 }: {
   /** Already filtered by search and category. */
   products: any[]
@@ -47,6 +48,8 @@ export function PosProductGrid({
   onCategoryChange: (value: string) => void
   onSelect: (product: any) => void
   inputRef: React.RefObject<HTMLInputElement | null>
+  /** product id → quantity already in the basket (tiles show it). */
+  quantities: Map<string, number>
 }) {
   const tCommon = useTranslations('common')
   const tInventory = useTranslations('inventory')
@@ -134,7 +137,7 @@ export function PosProductGrid({
              secondary text and only speaks up (in one colour) when it is
              actually running out. */
           <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:gap-3 xl:grid-cols-4">
               {visibleProducts.map((p) => {
                 // A service has no shelf to be empty, so it is never out of
                 // stock and never low — its tile says what it is instead of a
@@ -142,6 +145,7 @@ export function PosProductGrid({
                 const service = isService(p)
                 const isOutOfStock = !service && p.stock <= 0
                 const isLowStock = !service && p.stock > 0 && p.stock <= p.min_stock
+                const inCart = quantities.get(p.id) ?? 0
                 // An out-of-stock tile stays legible rather than being faded
                 // to 45%: the cashier still has to read the name and price of
                 // the thing they cannot sell, and a wholly dimmed tile reads
@@ -153,7 +157,7 @@ export function PosProductGrid({
                     type="button"
                     disabled={isOutOfStock}
                     onClick={() => onSelect(p)}
-                    className="group flex select-none flex-col overflow-hidden rounded-2xl border border-border/60 bg-card text-left shadow-sm transition-all duration-150 hover:border-violet-300 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none active:scale-[0.98] disabled:pointer-events-none dark:hover:border-violet-600"
+                    className={`group relative flex select-none flex-col overflow-hidden rounded-2xl border bg-card text-left shadow-sm transition-all duration-150 hover:border-violet-300 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none active:scale-[0.98] disabled:pointer-events-none dark:hover:border-violet-600 ${inCart > 0 ? 'border-violet-500 ring-2 ring-violet-500/25' : 'border-border/60'}`}
                   >
                     {/* Photo band — square, with the stock on a pill over its corner and the
                         "+" that adds it (the app design's till). `object-contain`, not `cover`,
@@ -189,6 +193,11 @@ export function PosProductGrid({
                           ? t('outOfStock')
                           : `${p.stock} ${p.unit || tCommon('pieces')}`}
                       </span>
+                      {inCart > 0 && (
+                        <span className="absolute top-2.5 right-2.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-violet-700 px-1.5 text-[11px] font-bold tabular-nums text-white shadow-brand dark:bg-violet-500">
+                          {inCart}
+                        </span>
+                      )}
                       {!isOutOfStock && (
                         <span className="absolute right-2.5 bottom-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-brand-gradient text-white shadow-brand transition-transform group-hover:scale-110">
                           <Plus className="h-4 w-4" />

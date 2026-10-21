@@ -12,6 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
+import { MobileCardList } from '@/components/shared/mobile-list'
 
 export interface ReportColumn<T> {
   key: string
@@ -69,16 +71,20 @@ export function ReportTable<T>({
   // sitting on page 5 would otherwise render an empty table.
   const currentPage = Math.min(page, totalPages)
   const pageRows = visible.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  // On a phone: up to five columns read fine as cards; wider reports stay a
+  // table that scrolls sideways inside this rounded card, first column pinned.
+  const asCards = columns.length <= 5
+  const [first, ...rest] = columns
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white md:rounded-xl dark:border-slate-800 dark:bg-slate-900">
       {(title || searchable) && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800">
           {title && (
             <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{title}</h2>
           )}
           {searchable && (
-            <div className="relative w-full max-w-xs">
+            <div className="relative w-full md:max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 value={query}
@@ -87,20 +93,60 @@ export function ReportTable<T>({
                   setPage(1)
                 }}
                 placeholder={searchPlaceholder ?? `${tc('search')}...`}
-                className="h-9 pl-9 text-sm"
+                className="h-10 pl-9 text-sm md:h-9"
               />
             </div>
           )}
         </div>
       )}
 
-      <Table>
+      {asCards && first && (
+        <MobileCardList
+          className="p-3"
+          isEmpty={pageRows.length === 0}
+          empty={
+            <div className="py-10 text-center">
+              <Inbox className="mx-auto mb-2 h-8 w-8 text-slate-300 dark:text-slate-700" />
+              <span className="text-sm text-slate-400 dark:text-slate-500">{tc('noData')}</span>
+            </div>
+          }
+        >
+          {pageRows.map((row, index) => (
+            <article
+              key={rowKey(row, index)}
+              className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm"
+            >
+              <div className="min-w-0 font-semibold leading-snug break-words">
+                {first.render(row, (currentPage - 1) * pageSize + index)}
+              </div>
+              {rest.length > 0 && (
+                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border/60 pt-3">
+                  {rest.map((col) => (
+                    <div key={col.key} className="min-w-0">
+                      <dt className="truncate text-[11px] text-muted-foreground">{col.header}</dt>
+                      <dd className="text-sm font-semibold tabular-nums break-words">
+                        {col.render(row, (currentPage - 1) * pageSize + index)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </article>
+          ))}
+        </MobileCardList>
+      )}
+
+      <Table containerClassName={asCards ? 'max-md:hidden' : undefined}>
         <TableHeader>
           <TableRow>
-            {columns.map((col) => (
+            {columns.map((col, ci) => (
               <TableHead
                 key={col.key}
-                className={`${col.align === 'right' ? 'text-right' : ''} ${col.className ?? ''}`}
+                className={cn(
+                  col.align === 'right' && 'text-right',
+                  col.className,
+                  ci === 0 && 'max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-white max-md:dark:bg-slate-900'
+                )}
               >
                 {col.header}
               </TableHead>
@@ -118,10 +164,14 @@ export function ReportTable<T>({
           ) : (
             pageRows.map((row, index) => (
               <TableRow key={rowKey(row, index)}>
-                {columns.map((col) => (
+                {columns.map((col, ci) => (
                   <TableCell
                     key={col.key}
-                    className={`${col.align === 'right' ? 'text-right tabular-nums' : ''} ${col.className ?? ''}`}
+                    className={cn(
+                      col.align === 'right' && 'text-right tabular-nums',
+                      col.className,
+                      ci === 0 && 'max-md:sticky max-md:left-0 max-md:z-10 max-md:bg-white max-md:dark:bg-slate-900'
+                    )}
                   >
                     {col.render(row, (currentPage - 1) * pageSize + index)}
                   </TableCell>
@@ -140,7 +190,7 @@ export function ReportTable<T>({
             type="button"
             onClick={() => setPage(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="inline-flex h-10 w-10 md:h-8 md:w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -151,7 +201,7 @@ export function ReportTable<T>({
             type="button"
             onClick={() => setPage(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
+            className="inline-flex h-10 w-10 md:h-8 md:w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
