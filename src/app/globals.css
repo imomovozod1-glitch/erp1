@@ -574,3 +574,10 @@
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
 }
+
+/* Landing: the module tiles of the hero window pop in one after another. */
+.lp-pop { animation: lp-pop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes lp-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.85); }
+  to { opacity: 1; transform: none; }
+}

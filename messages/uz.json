@@ -2710,13 +2710,9 @@
     "heroSubtitle": "Falco — ombor, savdo, kassa, xaridlar, moliya va xodimlarni bir joyda boshqaradigan bulutli ERP. Qog'oz va Excel jadvallar o'rniga — aniq raqamlar, real vaqtda.",
     "ctaLogin": "Tizimga kirish",
     "heroPointLanguages": "3 tilda: o'zbek, rus, ingliz",
-    "heroPointMobile": "Android va iOS ilova",
+    "heroPointMobile": "{platforms, select, both {Android va iOS ilova} android {Android ilova} ios {iOS ilova} other {Telefondan ham ishlaydi}}",
     "heroPointCloud": "O'rnatish shart emas — bulutda",
     "previewTitle": "Boshqaruv paneli",
-    "previewRevenue": "Daromad",
-    "previewOrders": "Sotuvlar",
-    "previewStock": "Kam zaxira",
-    "previewChart": "Haftalik savdo",
     "modulesTitle": "Kerakli hamma narsa — bir joyda",
     "modulesSubtitle": "Har bir bo'lim boshqalari bilan bog'langan: sotuv omborni kamaytiradi, kassaga tushadi va hisobotda darhol ko'rinadi.",
     "modules": {
@@ -2765,8 +2761,8 @@
         "desc": "Har bir xodim o'ziga qulay tilda ishlaydi — o'zbek, rus yoki ingliz."
       },
       "mobile": {
-        "title": "Mobil ilova",
-        "desc": "Telefon va planshetdan kassa, ombor va hisobotlar bilan ishlang."
+        "title": "Telefon va planshetda",
+        "desc": "Kassa, ombor va hisobotlar bilan istalgan qurilmadan ishlang."
       },
       "telegram": {
         "title": "Telegram bildirishnomalar",
@@ -2815,7 +2811,7 @@
     "footerRights": "Barcha huquqlar himoyalangan.",
     "statModules": "modul — bitta tizimda",
     "statLanguages": "til: UZ · RU · EN",
-    "statDevices": "Android, iOS va veb",
+    "statDevices": "{platforms, select, both {Veb, Android va iOS} android {Veb va Android ilova} ios {Veb va iOS ilova} other {Kompyuter va telefonda}}",
     "navStart": "Boshlash",
     "formEyebrow": "Boshlash",
     "formTitle": "Ariza qoldiring",
@@ -2912,7 +2908,7 @@
       },
       "mobile": {
         "q": "Telefondan ishlaydimi?",
-        "a": "Ha. Falco brauzerda ishlaydi, shuningdek Android va iOS ilovasi bor."
+        "a": "{platforms, select, both {Ha. Falco telefon brauzerida ham ishlaydi, shuningdek Android va iOS ilovasi bor.} android {Ha. Falco telefon brauzerida ham ishlaydi, shuningdek Android ilovasi bor.} ios {Ha. Falco telefon brauzerida ham ishlaydi, shuningdek iOS ilovasi bor.} other {Ha. Falco telefon va planshet brauzerida ham ishlaydi.}}"
       },
       "roles": {
         "q": "Xodimlarimga turli huquq bersam bo'ladimi?",
@@ -2930,6 +2926,10 @@
         "q": "Qanday boshlayman?",
         "a": "Ariza qoldiring. Biz siz bilan bog'lanib, kompaniyangiz uchun alohida manzil va hisoblarni ochamiz."
       }
-    }
+    },
+    "chipApp": "{platforms, select, both {Android va iOS ilova} android {Android ilova} ios {iOS ilova} other {Telefonda ham}}",
+    "chipLanguages": "3 tilda",
+    "appDownloadAndroid": "Android uchun yuklab olish",
+    "appDownloadIos": "iOS uchun yuklab olish"
   }
 }
