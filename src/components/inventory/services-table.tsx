@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { invalidateProducts } from "@/lib/data/revalidate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from "@/components/shared/mobile-list";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
   DropdownMenu,
@@ -135,11 +136,51 @@ export function ServicesTable({
   // No client-side filtering or slicing: `services` IS the current page.
   const paginated = services;
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (service: any) => (
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <DropdownMenuTrigger
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </DropdownMenuTrigger>
+              }
+            />
+            <TooltipContent side="left">
+              <p>{t("common.actions")}</p>
+            </TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem render={<Link href={`/${lang}/inventory/services/${service.id}/edit`} prefetch={true} />}>
+              <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleToggleStatus(service.id, service.is_active)}
+              disabled={isUpdatingStatus === service.id}
+            >
+              <Power className="mr-2 h-3.5 w-3.5" />{" "}
+              {service.is_active ? t("common.inactive") : t("common.active")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleDelete(service.id)}
+              disabled={isDeleting === service.id}
+              className="text-red-600 focus:text-red-600 focus:bg-red-50"
+            >
+              <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("common.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+  );
+
   return (
     <TooltipProvider>
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
             <div className="flex flex-wrap items-center gap-3">
               <TableSearch />
               <TableFilterChips
@@ -162,12 +203,12 @@ export function ServicesTable({
                 className="h-9 gap-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium text-xs rounded-lg"
               >
                 <Download className="h-4 w-4" />
-                {t("common.export")}
+                <span className="max-md:hidden">{t("common.export")}</span>
               </Button>
             </div>
           </div>
 
-          <Table>
+          <Table containerClassName="max-md:hidden">
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                 <TableHead className="w-10 font-semibold text-center">#</TableHead>
@@ -265,42 +306,7 @@ export function ServicesTable({
                         />
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <DropdownMenuTrigger
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </DropdownMenuTrigger>
-                              }
-                            />
-                            <TooltipContent side="left">
-                              <p>{t("common.actions")}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem render={<Link href={editHref} prefetch={true} />}>
-                              <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleToggleStatus(service.id, service.is_active)}
-                              disabled={isUpdatingStatus === service.id}
-                            >
-                              <Power className="mr-2 h-3.5 w-3.5" />{" "}
-                              {service.is_active ? t("common.inactive") : t("common.active")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(service.id)}
-                              disabled={isDeleting === service.id}
-                              className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                            >
-                              <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("common.delete")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {renderActions(service)}
                       </TableCell>
                     </TableRow>
                   );
@@ -308,6 +314,53 @@ export function ServicesTable({
               )}
             </TableBody>
           </Table>
+          {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+          <MobileCardList
+            isEmpty={paginated.length === 0}
+            empty={
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <Wrench className="h-8 w-8 opacity-40" />
+                <p className="text-sm">{t("common.noData")}</p>
+              </div>
+            }
+          >
+            {paginated.map((service) => {
+              const price = Number(service.price) || 0;
+              const cost = Number(service.cost_price) || 0;
+              const margin = price > 0 ? ((price - cost) / price) * 100 : null;
+              return (
+                <MobileCard
+                  key={service.id}
+                  onClick={() => router.push(`/${lang}/inventory/services/${service.id}/edit`)}
+                  leading={<MobileThumb fallback={<Wrench />} />}
+                  eyebrow={
+                    <>
+                      <MobileChip>{service.sku}</MobileChip>
+                      {service.categories?.name && <span className="truncate">{service.categories.name}</span>}
+                    </>
+                  }
+                  title={service.name}
+                  subtitle={service.description || undefined}
+                  status={
+                    <StatusBadge
+                      tone={service.is_active ? "emerald" : "slate"}
+                      label={service.is_active ? t("common.active") : t("common.inactive")}
+                    />
+                  }
+                  menu={renderActions(service)}
+                  stats={[
+                    { label: t("inventory.price"), value: formatCurrency(price), tone: "brand" },
+                    { label: t("inventory.costPrice"), value: formatCurrency(cost) },
+                    {
+                      label: t("inventory.margin"),
+                      value: margin === null ? "—" : `${margin.toFixed(1)}%`,
+                      tone: margin === null ? "default" : margin >= 0 ? "good" : "bad",
+                    },
+                  ]}
+                />
+              );
+            })}
+          </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
         </CardContent>
       </Card>

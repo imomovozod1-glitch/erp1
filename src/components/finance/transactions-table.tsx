@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { DollarSign, MoreHorizontal } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, DollarSign, MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { useRouter } from 'next/navigation'
 
@@ -45,15 +46,29 @@ export function TransactionsTable({
   // No client-side filtering or slicing: `transactions` IS the current page.
   const paginated = transactions
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (tx: any) => (
+                <DropdownMenu>
+                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}>
+                      {tCommon('edit')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+  )
+
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
           <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
           </div>
         </div>
-        <Table>
+        <Table containerClassName="max-md:hidden">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
@@ -105,16 +120,7 @@ export function TransactionsTable({
                         {tx.assignee?.full_name || tCommon('unassigned')}
                       </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}>
-                          {tCommon('edit')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {renderActions(tx)}
                   </TableCell>
                 </TableRow>
               ))
@@ -143,6 +149,52 @@ export function TransactionsTable({
             </TableFooter>
           )}
         </Table>
+        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+        <MobileCardList
+          isEmpty={paginated.length === 0}
+          empty={
+            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+              <DollarSign className="h-8 w-8 opacity-40" />
+              <p className="text-sm">{tCommon('noData')}</p>
+            </div>
+          }
+        >
+          {paginated.map((tx) => {
+            const isIncome = tx.type === 'income'
+            return (
+              <MobileCard
+                key={tx.id}
+                onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
+                leading={<MobileThumb fallback={isIncome ? <ArrowDownLeft /> : <ArrowUpRight />} />}
+                eyebrow={
+                  <>
+                    {tx.category && <MobileChip>{tx.category}</MobileChip>}
+                    <span className="truncate">{formatDateTime(tx.created_at)}</span>
+                  </>
+                }
+                title={tx.description || tx.category || '—'}
+                subtitle={tx.assignee?.full_name || tCommon('unassigned')}
+                menu={renderActions(tx)}
+                stats={[
+                  {
+                    label: isIncome ? t('incomeType') : t('expenseType'),
+                    value: formatCurrency(tx.amount),
+                    tone: isIncome ? 'good' : 'bad',
+                  },
+                ]}
+              />
+            )
+          })}
+          {total > 0 && (
+            <MobileCard
+              title={tCommon('total')}
+              stats={[
+                { label: t('incomeType'), value: formatCurrency(totalIncome), tone: 'good' },
+                { label: t('expenseType'), value: formatCurrency(totalExpense), tone: 'bad' },
+              ]}
+            />
+          )}
+        </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>

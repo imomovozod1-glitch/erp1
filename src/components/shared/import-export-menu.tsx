@@ -117,10 +117,11 @@ export function ImportExportMenu({ data, fetchAllRows, exportColumns, templateCo
         size="sm"
         onClick={handleExport}
         disabled={data.length === 0}
-        className="h-7 gap-1.5 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium rounded-xl"
+        className="h-7 gap-1.5 max-md:h-9 max-md:w-9 max-md:px-0 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium rounded-xl"
       >
         <Download className="h-3.5 w-3.5" />
-        {t('export')}
+        {/* Phones: icon only — three toolbar buttons with words do not fit one row. */}
+        <span className="max-md:sr-only">{t('export')}</span>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -130,12 +131,12 @@ export function ImportExportMenu({ data, fetchAllRows, exportColumns, templateCo
               variant="outline"
               size="sm"
               disabled={isImporting}
-              className="h-7 gap-1.5 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300 text-xs font-medium rounded-xl"
+              className="h-7 gap-1.5 max-md:h-9 max-md:w-9 max-md:px-0 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 hover:text-emerald-800 dark:hover:text-emerald-300 text-xs font-medium rounded-xl"
             />
           }
         >
           <Upload className="h-3.5 w-3.5" />
-          {t('import')}
+          <span className="max-md:sr-only">{t('import')}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-900 rounded-lg shadow-md border p-1">
           <DropdownMenuItem

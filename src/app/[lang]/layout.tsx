@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Manrope } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { Toaster } from '@/components/ui/sonner'
@@ -16,9 +16,9 @@ export function generateStaticParams() {
 }
 
 
-const inter = Inter({
+const appFont = Manrope({
   subsets: ['latin', 'cyrillic'],
-  variable: '--font-inter',
+  variable: '--font-app',
 })
 
 export const metadata: Metadata = {
@@ -35,6 +35,12 @@ export const metadata: Metadata = {
 // safe-area-inset-* is 0 and the fixed header sits under the notch.
 export const viewport: Viewport = {
   viewportFit: 'cover',
+  // The page colours of the design system (--background), per OS scheme; the
+  // ThemeProvider keeps them in step with the in-app choice.
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#faf8ff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0c0818' },
+  ],
 }
 
 export default async function RootLayout({
@@ -63,7 +69,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${appFont.variable} font-sans antialiased`}>
         <ThemeProvider>
           <CapacitorProvider />
           <NextIntlClientProvider messages={messages}>

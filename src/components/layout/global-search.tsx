@@ -339,7 +339,7 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center gap-2.5 h-10 w-64 lg:w-80 xl:w-96 min-w-0 shrink rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3.5 text-left text-sm text-slate-500 dark:text-slate-400 transition-colors hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800"
+        className="hidden md:order-first md:flex items-center gap-2.5 h-10 w-64 lg:w-80 xl:w-96 min-w-0 shrink rounded-xl border border-border bg-card px-3.5 text-left text-sm text-muted-foreground shadow-2xs transition-colors hover:border-violet-300 hover:bg-violet-50/50 dark:hover:border-violet-700 dark:hover:bg-violet-950/30"
       >
         <Search className="h-4 w-4 shrink-0" />
         <span className="min-w-0 flex-1 truncate">{tCommon('searchPlaceholder')}</span>
@@ -351,7 +351,7 @@ export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchPr
         type="button"
         onClick={() => setOpen(true)}
         aria-label={tCommon('search')}
-        className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+        className="md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/15"
       >
         <Search className="h-4 w-4" />
       </button>

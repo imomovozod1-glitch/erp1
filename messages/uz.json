@@ -168,7 +168,9 @@
     },
     "overdue": "Muddati o'tgan",
     "platform": "Platforma",
-    "support": "Qo'llab-quvvatlash"
+    "support": "Qo'llab-quvvatlash",
+    "more": "Yana",
+    "dashboardShort": "Boshqaruv"
   },
   "auth": {
     "loading": "Kirilmoqda...",
@@ -450,7 +452,8 @@
       "name": "O'lchov birligi nomi",
       "placeholder": "Masalan: Juft, Quti",
       "total": "Jami o'lchov birliklari"
-    }
+    },
+    "stockLow": "Kam qolgan"
   },
   "production": {
     "title": "Sanoat",

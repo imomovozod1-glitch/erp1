@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { invalidateCategories } from '@/lib/data/revalidate'
 import { Card, CardContent } from '@/components/ui/card'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
+import { MobileCard, MobileCardList, MobileThumb } from '@/components/shared/mobile-list'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent,
@@ -52,16 +53,39 @@ export function CategoriesTable({ categories, lang, page, pageSize, total, total
     setIsDeleting(null)
   }
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (category: any) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
+              <MoreHorizontal className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem
+                render={<Link href={`/${lang}/inventory/categories/${category.id}/edit`} prefetch={true} />}
+              >
+                <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDelete(category.id)}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
+                disabled={isDeleting === category.id}
+              >
+                <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+  )
+
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
           <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
           </div>
         </div>
 
-        <Table>
+        <Table containerClassName="max-md:hidden">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
@@ -105,31 +129,34 @@ export function CategoriesTable({ categories, lang, page, pageSize, total, total
                       </span>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            render={<Link href={`/${lang}/inventory/categories/${category.id}/edit`} prefetch={true} />}
-                          >
-                            <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(category.id)}
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
-                            disabled={isDeleting === category.id}
-                          >
-                            <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {renderActions(category)}
                     </TableCell>
                   </TableRow>
               ))
             )}
           </TableBody>
         </Table>
+        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+        <MobileCardList
+          isEmpty={categories.length === 0}
+          empty={
+            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+              <FolderTree className="h-8 w-8 opacity-40" />
+              <p className="text-sm">{tCommon('noData')}</p>
+            </div>
+          }
+        >
+          {categories.map((category) => (
+            <MobileCard
+              key={category.id}
+              onClick={() => router.push(`/${lang}/inventory/categories/${category.id}/edit`)}
+              leading={<MobileThumb fallback={<FolderTree />} />}
+              title={category.name}
+              subtitle={category.description || category.slug}
+              menu={renderActions(category)}
+            />
+          ))}
+        </MobileCardList>
         <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
       {confirmDialog}

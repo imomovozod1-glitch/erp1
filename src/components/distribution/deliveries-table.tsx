@@ -13,6 +13,7 @@ import { setDeliveryStatus, distributionErrorMessage } from '@/lib/distribution-
 import { businessRpcErrorMessage } from '@/lib/business-rpc'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { Card, CardContent } from '@/components/ui/card'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import {
   DropdownMenu,
@@ -114,109 +115,13 @@ export function DeliveriesTable({
     setBusyId(null)
   }
 
-  return (
-    <TooltipProvider>
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
-            <TableSearch />
-            <TableFilterChips
-              param="status"
-              value={status}
-              options={[
-                { value: 'all', label: t('common.all') },
-                { value: 'pending', label: t('distribution.status_pending') },
-                { value: 'in_transit', label: t('distribution.status_in_transit') },
-                { value: 'delivered', label: t('distribution.status_delivered') },
-                { value: 'cancelled', label: t('distribution.status_cancelled') },
-              ]}
-            />
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-                <TableHead className="w-10 text-center font-semibold">#</TableHead>
-                <TableHead className="font-semibold">{t('distribution.deliveryNumber')}</TableHead>
-                <TableHead>{t('distribution.customer')}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('distribution.order')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('distribution.courier')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('distribution.plannedDate')}</TableHead>
-                <TableHead className="hidden lg:table-cell text-right tabular-nums">{t('common.total')}</TableHead>
-                <TableHead>{t('common.status')}</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {deliveries.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Truck className="h-8 w-8 opacity-40" />
-                      <p className="text-sm">{t('common.noData')}</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                deliveries.map((delivery, index) => {
-                  const detailHref = `/${lang}/distribution/deliveries/${delivery.id}`
-                  const isPending = delivery.status === 'pending'
-                  const isInTransit = delivery.status === 'in_transit'
-                  const isOpen = isPending || isInTransit
-                  return (
-                    <TableRow
-                      key={delivery.id}
-                      className="cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/80"
-                      onClick={() => router.push(detailHref)}
-                    >
-                      <TableCell className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {(page - 1) * pageSize + index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <Link
-                          href={detailHref}
-                          className="font-semibold text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
-                        >
-                          {delivery.delivery_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p>{delivery.customer?.name ?? '—'}</p>
-                          {delivery.address && (
-                            <p className="max-w-50 truncate text-xs text-muted-foreground">{delivery.address}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {delivery.order ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{delivery.order.order_number}</span>
-                            <StatusBadge
-                              tone={orderStatusTone(delivery.order.status)}
-                              label={t(`sales.status.${delivery.order.status}`)}
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">{t('distribution.noOrderLink')}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {delivery.agent?.full_name || t('common.unassigned')}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {delivery.planned_date ? formatDate(delivery.planned_date) : '—'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-right tabular-nums">
-                        {delivery.order ? formatCurrency(Number(delivery.order.total_amount) || 0) : '—'}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge
-                          tone={DELIVERY_STATUS_TONES[delivery.status as DeliveryStatus] ?? 'slate'}
-                          label={t(`distribution.status_${delivery.status}`)}
-                        />
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (delivery: any) => {
+    const detailHref = `/${lang}/distribution/deliveries/${delivery.id}`
+    const isPending = delivery.status === 'pending'
+    const isInTransit = delivery.status === 'in_transit'
+    const isOpen = isPending || isInTransit
+    return (
                         <DropdownMenu>
                           <Tooltip>
                             <TooltipTrigger
@@ -276,6 +181,110 @@ export function DeliveriesTable({
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
+    )
+  };
+
+  return (
+    <TooltipProvider>
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
+        <CardContent className="p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
+            <TableSearch />
+            <TableFilterChips
+              param="status"
+              value={status}
+              options={[
+                { value: 'all', label: t('common.all') },
+                { value: 'pending', label: t('distribution.status_pending') },
+                { value: 'in_transit', label: t('distribution.status_in_transit') },
+                { value: 'delivered', label: t('distribution.status_delivered') },
+                { value: 'cancelled', label: t('distribution.status_cancelled') },
+              ]}
+            />
+          </div>
+
+          <Table containerClassName="max-md:hidden">
+            <TableHeader>
+              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+                <TableHead className="w-10 text-center font-semibold">#</TableHead>
+                <TableHead className="font-semibold">{t('distribution.deliveryNumber')}</TableHead>
+                <TableHead>{t('distribution.customer')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('distribution.order')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('distribution.courier')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('distribution.plannedDate')}</TableHead>
+                <TableHead className="hidden lg:table-cell text-right tabular-nums">{t('common.total')}</TableHead>
+                <TableHead>{t('common.status')}</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {deliveries.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Truck className="h-8 w-8 opacity-40" />
+                      <p className="text-sm">{t('common.noData')}</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                deliveries.map((delivery, index) => {
+                  const detailHref = `/${lang}/distribution/deliveries/${delivery.id}`
+                  return (
+                    <TableRow
+                      key={delivery.id}
+                      className="cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/80"
+                      onClick={() => router.push(detailHref)}
+                    >
+                      <TableCell className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {(page - 1) * pageSize + index + 1}
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={detailHref}
+                          className="font-semibold text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
+                        >
+                          {delivery.delivery_number}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p>{delivery.customer?.name ?? '—'}</p>
+                          {delivery.address && (
+                            <p className="max-w-50 truncate text-xs text-muted-foreground">{delivery.address}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {delivery.order ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">{delivery.order.order_number}</span>
+                            <StatusBadge
+                              tone={orderStatusTone(delivery.order.status)}
+                              label={t(`sales.status.${delivery.order.status}`)}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">{t('distribution.noOrderLink')}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        {delivery.agent?.full_name || t('common.unassigned')}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        {delivery.planned_date ? formatDate(delivery.planned_date) : '—'}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-right tabular-nums">
+                        {delivery.order ? formatCurrency(Number(delivery.order.total_amount) || 0) : '—'}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          tone={DELIVERY_STATUS_TONES[delivery.status as DeliveryStatus] ?? 'slate'}
+                          label={t(`distribution.status_${delivery.status}`)}
+                        />
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {renderActions(delivery)}
                       </TableCell>
                     </TableRow>
                   )
@@ -283,6 +292,48 @@ export function DeliveriesTable({
               )}
             </TableBody>
           </Table>
+          {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+          <MobileCardList
+            isEmpty={deliveries.length === 0}
+            empty={
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <Truck className="h-8 w-8 opacity-40" />
+                <p className="text-sm">{t('common.noData')}</p>
+              </div>
+            }
+          >
+            {deliveries.map((delivery) => (
+              <MobileCard
+                key={delivery.id}
+                onClick={() => router.push(`/${lang}/distribution/deliveries/${delivery.id}`)}
+                leading={<MobileThumb fallback={<Truck />} />}
+                eyebrow={
+                  <>
+                    <MobileChip>{delivery.delivery_number}</MobileChip>
+                    {delivery.order?.order_number && <span className="truncate">{delivery.order.order_number}</span>}
+                  </>
+                }
+                title={delivery.customer?.name ?? '—'}
+                subtitle={delivery.address || undefined}
+                status={
+                  <StatusBadge
+                    tone={DELIVERY_STATUS_TONES[delivery.status as DeliveryStatus] ?? 'slate'}
+                    label={t(`distribution.status_${delivery.status}`)}
+                  />
+                }
+                menu={renderActions(delivery)}
+                stats={[
+                  {
+                    label: t('common.total'),
+                    value: delivery.order ? formatCurrency(Number(delivery.order.total_amount) || 0) : '—',
+                    tone: 'brand',
+                  },
+                  { label: t('distribution.plannedDate'), value: delivery.planned_date ? formatDate(delivery.planned_date) : '—' },
+                  { label: t('distribution.courier'), value: delivery.agent?.full_name || t('common.unassigned') },
+                ]}
+              />
+            ))}
+          </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
         </CardContent>
       </Card>

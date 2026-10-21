@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination, TableFilterSelect } from '@/components/shared/table-pagination'
 import { EmployeeImportExport } from '@/components/hr/employee-import-export'
@@ -57,11 +58,35 @@ export function EmployeesTable({
   // No client-side filtering or slicing: `employees` IS the current page.
   const paginated = employees
 
+  /** The row's actions menu, shared by the desktop table row and the phone card. */
+  const renderActions = (emp: any) => (
+                      <DropdownMenu>
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </DropdownMenuTrigger>
+                            }
+                          />
+                          <TooltipContent side="left">
+                            <p>{tCommon('actions')}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}/edit`)}>
+                            <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
+                            {tCommon('edit')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+  );
+
   return (
     <TooltipProvider>
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
         <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
           <div className="flex flex-wrap items-center gap-3">
           <TableSearch />
           <TableFilterSelect
@@ -89,7 +114,7 @@ export function EmployeesTable({
             {canExport && <EmployeeImportExport employees={employees} lang={lang} />}
           </div>
         </div>
-        <Table>
+        <Table containerClassName="max-md:hidden">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 font-semibold text-center">#</TableHead>
@@ -179,26 +204,7 @@ export function EmployeesTable({
                       />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </DropdownMenuTrigger>
-                            }
-                          />
-                          <TooltipContent side="left">
-                            <p>{tCommon('actions')}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}/edit`)}>
-                            <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                            {tCommon('edit')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {renderActions(emp)}
                     </TableCell>
                   </TableRow>
                 </React.Fragment>
@@ -206,6 +212,45 @@ export function EmployeesTable({
             )}
           </TableBody>
         </Table>
+        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+        <MobileCardList
+          isEmpty={paginated.length === 0}
+          empty={
+            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+              <Users className="h-8 w-8 opacity-40" />
+              <p className="text-sm">{tCommon('noData')}</p>
+            </div>
+          }
+        >
+          {paginated.map((emp) => (
+            <MobileCard
+              key={emp.id}
+              onClick={() => router.push(`/${lang}/hr/employees/${emp.id}`)}
+              leading={<MobileThumb fallback={<Users />} />}
+              eyebrow={
+                <>
+                  {emp.employee_code && <MobileChip>{emp.employee_code}</MobileChip>}
+                  {emp.position && <span className="truncate">{emp.position}</span>}
+                </>
+              }
+              title={emp.full_name ?? '—'}
+              subtitle={emp.profiles?.phone || undefined}
+              status={
+                <StatusBadge
+                  tone={emp.is_active ? 'emerald' : 'rose'}
+                  pulse={emp.is_active}
+                  label={emp.is_active ? t('statusEmployed') : t('statusTerminated')}
+                />
+              }
+              menu={renderActions(emp)}
+              stats={[
+                { label: t('salary'), value: formatCurrency(emp.salary), tone: 'brand' },
+                { label: t('hiredAt'), value: formatDate(emp.hired_at) },
+                { label: t('subscription'), value: emp.is_paid ? t('subscribed') : t('notSubscribed'), tone: emp.is_paid ? 'good' : 'default' },
+              ]}
+            />
+          ))}
+        </MobileCardList>
         <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>

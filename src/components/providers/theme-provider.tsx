@@ -87,6 +87,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', resolvedTheme === 'dark')
+    // The browser's own chrome (address bar, the Android task switcher) takes its
+    // colour from <meta name="theme-color">. The root layout declares one per
+    // OS scheme; once the user has picked a theme in the app that choice, not the
+    // OS's, decides — so every tag is pointed at the app's page colour.
+    const color = resolvedTheme === 'dark' ? '#0c0818' : '#faf8ff'
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute('content', color)
+      meta.removeAttribute('media')
+    })
   }, [resolvedTheme])
 
   const setTheme = useCallback((next: Theme) => {

@@ -23,7 +23,7 @@ const DOT_STYLES: Record<StatusTone, string> = {
 interface StatusBadgeProps {
   label: string
   tone: StatusTone
-  /** Small pulsing dot, reserved for "currently active/live" states (e.g. an employee who is actively employed). */
+  /** Makes the status dot pulse — reserved for "currently active/live" states (e.g. an employee who is actively employed). The dot itself is always there. */
   pulse?: boolean
   className?: string
 }
@@ -42,7 +42,7 @@ export function StatusBadge({ label, tone, pulse = false, className }: StatusBad
         className
       )}
     >
-      {pulse && <span className={cn('w-1.5 h-1.5 rounded-full', DOT_STYLES[tone], pulse && 'animate-pulse')} />}
+      <span className={cn('w-1.5 h-1.5 shrink-0 rounded-full', DOT_STYLES[tone], pulse && 'animate-pulse')} />
       {label}
     </span>
   )

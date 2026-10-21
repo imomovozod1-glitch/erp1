@@ -17,7 +17,7 @@ function Card({
         // exactly that — but `border-0` cannot cancel a ring, so those cards
         // were rendering with an outline the convention says they shouldn't
         // have. With a border it behaves as documented.
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl border border-slate-200/70 bg-card py-(--card-spacing) text-sm text-card-foreground shadow-sm transition-shadow duration-200 dark:border-slate-800 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-2xl border border-border/60 bg-card py-(--card-spacing) text-sm text-card-foreground shadow-sm transition-shadow duration-200 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl",
         // Sectioned cards — a divided header (`border-b`, own padding and
         // tint) or edge-to-edge content (`CardContent p-0`, i.e. a table) —
         // pad their own sections. The card's vertical padding and gap would
@@ -36,7 +36,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)",
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-2xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)",
         className
       )}
       {...props}

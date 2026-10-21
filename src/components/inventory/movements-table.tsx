@@ -11,6 +11,8 @@ import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow,
 } from '@/components/ui/table'
+import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
+import { StatusBadge } from '@/components/shared/status-badge'
 import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
 
 interface MovementsTableProps {
@@ -57,15 +59,15 @@ export function MovementsTable({
   }
 
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
       <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
           <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
           </div>
         </div>
 
-        <Table>
+        <Table containerClassName="max-md:hidden">
           <TableHeader>
             <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
               <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
@@ -131,6 +133,49 @@ export function MovementsTable({
             )}
           </TableBody>
         </Table>
+        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
+        <MobileCardList
+          isEmpty={paginated.length === 0}
+          empty={
+            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+              <Activity className="h-8 w-8 opacity-40" />
+              <p className="text-sm">{tCommon('noData')}</p>
+            </div>
+          }
+        >
+          {paginated.map((movement) => {
+            const tone = movement.type === 'in' ? 'good' : movement.type === 'out' ? 'bad' : 'warn'
+            return (
+              <MobileCard
+                key={movement.id}
+                onClick={movement.product_id ? () => router.push(`/${lang}/inventory/products/${movement.product_id}`) : undefined}
+                leading={<MobileThumb fallback={movement.type === 'in' ? <ArrowDownRight /> : movement.type === 'out' ? <ArrowUpRight /> : <Settings2 />} />}
+                eyebrow={
+                  <>
+                    <MobileChip>{formatDateTime(movement.created_at)}</MobileChip>
+                  </>
+                }
+                title={movement.products?.name || '—'}
+                subtitle={movement.reason ? translateMovementReason(movement.reason, t) : undefined}
+                status={
+                  <StatusBadge
+                    tone={movement.type === 'in' ? 'emerald' : movement.type === 'out' ? 'rose' : 'amber'}
+                    label={movement.type === 'in' ? t('stockIn') : movement.type === 'out' ? t('stockOut') : t('adjustment')}
+                  />
+                }
+                stats={[
+                  {
+                    label: t('quantity'),
+                    value: `${movement.type === 'in' ? '+' : movement.type === 'out' ? '-' : ''}${formatNumber(movement.quantity)}`,
+                    tone,
+                  },
+                  { label: t('before'), value: formatNumber(movement.quantity_before) },
+                  { label: t('after'), value: formatNumber(movement.quantity_after) },
+                ]}
+              />
+            )
+          })}
+        </MobileCardList>
           <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
       </CardContent>
     </Card>

@@ -17,6 +17,7 @@ import { PosReceiptDialog, type ReceiptOrder } from '@/components/pos/pos-receip
 import { PosAddCustomerDialog } from '@/components/pos/pos-add-customer-dialog'
 import { PosProductGrid } from '@/components/pos/pos-product-grid'
 import { PosCartPanel } from '@/components/pos/pos-cart-panel'
+import { PosCheckoutBar } from '@/components/pos/pos-checkout-bar'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
 import { isService } from '@/lib/product-kind'
 
@@ -490,6 +491,8 @@ export function POSClient({
           lang={lang}
         />
       </div>
+
+      <PosCheckoutBar count={cart.items.length} total={cart.total} />
 
       <PosAddCustomerDialog
         open={isAddCustomerOpen}

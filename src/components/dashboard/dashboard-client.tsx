@@ -70,37 +70,34 @@ function KpiTile({
   label,
   value,
   icon: Icon,
+  wide,
   children,
 }: {
   label: string
   value: string
   icon: LucideIcon
+  /** Spans both columns on a phone — the fifth tile would otherwise sit alone in a half-empty row. */
+  wide?: boolean
   /** The small print under the number. */
   children: React.ReactNode
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:bg-slate-900">
+    <div className={`group relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${wide ? 'max-sm:col-span-2' : ''}`}>
       <div
         aria-hidden="true"
-        className="absolute top-0 right-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-50 opacity-40 transition-transform duration-300 group-hover:scale-110 dark:bg-violet-950/40"
+        className="absolute top-0 right-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-100 opacity-60 transition-transform duration-300 group-hover:scale-110 dark:bg-violet-500/10"
       />
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 space-y-1">
-          <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
-            {label}
-          </span>
-          {/* `text-xl`, not 2xl: at five columns a tile leaves roughly 150px
-              for the number once the padding and the icon chip are taken, and a
-              nine-digit sum in 2xl ran straight out of the card. */}
-          <h3 className="text-xl font-bold tracking-tight break-words tabular-nums text-slate-900 dark:text-slate-100">
-            {value}
-          </h3>
-        </div>
-        <div className="shrink-0 rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-          <Icon className="h-5 w-5" />
-        </div>
+      <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+        <Icon className="h-5 w-5" />
       </div>
-      {children}
+      <p className="relative mt-3 text-sm font-medium text-muted-foreground">{label}</p>
+      {/* `text-lg` on a phone, where two tiles share the width and a nine-digit
+          sum must still fit; `xl` once there are five across, where it used to
+          run straight out of the card in 2xl. */}
+      <h3 className="relative mt-0.5 text-lg font-extrabold tracking-tight break-words tabular-nums text-foreground sm:text-xl">
+        {value}
+      </h3>
+      <div className="relative">{children}</div>
     </div>
   )
 }
@@ -294,9 +291,9 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
   return (
     <div className="space-y-6">
       {/* Top Bar with Period Presets */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border shadow-sm">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+      <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none sm:flex-row sm:items-center">
+        <div className="max-md:hidden">
+          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
             {t.title}
             <PageInfoButton text={tInfo('dashboard')} />
           </h1>
@@ -320,12 +317,14 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
       {agentCard}
 
       {/* Quick Action Launchpad — every "create new" page in the sidebar, one tap away */}
-      <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border shadow-sm space-y-3">
-        <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-          <Zap className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+      <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-5 shadow-sm max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none">
+        <h2 className="flex items-center gap-2 text-sm font-bold tracking-wider text-foreground uppercase max-md:text-base max-md:normal-case max-md:tracking-tight">
+          <Zap className="h-4 w-4 text-violet-600 dark:text-violet-400 max-md:hidden" />
           {t.quickActions}
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Phones: one row of square tiles that scrolls sideways, the first one
+            filled (the app design's "Tezkor amallar"). Desktop: the button grid. */}
+        <div className="flex gap-3 overflow-x-auto max-md:-mx-4 max-md:px-4 max-md:pb-1 max-md:[scrollbar-width:none] md:grid md:grid-cols-4 md:overflow-visible">
           {/* One tone for all of them. They were previously indigo / emerald /
               rose / blue / amber / slate at random — a colour per button with
               no meaning behind any of it, which is the single loudest thing on
@@ -341,15 +340,27 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
             { href: 'production/orders/new', label: tProduction('addOrder'), icon: Factory },
             { href: 'distribution/deliveries/new', label: tDistribution('addDelivery'), icon: Send },
             { href: 'hr/employees/new', label: tHr('addEmployee'), icon: UserPlus },
-          ].map((action) => {
+          ].map((action, index) => {
             const Icon = action.icon
             return (
               <Link
                 key={action.href}
                 href={`/${lang}/${action.href}`}
-                className="flex min-h-12 items-center justify-start gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-violet-700 dark:hover:bg-violet-950/30 dark:hover:text-violet-300"
+                className={
+                  'flex shrink-0 items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground/80 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:hover:border-violet-700 dark:hover:bg-violet-950/30 dark:hover:text-violet-300 ' +
+                  // Phone tile: icon over label, 84px wide, card-white.
+                  'max-md:w-[5.25rem] max-md:flex-col max-md:justify-start max-md:rounded-2xl max-md:border-0 max-md:bg-card max-md:px-2 max-md:py-3 max-md:text-center max-md:text-[11px] max-md:shadow-sm ' +
+                  (index === 0 ? 'max-md:bg-brand-gradient max-md:text-white max-md:shadow-brand' : '')
+                }
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <span
+                  className={
+                    'flex shrink-0 items-center justify-center max-md:h-10 max-md:w-10 max-md:rounded-xl ' +
+                    (index === 0 ? 'max-md:bg-white/20 max-md:text-white' : 'max-md:bg-violet-100 max-md:text-violet-700 dark:max-md:bg-violet-500/15 dark:max-md:text-violet-300')
+                  }
+                >
+                  <Icon className="h-4 w-4 shrink-0 max-md:h-5 max-md:w-5" />
+                </span>
                 <span className="leading-tight">{action.label}</span>
               </Link>
             )
@@ -358,7 +369,7 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
       </div>
 
       {/* Main KPI Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         <KpiTile label={t.sales} value={formatCurrency(metrics.revenue)} icon={ShoppingCart}>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="tabular-nums">{td('ordersCountText', { count: metrics.ordersCount })}</span>
@@ -412,6 +423,7 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
         </KpiTile>
 
         <KpiTile
+          wide
           label={td('soldOnCredit')}
           value={formatCurrency(realReceivables)}
           icon={AlertTriangle}
@@ -427,16 +439,16 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
       {/* Small Secondary Meta info row (Customers & Employees) */}
       {/* Three tiles, three columns — `md:grid-cols-4` left a visible empty
           cell at the end of the row on every desktop width. */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
           <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('customersCountText', { count: totalCustomers ?? 0 })}</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
           <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('employeesCountText', { count: totalEmployees ?? 0 })}</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 px-4 py-2.5 rounded-xl border shadow-sm flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
           <Truck className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('suppliersCountText', { count: totalSuppliers ?? 0 })}</span>
         </div>
