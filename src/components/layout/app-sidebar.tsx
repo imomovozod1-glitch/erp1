@@ -9,7 +9,7 @@ import {
   LayoutDashboard,
   Package,
   Factory,
-  Send,
+  // Send,
   ShoppingCart,
   DollarSign,
   Users,
@@ -111,13 +111,15 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'boms', href: 'production/boms' },
     ]
   },
-  {
-    key: 'distribution', icon: Send, href: 'distribution',
-    subItems: [
-      { key: 'deliveries', href: 'distribution/deliveries' },
-      { key: 'routes', href: 'distribution/routes' },
-    ]
-  },
+  // Distribution is hidden from the sidebar for now; uncomment (and the `Send`
+  // import above) to bring it back.
+  // {
+  //   key: 'distribution', icon: Send, href: 'distribution',
+  //   subItems: [
+  //     { key: 'deliveries', href: 'distribution/deliveries' },
+  //     { key: 'routes', href: 'distribution/routes' },
+  //   ]
+  // },
   { key: 'settings', icon: Settings, href: 'settings' },
   // The guide and the FAQ live in the header's help menu (app-header.tsx),
   // where they stay reachable from every page instead of being buried at the
