@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
+import { TableFilterChips, TableSearch, TablePagination } from '@/components/shared/table-pagination'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateInvoices } from '@/lib/data/revalidate'
@@ -34,6 +34,8 @@ interface InvoicesTableProps {
   pageSize: number
   total: number
   totalPages: number
+  /** The active status filter, from the URL. */
+  status: string
   /** May the caller change invoices (edit, status)? */
   canEdit: boolean
 }
@@ -134,11 +136,21 @@ export function InvoicesTable({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
           <div className="flex flex-wrap items-center gap-3">
             <TableSearch />
+            <TableFilterChips
+              param="status"
+              value={status}
+              options={[
+                { value: 'all', label: tCommon('all') },
+                { value: 'sent', label: t('status.sent') },
+                { value: 'overdue', label: t('status.overdue') },
+                { value: 'paid', label: t('status.paid') },
+                { value: 'cancelled', label: t('status.cancelled') },
+              ]}
+            />
           </div>
         </div>
 
-        <div className="overflow-x-auto max-md:hidden">
-          <Table containerClassName="max-md:hidden">
+        <Table containerClassName="max-md:hidden">
             <TableHeader>
               <TableRow className="bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                 <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
@@ -233,7 +245,6 @@ export function InvoicesTable({
               )}
           </TableBody>
         </Table>
-      </div>
         {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
         <MobileCardList
           isEmpty={paginated.length === 0}

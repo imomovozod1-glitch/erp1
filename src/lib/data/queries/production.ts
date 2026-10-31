@@ -8,7 +8,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { ilikeAny, queryPage, type PageResult } from '@/lib/data/paginate'
+import { ilikeAny, queryPage, type OwnerFilter, type PageResult } from '@/lib/data/paginate'
 import { CACHE_TAGS } from './cache-tags'
 
 const BOM_SELECT =
@@ -96,7 +96,7 @@ export function getProductionOrdersPage(
     pageSize: number
     search?: string
     status?: 'all' | 'draft' | 'completed' | 'cancelled'
-    ownerId?: string
+    ownerId?: OwnerFilter
   }
 ): Promise<PageResult<any>> {
   return queryPage({

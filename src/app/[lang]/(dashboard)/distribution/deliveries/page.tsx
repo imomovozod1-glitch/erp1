@@ -7,7 +7,7 @@ import { DeliveryStats, DeliveryAgentBreakdown } from '@/components/distribution
 import { getDeliveriesPage, getCachedDeliveryStats } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter } from '@/lib/permissions-server'
 import { DELIVERY_STATUSES, type DeliveryStatus } from '@/lib/statuses'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -26,14 +26,13 @@ export default async function DeliveriesPage({
   const [{ lang }, sp] = await Promise.all([params, searchParams])
 
   const { page, pageSize, search } = readPageParams(sp)
-  const [scope, permCtx] = await Promise.all([getDataScope('distribution'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('distribution', 'deliveries')
   const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status
   const status: 'all' | DeliveryStatus = DELIVERY_STATUSES.includes(statusParam as DeliveryStatus)
     ? (statusParam as DeliveryStatus)
     : 'all'
 
-  const canEdit = await canEditModule('distribution')
+  const canEdit = await canResource('distribution', 'deliveries', 'edit')
   const tenantId = (await getCurrentTenantId()) as string
   const [t, tInfo, result, stats] = await Promise.all([
     getTranslations('distribution'),

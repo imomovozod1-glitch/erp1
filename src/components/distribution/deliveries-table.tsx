@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { errorMessage } from '@/lib/error-message'
@@ -56,6 +57,7 @@ export function DeliveriesTable({
   status,
   canEdit,
 }: DeliveriesTableProps) {
+  const canDelete = useCan('distribution', 'delete', 'deliveries')
   const t = useTranslations()
   const router = useRouter()
   const [confirmAction, confirmDialog] = useConfirmDelete()
@@ -170,7 +172,7 @@ export function DeliveriesTable({
                                 <Ban className="mr-2 h-3.5 w-3.5" /> {t('common.cancel')}
                               </DropdownMenuItem>
                             )}
-                            {canEdit && delivery.status !== 'delivered' && (
+                            {canDelete && delivery.status !== 'delivered' && (
                               <DropdownMenuItem
                                 onClick={() => handleDelete(delivery)}
                                 disabled={busyId === delivery.id}

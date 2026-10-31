@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { ProductForm } from '@/components/inventory/product-form'
 import { Metadata } from 'next'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 import { getAssignableUsers, getCachedProductFormOptions } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
@@ -22,7 +22,7 @@ export default async function EditProductPage({
   const { lang, id } = await params
   const tenantId = (await getCurrentTenantId()) as string
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('inventory', lang, '/inventory/products')
+  await requireResourceAction('inventory', 'products', 'edit', lang, '/inventory/products')
   const supabase = await createClient()
 
   // Six awaits in a row became one batch: none of these depends on another's

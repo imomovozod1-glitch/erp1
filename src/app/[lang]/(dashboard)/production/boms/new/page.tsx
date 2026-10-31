@@ -4,7 +4,7 @@ import { BomForm } from '@/components/production/bom-form'
 import { Metadata } from 'next'
 import { getCachedProductsForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -22,7 +22,7 @@ export default async function NewBomPage({
   const [{ lang }, sp] = await Promise.all([params, searchParams])
   // Set when the form was opened from a product's own "Tarkib" card.
   const rawProduct = Array.isArray(sp.product) ? sp.product[0] : sp.product
-  await requireModuleEdit('production', lang, '/production/boms')
+  await requireResourceAction('production', 'boms', 'create', lang, '/production/boms')
   const tenantId = (await getCurrentTenantId()) as string
   const [t, tCommon, products, assignableUsers] = await Promise.all([
     getTranslations('production'),

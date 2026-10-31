@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { DeliveryForm } from '@/components/distribution/delivery-form'
 import { Metadata } from 'next'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 import {
   getAssignableUsers,
   getCachedRoutesForSelect,
@@ -25,7 +25,7 @@ export default async function EditDeliveryPage({
 }) {
   const { lang, id } = await params
   const tenantId = (await getCurrentTenantId()) as string
-  await requireModuleEdit('distribution', lang, '/distribution/deliveries')
+  await requireResourceAction('distribution', 'deliveries', 'edit', lang, '/distribution/deliveries')
 
   const [t, tCommon, orders, routes, assignableUsers, delivery] = await Promise.all([
     getTranslations('distribution'),

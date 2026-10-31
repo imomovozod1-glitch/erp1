@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { Metadata } from 'next'
 import { PageHeader } from '@/components/shared/page-header'
 import { CategoryForm } from '@/components/inventory/category-form'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 
 export async function generateMetadata({
   params,
@@ -21,7 +21,7 @@ export default async function NewCategoryPage({
 }) {
   const { lang } = await params
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('inventory', lang, '/inventory/categories')
+  await requireResourceAction('inventory', 'categories', 'create', lang, '/inventory/categories')
   const t = await getTranslations('inventory')
   const tCommon = await getTranslations('common')
 

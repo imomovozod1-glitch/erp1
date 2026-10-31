@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { TransactionsPageClient } from '@/components/finance/transactions-page-client'
 import { getTransactionsPage } from '@/lib/data/queries'
 import { readPageParams, resolvePeriodRange, type PeriodKey } from '@/lib/data/paginate'
-import { getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { getOwnerFilter } from '@/lib/permissions-server'
 import { getCurrentTenantId } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -27,8 +27,7 @@ export default async function TransactionsPage({
   const { page, pageSize, search } = readPageParams(sp)
   // With the `own` data scope this list is limited to the records this user
   // is responsible for (plus unassigned ones) — applied in the query.
-  const [scope, permCtx] = await Promise.all([getDataScope('finance'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('finance', 'transactions')
   // The period moved from component state into the URL: with the list paged in
   // Postgres, the date range has to be resolved before the query runs, not
   // applied to an already-downloaded array afterwards.

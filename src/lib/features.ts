@@ -54,6 +54,11 @@ export const FEATURE_FLAGS = {
     description:
       'Marks this company as the one used to try changes out before they go to real customers. Its workspace shows a "TEST" badge in the header so nobody mistakes it for live data, and any unreleased feature can be gated on this flag.',
   },
+  permissions_v2: {
+    label: 'New permissions editor',
+    description:
+      'Replaces the module checkboxes with per-section access levels (denied, if responsible, by department, allowed).',
+  },
 } as const satisfies Record<string, FeatureFlagMeta>
 
 export type FeatureFlag = keyof typeof FEATURE_FLAGS

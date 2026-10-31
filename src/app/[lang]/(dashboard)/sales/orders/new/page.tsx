@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { SaleForm } from '@/components/sales/sale-form'
 import { getCachedProductsForSelect, getCachedCustomersForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic'
 export default async function NewSalePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('sales', lang, '/sales/orders')
+  await requireResourceAction('sales', 'orders', 'create', lang, '/sales/orders')
   const tenantId = await getCurrentTenantId() as string
   const [t, products, customers, assignableUsers] = await Promise.all([
     getTranslations('sales'),

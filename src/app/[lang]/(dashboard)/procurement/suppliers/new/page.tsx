@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { SupplierForm } from '@/components/procurement/supplier-form'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 import { getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
@@ -17,7 +17,7 @@ export default async function NewSupplierPage({ params }: { params: Promise<{ la
   const tenantId = (await getCurrentTenantId()) as string
   const assignableUsers = await getAssignableUsers(tenantId)
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('procurement', lang, '/procurement/suppliers')
+  await requireResourceAction('procurement', 'suppliers', 'create', lang, '/procurement/suppliers')
   const t = await getTranslations('procurement')
 
   return (

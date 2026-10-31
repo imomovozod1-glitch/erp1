@@ -26,13 +26,15 @@ import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
 import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
 import { isStrongPassword } from '@/lib/password-validation'
 import { isValidPhone } from '@/lib/phone-validation'
-import { cn, generateDocumentNumber, isoDate } from '@/lib/utils'
+import { nextEmployeeCode } from '@/lib/employee-code'
+import { cn, isoDate } from '@/lib/utils'
 import { errorMessage } from '@/lib/error-message'
 import { FormFooter } from '@/components/shared/form-footer'
 
 
 /** Dropdown contents, fetched on the server — see `getCachedEmployeeFormOptions`. */
 export interface EmployeeFormOptions {
+  nextEmployeeCode: string
   cashboxes: CashboxOption[]
   roleTemplates: RoleTemplateOption[]
   profiles: AccountOption[]
@@ -142,8 +144,8 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
         .trim()
         .min(2, tCommon('required'))
         .max(120, tCommon('tooLong')),
-      // Optional: left blank, one is generated on save (the column is NOT NULL
-      // and unique per tenant, so it cannot simply be stored empty).
+      // Pre-filled with the next number. Left blank, that number is used on save
+      // (the column is NOT NULL and unique per tenant, so it cannot stay empty).
       employee_code: z
         .string()
         .trim()
@@ -189,7 +191,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
     resolver: zodResolver(innerFormSchema) as unknown as Resolver<FormData>,
     defaultValues: {
       full_name: initialData?.full_name || '',
-      employee_code: initialData?.employee_code || '',
+      employee_code: initialData?.employee_code || options.nextEmployeeCode,
       position: initialData?.position || '',
       salary: initialData?.salary ?? '' as any,
       hired_at: initialData?.hired_at ? initialData.hired_at.split('T')[0] : '',
@@ -271,7 +273,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
 
       const payload = {
         ...data,
-        employee_code: data.employee_code || initialData?.employee_code || generateDocumentNumber('EMP'),
+        employee_code: data.employee_code || initialData?.employee_code || options.nextEmployeeCode,
         terminated_at: !data.is_active && data.terminated_at ? data.terminated_at : null,
         profile_id: profileId,
         is_paid: isPaid,
@@ -290,10 +292,21 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
         if (error) throw asFriendlyError(error)
         toast.success(tCommon('saved'))
       } else {
-        const { error } = await supabase
-          .from('employees')
-          .insert(payload as any)
-        if (error) throw asFriendlyError(error)
+        // Two people adding an employee at once get the same suggested number.
+        // Only the automatic number moves on; one typed by hand stays an error.
+        const isAutomaticCode = !data.employee_code || data.employee_code === options.nextEmployeeCode
+        let employeeCode = payload.employee_code
+        for (let attempt = 0; ; attempt++) {
+          const { error } = await supabase
+            .from('employees')
+            .insert({ ...payload, employee_code: employeeCode } as any)
+          if (!error) break
+          const codeTaken = error.code === '23505' && error.message?.includes('employee_code')
+          if (!codeTaken || !isAutomaticCode || attempt === 4) throw asFriendlyError(error)
+          const { data: existing, error: readError } = await supabase.from('employees').select('employee_code')
+          if (readError) throw readError
+          employeeCode = nextEmployeeCode((existing ?? []).map((e: any) => e.employee_code))
+        }
         toast.success(tCommon('created'))
       }
 

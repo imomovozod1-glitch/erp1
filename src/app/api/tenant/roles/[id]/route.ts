@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { invalidateProfile, invalidateRoleTemplates } from '@/lib/data/revalidate'
+import { expireProfile, expireRoleTemplates } from '@/lib/data/revalidate-route'
 import { PERMISSION_MODULES, normaliseModulePermission } from '@/lib/permissions'
 
 /**
@@ -95,10 +95,10 @@ export async function PATCH(
       console.error('[tenant/roles] permission propagation failed:', propagateError.message)
       return NextResponse.json({ error: 'server_error' }, { status: 400 })
     }
-    await Promise.all(ids.map((profileId) => invalidateProfile(profileId)))
+    ids.forEach((profileId) => expireProfile(profileId))
   }
 
-  await invalidateRoleTemplates()
+  expireRoleTemplates()
   return NextResponse.json({ ok: true, updatedProfiles: ids.length })
 }
 
@@ -135,6 +135,6 @@ export async function DELETE(
     return NextResponse.json({ error: 'server_error' }, { status: 400 })
   }
 
-  await invalidateRoleTemplates()
+  expireRoleTemplates()
   return NextResponse.json({ ok: true })
 }

@@ -25,6 +25,7 @@ import {
 import { formatCurrency, isoDate } from '@/lib/utils'
 import { PeriodFilter } from '@/components/shared/period-filter'
 import { PageInfoButton } from '@/components/shared/page-info-button'
+import { useCan } from '@/components/providers/permissions-provider'
 
 const formatDateISO = (d: Date) => {
   const year = d.getFullYear()
@@ -141,6 +142,22 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     setCustomEnd(end)
     setPeriod('custom')
   }
+
+  const canSeeSales = useCan('sales', 'view')
+  const canSeeReports = useCan('analytics', 'view')
+  const canSeeFinance = useCan('finance', 'view')
+  const canSeeInventory = useCan('inventory', 'view')
+  const canSeeCustomers = useCan('customers', 'view')
+  const canSeeEmployees = useCan('hr', 'view')
+  const canSeeSuppliers = useCan('procurement', 'view')
+  const canAddSale = useCan('sales', 'create')
+  const canAddMoney = useCan('finance', 'create')
+  const canAddCustomer = useCan('customers', 'create')
+  const canAddProduct = useCan('inventory', 'create')
+  const canAddPurchase = useCan('procurement', 'create')
+  const canAddProduction = useCan('production', 'create')
+  const canAddDelivery = useCan('distribution', 'create')
+  const canAddEmployee = useCan('hr', 'create')
 
   const td = useTranslations('dashboard')
   const tInfo = useTranslations('pageInfo')
@@ -317,6 +334,7 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
       {agentCard}
 
       {/* Quick Action Launchpad — every "create new" page in the sidebar, one tap away */}
+      {(canAddSale || canAddMoney || canAddCustomer || canAddProduct || canAddPurchase || canAddProduction || canAddDelivery || canAddEmployee) && (
       <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-5 shadow-sm max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none">
         <h2 className="flex items-center gap-2 text-sm font-bold tracking-wider text-foreground uppercase max-md:text-base max-md:normal-case max-md:tracking-tight">
           <Zap className="h-4 w-4 text-violet-600 dark:text-violet-400 max-md:hidden" />
@@ -330,17 +348,17 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
               no meaning behind any of it, which is the single loudest thing on
               the page. These are all just "create something". */}
           {[
-            { href: 'sales/orders/new', label: t.newSale, icon: Plus },
-            { href: 'finance/cashbox?action=kirim', label: t.addIncome, icon: ArrowUpRight },
-            { href: 'finance/cashbox?action=chiqim', label: t.addExpense, icon: ArrowDownRight },
-            { href: 'customers/new', label: tSales('addCustomer'), icon: Contact },
-            { href: 'inventory/products/new', label: tInventory('addProduct'), icon: Package },
-            { href: 'procurement/purchase-orders/new', label: tProcurement('addPurchase'), icon: Truck },
-            { href: 'procurement/suppliers/new', label: tProcurement('addSupplier'), icon: Building2 },
-            { href: 'production/orders/new', label: tProduction('addOrder'), icon: Factory },
-            { href: 'distribution/deliveries/new', label: tDistribution('addDelivery'), icon: Send },
-            { href: 'hr/employees/new', label: tHr('addEmployee'), icon: UserPlus },
-          ].map((action, index) => {
+            { allowed: canAddSale, href: 'sales/orders/new', label: t.newSale, icon: Plus },
+            { allowed: canAddMoney, href: 'finance/cashbox?action=kirim', label: t.addIncome, icon: ArrowUpRight },
+            { allowed: canAddMoney, href: 'finance/cashbox?action=chiqim', label: t.addExpense, icon: ArrowDownRight },
+            { allowed: canAddCustomer, href: 'customers/new', label: tSales('addCustomer'), icon: Contact },
+            { allowed: canAddProduct, href: 'inventory/products/new', label: tInventory('addProduct'), icon: Package },
+            { allowed: canAddPurchase, href: 'procurement/purchase-orders/new', label: tProcurement('addPurchase'), icon: Truck },
+            { allowed: canAddPurchase, href: 'procurement/suppliers/new', label: tProcurement('addSupplier'), icon: Building2 },
+            { allowed: canAddProduction, href: 'production/orders/new', label: tProduction('addOrder'), icon: Factory },
+            { allowed: canAddDelivery, href: 'distribution/deliveries/new', label: tDistribution('addDelivery'), icon: Send },
+            { allowed: canAddEmployee, href: 'hr/employees/new', label: tHr('addEmployee'), icon: UserPlus },
+          ].filter((action) => action.allowed).map((action, index) => {
             const Icon = action.icon
             return (
               <Link
@@ -367,9 +385,11 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
           })}
         </div>
       </div>
+      )}
 
       {/* Main KPI Stats Grid */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+        {canSeeSales && (
         <KpiTile label={t.sales} value={formatCurrency(metrics.revenue)} icon={ShoppingCart}>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="tabular-nums">{td('ordersCountText', { count: metrics.ordersCount })}</span>
@@ -378,7 +398,9 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
             </span>
           </div>
         </KpiTile>
+        )}
 
+        {canSeeReports && (
         <KpiTile label={t.profit} value={formatCurrency(metrics.profit)} icon={DollarSign}>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-300">
@@ -386,10 +408,12 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
                 percentage: ((metrics.profit / (metrics.revenue || 1)) * 100).toFixed(1),
               })}
             </span>
-            <span className="tabular-nums">{td('expenseText', { amount: formatCurrency(metrics.expenses) })}</span>
+            {canSeeFinance && <span className="tabular-nums">{td('expenseText', { amount: formatCurrency(metrics.expenses) })}</span>}
           </div>
         </KpiTile>
+        )}
 
+        {canSeeFinance && (
         <KpiTile label={t.cashBalance} value={formatCurrency(realCashboxBalance)} icon={Layers}>
           {/* Money owed to us and money we owe: the one place on this screen
               where colour classifies rather than decorates. */}
@@ -412,7 +436,9 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
             </div>
           </div>
         </KpiTile>
+        )}
 
+        {canSeeInventory && (
         <KpiTile label={t.warehouseValue} value={formatCurrency(realWarehouseValue)} icon={Package}>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="tabular-nums">{td('productsCountText', { count: totalProducts ?? 0 })}</span>
@@ -421,7 +447,9 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
             </span>
           </div>
         </KpiTile>
+        )}
 
+        {canSeeSales && (
         <KpiTile
           wide
           label={td('soldOnCredit')}
@@ -434,24 +462,31 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
             </span>
           </div>
         </KpiTile>
+        )}
       </div>
 
       {/* Small Secondary Meta info row (Customers & Employees) */}
       {/* Three tiles, three columns — `md:grid-cols-4` left a visible empty
           cell at the end of the row on every desktop width. */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        {canSeeCustomers && (
         <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
           <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('customersCountText', { count: totalCustomers ?? 0 })}</span>
         </div>
+        )}
+        {canSeeEmployees && (
         <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
           <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('employeesCountText', { count: totalEmployees ?? 0 })}</span>
         </div>
+        )}
+        {canSeeSuppliers && (
         <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
           <Truck className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('suppliersCountText', { count: totalSuppliers ?? 0 })}</span>
         </div>
+        )}
       </div>
 
     </div>

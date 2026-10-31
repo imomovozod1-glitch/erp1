@@ -9,6 +9,7 @@ import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { PermissionsProvider } from '@/components/providers/permissions-provider'
 import { FeaturesProvider } from '@/components/providers/features-provider'
 import { OfflineBanner } from '@/components/shared/offline-banner'
 import { SubscriptionBanner } from '@/components/shared/subscription-banner'
@@ -111,6 +112,10 @@ export default async function DashboardLayout({
 
   return (
     <FeaturesProvider features={features}>
+      <PermissionsProvider
+        role={(profile as { role?: string } | null)?.role}
+        permissions={(profile as { permissions?: unknown } | null)?.permissions}
+      >
       <SidebarProvider defaultOpen={sidebarOpen}>
         <AppSidebar lang={lang} profile={profile} />
         <SidebarInset>
@@ -133,6 +138,7 @@ export default async function DashboardLayout({
           <BottomNav lang={lang} profile={profile} />
         </SidebarInset>
       </SidebarProvider>
+      </PermissionsProvider>
     </FeaturesProvider>
   )
 }

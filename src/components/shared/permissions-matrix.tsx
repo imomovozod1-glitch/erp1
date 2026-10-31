@@ -1,13 +1,14 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { useFeature } from '@/components/providers/features-provider'
+import { PermissionLevelsEditor } from '@/components/shared/permission-levels-editor'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import {
-  PERMISSION_MODULES,
-  PERMISSION_ACTIONS,
-  moduleSupportsApproval,
+  MATRIX_MODULES,
+  MATRIX_ACTIONS,
   normaliseModulePermission,
   NO_MODULE_ACCESS,
   type Permissions,
@@ -33,7 +34,12 @@ interface PermissionsMatrixProps {
  * server-side in the API routes, so a hand-built payload cannot store an
  * incoherent combination either.
  */
-export function PermissionsMatrix({ value, onChange, disabled }: PermissionsMatrixProps) {
+export function PermissionsMatrix(props: PermissionsMatrixProps) {
+  const useLevels = useFeature('permissions_v2')
+  return useLevels ? <PermissionLevelsEditor {...props} /> : <ModuleCheckboxMatrix {...props} />
+}
+
+function ModuleCheckboxMatrix({ value, onChange, disabled }: PermissionsMatrixProps) {
   const tNav = useTranslations('nav')
   const tPerm = useTranslations('permissions')
 
@@ -42,7 +48,8 @@ export function PermissionsMatrix({ value, onChange, disabled }: PermissionsMatr
 
   const toggle = (module: PermissionModule, action: PermissionAction) => {
     const current = entryFor(module)
-    const next: ModulePermission = { ...current, [action]: !current[action] }
+    // This editor works on the module's flags; section levels would contradict them.
+    const next: ModulePermission = { ...current, levels: undefined, department: undefined, [action]: !current[action] }
 
     if (action === 'view' && !next.view) {
       // Losing sight of a module removes everything that acts on it.
@@ -58,7 +65,7 @@ export function PermissionsMatrix({ value, onChange, disabled }: PermissionsMatr
   }
 
   const setScope = (module: PermissionModule, scope: DataScope) => {
-    onChange({ ...value, [module]: { ...entryFor(module), scope } })
+    onChange({ ...value, [module]: { ...entryFor(module), levels: undefined, department: undefined, scope } })
   }
 
   /** Grants or clears an entire row in one click — the common case when setting up a role. */
@@ -72,7 +79,7 @@ export function PermissionsMatrix({ value, onChange, disabled }: PermissionsMatr
             edit: true,
             delete: true,
             export: true,
-            approve: moduleSupportsApproval(module),
+            approve: false,
             scope: entryFor(module).scope,
           }
         : { ...NO_MODULE_ACCESS },
@@ -87,7 +94,7 @@ export function PermissionsMatrix({ value, onChange, disabled }: PermissionsMatr
             <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-400">
               {tPerm('module')}
             </th>
-            {PERMISSION_ACTIONS.map((action) => (
+            {MATRIX_ACTIONS.map((action) => (
               <th
                 key={action}
                 className="w-20 px-2 py-2 text-center font-semibold text-slate-600 dark:text-slate-400"
@@ -102,26 +109,19 @@ export function PermissionsMatrix({ value, onChange, disabled }: PermissionsMatr
           </tr>
         </thead>
         <tbody>
-          {PERMISSION_MODULES.map((module) => {
+          {MATRIX_MODULES.map((module) => {
             const perm = entryFor(module)
-            const approvable = moduleSupportsApproval(module)
-            const allGranted = PERMISSION_ACTIONS.every(
-              (a) => (a === 'approve' && !approvable) || perm[a]
-            )
+            const allGranted = MATRIX_ACTIONS.every((a) => perm[a])
             return (
               <tr key={module} className="border-b last:border-b-0 dark:border-slate-800">
                 <td className="px-3 py-2 font-medium text-slate-700 dark:text-slate-300">
                   {tNav(module)}
                 </td>
 
-                {PERMISSION_ACTIONS.map((action) => {
-                  // Approval is meaningless in modules with nothing to authorise.
-                  const notApplicable = action === 'approve' && !approvable
+                {MATRIX_ACTIONS.map((action) => {
                   return (
                     <td key={action} className="px-2 py-2 text-center">
-                      {notApplicable ? (
-                        <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
-                      ) : (
+                      {(
                         <Checkbox
                           checked={perm[action]}
                           disabled={disabled}

@@ -6,7 +6,7 @@ import { ServicesTable } from '@/components/inventory/services-table'
 import { getServicesPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -24,12 +24,11 @@ export default async function ServicesPage({
   const [{ lang }, sp] = await Promise.all([params, searchParams])
 
   const { page, pageSize, search } = readPageParams(sp)
-  const [scope, permCtx] = await Promise.all([getDataScope('inventory'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('inventory', 'services')
   const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status
   const status = statusParam === 'active' || statusParam === 'inactive' ? statusParam : 'all'
 
-  const canEdit = await canEditModule('inventory')
+  const canCreate = await canResource('inventory', 'services', 'create')
   const tenantId = (await getCurrentTenantId()) as string
   const [t, tInfo, result] = await Promise.all([
     getTranslations('inventory'),
@@ -43,7 +42,7 @@ export default async function ServicesPage({
         title={t('services')}
         subtitle={t('title')}
         info={tInfo('services')}
-        action={canEdit ? { label: t('addService'), href: `/${lang}/inventory/services/new`, icon: Plus } : undefined}
+        action={canCreate ? { label: t('addService'), href: `/${lang}/inventory/services/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },

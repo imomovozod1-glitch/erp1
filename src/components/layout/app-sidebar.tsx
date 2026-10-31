@@ -42,7 +42,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import type { Profile } from '@/types/database.types'
 import { cn, getInitials } from '@/lib/utils'
-import { hasViewAccess, PERMISSION_MODULES, type PermissionModule } from '@/lib/permissions'
+import { canResource, hasViewAccess, PERMISSION_MODULES, PERMISSION_RESOURCES, type PermissionModule } from '@/lib/permissions'
 
 interface NavItem {
   key: string
@@ -264,7 +264,14 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
     const permissionModule = item.module ?? (item.key as PermissionModule)
     if (!PERMISSION_MODULES.includes(permissionModule)) return true
     return hasViewAccess(profile?.role, (profile as any)?.permissions, permissionModule)
-  })
+  }).map((item) => ({
+    ...item,
+    subItems: item.subItems?.filter((sub) => {
+      const permissionModule = item.module ?? (item.key as PermissionModule)
+      const resource = PERMISSION_RESOURCES[permissionModule]?.find((r) => r.path === sub.href)
+      return !resource || canResource(profile?.role, (profile as any)?.permissions, permissionModule, resource.key, 'view')
+    }),
+  }))
 
   return (
     <Sidebar variant="inset" collapsible="icon">

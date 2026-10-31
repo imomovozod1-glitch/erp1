@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { invalidateProfile } from '@/lib/data/revalidate'
-import { PERMISSION_MODULES, normaliseModulePermission } from '@/lib/permissions'
+import { expireProfile } from '@/lib/data/revalidate-route'
+import { pickKnownPermissions } from '@/lib/permissions'
 
 /**
  * The only path by which a tenant user's role, module permissions or active
@@ -38,18 +38,6 @@ const bodySchema = z
     role_template_id: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' })
-
-function pickKnownModules(permissions: Record<string, unknown> | undefined) {
-  if (!permissions) return undefined
-  const known: Record<string, unknown> = {}
-  for (const moduleKey of PERMISSION_MODULES) {
-    const entry = permissions[moduleKey]
-    // Normalised server-side too, so a hand-built payload can't store an
-    // incoherent combination (e.g. "can delete but cannot view").
-    if (entry) known[moduleKey] = normaliseModulePermission(entry)
-  }
-  return known
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -116,7 +104,7 @@ export async function PATCH(
   const update: Record<string, unknown> = {}
   if (input.role !== undefined) update.role = input.role
   if (input.is_active !== undefined) update.is_active = input.is_active
-  if (input.permissions !== undefined) update.permissions = pickKnownModules(input.permissions) ?? {}
+  if (input.permissions !== undefined) update.permissions = pickKnownPermissions(input.permissions) ?? {}
   if (input.role_template_id !== undefined) update.role_template_id = input.role_template_id
 
   const { error } = await supabase.from('profiles').update(update).eq('id', targetId)
@@ -125,6 +113,6 @@ export async function PATCH(
     return NextResponse.json({ error: 'server_error' }, { status: 400 })
   }
 
-  await invalidateProfile(targetId)
+  expireProfile(targetId)
   return NextResponse.json({ ok: true })
 }

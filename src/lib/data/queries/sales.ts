@@ -6,9 +6,10 @@
  * `tenant_id` explicitly: the service-role client it uses bypasses RLS.
  */
 
+import { isoDate } from '@/lib/utils'
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { queryPage, type PageResult } from '@/lib/data/paginate'
+import { queryPage, type PageResult, type OwnerFilter } from '@/lib/data/paginate'
 import { CACHE_TAGS } from './cache-tags'
 
 export const getCachedOrders = unstable_cache(
@@ -135,7 +136,7 @@ export const getCachedInvoiceById = unstable_cache(
 
 export function getOrdersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: OwnerFilter }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'sales_orders',
@@ -150,9 +151,11 @@ export function getOrdersPage(
   })
 }
 
+export type InvoiceListStatus = 'sent' | 'overdue' | 'paid' | 'cancelled'
+
 export function getInvoicesPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: OwnerFilter; status?: InvoiceListStatus }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'invoices',
@@ -164,5 +167,10 @@ export function getInvoicesPage(
     searchColumns: ['invoice_number'],
     orderBy: { column: 'created_at', ascending: false },
     ownerId: opts.ownerId,
+    // Same rule as the header's overdue alert. `overdue` is worked out rather
+    // than stored, so it is an open invoice whose due date has passed.
+    ...(opts.status === 'overdue'
+      ? { inFilters: { status: ['sent', 'overdue'] }, before: { column: 'due_at', value: isoDate() } }
+      : { filters: { status: opts.status } }),
   })
 }

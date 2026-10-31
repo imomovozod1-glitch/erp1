@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { BomForm } from '@/components/production/bom-form'
 import { Metadata } from 'next'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 import { getCachedProductsForSelect, getAssignableUsers, getCachedBomDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
@@ -20,7 +20,7 @@ export default async function EditBomPage({
 }) {
   const { lang, id } = await params
   const tenantId = (await getCurrentTenantId()) as string
-  await requireModuleEdit('production', lang, '/production/boms')
+  await requireResourceAction('production', 'boms', 'edit', lang, '/production/boms')
 
   const [t, tCommon, products, assignableUsers, details] = await Promise.all([
     getTranslations('production'),

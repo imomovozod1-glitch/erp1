@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { TransactionForm } from '@/components/finance/transaction-form'
 import { Metadata } from 'next'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 import { getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
@@ -21,7 +21,7 @@ export default async function NewTransactionPage({
 }) {
   const { lang } = await params
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('finance', lang, '/finance/transactions')
+  await requireResourceAction('finance', 'transactions', 'create', lang, '/finance/transactions')
   const { type } = await searchParams
   const tenantId = (await getCurrentTenantId()) as string
   const [t, tCommon, assignableUsers] = await Promise.all([

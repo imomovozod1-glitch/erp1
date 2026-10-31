@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { PurchaseOrderForm } from '@/components/procurement/purchase-order-form'
 import { getCachedSuppliersForSelect, getCachedProductsForSelect, getAssignableUsers, getCashboxesForSelect } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic'
 export default async function NewPurchaseOrderPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('procurement', lang, '/procurement/purchase-orders')
+  await requireResourceAction('procurement', 'purchases', 'create', lang, '/procurement/purchase-orders')
   const tenantId = await getCurrentTenantId() as string
   const [t, suppliers, products, assignableUsers, cashboxes] = await Promise.all([
     getTranslations('procurement'),

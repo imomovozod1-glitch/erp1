@@ -8,7 +8,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { ilikeAny, queryPage, type PageResult } from '@/lib/data/paginate'
+import { ilikeAny, queryPage, type PageResult, ownerExpression, type OwnerFilter } from '@/lib/data/paginate'
 import { CACHE_TAGS } from './cache-tags'
 
 export const getCachedTransactions = unstable_cache(
@@ -168,7 +168,7 @@ export const getCachedTransactionById = unstable_cache(
  */
 export async function getTransactionsPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string; ownerId?: string }
+  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string; ownerId?: OwnerFilter }
 ): Promise<PageResult<any> & { totalIncome: number; totalExpense: number }> {
   const [result, totals] = await Promise.all([
     getTransactionsPageRows(tenantId, opts),
@@ -198,7 +198,7 @@ async function getTransactionTotals(
 
 async function getTransactionsPageRows(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string; ownerId?: string }
+  opts: { page: number; pageSize: number; search?: string; from?: string; to?: string; ownerId?: OwnerFilter }
 ): Promise<PageResult<any>> {
   const supabase = getCacheClient() as any
   const from = (opts.page - 1) * opts.pageSize
@@ -209,7 +209,7 @@ async function getTransactionsPageRows(
   if (opts.search?.trim()) query = query.or(ilikeAny(['category', 'description'], opts.search.trim()))
   if (opts.from) query = query.gte('created_at', opts.from)
   if (opts.to) query = query.lte('created_at', opts.to)
-  if (opts.ownerId) query = query.or(`assigned_to.eq.${opts.ownerId},assigned_to.is.null`)
+  if (opts.ownerId) query = query.or(ownerExpression('assigned_to', opts.ownerId))
   const { data, count } = await query
     .order('created_at', { ascending: false })
     .range(from, from + opts.pageSize - 1)

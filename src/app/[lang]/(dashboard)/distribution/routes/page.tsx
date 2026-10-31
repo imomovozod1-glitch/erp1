@@ -6,7 +6,7 @@ import { RoutesTable } from '@/components/distribution/routes-table'
 import { getRoutesPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule } from '@/lib/permissions-server'
+import { canResource } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -24,10 +24,9 @@ export default async function RoutesPage({
   const [{ lang }, sp] = await Promise.all([params, searchParams])
   const { page, pageSize, search } = readPageParams(sp)
   const tenantId = (await getCurrentTenantId()) as string
-  const [t, tInfo, canEdit, routesPage] = await Promise.all([
+  const [t, tInfo, routesPage] = await Promise.all([
     getTranslations('distribution'),
     getTranslations('pageInfo'),
-    canEditModule('distribution'),
     getRoutesPage(tenantId, { page, pageSize, search }),
   ])
 
@@ -37,7 +36,7 @@ export default async function RoutesPage({
         title={t('routes')}
         subtitle={t('title')}
         info={tInfo('routes')}
-        action={canEdit ? { label: t('addRoute'), href: `/${lang}/distribution/routes/new`, icon: Plus } : undefined}
+        action={(await canResource('distribution', 'routes', 'create')) ? { label: t('addRoute'), href: `/${lang}/distribution/routes/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },

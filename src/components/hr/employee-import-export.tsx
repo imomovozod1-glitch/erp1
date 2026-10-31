@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateEmployees } from '@/lib/data/revalidate'
-import { formatDate, generateDocumentNumber } from '@/lib/utils'
+import { nextEmployeeCode } from '@/lib/employee-code'
+import { formatDate } from '@/lib/utils'
 import { ImportExportMenu } from '@/components/shared/import-export-menu'
 import { pickField, type ExcelColumn } from '@/lib/excel-io'
 import { errorMessage } from '@/lib/error-message'
@@ -30,7 +31,7 @@ export function EmployeeImportExport({ employees }: EmployeeImportExportProps) {
   ]
 
   const TEMPLATE_COLUMNS: ExcelColumn[] = [
-    { header: tRoot('hr.employeeCode'), key: 'employee_code', sample: 'EMP-1001' },
+    { header: tRoot('hr.employeeCode'), key: 'employee_code', sample: '1001' },
     { header: tRoot('hr.excel.fullName'), key: 'fullName', sample: '' },
     { header: tRoot('hr.excel.phoneTemplate'), key: 'phone', sample: '+998901234567' },
     { header: tRoot('hr.position'), key: 'position', sample: 'Sotuvchi' },
@@ -73,6 +74,14 @@ export function EmployeeImportExport({ employees }: EmployeeImportExportProps) {
       )
     }
 
+    const { data: existing, error: codesError } = await supabase.from('employees').select('employee_code')
+    if (codesError) return { count: 0, error: errorMessage(tRoot, codesError, tRoot('common.error')) }
+    // Codes typed in the file count too, so a blank row never lands on one of them.
+    const usedCodes: string[] = (existing ?? []).map((e: any) => e.employee_code)
+    for (const row of rows) {
+      usedCodes.push(pickField(row, tRoot('hr.employeeCode'), 'Xodim kodi', 'Employee Code', 'Код сотрудника'))
+    }
+
     const newEmployees = rows
       .map((row) => {
         const employeeCode = pickField(row, tRoot('hr.employeeCode'), 'Xodim kodi', 'Employee Code', 'Код сотрудника')
@@ -85,9 +94,11 @@ export function EmployeeImportExport({ employees }: EmployeeImportExportProps) {
         if (!hiredAt) return null
         const phone = readPhone(row)
         const salaryRaw = pickField(row, tRoot('hr.excel.salary'), 'Oylik maosh', 'Salary', 'Зарплата')
+        // Optional, as in the form: a blank one takes the next number.
+        const code = employeeCode || nextEmployeeCode(usedCodes)
+        if (!employeeCode) usedCodes.push(code)
         return {
-          // Optional, as in the form: a blank one is generated.
-          employee_code: employeeCode || generateDocumentNumber('EMP'),
+          employee_code: code,
           profile_id: phone ? profilesByPhone[phone] || null : null,
           position: pickField(row, tRoot('hr.position'), 'Lavozim', 'Position', 'Должность') || null,
           salary: salaryRaw ? Number(salaryRaw.replace(/[^\d.]/g, '')) || 0 : 0,

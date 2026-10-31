@@ -2,8 +2,10 @@ import { getCachedEmployeeDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { EmployeeDetailClient } from '@/components/hr/employee-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
+import { canEditRecord } from '@/lib/permissions-server'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import { Pencil } from 'lucide-react'
 
 interface EmployeeDetailPageProps {
   params: Promise<{ id: string; lang: string }>
@@ -12,19 +14,25 @@ interface EmployeeDetailPageProps {
 export default async function EmployeeDetailPage({ params }: EmployeeDetailPageProps) {
   const { id, lang } = await params
   const tenantId = await getCurrentTenantId() as string
-  const t = await getTranslations('hr')
-  const details = await getCachedEmployeeDetails(id, tenantId)
+  const [t, tCommon, details] = await Promise.all([
+    getTranslations('hr'),
+    getTranslations('common'),
+    getCachedEmployeeDetails(id, tenantId),
+  ])
 
   if (!details || !details.employee) {
     notFound()
   }
 
   const { employee, transactions, salesOrders } = details
+  // Employees have no assignee, so only the module's Edit permission applies.
+  const canEdit = await canEditRecord('hr', 'employees', undefined)
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title={employee?.full_name ?? '—'}
+        action={canEdit ? { label: tCommon('edit'), href: `/${lang}/hr/employees/${id}/edit`, icon: Pencil } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('employees'), href: `/${lang}/hr/employees` },

@@ -4,7 +4,7 @@ import { ServiceForm } from '@/components/inventory/service-form'
 import { Metadata } from 'next'
 import { getCachedCategoriesForSelect, getAssignableUsers, getCachedProductFormOptions } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -19,7 +19,7 @@ export default async function NewServicePage({
 }) {
   const { lang } = await params
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('inventory', lang, '/inventory/services')
+  await requireResourceAction('inventory', 'services', 'create', lang, '/inventory/services')
   const tenantId = await getCurrentTenantId() as string
   const [t, tCommon, categories, assignableUsers, options] = await Promise.all([
     getTranslations('inventory'),

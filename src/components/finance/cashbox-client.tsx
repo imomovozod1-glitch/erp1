@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { errorMessage } from '@/lib/error-message'
@@ -103,6 +104,8 @@ export function CashboxClient({
   customStart: string
   customEnd: string
 }) {
+  const canEditCashbox = useCan('finance', 'edit', 'cashbox')
+  const canDeleteCashbox = useCan('finance', 'delete', 'cashbox')
   const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const tInfo = useTranslations('pageInfo')
@@ -895,6 +898,7 @@ export function CashboxClient({
                             )}
                           </div>
                           <div className="flex shrink-0 gap-1">
+                            {canEditCashbox && (
                             <button
                               type="button"
                               onClick={() => handleOpenEditModal(cb)}
@@ -903,6 +907,8 @@ export function CashboxClient({
                             >
                               <Edit2 className="h-4 w-4" />
                             </button>
+                            )}
+                            {canDeleteCashbox && (
                             <button
                               type="button"
                               onClick={() => handleDelete(cb.id)}
@@ -911,6 +917,7 @@ export function CashboxClient({
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
+                            )}
                           </div>
                         </div>
                         <p className="relative mt-4 text-[11px] text-white/70">{t('balance')}</p>
@@ -1028,6 +1035,7 @@ export function CashboxClient({
                             <Minus className="h-3 w-3 mr-1" />
                             {t('cashOut')}
                           </Button>
+                          {canEditCashbox && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1036,6 +1044,8 @@ export function CashboxClient({
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </Button>
+                          )}
+                          {canDeleteCashbox && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1044,6 +1054,7 @@ export function CashboxClient({
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

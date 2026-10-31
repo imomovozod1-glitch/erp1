@@ -82,6 +82,8 @@ interface QueryPageOptions {
   filters?: Record<string, string | number | boolean | undefined>
   /** Values the column must be one of. */
   inFilters?: Record<string, (string | number)[] | undefined>
+  /** Rows whose `column` is strictly below `value`, e.g. a due date already past. */
+  before?: { column: string; value: string }
   /**
    * Restricts the query to records this user is RESPONSIBLE for. Set when the
    * caller's data scope for the module is 'own'.
@@ -91,7 +93,7 @@ interface QueryPageOptions {
    * document is often not the person who owns it — a cashier rings up a sale
    * that belongs to a salesperson's book.
    */
-  ownerId?: string
+  ownerId?: OwnerFilter
   /**
    * Date column the `from`/`to` bounds apply to. Every list that filters by
    * period needs this, and each page that needed it used to hand-roll its own
@@ -104,6 +106,15 @@ interface QueryPageOptions {
   to?: string
   /** Column holding the responsible person; defaults to `assigned_to`. */
   ownerColumn?: string
+}
+
+/** One user, or everyone in their department. */
+export type OwnerFilter = string | string[]
+
+/** The "mine OR nobody's" PostgREST filter. */
+export function ownerExpression(column: string, owner: OwnerFilter): string {
+  const match = Array.isArray(owner) ? `${column}.in.(${owner.join(',')})` : `${column}.eq.${owner}`
+  return `${match},${column}.is.null`
 }
 
 /**
@@ -129,6 +140,7 @@ export async function queryPage<T = Record<string, unknown>>(
   for (const [column, values] of Object.entries(options.inFilters ?? {})) {
     if (values && values.length > 0) query = query.in(column, values)
   }
+  if (options.before) query = query.lt(options.before.column, options.before.value)
   if (options.ownerId) {
     const column = options.ownerColumn ?? 'assigned_to'
     // "Mine OR nobody's". An unassigned record is not someone else's private
@@ -137,7 +149,7 @@ export async function queryPage<T = Record<string, unknown>>(
     // suppliers, products) everything starts unassigned, so a strict
     // `= me` would show a salesperson an empty customer list on day one.
     // Admins are never filtered at all, so they always see the full set.
-    query = query.or(`${column}.eq.${options.ownerId},${column}.is.null`)
+    query = query.or(ownerExpression(column, options.ownerId))
   }
   if (options.dateColumn) {
     if (options.from) query = query.gte(options.dateColumn, options.from)

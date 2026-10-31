@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { ProductionOrderDetail } from '@/components/production/production-order-detail'
 import { getCachedProductionOrderDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule } from '@/lib/permissions-server'
+import { canResource } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -22,7 +22,7 @@ export default async function ProductionOrderPage({
   const tenantId = (await getCurrentTenantId()) as string
   const [t, canEdit, details] = await Promise.all([
     getTranslations('production'),
-    canEditModule('production'),
+    canResource('production', 'orders', 'edit'),
     getCachedProductionOrderDetails(id, tenantId),
   ])
 

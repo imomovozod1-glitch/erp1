@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { SupplierForm } from '@/components/procurement/supplier-form'
 import { getCachedSupplierById, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireRecordEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string; id: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -19,8 +19,6 @@ export default async function EditSupplierPage({
   params: Promise<{ lang: string; id: string }>
 }) {
   const { lang, id } = await params
-  // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('procurement', lang, '/procurement/suppliers')
   const tenantId = (await getCurrentTenantId()) as string
   // Batched, not chained: neither read depends on the other's result.
   const [assignableUsers, t, supplier] = await Promise.all([
@@ -30,6 +28,8 @@ export default async function EditSupplierPage({
   ])
 
   if (!supplier) notFound()
+  // Editing needs the module's Edit permission, not just View.
+  await requireRecordEdit('procurement', 'suppliers', supplier.assigned_to, lang, '/procurement/suppliers')
 
   return (
     <div>

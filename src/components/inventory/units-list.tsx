@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
@@ -26,6 +27,8 @@ interface UnitRow {
 }
 
 export function UnitsList({ initialUnits }: UnitsListProps) {
+  const canEdit = useCan('inventory', 'edit', 'units')
+  const canDelete = useCan('inventory', 'delete', 'units')
   const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('inventory')
@@ -223,6 +226,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                         </div>
                       ) : (
                         <div className="flex gap-1">
+                          {canEdit && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -235,9 +239,12 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
+                          )}
+                          {canDelete && (
                           <Button variant="ghost" size="icon" onClick={() => handleDeleteUnit(u.id)} className="h-10 w-10 text-rose-600 dark:text-rose-400" title={tCommon('delete') || 'Delete'}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
+                          )}
                         </div>
                       )
                     }
@@ -310,6 +317,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                             </div>
                           ) : (
                             <div className="flex justify-end gap-1">
+                              {canEdit && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -322,6 +330,8 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
+                              )}
+                              {canDelete && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -331,6 +341,7 @@ export function UnitsList({ initialUnits }: UnitsListProps) {
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
+                              )}
                             </div>
                           )}
                         </TableCell>

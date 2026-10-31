@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { DeliveryDetail } from '@/components/distribution/delivery-detail'
 import { getCachedDeliveryDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule } from '@/lib/permissions-server'
+import { canResource } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -22,7 +22,7 @@ export default async function DeliveryPage({
   const tenantId = (await getCurrentTenantId()) as string
   const [t, canEdit, delivery] = await Promise.all([
     getTranslations('distribution'),
-    canEditModule('distribution'),
+    canResource('distribution', 'deliveries', 'edit'),
     getCachedDeliveryDetails(id, tenantId),
   ])
 

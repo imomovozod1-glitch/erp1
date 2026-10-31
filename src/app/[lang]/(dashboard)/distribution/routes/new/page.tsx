@@ -4,7 +4,7 @@ import { RouteForm } from '@/components/distribution/route-form'
 import { Metadata } from 'next'
 import { getCachedCustomersForRouting, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
 export default async function NewRoutePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
-  await requireModuleEdit('distribution', lang, '/distribution/routes')
+  await requireResourceAction('distribution', 'routes', 'create', lang, '/distribution/routes')
   const tenantId = (await getCurrentTenantId()) as string
   const [t, tCommon, customers, assignableUsers] = await Promise.all([
     getTranslations('distribution'),
