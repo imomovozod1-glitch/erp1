@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useState } from 'react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { useTranslations } from 'next-intl'
@@ -60,6 +61,8 @@ export function CustomersTable({
   total,
   totalPages,
 }: CustomersTableProps) {
+  const canEdit = useCan('customers', 'edit', 'list')
+  const canDelete = useCan('customers', 'delete', 'list')
   
   const tCommon = useTranslations('common')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
@@ -111,22 +114,26 @@ export function CustomersTable({
                           </TooltipContent>
                         </Tooltip>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/${lang}/customers/${customer.id}/edit`)}>
+                        {canEdit && (
+                          <DropdownMenuItem onClick={() => router.push(`/${lang}/customers/${customer.id}/edit`)}>
                           <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
                         </DropdownMenuItem>
+                        )}
                         {(customer.address || (customer.latitude && customer.longitude)) && (
                           <DropdownMenuItem onClick={() => setMapCustomer({ name: customer.name, address: customer.address, latitude: customer.latitude, longitude: customer.longitude })}>
                             <MapPin className="mr-2 h-3.5 w-3.5" />
                             {tSales('viewOnMap')}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem
+                        {canDelete && (
+                          <DropdownMenuItem
                           onClick={() => handleDelete(customer.id)}
                           disabled={isDeleting === customer.id}
                           className="text-red-600 focus:text-red-600 focus:bg-red-50"
                         >
                           <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
                         </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
   )

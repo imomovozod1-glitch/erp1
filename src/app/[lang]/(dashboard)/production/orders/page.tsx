@@ -6,7 +6,7 @@ import { ProductionOrdersTable } from '@/components/production/production-orders
 import { getProductionOrdersPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -24,13 +24,12 @@ export default async function ProductionOrdersPage({
   const [{ lang }, sp] = await Promise.all([params, searchParams])
 
   const { page, pageSize, search } = readPageParams(sp)
-  const [scope, permCtx] = await Promise.all([getDataScope('production'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('production', 'orders')
   const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status
   const status =
     statusParam === 'draft' || statusParam === 'completed' || statusParam === 'cancelled' ? statusParam : 'all'
 
-  const canEdit = await canEditModule('production')
+  const canCreate = await canResource('production', 'orders', 'create')
   const tenantId = (await getCurrentTenantId()) as string
   const [t, tInfo, result] = await Promise.all([
     getTranslations('production'),
@@ -44,7 +43,7 @@ export default async function ProductionOrdersPage({
         title={t('orders')}
         subtitle={t('title')}
         info={tInfo('productionOrders')}
-        action={canEdit ? { label: t('addOrder'), href: `/${lang}/production/orders/new`, icon: Plus } : undefined}
+        action={canCreate ? { label: t('addOrder'), href: `/${lang}/production/orders/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },

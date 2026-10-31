@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { ProductionOrderForm } from '@/components/production/production-order-form'
 import { Metadata } from 'next'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 import {
   getCachedProductsForSelect,
   getAssignableUsers,
@@ -25,7 +25,7 @@ export default async function EditProductionOrderPage({
 }) {
   const { lang, id } = await params
   const tenantId = (await getCurrentTenantId()) as string
-  await requireModuleEdit('production', lang, '/production/orders')
+  await requireResourceAction('production', 'orders', 'edit', lang, '/production/orders')
 
   const [t, tCommon, products, boms, assignableUsers, details] = await Promise.all([
     getTranslations('production'),

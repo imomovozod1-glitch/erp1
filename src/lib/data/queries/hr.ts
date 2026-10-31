@@ -6,6 +6,7 @@
  * `tenant_id` explicitly: the service-role client it uses bypasses RLS.
  */
 
+import { nextEmployeeCode } from '@/lib/employee-code'
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { queryPage, type PageResult } from '@/lib/data/paginate'
@@ -135,16 +136,18 @@ export const getCachedEmployeeFormOptions = unstable_cache(
         .eq('tenant_id', tenantId),
       supabase
         .from('employees')
-        .select('profile_id')
-        .eq('tenant_id', tenantId)
-        .not('profile_id', 'is', null),
+        .select('profile_id, employee_code')
+        .eq('tenant_id', tenantId),
     ])
 
     return {
       cashboxes: cashboxes.data ?? [],
       roleTemplates: roleTemplates.data ?? [],
       profiles: profiles.data ?? [],
-      claimedProfileIds: (linked.data ?? []).map((e: any) => e.profile_id as string),
+      claimedProfileIds: (linked.data ?? [])
+        .map((e: any) => e.profile_id as string | null)
+        .filter((id: string | null): id is string => id !== null),
+      nextEmployeeCode: nextEmployeeCode((linked.data ?? []).map((e: any) => e.employee_code)),
     }
   },
   ['employee-form-options'],

@@ -6,7 +6,7 @@ import { OrdersTable } from '@/components/sales/orders-table'
 import { getOrdersPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter } from '@/lib/permissions-server'
 
 export const revalidate = 30
 
@@ -30,11 +30,11 @@ export default async function OrdersPage({
   // A user whose data scope for this module is 'own' only ever sees the
   // records they created — applied in the query, not by hiding rows after the
   // fact.
-  const [scope, permCtx] = await Promise.all([getDataScope('sales'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('sales', 'orders')
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
-  const canEdit = await canEditModule('sales')
+  const canEdit = await canResource('sales', 'orders', 'edit')
+  const canCreate = await canResource('sales', 'orders', 'create')
   const tenantId = await getCurrentTenantId() as string
   const [t, tInfo, result] = await Promise.all([
     getTranslations('sales'),
@@ -48,7 +48,7 @@ export default async function OrdersPage({
         title={t('orders')}
         subtitle={t('title')}
         info={tInfo('salesOrders')}
-        action={canEdit ? { label: t('addSale'), href: `/${lang}/sales/orders/new`, icon: Plus } : undefined}
+        action={canCreate ? { label: t('addSale'), href: `/${lang}/sales/orders/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },

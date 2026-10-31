@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { errorMessage } from '@/lib/error-message'
@@ -55,6 +56,8 @@ interface BomsTableProps {
  * the page being shown.
  */
 export function BomsTable({ boms, lang, page, pageSize, total, totalPages }: BomsTableProps) {
+  const canEdit = useCan('production', 'edit', 'boms')
+  const canDelete = useCan('production', 'delete', 'boms')
   const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('production')
@@ -108,31 +111,37 @@ export function BomsTable({ boms, lang, page, pageSize, total, totalPages }: Bom
   }
 
   /** The row's actions menu, shared by the desktop table row and the phone card. */
-  const renderActions = (bom: BomRow) => (
+  const renderActions = (bom: BomRow) => !(canEdit || canDelete) ? null : (
                     <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
                         <MoreHorizontal className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem
+                        {canEdit && (
+                          <DropdownMenuItem
                           render={<Link href={`/${lang}/production/boms/${bom.id}/edit`} prefetch={true} />}
                         >
                           <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
+                        )}
+                        {canEdit && (
+                          <DropdownMenuItem
                           onClick={() => handleToggleStatus(bom.id, bom.is_active)}
                           disabled={isUpdatingStatus === bom.id}
                         >
                           <Power className="mr-2 h-3.5 w-3.5" />{' '}
                           {bom.is_active ? tCommon('inactive') : tCommon('active')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
+                        )}
+                        {canDelete && (
+                          <DropdownMenuItem
                           onClick={() => handleDelete(bom.id)}
                           className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
                           disabled={isDeleting === bom.id}
                         >
                           <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
                         </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
   )

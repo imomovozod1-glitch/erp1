@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { invalidateRoleTemplates } from '@/lib/data/revalidate'
+import { expireRoleTemplates } from '@/lib/data/revalidate-route'
 import { PERMISSION_MODULES, normaliseModulePermission } from '@/lib/permissions'
 
 /**
@@ -57,6 +57,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'server_error' }, { status: 400 })
   }
 
-  await invalidateRoleTemplates()
+  expireRoleTemplates()
   return NextResponse.json({ id: data.id }, { status: 201 })
 }

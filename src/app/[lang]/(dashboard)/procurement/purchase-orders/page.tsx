@@ -6,7 +6,7 @@ import { PurchaseOrdersTable } from '@/components/procurement/purchase-orders-ta
 import { getPurchaseOrdersPage } from '@/lib/data/queries'
 import { readPageParams, resolvePeriodDays, type PeriodKey } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter } from '@/lib/permissions-server'
 
 const PERIODS: PeriodKey[] = ['today', 'yesterday', 'week', 'month', 'custom', 'all']
 
@@ -40,11 +40,10 @@ export default async function PurchaseOrdersPage({
   // A user whose data scope for this module is 'own' only ever sees the
   // records they created — applied in the query, not by hiding rows after the
   // fact.
-  const [scope, permCtx] = await Promise.all([getDataScope('procurement'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('procurement', 'purchases')
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
-  const canEdit = await canEditModule('procurement')
+  const canCreate = await canResource('procurement', 'purchases', 'create')
   const tenantId = await getCurrentTenantId() as string
   const [t, tInfo, result] = await Promise.all([
     getTranslations('procurement'),
@@ -58,7 +57,7 @@ export default async function PurchaseOrdersPage({
         title={t('purchases')}
         subtitle={t('title')}
         info={tInfo('purchaseOrders')}
-        action={canEdit ? { label: t('addPurchase'), href: `/${lang}/procurement/purchase-orders/new`, icon: Plus } : undefined}
+        action={canCreate ? { label: t('addPurchase'), href: `/${lang}/procurement/purchase-orders/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },

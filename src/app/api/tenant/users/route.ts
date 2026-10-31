@@ -5,11 +5,13 @@ import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { phoneSchema } from '@/lib/phone-validation'
 import { memberLoginEmail, phoneToSyntheticEmail } from '@/lib/tenant-auth'
-const modulePermissionSchema = z.object({ view: z.boolean(), edit: z.boolean() })
+import { pickKnownPermissions } from '@/lib/permissions'
 // A partial map keyed by module — z.record() with an enum key requires
 // every enum key to be present (Zod v4), but the client only ever sends
 // entries for modules the admin actually touched in the checkbox matrix.
-const permissionsSchema = z.record(z.string(), modulePermissionSchema).optional()
+// Loose per module: pickKnownPermissions normalises the action set, so a stricter
+// shape here only drops what the matrix sent (create, delete, export, scope).
+const permissionsSchema = z.record(z.string(), z.record(z.string(), z.unknown())).optional()
 
 const createUserSchema = z.object({
   full_name: z.string().min(1),
@@ -122,7 +124,7 @@ export async function POST(request: NextRequest) {
     .from('profiles')
     .update({
       phone: input.phone,
-      permissions: input.permissions ?? {},
+      permissions: pickKnownPermissions(input.permissions) ?? {},
       role_template_id: input.role_template_id ?? null,
     })
     .eq('id', authData.user.id)
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
         email,
         phone: input.phone,
         role: 'staff',
-        permissions: input.permissions ?? {},
+        permissions: pickKnownPermissions(input.permissions) ?? {},
       },
     },
     { status: 201 }

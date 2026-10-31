@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { ServiceForm } from '@/components/inventory/service-form'
 import { Metadata } from 'next'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 import { getAssignableUsers, getCachedProductFormOptions } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
@@ -22,7 +22,7 @@ export default async function EditServicePage({
   const { lang, id } = await params
   const tenantId = (await getCurrentTenantId()) as string
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('inventory', lang, '/inventory/services')
+  await requireResourceAction('inventory', 'services', 'edit', lang, '/inventory/services')
   // `is_service` postdates the generated Supabase types (database.types.ts is
   // stale — it has no tenant_id or assigned_to either), so the builder is cast
   // the same way the rest of the app does it.

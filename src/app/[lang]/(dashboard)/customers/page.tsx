@@ -8,7 +8,7 @@ import { getCustomersPage , getCustomersMapPoints, getCustomerBalanceTotals} fro
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { formatCurrency } from '@/lib/utils'
-import { canEditModule , canDo, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter, getPermissionContext, requireResourceView } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -32,14 +32,14 @@ export default async function CustomersPage({
       : undefined
   // With the `own` data scope this list is limited to the records this user
   // is responsible for (plus unassigned ones) — applied in the query.
-  const [scope, permCtx] = await Promise.all([getDataScope('customers'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  await requireResourceView('customers', 'list', lang)
+  const [ownerId, permCtx] = await Promise.all([getOwnerFilter('customers', 'list'), getPermissionContext()])
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
-  const canEdit = await canEditModule('customers')
+  const canCreate = await canResource('customers', 'list', 'create')
   // Reading a list on screen and downloading the whole list are different
   // risks, so export is its own permission.
-  const canExport = await canDo('customers', 'export')
+  const canExport = await canResource('customers', 'list', 'export')
   const tenantId = await getCurrentTenantId() as string
   const [t, tNav, tInfo, result, mapPoints, totals] = await Promise.all([
     getTranslations('sales'),
@@ -63,7 +63,7 @@ export default async function CustomersPage({
       <PageHeader
         title={t('customers')}
         info={tInfo('customers')}
-        action={canEdit ? { label: t('addCustomer'), href: `/${lang}/customers/new`, icon: Plus } : undefined}
+        action={canCreate ? { label: t('addCustomer'), href: `/${lang}/customers/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: tNav('customers'), href: `/${lang}/customers` },

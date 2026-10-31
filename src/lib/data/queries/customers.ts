@@ -8,7 +8,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { queryPage, type PageResult } from '@/lib/data/paginate'
+import { queryPage, type OwnerFilter, type PageResult, ownerExpression } from '@/lib/data/paginate'
 import { CACHE_TAGS } from './cache-tags'
 
 export const getCachedCustomers = unstable_cache(
@@ -140,7 +140,7 @@ export async function getCustomersPage(
     page: number
     pageSize: number
     search?: string
-    ownerId?: string
+    ownerId?: OwnerFilter
     /** Narrow to who owes us, who holds credit, or whose account is settled. */
     balance?: CustomerBalanceFilter
   }
@@ -248,7 +248,7 @@ async function customerIdsByBalance(
  * "only mine" filter on top of whatever the scope allowed.
  */
 export const getCustomersMapPoints = unstable_cache(
-  async (tenantId: string, ownerId?: string) => {
+  async (tenantId: string, ownerId?: OwnerFilter) => {
     const supabase = getCacheClient() as any
     let query = supabase
       .from('customers')
@@ -257,7 +257,7 @@ export const getCustomersMapPoints = unstable_cache(
       .not('latitude', 'is', null)
       .not('longitude', 'is', null)
     if (ownerId) {
-      query = query.or(`assigned_to.eq.${ownerId},assigned_to.is.null`)
+      query = query.or(ownerExpression('assigned_to', ownerId))
     }
     const { data } = await query
     return data ?? []

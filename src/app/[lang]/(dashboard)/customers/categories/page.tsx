@@ -6,7 +6,7 @@ import { CustomerCategoriesTable } from '@/components/sales/customer-categories-
 import { getCustomerCategoriesPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule } from '@/lib/permissions-server'
+import { canResource } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -25,7 +25,7 @@ export default async function CustomerCategoriesPage({
   const { page, pageSize, search } = readPageParams(sp)
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
-  const canEdit = await canEditModule('customers')
+  const canCreate = await canResource('customers', 'categories', 'create')
   const tenantId = await getCurrentTenantId() as string
   const [t, tNav, tInfo, categoriesPage] = await Promise.all([
     getTranslations('sales'),
@@ -40,7 +40,7 @@ export default async function CustomerCategoriesPage({
         title={t('customerCategories')}
         subtitle={t('customers')}
         info={tInfo('customerCategories')}
-        action={canEdit ? {
+        action={canCreate ? {
           label: t('addCustomerCategory'),
           href: `/${lang}/customers/categories/new`,
           icon: Plus,

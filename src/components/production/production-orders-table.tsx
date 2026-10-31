@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { errorMessage } from '@/lib/error-message'
@@ -59,6 +60,8 @@ export function ProductionOrdersTable({
   totalPages,
   status,
 }: ProductionOrdersTableProps) {
+  const canEdit = useCan('production', 'edit', 'orders')
+  const canDelete = useCan('production', 'delete', 'orders')
   const t = useTranslations()
   const router = useRouter()
   const [confirmAction, confirmDialog] = useConfirmDelete()
@@ -107,6 +110,7 @@ export function ProductionOrdersTable({
   const renderActions = (order: any) => {
     const detailHref = `/${lang}/production/orders/${order.id}`
     const isDraft = order.status === 'draft'
+    if (!canEdit && !canDelete) return null
     return (
                         <DropdownMenu>
                           <Tooltip>
@@ -125,7 +129,7 @@ export function ProductionOrdersTable({
                             </TooltipContent>
                           </Tooltip>
                           <DropdownMenuContent align="end" className="w-44">
-                            {isDraft && (
+                            {canEdit && isDraft && (
                               <DropdownMenuItem
                                 render={<Link href={`/${lang}/production/orders/${order.id}/edit`} prefetch={true} />}
                               >
@@ -135,17 +139,17 @@ export function ProductionOrdersTable({
                             {/* Completing needs the shortage check and a
                                 non-destructive confirmation, which live on the
                                 run's own page — this only takes you there. */}
-                            {isDraft && (
+                            {canEdit && isDraft && (
                               <DropdownMenuItem render={<Link href={detailHref} prefetch={true} />}>
                                 <Play className="mr-2 h-3.5 w-3.5" /> {t('production.complete')}
                               </DropdownMenuItem>
                             )}
-                            {order.status !== 'cancelled' && (
+                            {canEdit && order.status !== 'cancelled' && (
                               <DropdownMenuItem onClick={() => handleCancel(order)} disabled={busyId === order.id}>
                                 <Ban className="mr-2 h-3.5 w-3.5" /> {t('common.cancel')}
                               </DropdownMenuItem>
                             )}
-                            {order.status !== 'completed' && (
+                            {canDelete && order.status !== 'completed' && (
                               <DropdownMenuItem
                                 onClick={() => handleDelete(order)}
                                 disabled={busyId === order.id}

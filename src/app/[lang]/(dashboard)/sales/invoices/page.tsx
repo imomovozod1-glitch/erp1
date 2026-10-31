@@ -3,12 +3,14 @@ import { getTranslations } from 'next-intl/server'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
 import { InvoicesTable } from '@/components/sales/invoices-table'
-import { getInvoicesPage } from '@/lib/data/queries'
+import { getInvoicesPage, type InvoiceListStatus } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter } from '@/lib/permissions-server'
 
 export const revalidate = 30
+
+const INVOICE_STATUSES: InvoiceListStatus[] = ['sent', 'overdue', 'paid', 'cancelled']
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -27,19 +29,21 @@ export default async function InvoicesPage({
   // Paging and search live in the URL and are applied by Postgres; this page
   // used to fetch every row in the tenant and slice ten out in the browser.
   const { page, pageSize, search } = readPageParams(sp)
+  const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status
+  const status = INVOICE_STATUSES.find((s) => s === statusParam)
   // A user whose data scope for this module is 'own' only ever sees the
   // records they created — applied in the query, not by hiding rows after the
   // fact.
-  const [scope, permCtx] = await Promise.all([getDataScope('sales'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('sales', 'invoices')
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
-  const canEdit = await canEditModule('sales')
+  const canEdit = await canResource('sales', 'invoices', 'edit')
+  const canCreate = await canResource('sales', 'invoices', 'create')
   const tenantId = await getCurrentTenantId() as string
   const [t, tInfo, result] = await Promise.all([
     getTranslations('sales'),
     getTranslations('pageInfo'),
-    getInvoicesPage(tenantId, { page, pageSize, search, ownerId }),
+    getInvoicesPage(tenantId, { page, pageSize, search, ownerId, status }),
   ])
 
   return (
@@ -48,7 +52,7 @@ export default async function InvoicesPage({
         title={t('invoices')}
         subtitle={t('title')}
         info={tInfo('invoices')}
-        action={canEdit ? { label: t('addInvoice'), href: `/${lang}/sales/invoices/new`, icon: Plus } : undefined}
+        action={canCreate ? { label: t('addInvoice'), href: `/${lang}/sales/invoices/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },
@@ -63,6 +67,7 @@ export default async function InvoicesPage({
         total={result.total}
         totalPages={result.totalPages}
         canEdit={canEdit}
+        status={status ?? 'all'}
       />
     </div>
   )

@@ -2,7 +2,16 @@ import 'server-only'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
-import { can, dataScope, type DataScope, type PermissionAction, type PermissionModule } from '@/lib/permissions'
+import { getCacheClient } from '@/lib/supabase/cache-client'
+import {
+  accessLevel,
+  can,
+  dataScope,
+  type DataScope,
+  type LevelAction,
+  type PermissionAction,
+  type PermissionModule,
+} from '@/lib/permissions'
 
 /**
  * Server-side enforcement of `profiles.permissions`.
@@ -91,6 +100,94 @@ export async function requireModuleEdit(
   if (!(await canDo(module, 'create')) && !(await canDo(module, 'edit'))) {
     redirect(`/${lang}${listPath}?denied=edit`)
   }
+}
+
+/**
+ * May the caller edit this one record? Needs `edit` in the section and, short of
+ * an `all` level, a record that is theirs or nobody's — the same "mine OR
+ * unassigned" rule the scoped lists apply (`queryPage`), so a user can edit
+ * what their list shows them. Pass `undefined` for a table with no assignee.
+ */
+export async function canEditRecord(
+  module: PermissionModule,
+  resource: string,
+  assignedTo: string | null | undefined
+): Promise<boolean> {
+  if (!(await canResource(module, resource, 'edit'))) return false
+  const owners = await getOwnerFilter(module, resource, 'edit')
+  if (owners === undefined || !assignedTo) return true
+  return Array.isArray(owners) ? owners.includes(assignedTo) : owners === assignedTo
+}
+
+/** Guard for a `/[id]/edit` page, once the record is loaded. See `canEditRecord`. */
+export async function requireRecordEdit(
+  module: PermissionModule,
+  resource: string,
+  assignedTo: string | null | undefined,
+  lang: string,
+  listPath: string
+): Promise<void> {
+  if (!(await canEditRecord(module, resource, assignedTo))) {
+    redirect(`/${lang}${listPath}?denied=edit`)
+  }
+}
+
+/** May the caller do `action` in this section of the module? */
+export async function canResource(module: PermissionModule, resource: string, action: LevelAction): Promise<boolean> {
+  const ctx = await getPermissionContext()
+  if (!ctx) return false
+  return accessLevel(ctx.role, ctx.permissions, module, resource, action) !== 'none'
+}
+
+/** Guard for a section's route subtree. Call it from the section's `layout.tsx`. */
+export async function requireResourceView(module: PermissionModule, resource: string, lang: string): Promise<void> {
+  if (!(await canResource(module, resource, 'view'))) {
+    redirect(`/${lang}/dashboard?denied=${module}`)
+  }
+}
+
+/** Guard for a `/new` or `/[id]/edit` page in a section. */
+export async function requireResourceAction(
+  module: PermissionModule,
+  resource: string,
+  action: LevelAction,
+  lang: string,
+  listPath: string
+): Promise<void> {
+  if (!(await canResource(module, resource, action))) {
+    redirect(`/${lang}${listPath}?denied=${action}`)
+  }
+}
+
+/** The caller's colleagues in their department, themselves included. */
+const getDepartmentUserIds = cache(async (userId: string): Promise<string[]> => {
+  const supabase = getCacheClient() as any
+  const { data: me } = await supabase.from('profiles').select('tenant_id, department_id').eq('id', userId).single()
+  if (!me?.department_id) return [userId]
+  const { data } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('tenant_id', me.tenant_id)
+    .eq('department_id', me.department_id)
+  const ids: string[] = (data ?? []).map((p: { id: string }) => p.id)
+  return ids.includes(userId) ? ids : [...ids, userId]
+})
+
+/**
+ * Whose records a list shows: `undefined` for everyone's, otherwise the user or
+ * their department. Pass the result to the query as `ownerId`.
+ */
+export async function getOwnerFilter(
+  module: PermissionModule,
+  resource: string,
+  action: LevelAction = 'view'
+): Promise<string | string[] | undefined> {
+  const ctx = await getPermissionContext()
+  if (!ctx) return undefined
+  const level = accessLevel(ctx.role, ctx.permissions, module, resource, action)
+  if (level === 'own') return ctx.userId
+  if (level === 'department') return getDepartmentUserIds(ctx.userId)
+  return undefined
 }
 
 /** Guard for a route that needs one specific action (e.g. an approval screen). */

@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { errorMessage } from '@/lib/error-message'
@@ -113,6 +114,7 @@ function isoDaysAgo(days: number, today: string): string {
  * for the one caveat that follows from it.
  */
 export function ReportBuilder({ today }: { today: string }) {
+  const canExport = useCan('analytics', 'export')
   const tCommon = useTranslations('common')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const tRoot = useTranslations()
@@ -411,7 +413,8 @@ export function ReportBuilder({ today }: { today: string }) {
               <Save className="h-4 w-4" />
               {tCommon('save')}
             </Button>
-            <Button
+            {canExport && (
+              <Button
               variant="outline"
               onClick={handleExport}
               disabled={rows.length === 0}
@@ -420,6 +423,7 @@ export function ReportBuilder({ today }: { today: string }) {
               <Download className="h-4 w-4" />
               {tCommon('export')}
             </Button>
+            )}
           </div>
 
           {/* Column picker — appears once a report has been run, because the

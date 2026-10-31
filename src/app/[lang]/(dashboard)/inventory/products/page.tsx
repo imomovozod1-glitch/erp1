@@ -6,7 +6,7 @@ import { ProductsTable } from '@/components/inventory/products-table'
 import { getProductsPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -29,14 +29,13 @@ export default async function ProductsPage({
   const { page, pageSize, search } = readPageParams(sp)
   // With the `own` data scope this list is limited to the records this user
   // is responsible for (plus unassigned ones) — applied in the query.
-  const [scope, permCtx] = await Promise.all([getDataScope('inventory'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('inventory', 'products')
   const statusParam = Array.isArray(sp.status) ? sp.status[0] : sp.status
   const status = statusParam === 'active' || statusParam === 'inactive' ? statusParam : 'all'
 
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
-  const canEdit = await canEditModule('inventory')
+  const canCreate = await canResource('inventory', 'products', 'create')
   const tenantId = (await getCurrentTenantId()) as string
   const [t, result] = await Promise.all([
     getTranslations('inventory'),
@@ -48,7 +47,7 @@ export default async function ProductsPage({
       <PageHeader
         title={t('products')}
         subtitle={t('title')}
-        action={canEdit ? {
+        action={canCreate ? {
           label: t('addProduct'),
           href: `/${lang}/inventory/products/new`,
           icon: Plus,

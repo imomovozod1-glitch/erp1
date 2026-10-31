@@ -1,5 +1,6 @@
 'use client'
 
+import { dataScope, hasViewAccess, type PermissionModule } from '@/lib/permissions'
 import { BackButton } from '@/components/shared/back-button'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
@@ -146,8 +147,18 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       // indexed predicate the database evaluates instead of a filter over the
       // whole table in the client. Overdue invoices filter on due_at directly.
       const todayISO = isoDate()
+      // An alert is a window into a module, so it follows that module's
+      // permissions: nothing for a module the user cannot open, and only their
+      // own records with an `own` data scope ("mine OR unassigned", as the lists).
+      const role = profile?.role
+      const permissions = (profile as { permissions?: unknown } | null)?.permissions
+      const scoped = (query: any, module: PermissionModule) =>
+        dataScope(role, permissions, module) === 'own' && profile?.id
+          ? query.or(`assigned_to.eq.${profile.id},assigned_to.is.null`)
+          : query
+      const nothing = Promise.resolve({ data: [] })
       const [{ data: products }, { data: invoices }, { data: supportReplies }] = await Promise.all([
-        supabase
+        !hasViewAccess(role, permissions, 'inventory') ? nothing : scoped(supabase
           .from('products')
           .select('id, name, stock, min_stock, updated_at')
           .eq('is_active', true)
@@ -157,14 +168,14 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           // forever. Goods only (migration_services.sql).
           .eq('is_service', false)
           .order('stock', { ascending: true })
-          .limit(20),
-        supabase
+          .limit(20), 'inventory'),
+        !hasViewAccess(role, permissions, 'sales') ? nothing : scoped(supabase
           .from('invoices')
           .select('id, invoice_number, total_amount, due_at, customers(name)')
           .in('status', ['sent', 'overdue'])
           .lt('due_at', todayISO)
           .order('due_at', { ascending: true })
-          .limit(20),
+          .limit(20), 'sales'),
         supabase
           .from('support_messages')
           .select('id, body, sender_name, sender_role, created_at')
@@ -200,7 +211,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
           type: 'overdue_invoice',
           title: tNav('notifications.overdueInvoiceTitle'),
           description: tNav('notifications.overdueInvoiceDescription', { number: i.invoice_number, customer: i.customers?.name || '' }),
-          href: `/${lang}/sales/invoices`,
+          href: `/${lang}/sales/invoices/${i.id}`,
           read: readIds.includes(`overdue-invoice-${i.id}`),
           created_at: new Date(i.due_at),
         }))
@@ -236,7 +247,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
       clearTimeout(firstFetch)
       clearInterval(interval)
     }
-  }, [lang, tNav])
+  }, [lang, tNav, profile])
 
   const initials = getInitials(profile?.full_name) || 'U'
 
@@ -378,7 +389,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push(`/${lang}/sales/invoices`)}
+          onClick={() => router.push(`/${lang}/sales/invoices?status=overdue`)}
           // Rose because it classifies — money that is late. Not animated:
           // a button that pulses on every page for as long as one invoice is
           // overdue stops meaning "look here" within a day.

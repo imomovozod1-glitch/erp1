@@ -1,5 +1,6 @@
 "use client";
 
+import { useCan } from "@/components/providers/permissions-provider"
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useConfirmDelete } from "@/components/shared/confirm-dialog";
@@ -63,6 +64,9 @@ export function ServicesTable({
   totalPages,
   status,
 }: ServicesTableProps) {
+  const canEdit = useCan("inventory", "edit", "services")
+  const canExport = useCan("inventory", "export", "services")
+  const canDelete = useCan("inventory", "delete", "services")
   const t = useTranslations();
   const [confirmDelete, confirmDialog] = useConfirmDelete();
   const router = useRouter();
@@ -137,7 +141,7 @@ export function ServicesTable({
   const paginated = services;
 
   /** The row's actions menu, shared by the desktop table row and the phone card. */
-  const renderActions = (service: any) => (
+  const renderActions = (service: any) => !(canEdit || canDelete) ? null : (
         <DropdownMenu>
           <Tooltip>
             <TooltipTrigger
@@ -155,23 +159,29 @@ export function ServicesTable({
             </TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem render={<Link href={`/${lang}/inventory/services/${service.id}/edit`} prefetch={true} />}>
+            {canEdit && (
+              <DropdownMenuItem render={<Link href={`/${lang}/inventory/services/${service.id}/edit`} prefetch={true} />}>
               <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
             </DropdownMenuItem>
-            <DropdownMenuItem
+            )}
+            {canEdit && (
+              <DropdownMenuItem
               onClick={() => handleToggleStatus(service.id, service.is_active)}
               disabled={isUpdatingStatus === service.id}
             >
               <Power className="mr-2 h-3.5 w-3.5" />{" "}
               {service.is_active ? t("common.inactive") : t("common.active")}
             </DropdownMenuItem>
-            <DropdownMenuItem
+            )}
+            {canDelete && (
+              <DropdownMenuItem
               onClick={() => handleDelete(service.id)}
               disabled={isDeleting === service.id}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("common.delete")}
             </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
   );
@@ -194,6 +204,7 @@ export function ServicesTable({
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {canExport && (
               <Button
                 type="button"
                 variant="outline"
@@ -205,6 +216,7 @@ export function ServicesTable({
                 <Download className="h-4 w-4" />
                 <span className="max-md:hidden">{t("common.export")}</span>
               </Button>
+              )}
             </div>
           </div>
 

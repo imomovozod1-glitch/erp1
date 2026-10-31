@@ -6,7 +6,7 @@ import { BomsTable } from '@/components/production/boms-table'
 import { getBomsPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { canEditModule } from '@/lib/permissions-server'
+import { canResource } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -24,10 +24,9 @@ export default async function BomsPage({
   const [{ lang }, sp] = await Promise.all([params, searchParams])
   const { page, pageSize, search } = readPageParams(sp)
   const tenantId = (await getCurrentTenantId()) as string
-  const [t, tInfo, canEdit, bomsPage] = await Promise.all([
+  const [t, tInfo, bomsPage] = await Promise.all([
     getTranslations('production'),
     getTranslations('pageInfo'),
-    canEditModule('production'),
     getBomsPage(tenantId, { page, pageSize, search }),
   ])
 
@@ -37,7 +36,7 @@ export default async function BomsPage({
         title={t('boms')}
         subtitle={t('title')}
         info={tInfo('boms')}
-        action={canEdit ? { label: t('addBom'), href: `/${lang}/production/boms/new`, icon: Plus } : undefined}
+        action={(await canResource('production', 'boms', 'create')) ? { label: t('addBom'), href: `/${lang}/production/boms/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },

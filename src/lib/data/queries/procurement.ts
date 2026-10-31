@@ -8,7 +8,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { queryPage, type PageResult } from '@/lib/data/paginate'
+import { queryPage, type PageResult, type OwnerFilter } from '@/lib/data/paginate'
 import { CACHE_TAGS } from './cache-tags'
 
 export const getCachedSuppliers = unstable_cache(
@@ -93,7 +93,7 @@ export const getCachedSupplierDetails = unstable_cache(
 
 export function getSuppliersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; ownerId?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: OwnerFilter }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'suppliers',
@@ -110,7 +110,7 @@ export function getSuppliersPage(
 
 export function getPurchaseOrdersPage(
   tenantId: string,
-  opts: { page: number; pageSize: number; search?: string; ownerId?: string; from?: string; to?: string }
+  opts: { page: number; pageSize: number; search?: string; ownerId?: OwnerFilter; from?: string; to?: string }
 ): Promise<PageResult<any>> {
   return queryPage({
     table: 'purchase_orders',

@@ -5,7 +5,7 @@ import { getCachedOrderById, getCachedCustomersForSelect, getAssignableUsers, ge
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -20,7 +20,7 @@ export default async function EditOrderPage({
 }) {
   const { lang, id } = await params
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('sales', lang, '/sales/orders')
+  await requireResourceAction('sales', 'orders', 'edit', lang, '/sales/orders')
   const tenantId = await getCurrentTenantId() as string
   const [t, tCommon, order, customers, assignableUsers, items] = await Promise.all([
     getTranslations('sales'),

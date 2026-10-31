@@ -1,5 +1,6 @@
 "use client";
 
+import { useCan } from "@/components/providers/permissions-provider"
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useConfirmDelete } from "@/components/shared/confirm-dialog";
@@ -190,6 +191,10 @@ export function ProductsTable({
   totalPages,
   status,
 }: ProductsTableProps) {
+  const canEdit = useCan("inventory", "edit", "products")
+  const canExport = useCan("inventory", "export", "products")
+  const canCreate = useCan("inventory", "create", "products")
+  const canDelete = useCan("inventory", "delete", "products")
   const t = useTranslations();
   const [confirmDelete, confirmDialog] = useConfirmDelete();
   const router = useRouter();
@@ -474,7 +479,7 @@ export function ProductsTable({
 
 
   /** The row's actions menu, shared by the desktop table row and the phone card. */
-  const renderActions = (product: any) => (
+  const renderActions = (product: any) => !(canEdit || canDelete) ? null : (
             <DropdownMenu>
               <Tooltip>
                 <TooltipTrigger
@@ -492,7 +497,8 @@ export function ProductsTable({
                 </TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem
+                {canEdit && (
+                  <DropdownMenuItem
                   render={
                     <Link
                       href={`/${lang}/inventory/products/${product.id}/edit`}
@@ -502,20 +508,25 @@ export function ProductsTable({
                 >
                   <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.edit")}
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                )}
+                {canEdit && (
+                  <DropdownMenuItem
                   onClick={() => handleToggleStatus(product.id, product.is_active)}
                   disabled={isUpdatingStatus === product.id}
                 >
                   <Power className="mr-2 h-3.5 w-3.5" />{" "}
                   {product.is_active ? t("common.inactive") : t("common.active")}
                 </DropdownMenuItem>
-                <DropdownMenuItem
+                )}
+                {canDelete && (
+                  <DropdownMenuItem
                   onClick={() => handleDelete(product.id)}
                   disabled={isDeleting === product.id}
                   className="text-red-600 focus:text-red-600 focus:bg-red-50"
                 >
                   <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("common.delete")}
                 </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
   );
@@ -539,6 +550,7 @@ export function ProductsTable({
               />
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {canExport && (
               <Button
                 type="button"
                 variant="outline"
@@ -550,6 +562,9 @@ export function ProductsTable({
                 <Download className="h-4 w-4" />
                 <span className="max-md:sr-only">{t("common.export", { fallback: "Eksport" })}</span>
               </Button>
+              )}
+              {canCreate && (
+              <>
               <input
                 type="file"
                 accept=".xlsx, .xls"
@@ -588,6 +603,8 @@ export function ProductsTable({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
+              )}
               <Tooltip>
                 <TooltipTrigger
                   render={

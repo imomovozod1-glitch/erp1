@@ -7,7 +7,7 @@ import { getSuppliersPage } from '@/lib/data/queries'
 import { readPageParams } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { SuppliersTable } from '@/components/procurement/suppliers-table'
-import { canEditModule , canDo, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canResource, getOwnerFilter } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -26,14 +26,13 @@ export default async function SuppliersPage({
   const { page, pageSize, search } = readPageParams(sp)
   // With the `own` data scope this list is limited to the records this user
   // is responsible for (plus unassigned ones) — applied in the query.
-  const [scope, permCtx] = await Promise.all([getDataScope('procurement'), getPermissionContext()])
-  const ownerId = scope === 'own' ? permCtx?.userId : undefined
+  const ownerId = await getOwnerFilter('procurement', 'suppliers')
   // Don't offer an action the user isn't allowed to complete — the
   // /new route guard would just bounce them straight back.
-  const canEdit = await canEditModule('procurement')
+  const canCreate = await canResource('procurement', 'suppliers', 'create')
   // Reading a list on screen and downloading the whole list are different
   // risks, so export is its own permission.
-  const canExport = await canDo('procurement', 'export')
+  const canExport = await canResource('procurement', 'suppliers', 'export')
   const t = await getTranslations('procurement')
   const tInfo = await getTranslations('pageInfo')
   const tenantId = (await getCurrentTenantId()) as string
@@ -74,7 +73,7 @@ export default async function SuppliersPage({
         title={t('suppliers')}
         subtitle={t('title')}
         info={tInfo('suppliers')}
-        action={canEdit ? { label: t('addSupplier'), href: `/${lang}/procurement/suppliers/new`, icon: Plus } : undefined}
+        action={canCreate ? { label: t('addSupplier'), href: `/${lang}/procurement/suppliers/new`, icon: Plus } : undefined}
         breadcrumbs={[
           { label: 'Falco', href: `/${lang}/dashboard` },
           { label: t('title') },

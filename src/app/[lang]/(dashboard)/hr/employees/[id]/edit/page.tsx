@@ -5,7 +5,7 @@ import { Metadata } from 'next'
 import { getCachedEmployeeById, getCachedEmployeeFormOptions } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { notFound } from 'next/navigation'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireRecordEdit } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -27,8 +27,8 @@ export default async function EditEmployeePage({
   params: Promise<{ lang: string, id: string }>
 }) {
   const { lang, id } = await params
-  // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('hr', lang, '/hr/employees')
+  // Editing needs the module's Edit permission, not just View.
+  await requireRecordEdit('hr', 'employees', undefined, lang, '/hr/employees')
   const tenantId = await getCurrentTenantId()
   if (!tenantId) return notFound()
 

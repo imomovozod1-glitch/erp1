@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { RouteForm } from '@/components/distribution/route-form'
 import { Metadata } from 'next'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 import { getCachedCustomersForRouting, getAssignableUsers, getCachedRouteDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 
@@ -20,7 +20,7 @@ export default async function EditRoutePage({
 }) {
   const { lang, id } = await params
   const tenantId = (await getCurrentTenantId()) as string
-  await requireModuleEdit('distribution', lang, '/distribution/routes')
+  await requireResourceAction('distribution', 'routes', 'edit', lang, '/distribution/routes')
 
   const [t, tCommon, customers, assignableUsers, details] = await Promise.all([
     getTranslations('distribution'),

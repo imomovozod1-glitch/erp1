@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { CustomerCategoryForm } from '@/components/sales/customer-category-form'
-import { requireModuleEdit } from '@/lib/permissions-server'
+import { requireResourceAction } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -19,7 +19,7 @@ export default async function EditCustomerCategoryPage({
 }) {
   const { lang, id } = await params
   // Creating/editing needs the module's Edit permission, not just View.
-  await requireModuleEdit('customers', lang, '/customers/categories')
+  await requireResourceAction('customers', 'categories', 'edit', lang, '/customers/categories')
   const [t, tCommon, tNav] = await Promise.all([
     getTranslations('sales'),
     getTranslations('common'),

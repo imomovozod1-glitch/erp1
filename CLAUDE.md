@@ -55,6 +55,7 @@ Required env (`.env.local`, git-ignored, documented in `.env.example`): `NEXT_PU
 
 - `profiles.role` (`admin`/`manager`/`staff`) plus `profiles.permissions` JSONB: `{ module: { view, create, edit, delete, export, approve, scope: 'all' | 'own' } }`. Role templates (`role_templates`) pre-fill it.
 - `src/lib/permissions.ts`: `can()` (admin always passes), `normaliseModulePermission` (upgrades the legacy `{view, edit}` shape). `src/lib/permissions-server.ts`: `canDo`, `getDataScope`, `requireModuleView` (called from each module's `layout.tsx`), `requireModuleEdit`, `requireAction`, `requireTenantAdmin`.
+- Sections and levels: `PERMISSION_RESOURCES` lists each module's sections; a section's action has a level `none` / `own` / `department` / `all`, stored in `permissions.<module>.levels` and written by `PermissionLevelsEditor` (behind the `permissions_v2` flag). `flattenLevels` keeps the module flags beside it as a summary (scope = the narrowest level in use), so `can()`, `app_can` and `app_data_scope` keep working; `migration_permission_levels.sql` teaches `app_owns` "by department". Pages use `canResource`, `requireResourceView`, `requireResourceAction`, `getOwnerFilter`, `canEditRecord`; client components use `useCan(module, action, resource)` (`permissions-provider.tsx`). RPCs check the module, not the section. `approve` is not offered: nothing asks for it. Distribution is left out of the editors (`MATRIX_MODULES`) while it is hidden from the sidebar.
 - Tenant user management goes through `src/app/api/tenant/users/**` and `api/tenant/roles/**` (admin-only, service role).
 
 ### Feature flags & release flow
@@ -95,6 +96,8 @@ The business write path, consistent across every `*-form.tsx`:
 "own" = with an `own` data scope only records `assigned_to` the caller. Still plain browser writes: product stock adjustments (`product-form.tsx`), the AI stock scanner, cashbox rename/delete, and the non-money header fields of orders (`order-form.tsx`).
 
 Reads: `src/lib/data/queries/*.ts` (one file per domain, re-exported from `index.ts`, tags in `cache-tags.ts`) — `unstable_cache` with 30–60 s TTLs, service-role client, explicit tenant filter. `src/lib/data/paginate.ts` (`queryPage`) is the uncached server-side paging/search path, including the "own records" scope filter.
+
+A Route Handler cannot call `invalidate*()` (`updateTag` throws there): use `src/lib/data/revalidate-route.ts`.
 
 API routes (`src/app/api/`) handle everything that needs the service role or a secret: admin/support/tenant management, logins, Telegram, `reports/run`, `ocr`, `inventory/scan`, `build-id`.
 
