@@ -128,6 +128,8 @@ export async function invalidateAnalytics() {
 
 export async function invalidateProfile(userId: string) {
   updateTag(`profile:${userId}`)
+  // The employee form's options hold every profile's permissions too.
+  updateTag('profiles')
 }
 
 export async function invalidateTenant(tenantId: string) {

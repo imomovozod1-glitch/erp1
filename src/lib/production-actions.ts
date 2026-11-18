@@ -18,19 +18,32 @@ import { formatNumber } from '@/lib/utils'
 export interface ProductionLineInput {
   component_id: string
   quantity: number
+  is_extra?: boolean
+  is_fixed?: boolean
+}
+
+export interface ProductionOutputInput {
+  product_id: string
+  quantity: number
+  /** Percent of the run's cost; all outputs carry one or none do. */
+  cost_share?: number | null
+  is_extra?: boolean
 }
 
 export interface SaveProductionOrderInput {
   id?: string
   order_number: string
   bom_id?: string | null
+  /** How many times the composition is run. */
+  batches?: number | null
+  /** The first output, for a database without migration_production_outputs.sql. */
   product_id: string
   quantity: number
   planned_date?: string | null
-  extra_cost?: number
   notes?: string | null
   assigned_to?: string | null
   items: ProductionLineInput[]
+  outputs: ProductionOutputInput[]
 }
 
 /** Thrown when the migration has not been applied on this deployment yet. */
@@ -80,6 +93,8 @@ export function productionErrorMessage(
   switch (error.code as string) {
     case 'duplicate_number':
       return t('production.duplicateNumber')
+    case 'cost_share_sum':
+      return t('production.costShareSum')
     case 'not_draft':
       return t('production.notDraft')
     case 'already_cancelled':

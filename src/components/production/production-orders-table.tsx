@@ -70,6 +70,7 @@ export function ProductionOrdersTable({
   const handleCancel = async (order: any) => {
     const confirmed = await confirmAction({
       title: t('production.cancelTitle'),
+      confirmLabel: t('production.cancelRun'),
       description: order.status === 'completed' ? t('production.cancelConfirm') : undefined,
       name: order.order_number,
     })
@@ -230,7 +231,10 @@ export function ProductionOrdersTable({
                           {order.order_number}
                         </Link>
                       </TableCell>
-                      <TableCell>{order.product?.name ?? '—'}</TableCell>
+                      <TableCell>
+                        {order.product?.name ?? '—'}
+                        {(order.outputs?.length ?? 0) > 1 && <span className="ml-1.5 text-xs text-muted-foreground">{t('production.moreOutputs', { count: order.outputs.length - 1 })}</span>}
+                      </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {formatNumber(Number(order.quantity) || 0)} {order.product?.unit}
                       </TableCell>
@@ -282,7 +286,7 @@ export function ProductionOrdersTable({
                     {order.planned_date && <span className="truncate">{formatDate(order.planned_date)}</span>}
                   </>
                 }
-                title={order.product?.name ?? '—'}
+                title={`${order.product?.name ?? '—'}${(order.outputs?.length ?? 0) > 1 ? ` ${t('production.moreOutputs', { count: order.outputs.length - 1 })}` : ''}`}
                 status={
                   <StatusBadge
                     tone={STATUS_TONE[order.status as keyof typeof STATUS_TONE] ?? 'slate'}

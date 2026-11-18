@@ -85,7 +85,7 @@ export function SupportLoginForm() {
       subheading={t('loginSubheading')}
       // Cookie mode: the portal is fast-pathed past next-intl's middleware in
       // src/proxy.ts, so it has no `[lang]` URL segment to rewrite.
-      action={<LocaleSwitcher mode="cookie" variant="glass" />}
+      action={<LocaleSwitcher mode="cookie" />}
     >
       {failure && <AuthAlert>{failure}</AuthAlert>}
 

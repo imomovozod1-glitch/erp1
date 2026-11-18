@@ -85,14 +85,14 @@ export function AdminLoginForm() {
       subheading={t('subheading')}
       // Cookie mode: the console is fast-pathed past next-intl's middleware in
       // src/proxy.ts, so it has no `[lang]` URL segment to rewrite.
-      action={<LocaleSwitcher mode="cookie" variant="glass" />}
+      action={<LocaleSwitcher mode="cookie" />}
     >
       {failure && <AuthAlert>{failure}</AuthAlert>}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <AuthField id="email" label={t('email')} error={errors.email?.message}>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="email"
               type="email"
@@ -109,7 +109,7 @@ export function AdminLoginForm() {
           label={t('password')}
           error={errors.password?.message}
           action={
-            <Link href="/admin/forgot-password" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">
+            <Link href="/admin/forgot-password" className="text-xs font-medium text-violet-700 transition-colors hover:text-violet-900 dark:text-violet-300 dark:hover:text-violet-200">
               {t('forgotPassword')}
             </Link>
           }

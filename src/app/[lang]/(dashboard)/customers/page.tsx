@@ -50,7 +50,7 @@ export default async function CustomersPage({
     // to see; only the LIST is paged. Same `ownerId` as the list — otherwise
     // the map tab would leak rows the list deliberately hides.
     getCustomersMapPoints(tenantId, ownerId),
-    getCustomerBalanceTotals(tenantId),
+    getCustomerBalanceTotals(tenantId, ownerId),
   ])
 
   const { totalDebt, totalCredit } = totals

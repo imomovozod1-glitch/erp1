@@ -1,19 +1,17 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { errorMessage } from '@/lib/error-message'
 import { Resolver, Controller } from 'react-hook-form'
-import { formatCurrency } from '@/lib/utils'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
-import { NumericInput } from '@/components/ui/numeric-input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateBoms } from '@/lib/data/revalidate'
 import { toast } from 'sonner'
-import { Trash2, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,15 +19,12 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
-import { ItemPicker } from '@/components/shared/item-picker'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  ProductionLinesTabs,
+  costShareTotal,
+  type MaterialLine,
+  type OutputLine,
+} from '@/components/production/production-lines-tabs'
 import { FormFooter } from '@/components/shared/form-footer'
 
 
@@ -38,15 +33,8 @@ export interface BomProductOption {
   name: string
   unit: string
   cost_price: number
+  stock?: number
   is_service?: boolean
-}
-
-interface BomLine {
-  componentId: string
-  name: string
-  unit: string
-  costPrice: number
-  quantity: number
 }
 
 interface BomFormProps {
@@ -54,29 +42,34 @@ interface BomFormProps {
   products: BomProductOption[]
   initialData?: any
   initialItems?: any[]
+  /** product_bom_outputs rows; empty for a composition saved before they existed. */
+  initialOutputs?: any[]
   /** Set when the form was opened from a product's own page. */
   presetProductId?: string
   lang: string
 }
 
+/** Lower-level codes a database without migration_production_outputs.sql answers with. */
+const MISSING_SCHEMA_CODES = new Set(['PGRST204', 'PGRST205', '42P01', '42703'])
+
 /**
- * Tarkib — the recipe for one batch of a finished product.
+ * Tarkib — the recipe for one batch.
  *
- * Shaped like `role-template-form.tsx`, because it is the same kind of object:
- * a reusable TEMPLATE whose detail grid (there a permissions matrix, here a
- * component list) a production run copies and may then adjust. Name at the
- * top, the grid under its own label, actions bottom-right.
+ * Laid out like Bito's: the composition's name on top, then two tabs — the raw
+ * materials that go in (each either scaling with the run or fixed) and the
+ * finished products that come out, optionally with each one's share of the
+ * cost. There is no extra-cost tab: a run's cost is what its materials were
+ * carried at (complete_production_order).
  *
- * This writes no stock and no money, so unlike a production run it is an
- * ordinary browser write (see CLAUDE.md § Data layer): the header is
- * inserted/updated, then the component lines are replaced wholesale. A failure
- * between the two leaves a recipe the user can see is empty and re-save —
- * which is why the lines are deleted and re-inserted rather than diffed.
+ * This writes no stock and no money, so it is an ordinary browser write (see
+ * CLAUDE.md § Data layer): the header is saved, then both line lists are
+ * replaced wholesale. `product_boms.product_id` / `output_quantity` mirror the
+ * first finished product for every reader that predates product_bom_outputs.
  */
-export function BomForm({ initialData, initialItems, products, presetProductId, lang, assignableUsers }: BomFormProps) {
+export function BomForm({ initialData, initialItems, initialOutputs, products, presetProductId, lang, assignableUsers }: BomFormProps) {
   // The draft is keyed by the product it is for, so opening "add composition"
   // from one product never restores a half-written recipe for another.
-  const FORM_ID = `bom-form-v1:${initialData?.id ?? presetProductId ?? 'new'}`
+  const FORM_ID = `bom-form-v2:${initialData?.id ?? presetProductId ?? 'new'}`
   const tRoot = useTranslations()
   const tCommon = useTranslations('common')
   const t = useTranslations('production')
@@ -85,96 +78,58 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const supabase = createClient() as any
 
-  const [lines, setLines] = useState<BomLine[]>(() =>
+  const [materials, setMaterials] = useState<MaterialLine[]>(() =>
     (initialItems ?? []).map((item: any) => ({
-      componentId: item.component_id,
-      name: item.component?.name ?? '',
-      unit: item.component?.unit ?? '',
-      costPrice: Number(item.component?.cost_price) || 0,
+      productId: item.component_id,
       quantity: Number(item.quantity) || 0,
+      consumption: item.consumption === 'fixed' ? 'fixed' : 'variable',
+      isExtra: false,
     }))
   )
-
+  const [outputs, setOutputs] = useState<OutputLine[]>(() => {
+    if (initialOutputs && initialOutputs.length > 0) {
+      return initialOutputs.map((row: any) => ({
+        productId: row.product_id,
+        quantity: Number(row.quantity) || 0,
+        costShare: row.cost_share === null || row.cost_share === undefined ? null : Number(row.cost_share),
+        isExtra: false,
+      }))
+    }
+    const productId = initialData?.product_id ?? presetProductId
+    return productId
+      ? [{ productId, quantity: Number(initialData?.output_quantity) || 1, costShare: null, isExtra: false }]
+      : []
+  })
 
   const schema = z.object({
     name: z.string().min(1, tCommon('required')),
-    product_id: z.string().min(1, tCommon('required')),
-    output_quantity: z.preprocess(
-      (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
-      z.number().positive(tCommon('required'))
-    ),
     notes: z.string().optional(),
     is_active: z.boolean().default(true),
   })
 
   type FormData = z.infer<typeof schema>
 
-  const { register, handleSubmit, watch, control, formState: { errors } } = usePersistedForm<FormData>(FORM_ID, {
+  const { register, handleSubmit, control, formState: { errors } } = usePersistedForm<FormData>(FORM_ID, {
     resolver: zodResolver(schema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
-      product_id: initialData?.product_id || presetProductId || '',
-      output_quantity: initialData?.output_quantity ?? 1,
       notes: initialData?.notes || '',
       is_active: initialData?.is_active ?? true,
     },
   })
 
-  const productId = watch('product_id')
-  const outputQuantity = Number(watch('output_quantity')) || 0
-
-  // What the batch looks like it will cost at today's cost prices. The real
-  // figure is only known when a run is completed and the stock layers are
-  // actually drawn down, which is why this is labelled an estimate.
-  const componentsCost = useMemo(
-    () => lines.reduce((sum, l) => sum + l.costPrice * l.quantity, 0),
-    [lines]
-  )
-  const batchCost = componentsCost
-  const perUnitCost = outputQuantity > 0 ? batchCost / outputQuantity : 0
-
-  /**
-   * One click adds the component, at a quantity of 1 — the same gesture the
-   * sales form uses. How much of it goes in is then typed in the table, next to
-   * the other lines and next to the running batch cost, which is where that
-   * number is actually decided. Clicking one already listed bumps it by one.
-   */
-  const addComponent = (id: string) => {
-    if (id === productId) {
-      toast.error(t('selfComponent'))
-      return false
-    }
-    const existing = lines.findIndex((l) => l.componentId === id)
-    if (existing >= 0) {
-      setLines((current) =>
-        current.map((line, idx) => (idx === existing ? { ...line, quantity: line.quantity + 1 } : line))
-      )
+  const onSubmit = async (data: any) => {
+    if (materials.length === 0 || materials.some((m) => !(m.quantity > 0))) {
+      toast.error(t('noComponents'))
       return
     }
-    const product = products.find((p) => p.id === id)
-    if (!product) return false
-    setLines((current) => [
-      ...current,
-      {
-        componentId: product.id,
-        name: product.name,
-        unit: product.unit,
-        costPrice: Number(product.cost_price) || 0,
-        quantity: 1,
-      },
-    ])
-  }
-
-  /** The missing half of the line CRUD: a quantity that can be corrected. */
-  const setLineQuantity = (componentId: string, quantity: number) => {
-    setLines((current) =>
-      current.map((line) => (line.componentId === componentId ? { ...line, quantity } : line))
-    )
-  }
-
-  const onSubmit = async (data: any) => {
-    if (lines.length === 0) {
-      toast.error(t('noComponents'))
+    if (outputs.length === 0 || outputs.some((o) => !(o.quantity > 0))) {
+      toast.error(t('noOutputs'))
+      return
+    }
+    const useShares = outputs.every((o) => o.costShare !== null)
+    if (useShares && Math.abs(costShareTotal(outputs) - 100) > 0.01) {
+      toast.error(t('costShareSum'))
       return
     }
     setIsSubmitting(true)
@@ -184,8 +139,8 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
 
       const payload: Record<string, any> = {
         name: data.name.trim(),
-        product_id: data.product_id,
-        output_quantity: data.output_quantity,
+        product_id: outputs[0].productId,
+        output_quantity: outputs[0].quantity,
         notes: data.notes || null,
         is_active: data.is_active,
         assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
@@ -196,8 +151,12 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
       if (bomId) {
         const { error } = await supabase.from('product_boms').update(payload).eq('id', bomId)
         if (error) throw error
-        const { error: delError } = await supabase.from('product_bom_items').delete().eq('bom_id', bomId)
-        if (delError) throw delError
+        const [{ error: delItems }, { error: delOutputs }] = await Promise.all([
+          supabase.from('product_bom_items').delete().eq('bom_id', bomId),
+          supabase.from('product_bom_outputs').delete().eq('bom_id', bomId),
+        ])
+        if (delItems) throw delItems
+        if (delOutputs) throw delOutputs
       } else {
         const { data: created, error } = await supabase.from('product_boms').insert([payload]).select('id').single()
         if (error) throw error
@@ -206,33 +165,36 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
 
       // `tenant_id` is left out on purpose: the set_tenant_id() BEFORE INSERT
       // trigger stamps it (migration_production.sql).
-      const { error: itemsError } = await supabase.from('product_bom_items').insert(
-        lines.map((l) => ({ bom_id: bomId, component_id: l.componentId, quantity: l.quantity }))
-      )
+      const [{ error: itemsError }, { error: outputsError }] = await Promise.all([
+        supabase.from('product_bom_items').insert(
+          materials.map((m) => ({ bom_id: bomId, component_id: m.productId, quantity: m.quantity, consumption: m.consumption }))
+        ),
+        supabase.from('product_bom_outputs').insert(
+          outputs.map((o) => ({
+            bom_id: bomId,
+            product_id: o.productId,
+            quantity: o.quantity,
+            cost_share: useShares ? o.costShare : null,
+          }))
+        ),
+      ])
       if (itemsError) throw itemsError
+      if (outputsError) throw outputsError
 
       toast.success(tCommon('success'))
       await invalidateBoms()
       clearPersistedForm(FORM_ID)
       exitForm()
     } catch (error: any) {
-      toast.error(errorMessage(tRoot, error, tCommon('error')))
+      toast.error(
+        MISSING_SCHEMA_CODES.has(error?.code)
+          ? tRoot('production.migrationMissing')
+          : errorMessage(tRoot, error, tCommon('error'))
+      )
     } finally {
       setIsSubmitting(false)
     }
   }
-
-  // Everything except the recipe's own output — a product cannot be made out
-  // of itself. Components ALREADY on the list stay in the picker rather than
-  // disappearing from it: they carry a badge with their current quantity, and
-  // clicking one again bumps it, which is how the sales form behaves and what
-  // makes a second helping one click instead of a scroll down to the table.
-  // A recipe lists raw materials, which are goods — services (electricity,
-  // wages) are added per run as extras, not here.
-  const availableComponents = products.filter((p) => p.id !== productId && !p.is_service)
-  // The output of a recipe is stocked when a run completes, so it cannot be a
-  // service.
-  const producibleProducts = products.filter((p) => !p.is_service)
 
   return (
     <Card className="border-0 shadow-sm">
@@ -246,42 +208,6 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
           <Label htmlFor="name">{t('bomName')} *</Label>
           <Input id="name" {...register('name')} placeholder={t('bomNamePlaceholder')} />
           {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="product_id">{t('finishedProduct')} *</Label>
-          <Controller
-            control={control}
-            name="product_id"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger id="product_id" className="w-full">
-                  <SelectValue placeholder={tCommon('select')}>
-                    {field.value ? products.find((p) => p.id === field.value)?.name : tCommon('select')}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {producibleProducts.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {errors.product_id && <p className="text-sm text-red-500">{errors.product_id.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="output_quantity">{t('outputQuantity')} *</Label>
-          <Controller
-            control={control}
-            name="output_quantity"
-            render={({ field: { onChange, value } }) => (
-              <NumericInput id="output_quantity" value={value} onChange={onChange} />
-            )}
-          />
-          <p className="text-[11px] text-muted-foreground leading-snug">{t('outputHint')}</p>
-          {errors.output_quantity && <p className="text-sm text-red-500">{errors.output_quantity.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -304,150 +230,15 @@ export function BomForm({ initialData, initialItems, products, presetProductId, 
         </div>
       </div>
 
-      {/* Components */}
-      <div className="space-y-3">
-        <Label>{t('components')} *</Label>
-        <ItemPicker
-          options={availableComponents.map((p) => ({
-            id: p.id,
-            name: p.name,
-            meta: p.unit,
-            trailing: formatCurrency(p.cost_price),
-            badge: lines.find((l) => l.componentId === p.id)?.quantity ?? null,
-          }))}
-          onPick={(option) => addComponent(option.id)}
-          placeholder={`${t('component')}...`}
-          emptyLabel={tCommon('noData')}
-          hint={t('clickToAddComponentHint')}
-        />
-
-        <div className="space-y-3 md:hidden">
-          {lines.length === 0 ? (
-            <p className="rounded-2xl border border-dashed py-8 text-center text-sm text-muted-foreground">
-              {t('noComponents')}
-            </p>
-          ) : (
-            lines.map((line) => (
-              <div key={line.componentId} className="rounded-2xl border bg-card p-3 shadow-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0 break-words text-sm font-semibold">{line.name}</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={tCommon('delete')}
-                    onClick={() => setLines((c) => c.filter((l) => l.componentId !== line.componentId))}
-                    className="-mr-1 -mt-1 h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="mt-2 flex items-end gap-2">
-                  <label className="flex-1 space-y-1 text-xs text-muted-foreground">
-                    {tCommon('quantity')}
-                    <div className="flex items-center gap-1.5">
-                      <NumericInput
-                        value={line.quantity}
-                        onChange={(val) => setLineQuantity(line.componentId, Number(val) || 0)}
-                        className="text-right"
-                      />
-                      <span className="shrink-0 text-xs">{line.unit}</span>
-                    </div>
-                  </label>
-                  <div className="flex-1 text-right text-xs text-muted-foreground">
-                    {t('unitCost')}
-                    <p className="text-sm tabular-nums text-foreground">{formatCurrency(line.costPrice)}</p>
-                  </div>
-                </div>
-                <div className="mt-2 flex items-center justify-between border-t pt-2 text-sm">
-                  <span className="text-muted-foreground">{tCommon('total')}</span>
-                  <span className="font-bold tabular-nums">{formatCurrency(line.costPrice * line.quantity)}</span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="rounded-lg border overflow-x-auto max-md:hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-                <TableHead>{t('component')}</TableHead>
-                <TableHead className="text-right tabular-nums">{tCommon('quantity')}</TableHead>
-                <TableHead className="text-right tabular-nums">{t('unitCost')}</TableHead>
-                <TableHead className="text-right tabular-nums">{tCommon('total')}</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {lines.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
-                    {t('noComponents')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                lines.map((line) => (
-                  <TableRow key={line.componentId}>
-                    <TableCell className="font-medium">{line.name}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      <div className="ml-auto flex w-32 items-center gap-1.5">
-                        <NumericInput
-                          value={line.quantity}
-                          onChange={(val) => setLineQuantity(line.componentId, Number(val) || 0)}
-                          className="h-8 text-right"
-                        />
-                        <span className="shrink-0 text-xs text-muted-foreground">{line.unit}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{formatCurrency(line.costPrice)}</TableCell>
-                    <TableCell className="text-right font-medium tabular-nums">
-                      {formatCurrency(line.costPrice * line.quantity)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setLines((c) => c.filter((l) => l.componentId !== line.componentId))}
-                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {lines.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200/60 bg-linear-to-r from-slate-50 to-slate-100 p-4 shadow-inner dark:border-slate-700 dark:from-slate-800 dark:to-slate-800/60">
-            <div className="flex flex-wrap gap-8">
-              <div className="space-y-1">
-                <span className="block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {t('batchCost')}
-                </span>
-                <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                  {formatCurrency(batchCost)}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <span className="block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {t('perUnitCost')} · {t('estimated')}
-                </span>
-                <span className="text-lg font-bold tracking-tight text-violet-600 dark:text-violet-400">
-                  {formatCurrency(perUnitCost)}
-                </span>
-              </div>
-            </div>
-            <p className="basis-full text-[11px] leading-snug text-slate-400 dark:text-slate-500">
-              {t('estimatedHint')}
-            </p>
-          </div>
-        )}
-      </div>
+      <ProductionLinesTabs
+        mode="bom"
+        products={products}
+        materials={materials}
+        outputs={outputs}
+        onMaterialsChange={setMaterials}
+        onOutputsChange={setOutputs}
+        disabled={isSubmitting}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="notes">{tCommon('description')}</Label>

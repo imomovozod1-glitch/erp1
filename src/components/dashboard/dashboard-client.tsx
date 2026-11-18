@@ -143,11 +143,13 @@ export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps
     setPeriod('custom')
   }
 
-  const canSeeSales = useCan('sales', 'view')
+  // The server leaves the company-wide totals out (null) for a user who may
+  // only see their own records (dashboard/page.tsx); the tile goes with them.
+  const canSeeSales = useCan('sales', 'view') && stats.totalOrders !== null
   const canSeeReports = useCan('analytics', 'view')
   const canSeeFinance = useCan('finance', 'view')
   const canSeeInventory = useCan('inventory', 'view')
-  const canSeeCustomers = useCan('customers', 'view')
+  const canSeeCustomers = useCan('customers', 'view') && stats.totalCustomers !== null
   const canSeeEmployees = useCan('hr', 'view')
   const canSeeSuppliers = useCan('procurement', 'view')
   const canAddSale = useCan('sales', 'create')

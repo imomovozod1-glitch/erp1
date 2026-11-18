@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Calendar, Receipt, Search, TrendingUp } from 'lucide-react'
@@ -42,6 +43,8 @@ export function CashboxTransactionsCard({
   onSearchChange: (value: string) => void
   lang: string
 }) {
+  // Rows open the transaction's editor, which a view-only user cannot use.
+  const canEdit = useCan('finance', 'edit', 'transactions')
   const router = useRouter()
   const tCommon = useTranslations('common')
   const t = useTranslations('finance')
@@ -85,7 +88,7 @@ export function CashboxTransactionsCard({
           return (
             <MobileCard
               key={tx.id}
-              onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
+              onClick={canEdit ? () => router.push(`/${lang}/finance/transactions/${tx.id}/edit`) : undefined}
               eyebrow={
                 <>
                   <MobileChip>{tx.category}</MobileChip>
@@ -160,7 +163,7 @@ export function CashboxTransactionsCard({
                   <tr
                     key={tx.id}
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/${lang}/finance/transactions/${tx.id}/edit`)}
+                    onClick={canEdit ? () => router.push(`/${lang}/finance/transactions/${tx.id}/edit`) : undefined}
                   >
                     <td className="p-4 pl-6 text-xs text-slate-500 dark:text-slate-400">
                       <div className="flex items-center gap-1.5">

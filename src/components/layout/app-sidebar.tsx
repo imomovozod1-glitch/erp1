@@ -268,6 +268,9 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
     ...item,
     subItems: item.subItems?.filter((sub) => {
       const permissionModule = item.module ?? (item.key as PermissionModule)
+      // Role templates are admin-only (hr/roles/layout.tsx): don't offer a link
+      // that only bounces everyone else back to the dashboard.
+      if (sub.href === 'hr/roles') return profile?.role === 'admin'
       const resource = PERMISSION_RESOURCES[permissionModule]?.find((r) => r.path === sub.href)
       return !resource || canResource(profile?.role, (profile as any)?.permissions, permissionModule, resource.key, 'view')
     }),
@@ -428,7 +431,11 @@ export function AppSidebar({ lang, profile }: AppSidebarProps) {
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-semibold">{profile?.full_name ?? 'User'}</span>
-                  <span className="truncate text-xs text-muted-foreground">{profile?.email}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {/* Members sign in by phone; their email is a synthetic
+                        `{digits}@….tenant.local` (src/lib/tenant-auth.ts). */}
+                    {profile?.email?.endsWith('.tenant.local') ? (profile as { phone?: string | null }).phone || '' : profile?.email}
+                  </span>
                 </div>
                 <Badge
                   variant="outline"

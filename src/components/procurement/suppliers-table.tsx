@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import React, { useState } from 'react'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 import { useRouter } from 'next/navigation'
@@ -50,6 +51,7 @@ export function SuppliersTable({
   totalPages,
   canExport = false,
 }: SuppliersTableProps) {
+  const canEdit = useCan('procurement', 'edit', 'suppliers')
   const tCommon = useTranslations('common')
   const t = useTranslations('procurement')
   const router = useRouter()
@@ -76,10 +78,12 @@ export function SuppliersTable({
                             </TooltipContent>
                           </Tooltip>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}/edit`)}>
-                              <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                              {tCommon('edit')}
-                            </DropdownMenuItem>
+                            {canEdit && (
+                              <DropdownMenuItem onClick={() => router.push(`/${lang}/procurement/suppliers/${supplier.id}/edit`)}>
+                                <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
+                                {tCommon('edit')}
+                              </DropdownMenuItem>
+                            )}
                             {(supplier.address || (supplier.latitude && supplier.longitude)) && (
                               <DropdownMenuItem onClick={() => setMapSupplier({ name: supplier.name, address: supplier.address, latitude: supplier.latitude, longitude: supplier.longitude })}>
                                 <MapPin className="mr-2 h-3.5 w-3.5 text-slate-500" />

@@ -42,7 +42,7 @@ export default async function ProductionOrderPage({
           { label: details.order.order_number },
         ]}
       />
-      <ProductionOrderDetail order={details.order} items={details.items} lang={lang} canEdit={canEdit} />
+      <ProductionOrderDetail order={details.order} items={details.items} outputs={details.outputs} lang={lang} canEdit={canEdit} />
     </div>
   )
 }

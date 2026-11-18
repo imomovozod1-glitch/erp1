@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeImageWithOpenAI } from '@/lib/openai'
-import { getVerifiedUser } from '@/lib/auth'
+import { getTenantContext } from '@/lib/auth'
+import { canDo } from '@/lib/permissions-server'
 import { validateImageUpload } from '@/lib/file-validation'
 
 export async function POST(request: NextRequest) {
-  const user = await getVerifiedUser()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  // A paid API: only an active member of an active company who may add goods
+  // (the screens that call this) gets to spend on it.
+  const ctx = await getTenantContext()
+  if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  const [a, b] = await Promise.all([canDo('inventory', 'create'), Promise.resolve(false)])
+  if (!a && !b) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
-    const prompt = formData.get('prompt') as string | null
 
     if (!file) {
       return NextResponse.json(
@@ -33,7 +37,9 @@ export async function POST(request: NextRequest) {
     If it's an invoice, extract: vendor, date, total amount, and line items.
     If it's a generic document, extract the main text and summarize key entities.`
 
-    const finalPrompt = prompt || defaultPrompt
+    // The prompt is the server's own: a caller-supplied one turned this into a
+    // general-purpose paid model endpoint.
+    const finalPrompt = defaultPrompt
     const text = await analyzeImageWithOpenAI(file, finalPrompt, false)
 
     return NextResponse.json({ result: text })
