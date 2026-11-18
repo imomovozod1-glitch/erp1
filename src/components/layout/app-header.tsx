@@ -439,7 +439,7 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
 
       {/* Language Switcher — the shared one, so every screen offers the same
           control; the header only adds keeping unsaved form input. */}
-      <LocaleSwitcher mode="path" compact onSelect={handleLocaleChange} />
+      <LocaleSwitcher mode="path" onSelect={handleLocaleChange} />
 
       <ThemeToggle
         className={`w-9 ${HEADER_CONTROL}`}
