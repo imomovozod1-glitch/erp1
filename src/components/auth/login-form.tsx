@@ -12,6 +12,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
 import {
   AuthAlert,
   AuthAlertLink,
@@ -20,6 +21,7 @@ import {
   AuthSubmitButton,
   authInputClass,
   authInputErrorClass,
+  authLinkClass,
   authPhoneInputClasses,
 } from '@/components/auth/auth-card'
 import { phoneSchema } from '@/lib/phone-validation'
@@ -212,12 +214,17 @@ export function LoginForm({ lang }: { lang: string }) {
       brandSubtitle={t('brandSubtitle')}
       heading={t('loginTitle')}
       subheading={t('loginSubtitle')}
-      action={<LocaleSwitcher mode="path" variant="glass" />}
+      action={
+        <>
+          <ThemeToggle className="rounded-full" />
+          <LocaleSwitcher mode="path" />
+        </>
+      }
     >
       {failure && (
         <AuthAlert>
           <p>{failure.message}</p>
-          {failure.hint && <p className="text-red-200/70 text-xs">{failure.hint}</p>}
+          {failure.hint && <p className="text-xs opacity-80">{failure.hint}</p>}
           {failure.link && <AuthAlertLink href={failure.link.href}>{failure.link.label}</AuthAlertLink>}
         </AuthAlert>
       )}
@@ -250,13 +257,13 @@ export function LoginForm({ lang }: { lang: string }) {
                 render={
                   <button
                     type="button"
-                    className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                    className={authLinkClass}
                   />
                 }
               >
                 {t('forgotPassword')}
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-72 text-sm leading-relaxed bg-slate-900 border-white/10 text-slate-200">
+              <PopoverContent align="end" className="w-72 text-sm leading-relaxed">
                 {t('forgotPasswordHint')}
               </PopoverContent>
             </Popover>

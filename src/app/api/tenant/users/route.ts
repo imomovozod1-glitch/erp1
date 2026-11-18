@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getVerifiedUser, getCachedProfile } from '@/lib/auth'
+import { isTenantActive } from '@/lib/tenant-active'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { newPasswordSchema } from '@/lib/password-validation'
 import { phoneSchema } from '@/lib/phone-validation'
@@ -38,7 +39,15 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const callerProfile = await getCachedProfile(user.id) as any
-  if (!callerProfile || callerProfile.role !== 'admin' || !callerProfile.tenant_id) {
+  // Same gate as getTenantContext: a deactivated admin, or a company whose
+  // subscription has lapsed, manages no logins.
+  if (
+    !callerProfile ||
+    callerProfile.role !== 'admin' ||
+    !callerProfile.tenant_id ||
+    callerProfile.is_active === false ||
+    !(await isTenantActive(callerProfile.tenant_id))
+  ) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 

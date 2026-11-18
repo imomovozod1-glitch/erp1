@@ -18,6 +18,27 @@ const ORDER_SELECT =
   '*, product:products!production_orders_product_id_fkey(id, name, sku, unit), bom:product_boms(id, name), assignee:profiles!production_orders_assigned_to_fkey(full_name)'
 
 /**
+ * Selects with the product_bom_outputs / production_order_outputs embed tried
+ * first, falling back to the bare select on a database where
+ * migration_production_outputs.sql is not applied yet — every reader then sees
+ * one output, the mirrored `product_id`, as before.
+ */
+async function withOutputs<T>(
+  run: (embed: string) => PromiseLike<{ data: T | null; error: { code?: string } | null; count?: number | null }>,
+  embed: string
+): Promise<{ data: T | null; count?: number | null; error: { code?: string; message?: string } | null }> {
+  const first = await run(embed)
+  if (!first.error) return first
+  console.warn('[production] outputs not available, reading without them:', (first.error as { message?: string }).message)
+  return run('')
+}
+
+const BOM_OUTPUTS_EMBED =
+  ', outputs:product_bom_outputs(product_id, quantity, cost_share, created_at, product:products!product_bom_outputs_product_id_fkey(id, name, unit))'
+const ORDER_OUTPUTS_EMBED =
+  ', outputs:production_order_outputs(product_id, quantity, created_at, product:products!production_order_outputs_product_id_fkey(id, name, unit))'
+
+/**
  * Every composition, with its component count — the compositions list, loaded
  * the way `getCachedRoleTemplates` loads role templates.
  *
@@ -28,11 +49,15 @@ const ORDER_SELECT =
 export const getCachedBoms = unstable_cache(
   async (tenantId: string) => {
     const supabase = getCacheClient() as any
-    const { data } = await supabase
-      .from('product_boms')
-      .select(`${BOM_SELECT}, items:product_bom_items(id)`)
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
+    const { data } = await withOutputs(
+      (embed) =>
+        supabase
+          .from('product_boms')
+          .select(`${BOM_SELECT}, items:product_bom_items(id)${embed}`)
+          .eq('tenant_id', tenantId)
+          .order('created_at', { ascending: false }),
+      BOM_OUTPUTS_EMBED
+    )
     return (data ?? []) as any[]
   },
   ['boms-list'],
@@ -55,11 +80,8 @@ export async function getBomsPage(
   const from = (opts.page - 1) * opts.pageSize
   const term = opts.search?.trim() ?? ''
 
-  let query = supabase
-    .from('product_boms')
-    .select(`${BOM_SELECT}, items:product_bom_items(id)`, { count: 'exact' })
-    .eq('tenant_id', tenantId)
-
+  let productIds: string[] = []
+  let outputBomIds: string[] = []
   if (term) {
     const { data: products } = await supabase
       .from('products')
@@ -67,14 +89,34 @@ export async function getBomsPage(
       .eq('tenant_id', tenantId)
       .ilike('name', `%${term.replace(/[%_\\]/g, (c: string) => `\\${c}`)}%`)
       .limit(500)
-    const productIds = ((products ?? []) as { id: string }[]).map((p) => p.id)
-    const nameMatch = ilikeAny(['name'], term)
-    query = query.or(productIds.length ? `${nameMatch},product_id.in.(${productIds.join(',')})` : nameMatch)
+    productIds = ((products ?? []) as { id: string }[]).map((p) => p.id)
+    // A composition matches on ANY of its finished products, not just the first.
+    if (productIds.length) {
+      const { data: outputRows } = await supabase
+        .from('product_bom_outputs')
+        .select('bom_id')
+        .eq('tenant_id', tenantId)
+        .in('product_id', productIds)
+      outputBomIds = ((outputRows ?? []) as { bom_id: string }[]).map((r) => r.bom_id)
+    }
   }
 
-  const { data, count, error } = await query
-    .order('created_at', { ascending: false })
-    .range(from, from + opts.pageSize - 1)
+  const { data, count, error } = await withOutputs(
+    (embed) => {
+      let query = supabase
+        .from('product_boms')
+        .select(`${BOM_SELECT}, items:product_bom_items(id)${embed}`, { count: 'exact' })
+        .eq('tenant_id', tenantId)
+      if (term) {
+        const filters = [ilikeAny(['name'], term)]
+        if (productIds.length) filters.push(`product_id.in.(${productIds.join(',')})`)
+        if (outputBomIds.length) filters.push(`id.in.(${[...new Set(outputBomIds)].join(',')})`)
+        query = query.or(filters.join(','))
+      }
+      return query.order('created_at', { ascending: false }).range(from, from + opts.pageSize - 1)
+    },
+    BOM_OUTPUTS_EMBED
+  )
   if (error) {
     console.warn('[boms] page query failed:', error.message)
     return { rows: [], total: 0, page: opts.page, pageSize: opts.pageSize, totalPages: 0 }
@@ -89,7 +131,7 @@ export async function getBomsPage(
   }
 }
 
-export function getProductionOrdersPage(
+export async function getProductionOrdersPage(
   tenantId: string,
   opts: {
     page: number
@@ -99,18 +141,23 @@ export function getProductionOrdersPage(
     ownerId?: OwnerFilter
   }
 ): Promise<PageResult<any>> {
-  return queryPage({
-    table: 'production_orders',
-    tenantId,
-    select: ORDER_SELECT,
-    page: opts.page,
-    pageSize: opts.pageSize,
-    search: opts.search,
-    searchColumns: ['order_number'],
-    filters: { status: opts.status === 'all' || !opts.status ? undefined : opts.status },
-    orderBy: { column: 'created_at', ascending: false },
-    ownerId: opts.ownerId,
-  })
+  const page = (select: string) =>
+    queryPage({
+      table: 'production_orders',
+      tenantId,
+      select,
+      page: opts.page,
+      pageSize: opts.pageSize,
+      search: opts.search,
+      searchColumns: ['order_number'],
+      filters: { status: opts.status === 'all' || !opts.status ? undefined : opts.status },
+      orderBy: { column: 'created_at', ascending: false },
+      ownerId: opts.ownerId,
+    })
+  // queryPage answers a failed query with totalPages 0 (a real page is >= 1):
+  // the outputs embed is retried without on a pre-migration database.
+  const result = await page(ORDER_SELECT + ORDER_OUTPUTS_EMBED)
+  return result.totalPages === 0 ? page(ORDER_SELECT) : result
 }
 
 /**
@@ -122,12 +169,22 @@ export function getProductionOrdersPage(
  */
 export async function getBomsForSelect(tenantId: string) {
   const supabase = getCacheClient() as any
-  const { data } = await supabase
-    .from('product_boms')
-    .select('id, name, product_id, output_quantity, extra_cost, product:products!product_boms_product_id_fkey(id, name, unit), items:product_bom_items(component_id, quantity, component:products!product_bom_items_component_id_fkey(id, name, unit, cost_price, stock, is_service))')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
-    .order('name')
+  const base =
+    'id, name, product_id, output_quantity, extra_cost, product:products!product_boms_product_id_fkey(id, name, unit)'
+  const { data } = await withOutputs(
+    (embed) =>
+      supabase
+        .from('product_boms')
+        .select(
+          embed
+            ? `${base}, items:product_bom_items(component_id, quantity, consumption), outputs:product_bom_outputs(product_id, quantity, cost_share, created_at)`
+            : `${base}, items:product_bom_items(component_id, quantity)`
+        )
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+        .order('name'),
+    'outputs'
+  )
   return (data ?? []) as any[]
 }
 
@@ -139,16 +196,32 @@ export async function getBomsForSelect(tenantId: string) {
 export const getCachedProductBoms = unstable_cache(
   async (productId: string, tenantId: string) => {
     const supabase = getCacheClient() as any
-    const { data } = await supabase
+    // Every composition this product comes out of — as its first output or any
+    // other. Before migration_production_outputs.sql only the first exists.
+    const { data: outputRows, error: outputsError } = await supabase
+      .from('product_bom_outputs')
+      .select('bom_id, quantity')
+      .eq('tenant_id', tenantId)
+      .eq('product_id', productId)
+    const viaOutputs = new Map<string, number>(
+      outputsError ? [] : ((outputRows ?? []) as { bom_id: string; quantity: number }[]).map((r) => [r.bom_id, Number(r.quantity)])
+    )
+    let query = supabase
       .from('product_boms')
       .select(
-        'id, name, output_quantity, extra_cost, is_active, ' +
+        'id, name, product_id, output_quantity, extra_cost, is_active, ' +
           'items:product_bom_items(quantity, component:products!product_bom_items_component_id_fkey(name, unit, cost_price))'
       )
-      .eq('product_id', productId)
       .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-    return (data ?? []) as any[]
+    query = viaOutputs.size
+      ? query.or(`product_id.eq.${productId},id.in.(${[...viaOutputs.keys()].join(',')})`)
+      : query.eq('product_id', productId)
+    const { data } = await query.order('created_at', { ascending: false })
+    // `output_quantity` here is how much of THIS product one batch yields.
+    return ((data ?? []) as any[]).map((bom) => ({
+      ...bom,
+      output_quantity: viaOutputs.get(bom.id) ?? bom.output_quantity,
+    }))
   },
   ['product-boms-by-product'],
   { tags: [CACHE_TAGS.boms, CACHE_TAGS.products], revalidate: 30 }
@@ -157,7 +230,7 @@ export const getCachedProductBoms = unstable_cache(
 export const getCachedBomDetails = unstable_cache(
   async (id: string, tenantId: string) => {
     const supabase = getCacheClient() as any
-    const [{ data: bom }, { data: items }] = await Promise.all([
+    const [{ data: bom }, { data: items }, { data: outputs }] = await Promise.all([
       supabase.from('product_boms').select(BOM_SELECT).eq('id', id).eq('tenant_id', tenantId).maybeSingle(),
       supabase
         .from('product_bom_items')
@@ -165,8 +238,16 @@ export const getCachedBomDetails = unstable_cache(
         .eq('bom_id', id)
         .eq('tenant_id', tenantId)
         .order('created_at'),
+      // Fails quietly on a pre-migration database: the form then rebuilds the
+      // single output from product_id / output_quantity.
+      supabase
+        .from('product_bom_outputs')
+        .select('*, product:products!product_bom_outputs_product_id_fkey(id, name, sku, unit)')
+        .eq('bom_id', id)
+        .eq('tenant_id', tenantId)
+        .order('created_at'),
     ])
-    return { bom, items: items ?? [] }
+    return { bom, items: items ?? [], outputs: outputs ?? [] }
   },
   ['bom-details-by-id'],
   { tags: [CACHE_TAGS.boms, CACHE_TAGS.products], revalidate: 30 }
@@ -175,7 +256,7 @@ export const getCachedBomDetails = unstable_cache(
 export const getCachedProductionOrderDetails = unstable_cache(
   async (id: string, tenantId: string) => {
     const supabase = getCacheClient() as any
-    const [{ data: order }, { data: items }] = await Promise.all([
+    const [{ data: order }, { data: items }, { data: outputs }] = await Promise.all([
       supabase.from('production_orders').select(ORDER_SELECT).eq('id', id).eq('tenant_id', tenantId).maybeSingle(),
       supabase
         .from('production_order_items')
@@ -183,8 +264,22 @@ export const getCachedProductionOrderDetails = unstable_cache(
         .eq('order_id', id)
         .eq('tenant_id', tenantId)
         .order('created_at'),
+      supabase
+        .from('production_order_outputs')
+        .select('*, product:products!production_order_outputs_product_id_fkey(id, name, sku, unit, stock)')
+        .eq('order_id', id)
+        .eq('tenant_id', tenantId)
+        .order('created_at'),
     ])
-    return { order, items: items ?? [] }
+    // A run from before production_order_outputs: its one output is the header.
+    const outputRows = (outputs ?? []).length
+      ? outputs
+      : order
+        ? [{ product_id: order.product_id, quantity: order.quantity, cost_share: null, is_extra: false,
+             unit_cost: order.status === 'completed' ? order.unit_cost : null,
+             total_cost: order.status === 'completed' ? order.total_cost : null, product: order.product }]
+        : []
+    return { order, items: items ?? [], outputs: outputRows as any[] }
   },
   ['production-order-details-by-id'],
   { tags: [CACHE_TAGS.productionOrders, CACHE_TAGS.products], revalidate: 30 }

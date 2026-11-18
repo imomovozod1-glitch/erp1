@@ -42,6 +42,8 @@ const STATUS_TONE = {
 interface ProductionOrderDetailProps {
   order: any
   items: any[]
+  /** production_order_outputs; the query rebuilds one from the header for an older run. */
+  outputs: any[]
   lang: string
   canEdit: boolean
 }
@@ -54,7 +56,7 @@ interface ProductionOrderDetailProps {
  * touches stock, and it goes through `complete_production_order`, so the
  * whole run either happens or does not.
  */
-export function ProductionOrderDetail({ order, items, lang, canEdit }: ProductionOrderDetailProps) {
+export function ProductionOrderDetail({ order, items, outputs, lang, canEdit }: ProductionOrderDetailProps) {
   const tCommon = useTranslations('common')
   const t = useTranslations('production')
   const tRoot = useTranslations()
@@ -64,6 +66,9 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
 
   const isDraft = order.status === 'draft'
   const isCompleted = order.status === 'completed'
+  // A run that was completed and then cancelled still carries what it was
+  // charged; showing today's estimate for it would rewrite that figure.
+  const hasActualCost = isCompleted || (order.status === 'cancelled' && Number(order.total_cost) > 0)
 
   // A draft's figures are what today's cost prices suggest; a finished run
   // carries what it actually cost, written by the database function.
@@ -71,6 +76,17 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
     (sum, item) => sum + (Number(item.component?.cost_price) || 0) * Number(item.quantity),
     0
   ) + (Number(order.extra_cost) || 0)
+
+  // How a draft's estimate would be split: by the outputs' shares when they all
+  // carry one, otherwise by quantity — the rule complete_production_order uses.
+  const useShares = outputs.length > 0 && outputs.every((o) => o.cost_share !== null && o.cost_share !== undefined)
+  const outputsQty = outputs.reduce((sum, o) => sum + (Number(o.quantity) || 0), 0)
+  const outputCost = (output: any) => {
+    if (hasActualCost) return Number(output.total_cost) || 0
+    if (useShares) return (estimatedCost * Number(output.cost_share)) / 100
+    return outputsQty > 0 ? (estimatedCost * Number(output.quantity)) / outputsQty : 0
+  }
+  const firstOutput = outputs[0]
 
   const shortages = items.filter(
     (item) => !isService(item.component) && (Number(item.component?.stock) || 0) < Number(item.quantity)
@@ -93,6 +109,7 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
   const handleCancel = async () => {
     const confirmed = await confirmCancel({
       title: t('cancelTitle'),
+      confirmLabel: tRoot('production.cancelRun'),
       description: isCompleted ? t('cancelConfirm') : undefined,
       name: order.order_number,
     })
@@ -110,7 +127,10 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
   }
 
   return (
-    <div className="space-y-6">
+    // A grid, not a stack: the `.app-page` list rule (globals.css) stretches a
+    // card holding a table to the screen height and leaves `.grid` alone —
+    // without it each of the two line cards filled the viewport, mostly empty.
+    <div className="grid gap-6">
       <Card className="border-0 shadow-sm">
         <CardContent className="space-y-6 p-4 md:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -120,10 +140,15 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
               </div>
               <div className="min-w-0">
                 <p className="break-words text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  {order.product?.name ?? '—'}
+                  {firstOutput?.product?.name ?? order.product?.name ?? '—'}
+                  {outputs.length > 1 && (
+                    <span className="ml-2 text-sm font-medium text-muted-foreground">
+                      {t('moreOutputs', { count: outputs.length - 1 })}
+                    </span>
+                  )}
                 </p>
                 <p className="break-words text-sm text-muted-foreground">
-                  {formatNumber(Number(order.quantity))} {order.product?.unit} · {order.order_number}
+                  {formatNumber(Number(firstOutput?.quantity ?? order.quantity))} {firstOutput?.product?.unit ?? order.product?.unit} · {order.order_number}
                 </p>
               </div>
             </div>
@@ -161,7 +186,7 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
           </div>
 
           <div className="grid grid-cols-2 gap-4 border-t pt-4 md:grid-cols-4">
-            <Field label={t('plannedDate')} value={order.planned_date ? formatDate(order.planned_date) : '—'} />
+            <Field label={t('orderDate')} value={order.planned_date ? formatDate(order.planned_date) : '—'} />
             <Field label={t('completedAt')} value={order.completed_at ? formatDate(order.completed_at) : '—'} />
             {/* Only for runs that predate itemised extras. The lump-sum field is
                 gone from the form — electricity, wages and the like are lines of
@@ -173,22 +198,13 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
             <Field label={tCommon('assignedTo')} value={order.assignee?.full_name || tCommon('unassigned')} />
             <Field
               label={t('totalCost')}
-              value={formatCurrency(isCompleted ? Number(order.total_cost) || 0 : estimatedCost)}
-              hint={isCompleted ? undefined : t('estimated')}
-            />
-            <Field
-              label={t('perUnitCost')}
-              value={formatCurrency(
-                isCompleted
-                  ? Number(order.unit_cost) || 0
-                  : Number(order.quantity) > 0
-                    ? estimatedCost / Number(order.quantity)
-                    : 0
-              )}
-              hint={isCompleted ? undefined : t('estimated')}
-              accent
+              value={formatCurrency(hasActualCost ? Number(order.total_cost) || 0 : estimatedCost)}
+              hint={hasActualCost ? undefined : t('estimated')}
             />
             {order.bom?.name && <Field label={t('bom')} value={order.bom.name} />}
+            {order.bom?.name && Number(order.batches) > 0 && (
+              <Field label={t('batches')} value={formatNumber(Number(order.batches))} />
+            )}
           </div>
 
           {order.notes && (
@@ -200,14 +216,14 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="border-b p-4">
-            <h2 className="font-semibold text-slate-800 dark:text-slate-200">{t('components')}</h2>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-200">{t('tabMaterials')}</h2>
           </div>
           <MobileCardList className="p-3" isEmpty={items.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tCommon('noData')}</p>}>
             {items.map((item) => {
               const service = isService(item.component)
               const available = Number(item.component?.stock) || 0
               const short = !service && available < Number(item.quantity)
-              const unitCost = isCompleted ? Number(item.unit_cost) || 0 : Number(item.component?.cost_price) || 0
+              const unitCost = hasActualCost ? Number(item.unit_cost) || 0 : Number(item.component?.cost_price) || 0
               return (
                 <MobileCard
                   key={item.id}
@@ -233,7 +249,7 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
                     { label: t('unitCost'), value: formatCurrency(unitCost) },
                     {
                       label: tCommon('total'),
-                      value: formatCurrency(isCompleted ? Number(item.total_cost) || 0 : unitCost * Number(item.quantity)),
+                      value: formatCurrency(hasActualCost ? Number(item.total_cost) || 0 : unitCost * Number(item.quantity)),
                       tone: 'brand' as const,
                     },
                   ]}
@@ -265,7 +281,7 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
                     const available = Number(item.component?.stock) || 0
                     const short = !service && available < Number(item.quantity)
                     // A finished run shows what it was charged; a draft, today's price.
-                    const unitCost = isCompleted
+                    const unitCost = hasActualCost
                       ? Number(item.unit_cost) || 0
                       : Number(item.component?.cost_price) || 0
                     return (
@@ -278,6 +294,11 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
                               here. A badge rather than a second table, because
                               the order the components are listed in is still
                               the recipe's. */}
+                          {item.is_fixed && (
+                            <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                              {t('consumption_fixed')}
+                            </span>
+                          )}
                           {item.is_extra && (
                             <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
                               {t('extraMaterialShort')}
@@ -300,12 +321,82 @@ export function ProductionOrderDetail({ order, items, lang, canEdit }: Productio
                         )}
                         <TableCell className="text-right tabular-nums">{formatCurrency(unitCost)}</TableCell>
                         <TableCell className="text-right font-medium tabular-nums">
-                          {formatCurrency(isCompleted ? Number(item.total_cost) || 0 : unitCost * Number(item.quantity))}
+                          {formatCurrency(hasActualCost ? Number(item.total_cost) || 0 : unitCost * Number(item.quantity))}
                         </TableCell>
                       </TableRow>
                     )
                   })
                 )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-sm">
+        <CardContent className="p-0">
+          <div className="border-b p-4">
+            <h2 className="font-semibold text-slate-800 dark:text-slate-200">{t('tabOutputs')}</h2>
+          </div>
+          <MobileCardList className="p-3" isEmpty={outputs.length === 0} empty={<p className="py-10 text-center text-sm text-muted-foreground">{tCommon('noData')}</p>}>
+            {outputs.map((output, index) => {
+              const total = outputCost(output)
+              const qty = Number(output.quantity) || 0
+              return (
+                <MobileCard
+                  key={output.id ?? index}
+                  title={output.product?.name ?? '—'}
+                  subtitle={`${formatNumber(qty)} ${output.product?.unit ?? ''}`}
+                  stats={[
+                    ...(useShares ? [{ label: t('colCostShare'), value: `${formatNumber(Number(output.cost_share))}%` }] : []),
+                    { label: t('unitCost'), value: formatCurrency(qty > 0 ? total / qty : 0) },
+                    { label: tCommon('total'), value: formatCurrency(total), tone: 'brand' as const },
+                  ]}
+                />
+              )
+            })}
+          </MobileCardList>
+          <div className="max-md:hidden overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <TableHead>{t('colProduct')}</TableHead>
+                  <TableHead className="text-right tabular-nums">{t('colQuantity')}</TableHead>
+                  {useShares && <TableHead className="text-right tabular-nums">{t('colCostShare')}</TableHead>}
+                  <TableHead className="text-right tabular-nums">
+                    {t('unitCost')}
+                    {!hasActualCost && <span className="ml-1 font-normal normal-case text-muted-foreground">· {t('estimated')}</span>}
+                  </TableHead>
+                  <TableHead className="text-right tabular-nums">{tCommon('total')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {outputs.map((output, index) => {
+                  const total = outputCost(output)
+                  const qty = Number(output.quantity) || 0
+                  return (
+                    <TableRow key={output.id ?? index}>
+                      <TableCell className="font-medium">
+                        {output.product?.name ?? '—'}
+                        {output.is_extra && (
+                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                            {t('extraMaterialShort')}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {formatNumber(qty)} {output.product?.unit}
+                      </TableCell>
+                      {useShares && (
+                        <TableCell className="text-right tabular-nums">{formatNumber(Number(output.cost_share))}%</TableCell>
+                      )}
+                      <TableCell className="text-right tabular-nums text-violet-600 dark:text-violet-400">
+                        {formatCurrency(qty > 0 ? total / qty : 0)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium tabular-nums">{formatCurrency(total)}</TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>

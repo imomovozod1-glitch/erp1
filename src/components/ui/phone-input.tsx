@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useLocale } from 'next-intl'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { CountryFlag } from '@/components/ui/country-flag'
@@ -58,6 +59,7 @@ export function PhoneInput({
 
   const country = findPhoneCountry(countryIso)
   const maxDigits = country.nationalLength[1]
+  const countryName = useCountryNames()
 
   const emit = (c: PhoneCountry, nationalDigits: string) => {
     onChange(nationalDigits ? `+${c.dialCode} ${groupNationalDigits(c, nationalDigits)}`.trimEnd() : '')
@@ -91,13 +93,21 @@ export function PhoneInput({
             }}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent className={contentClassName}>
+        {/* Opens BELOW the trigger and wider than it: anchored to the trigger's
+            own 112px the names and codes were clipped, and centred over it
+            (the Select default) the list covered the number being typed. */}
+        <SelectContent
+          align="start"
+          alignItemWithTrigger={false}
+          sideOffset={6}
+          className={cn('max-h-80 w-60 rounded-2xl p-1.5 shadow-lg', contentClassName)}
+        >
           {PHONE_COUNTRIES.map((c) => (
-            <SelectItem key={c.iso} value={c.iso}>
-              <span className="flex items-center gap-2">
-                <CountryFlag iso={c.iso} title={c.name} />
-                <span>{c.name}</span>
-                <span className="text-muted-foreground tabular-nums">+{c.dialCode}</span>
+            <SelectItem key={c.iso} value={c.iso} className="rounded-xl py-2 pr-9 pl-2.5">
+              <span className="flex w-full min-w-0 items-center gap-2.5">
+                <CountryFlag iso={c.iso} title={countryName(c)} />
+                <span className="min-w-0 flex-1 truncate">{countryName(c)}</span>
+                <span className="shrink-0 text-muted-foreground tabular-nums">+{c.dialCode}</span>
               </span>
             </SelectItem>
           ))}
@@ -123,3 +133,25 @@ export function PhoneInput({
 }
 
 export { DEFAULT_PHONE_COUNTRY }
+
+/**
+ * Country names in the interface language. The list in phone-countries.ts is
+ * Uzbek only; `Intl.DisplayNames` knows every region in every locale. The
+ * options are only rendered once the list is opened — on the client — so the
+ * ICU difference between Node and the browser (CLAUDE.md § Conventions) never
+ * reaches hydration. The stored name is the fallback.
+ */
+function useCountryNames(): (country: PhoneCountry) => string {
+  const locale = useLocale()
+  const names = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([locale], { type: 'region' })
+    } catch {
+      return null
+    }
+  }, [locale])
+  return (country) => {
+    if (locale === 'uz' || !names) return country.name
+    return names.of(country.iso) ?? country.name
+  }
+}

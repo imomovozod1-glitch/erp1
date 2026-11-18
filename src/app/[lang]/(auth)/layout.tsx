@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { isSuperAdmin } from '@/lib/admin-auth'
-import { AuthScreen } from '@/components/auth/auth-card'
+import { getTranslations } from 'next-intl/server'
+import { AuthAside, AuthScreen } from '@/components/auth/auth-card'
 
 export default async function AuthLayout({
   children,
@@ -20,5 +21,19 @@ export default async function AuthLayout({
     redirect((await isSuperAdmin(user.id)) ? '/admin/tenants' : `/${lang}/dashboard`)
   }
 
-  return <AuthScreen>{children}</AuthScreen>
+  const t = await getTranslations('auth')
+  return (
+    <AuthScreen
+      aside={
+        <AuthAside
+          title={t('asideTitle')}
+          text={t('asideText')}
+          features={[t('asideFeature1'), t('asideFeature2'), t('asideFeature3')]}
+          tagline={t('brandSubtitle')}
+        />
+      }
+    >
+      {children}
+    </AuthScreen>
+  )
 }

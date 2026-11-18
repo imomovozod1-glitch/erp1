@@ -48,6 +48,7 @@ export default async function EditBomPage({
       <BomForm
         initialData={details.bom}
         initialItems={details.items}
+        initialOutputs={details.outputs}
         products={products}
         lang={lang}
         assignableUsers={assignableUsers}

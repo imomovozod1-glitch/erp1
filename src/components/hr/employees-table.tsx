@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -50,6 +51,7 @@ export function EmployeesTable({
   paid,
   canExport = false,
 }: EmployeesTableProps) {
+  const canEdit = useCan('hr', 'edit', 'employees')
   const tCommon = useTranslations('common')
   const tSettings = useTranslations('settings')
   const t = useTranslations('hr')
@@ -74,10 +76,12 @@ export function EmployeesTable({
                           </TooltipContent>
                         </Tooltip>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}/edit`)}>
-                            <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                            {tCommon('edit')}
-                          </DropdownMenuItem>
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}/edit`)}>
+                              <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
+                              {tCommon('edit')}
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
   );

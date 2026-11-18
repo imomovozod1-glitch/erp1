@@ -32,6 +32,7 @@ interface BomRow {
   is_active: boolean
   output_quantity: number
   product?: { name: string; unit: string } | null
+  outputs?: { product_id: string }[]
   items?: { id: string }[] | null
 }
 
@@ -190,7 +191,10 @@ export function BomsTable({ boms, lang, page, pageSize, total, totalPages }: Bom
                   <TableCell>
                     <p className="font-medium text-slate-800 dark:text-slate-200">{bom.name}</p>
                   </TableCell>
-                  <TableCell>{bom.product?.name ?? '—'}</TableCell>
+                  <TableCell>
+                    {bom.product?.name ?? '—'}
+                    {(bom.outputs?.length ?? 0) > 1 && <span className="ml-1.5 text-xs text-muted-foreground">{t('moreOutputs', { count: (bom.outputs?.length ?? 1) - 1 })}</span>}
+                  </TableCell>
                   <TableCell className="hidden md:table-cell text-right tabular-nums">
                     {formatNumber(Number(bom.output_quantity) || 0)} {bom.product?.unit}
                   </TableCell>
@@ -228,7 +232,7 @@ export function BomsTable({ boms, lang, page, pageSize, total, totalPages }: Bom
               key={bom.id}
               onClick={() => router.push(`/${lang}/production/boms/${bom.id}/edit`)}
               leading={<MobileThumb fallback={<Layers />} />}
-              eyebrow={<span className="truncate">{bom.product?.name ?? '—'}</span>}
+              eyebrow={<span className="truncate">{bom.product?.name ?? '—'}{(bom.outputs?.length ?? 0) > 1 ? ` ${t('moreOutputs', { count: (bom.outputs?.length ?? 1) - 1 })}` : ''}</span>}
               title={bom.name}
               status={
                 <StatusBadge

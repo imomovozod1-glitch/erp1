@@ -60,6 +60,7 @@ export default async function EditProductionOrderPage({
       <ProductionOrderForm
         initialData={details.order}
         initialItems={details.items}
+        initialOutputs={details.outputs}
         products={products}
         boms={boms}
         nextOrderNumber={details.order.order_number}

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
+import { getCurrentTenantId } from '@/lib/tenant'
 import {
   accessLevel,
   can,
@@ -188,6 +189,37 @@ export async function getOwnerFilter(
   if (level === 'own') return ctx.userId
   if (level === 'department') return getDepartmentUserIds(ctx.userId)
   return undefined
+}
+
+/**
+ * Guard for a record's own pages (`[id]/layout.tsx`). With an `own` or
+ * `department` level a user may open only what their list shows them —
+ * records assigned to them (or their department) and unassigned ones — so a
+ * typed or shared URL is no way around the scope. Records that do not exist
+ * are left to the page's own notFound().
+ */
+export async function requireRecordView(
+  module: PermissionModule,
+  resource: string,
+  table: string,
+  id: string,
+  lang: string,
+  listPath: string
+): Promise<void> {
+  const owners = await getOwnerFilter(module, resource, 'view')
+  if (owners === undefined) return
+  const tenantId = await getCurrentTenantId()
+  if (!tenantId) return
+  const { data } = await (getCacheClient() as any)
+    .from(table)
+    .select('assigned_to')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .maybeSingle()
+  const assignedTo: string | null | undefined = data?.assigned_to
+  if (!data || !assignedTo) return
+  const allowed = Array.isArray(owners) ? owners.includes(assignedTo) : owners === assignedTo
+  if (!allowed) redirect(`/${lang}${listPath}?denied=view`)
 }
 
 /** Guard for a route that needs one specific action (e.g. an approval screen). */

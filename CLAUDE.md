@@ -89,6 +89,7 @@ The business write path, consistent across every `*-form.tsx`:
 | `set_order_status`, `set_invoice_status` | `status-actions.ts` ← orders/invoices tables | `sales.edit`, own |
 | `accept_invoice_payment` | invoice detail page | `sales.edit`, own |
 | `save_invoice` | `invoice-form.tsx` | `sales.create`/`edit`; existing: `sales.edit`, own |
+| `save_production_order`, `complete_production_order`, `cancel_production_order` | `production-actions.ts` ← `production-order-form.tsx`, order detail | `production.create`/`edit`, own; cost split over outputs by `cost_share`, else by quantity |
 | `receive_purchase` | `purchase-order-form.tsx` | `procurement.create`/`edit` |
 | `create_cashbox`, `record_cashbox_movement` | `cashbox-client.tsx` | `finance.create`/`edit` |
 | `save_transaction` | `transaction-form.tsx` | `finance.create`/`edit`; existing: `finance.edit`, own |
@@ -175,6 +176,7 @@ Added by migrations:
 | — (columns on `distribution_routes`) | `route_geometry` | Cached Mapbox route shape, distance and duration |
 | — (column on `integration_settings`) | `telegram_language` | `telegram_language`: the language the company's bot writes in (`uz`/`ru`/`en`) |
 | — (column on `production_order_items`) | `production_extra_materials` | `is_extra`: the line was added to this run by hand, not carried in from the composition |
+| `product_bom_outputs`, `production_order_outputs` | `production_outputs` | Several finished products per composition and per run, each with an optional cost share (%); `product_bom_items.consumption` (`variable`/`fixed`), `production_orders.batches`, `production_order_items.is_fixed`. `product_id`/`quantity` on the headers mirror the first output |
 
 `migration_tenant_features.sql` adds `tenants.features` JSONB (see Feature flags & release flow) — readable by the tenant's own members, writable only with the service role.
 

@@ -122,6 +122,16 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
     setPermsValue(chosen?.permissions && typeof chosen.permissions === 'object' ? (chosen.permissions as Permissions) : EMPTY_PERMISSIONS)
   }
 
+  /**
+   * A grant changed by hand is no longer the template's: the link is dropped,
+   * otherwise the next edit of the template (api/tenant/roles/[id] copies it
+   * to every linked profile) would silently undo this change.
+   */
+  const editPermissions = (next: Permissions) => {
+    setPermsValue(next)
+    setSelectedRoleTemplateId(null)
+  }
+
   const handleSelectAccount = (profileId: string | null) => {
     const next = !profileId || profileId === 'none' ? null : profileId
     setSelectedProfileId(next)
@@ -532,7 +542,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
                     </div>
                     <div className="space-y-2">
                       <Label>{tSettings('permissions')}</Label>
-                      <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
+                      <PermissionsMatrix value={permsValue} onChange={editPermissions} />
                     </div>
                   </div>
                 )}
@@ -586,7 +596,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
                 </div>
                 <div className="space-y-2">
                   <Label>{tSettings('permissions')}</Label>
-                  <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
+                  <PermissionsMatrix value={permsValue} onChange={editPermissions} />
                 </div>
               </div>
             )}

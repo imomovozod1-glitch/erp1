@@ -4,14 +4,14 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
-import { formatCurrency, formatNumber, isoDate } from '@/lib/utils'
+import { formatCurrency, isoDate } from '@/lib/utils'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProduction, invalidateProductionOrders } from '@/lib/data/revalidate'
 import { saveProductionOrder, completeProductionOrder, productionErrorMessage } from '@/lib/production-actions'
 import { businessRpcErrorMessage } from '@/lib/business-rpc'
 import { toast } from 'sonner'
-import { Trash2, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,18 +19,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
-import { ItemPicker } from '@/components/shared/item-picker'
-import { StatusBadge } from '@/components/shared/status-badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { isService } from '@/lib/product-kind'
 import { FormFooter } from '@/components/shared/form-footer'
+import {
+  ProductionLinesTabs,
+  costShareTotal,
+  type MaterialLine,
+  type OutputLine,
+} from '@/components/production/production-lines-tabs'
 
 export interface ProductionProductOption {
   id: string
@@ -47,20 +42,9 @@ export interface ProductionBomOption {
   product_id: string
   output_quantity: number
   product?: { id: string; name: string; unit: string } | null
-  items?: { component_id: string; quantity: number }[]
-}
-
-interface Line {
-  componentId: string
-  quantity: number
-  /**
-   * Qo'shimcha xomashyo — added to this run by hand rather than carried in
-   * from the composition (supabase/migration_production_extra_materials.sql).
-   * It changes nothing about how the run is completed; it is what lets the
-   * quantity be re-scaled without throwing these lines away, and what lets the
-   * table show where each line came from.
-   */
-  isExtra: boolean
+  items?: { component_id: string; quantity: number; consumption?: string | null }[]
+  /** product_bom_outputs; absent on a database without migration_production_outputs.sql. */
+  outputs?: { product_id: string; quantity: number; cost_share: number | null; created_at?: string }[]
 }
 
 interface ProductionOrderFormProps {
@@ -69,26 +53,42 @@ interface ProductionOrderFormProps {
   boms: ProductionBomOption[]
   initialData?: any
   initialItems?: any[]
+  initialOutputs?: any[]
   nextOrderNumber: string
   lang: string
 }
 
+type RunStatus = 'completed' | 'draft'
+
+/** A composition's outputs, oldest first — the first one is the run's "main" product. */
+function bomOutputs(bom: ProductionBomOption) {
+  const rows = [...(bom.outputs ?? [])].sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
+  return rows.length > 0
+    ? rows
+    : [{ product_id: bom.product_id, quantity: Number(bom.output_quantity) || 1, cost_share: null }]
+}
+
+const round3 = (value: number) => Number(value.toFixed(3))
+
 /**
  * The production run.
  *
- * Saving goes through `save_production_order` rather than browser writes: a
- * run and its component list must never be half-written, and the function is
- * also where the `production` permission is enforced. Stock moves only in
- * `complete_production_order`, which the main button calls right after the
- * save (see `onSubmit`); "Save as draft" leaves that to the run's own page.
+ * Only what a run needs (Bito's form, trimmed): its code, who is responsible,
+ * the date, the composition and how many times it is run, the status, and a
+ * note. Under it the same two tabs as the composition — raw materials and
+ * finished products. With a composition chosen they are filled in from it:
+ * variable materials and the outputs multiplied by "Miqdori", fixed materials
+ * as they are. With none, both are entered by hand.
  *
- * Picking a composition fills the lines in, scaled to the quantity being
- * produced, and they stay editable: a real batch rarely takes exactly what the
- * recipe says.
+ * Saving goes through `save_production_order`; "Yakunlangan" then completes
+ * the run straight away (`complete_production_order` — materials leave stock,
+ * the products arrive, each costed at its share). If completing is refused, the
+ * run is kept as a draft with the reason shown.
  */
 export function ProductionOrderForm({
   initialData,
   initialItems,
+  initialOutputs,
   products,
   boms,
   nextOrderNumber,
@@ -101,143 +101,131 @@ export function ProductionOrderForm({
   const router = useRouter()
   const exitForm = useRouteModalExit(`/${lang}/production/orders`)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
   const supabase = createClient() as any
 
+  const initialBom = boms.find((b) => b.id === initialData?.bom_id)
   const [orderNumber, setOrderNumber] = useState<string>(initialData?.order_number || nextOrderNumber)
+  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
+  const [orderDate, setOrderDate] = useState<string>(initialData?.planned_date || isoDate())
+  // Kept even when the composition has been switched off since: the run still
+  // came from it. Re-deriving needs it in the list, so that is guarded below.
   const [bomId, setBomId] = useState<string>(initialData?.bom_id || '')
-  const [productId, setProductId] = useState<string>(initialData?.product_id || '')
-  const [quantity, setQuantity] = useState<number | ''>(initialData?.quantity ?? 1)
-  const [plannedDate, setPlannedDate] = useState<string>(initialData?.planned_date || isoDate())
+  const [batches, setBatches] = useState<number | ''>(() => {
+    if (initialData?.batches) return Number(initialData.batches)
+    // A run saved before `batches` existed: how many batches its quantity was.
+    if (initialBom) return round3((Number(initialData?.quantity) || 0) / (Number(initialBom.output_quantity) || 1)) || 1
+    return 1
+  })
+  // A new run is usually recorded once it is done; a saved draft stays a draft
+  // unless the user says otherwise.
+  const [status, setStatus] = useState<RunStatus>(initialData ? 'draft' : 'completed')
   const [notes, setNotes] = useState<string>(initialData?.notes || '')
 
-  const [lines, setLines] = useState<Line[]>(() =>
+  const [materials, setMaterials] = useState<MaterialLine[]>(() =>
     (initialItems ?? []).map((item: any) => ({
-      componentId: item.component_id,
+      productId: item.component_id,
       quantity: Number(item.quantity) || 0,
+      consumption: item.is_fixed ? 'fixed' : 'variable',
       isExtra: Boolean(item.is_extra),
     }))
   )
-
-  const productById = useMemo(
-    () => new Map(products.map((p) => [p.id, p])),
-    [products]
+  const [outputs, setOutputs] = useState<OutputLine[]>(() =>
+    (initialOutputs ?? []).map((row: any) => ({
+      productId: row.product_id,
+      quantity: Number(row.quantity) || 0,
+      costShare: row.cost_share === null || row.cost_share === undefined ? null : Number(row.cost_share),
+      isExtra: Boolean(row.is_extra),
+    }))
   )
 
-  /**
-   * The component list a composition produces for a given run size: its
-   * per-batch figures times how many batches this run is. Always derived from
-   * the composition itself and never from the lines currently on screen, so
-   * changing the quantity repeatedly cannot accumulate rounding drift.
-   */
-  const deriveLines = (bom: ProductionBomOption | undefined, runQuantity: number): Line[] => {
-    if (!bom) return []
-    const batches = runQuantity / (Number(bom.output_quantity) || 1)
-    return (bom.items ?? []).map((item) => ({
-      componentId: item.component_id,
-      quantity: Number((Number(item.quantity) * batches).toFixed(3)),
-      isExtra: false,
-    }))
-  }
+  const productIds = useMemo(() => new Set(products.map((p) => p.id)), [products])
 
   /**
-   * Picking a composition REPLACES the component list — exactly the way
-   * picking a role template replaces an employee's permission matrix in
-   * `employee-form.tsx`. The template decides the grid; the grid is yours to
-   * adjust afterwards. Choosing "no composition" empties it rather than
-   * leaving the last one's lines behind pretending to be hand-entered.
+   * The lines a composition gives for a run of `times` batches. Always derived
+   * from the composition, never from what is on screen, so changing "Miqdori"
+   * repeatedly cannot accumulate rounding drift.
    */
+  const derive = (bom: ProductionBomOption, times: number) => ({
+    materials: (bom.items ?? [])
+      .filter((item) => productIds.has(item.component_id))
+      .map<MaterialLine>((item) => {
+        const fixed = item.consumption === 'fixed'
+        return {
+          productId: item.component_id,
+          quantity: round3(Number(item.quantity) * (fixed ? 1 : times)),
+          consumption: fixed ? 'fixed' : 'variable',
+          isExtra: false,
+        }
+      }),
+    outputs: bomOutputs(bom)
+      .filter((row) => productIds.has(row.product_id))
+      .map<OutputLine>((row) => ({
+        productId: row.product_id,
+        quantity: round3(Number(row.quantity) * times),
+        costShare: row.cost_share === null || row.cost_share === undefined ? null : Number(row.cost_share),
+        isExtra: false,
+      })),
+  })
+
+  /**
+   * Re-derives the composition's lines and keeps what was added by hand: an
+   * addition belongs to this run and was entered at a quantity the user chose.
+   */
+  const applyBom = (bom: ProductionBomOption | undefined, times: number) => {
+    const extraMaterials = materials.filter((m) => m.isExtra)
+    const extraOutputs = outputs.filter((o) => o.isExtra)
+    if (!bom) {
+      setMaterials(extraMaterials.map((m) => ({ ...m, isExtra: false })))
+      setOutputs(extraOutputs.map((o) => ({ ...o, isExtra: false })))
+      return
+    }
+    const next = derive(bom, times)
+    const taken = new Set([...extraMaterials, ...extraOutputs].map((l) => l.productId))
+    const recipeOutputs = next.outputs.filter((o) => !taken.has(o.productId))
+    const keptOutputs = extraOutputs.filter((o) => !next.materials.some((m) => m.productId === o.productId))
+    const mergedOutputs = [...recipeOutputs, ...keptOutputs]
+    // Shares from the composition only add up while its outputs are all there.
+    const sharesHold = mergedOutputs.every((o) => o.costShare !== null)
+    setMaterials([
+      ...next.materials.filter((m) => !taken.has(m.productId)),
+      ...extraMaterials.filter((m) => !next.outputs.some((o) => o.productId === m.productId)),
+    ])
+    setOutputs(sharesHold ? mergedOutputs : mergedOutputs.map((o) => ({ ...o, costShare: null })))
+  }
+
   const handleSelectBom = (value: string | null) => {
-    const next = !value || value === 'none' ? null : value
-    setBomId(next ?? '')
-    const chosen = boms.find((b) => b.id === next)
-    // The extras belong to this RUN, not to the composition, so swapping the
-    // recipe keeps them — except any that would now be the product itself,
-    // which the RPC refuses outright.
-    const keptExtras = lines.filter((l) => l.isExtra)
-    if (!chosen) {
-      setLines(keptExtras)
-      return
-    }
-    setProductId(chosen.product_id)
-    setLines([
-      ...deriveLines(chosen, Number(quantity) || 0).filter(
-        (l) => !keptExtras.some((e) => e.componentId === l.componentId)
-      ),
-      ...keptExtras.filter((l) => l.componentId !== chosen.product_id),
-    ])
+    const next = !value || value === 'none' ? '' : value
+    setBomId(next)
+    applyBom(boms.find((b) => b.id === next), Number(batches) || 1)
   }
 
-  /**
-   * A new run size re-derives the lines from the composition. A hand edit to a
-   * line is lost when the quantity changes, which is the honest trade: scaling
-   * whatever is on screen by the ratio instead would compound rounding and
-   * keep edits that no longer mean anything at the new size. With no
-   * composition selected the lines are purely manual and quantity leaves them
-   * alone.
-   */
-  const changeQuantity = (value: number | '') => {
-    setQuantity(value)
-    if (!bomId) return
-    // Only the recipe lines are re-derived. An extra was put on this run
-    // deliberately and at a quantity the user chose, so re-scaling the batch
-    // leaves it exactly where it is — before is_extra existed there was no way
-    // to tell it apart and it was silently thrown away here.
-    const keptExtras = lines.filter((l) => l.isExtra)
-    setLines([
-      ...deriveLines(boms.find((b) => b.id === bomId), Number(value) || 0).filter(
-        (l) => !keptExtras.some((e) => e.componentId === l.componentId)
-      ),
-      ...keptExtras,
-    ])
+  const changeBatches = (value: number | '') => {
+    setBatches(value)
+    const bom = boms.find((b) => b.id === bomId)
+    if (bom && Number(value) > 0) applyBom(bom, Number(value))
   }
 
-  /**
-   * One click adds the material at a quantity of 1, and a second click on the
-   * same one bumps it — the gesture the sales form uses.
-   *
-   * `isExtra` comes from WHICH of the two pickers was used, so the distinction
-   * is made at the moment of adding rather than guessed afterwards: the left
-   * one adds to the run's recipe, the right one adds something this batch
-   * needed on top of it. Bumping an existing line leaves its flag alone — the
-   * line is already on the run, and a second click is about how much, not about
-   * where it came from.
-   */
-  const addComponent = (id: string, isExtra: boolean) => {
-    if (id === productId) {
-      toast.error(t('selfComponent'))
-      return false
-    }
-    const existing = lines.findIndex((l) => l.componentId === id)
-    if (existing >= 0) {
-      setLines((current) =>
-        current.map((line, idx) => (idx === existing ? { ...line, quantity: line.quantity + 1 } : line))
-      )
-      return
-    }
-    setLines((current) => [...current, { componentId: id, quantity: 1, isExtra }])
-  }
-
-  /**
-   * Saving finishes the run by default: the save is followed straight by
-   * `complete_production_order`, so materials leave the shelf and the product
-   * arrives in one step instead of the run sitting as a draft until someone
-   * opens it and presses Complete. "Save as draft" keeps the old behaviour for
-   * a run that is only being planned. If completing is refused (not enough
-   * stock), the run is still saved — as a draft, with the reason shown.
-   */
-  const onSubmit = async (e: React.SyntheticEvent, complete = true) => {
+  const onSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
-    if (!productId || !orderNumber.trim()) {
+    if (!orderNumber.trim()) {
       toast.error(tCommon('required'))
       return
     }
-    if ((Number(quantity) || 0) <= 0) {
+    if (bomId && !(Number(batches) > 0)) {
       toast.error(tCommon('required'))
       return
     }
-    if (lines.length === 0) {
+    if (materials.length === 0 || materials.some((m) => !(m.quantity > 0))) {
       toast.error(t('noComponents'))
+      return
+    }
+    if (outputs.length === 0 || outputs.some((o) => !(o.quantity > 0))) {
+      toast.error(t('noOutputs'))
+      return
+    }
+    const useShares = outputs.every((o) => o.costShare !== null)
+    if (useShares && Math.abs(costShareTotal(outputs) - 100) > 0.01) {
+      toast.error(t('costShareSum'))
       return
     }
 
@@ -247,16 +235,28 @@ export function ProductionOrderForm({
         id: initialData?.id,
         order_number: orderNumber.trim(),
         bom_id: bomId || null,
-        product_id: productId,
-        quantity: Number(quantity),
-        planned_date: plannedDate || null,
+        batches: bomId ? Number(batches) : null,
+        product_id: outputs[0].productId,
+        quantity: outputs[0].quantity,
+        planned_date: orderDate || null,
         notes: notes.trim() || null,
         assigned_to: assignedTo,
-        items: lines.map((l) => ({ component_id: l.componentId, quantity: l.quantity, is_extra: l.isExtra })),
+        items: materials.map((m) => ({
+          component_id: m.productId,
+          quantity: m.quantity,
+          is_extra: m.isExtra,
+          is_fixed: m.consumption === 'fixed',
+        })),
+        outputs: outputs.map((o) => ({
+          product_id: o.productId,
+          quantity: o.quantity,
+          cost_share: useShares ? o.costShare : null,
+          is_extra: o.isExtra,
+        })),
       })
-      if (complete) {
+      if (status === 'completed') {
         try {
-          const done = await completeProductionOrder(supabase, result.id, isoDate())
+          const done = await completeProductionOrder(supabase, result.id, orderDate || isoDate())
           toast.success(t('completed', { cost: formatCurrency(Number(done.unit_cost) || 0) }))
           await invalidateProduction()
         } catch (error) {
@@ -271,347 +271,112 @@ export function ProductionOrderForm({
       }
       router.push(`/${lang}/production/orders/${result.id}`)
     } catch (error) {
-      toast.error(productionErrorMessage(tRoot, error, (e) => businessRpcErrorMessage(tRoot, e)))
+      toast.error(productionErrorMessage(tRoot, error, (err) => businessRpcErrorMessage(tRoot, err)))
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  // Everything except the run's own output. Materials already on the list stay
-  // in the picker, badged with their quantity — clicking one again bumps it.
-  const availableComponents = products.filter((p) => p.id !== productId)
-  // Stock is shown because a run is limited by it — cost is not,
-  // because what the batch really costs is only known when it is completed and
-  // the stock layers are drawn down, and a guess next to every line invites
-  // being read as a figure.
-  const pickerOptions = availableComponents.map((p) => ({
-    id: p.id,
-    name: p.name,
-    meta: isService(p) ? tRoot('inventory.service') : `${t('available')}: ${formatNumber(p.stock)} ${p.unit}`,
-    badge: lines.find((l) => l.componentId === p.id)?.quantity ?? null,
-  }))
-  // Raw materials are goods off the shelf; a service (electricity, wages) is
-  // never one of them. It only goes in through the extras picker.
-  const materialOptions = pickerOptions.filter((o) => !isService(productById.get(o.id)))
-  const recipeLines = lines.filter((l) => !l.isExtra)
-  const extraLines = lines.filter((l) => l.isExtra)
-  // Headed groups only when there is something to tell apart: with no
-  // composition every line is an addition, and a header saying so is noise.
-  const grouped = recipeLines.length > 0 && extraLines.length > 0
-  // A run puts its output ON the shelf, and a service has no shelf — the RPC
-  // would write stock onto a row the services constraint pins at zero. Services
-  // stay available as COMPONENTS (subcontracted work), just not as the output.
-  const producibleProducts = products.filter((p) => !isService(p))
-
   return (
-    <Card className="border-0 shadow-sm">
-      <CardHeader>
-        <CardTitle>{initialData ? t('editOrder') : t('addOrder')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={(e) => onSubmit(e)} className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <div className="space-y-2">
-          <Label htmlFor="order_number">{t('orderNumber')} *</Label>
-          <Input id="order_number" value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="bom_id">{t('selectBomTemplate')}</Label>
-          <Select value={bomId || 'none'} onValueChange={handleSelectBom}>
-            <SelectTrigger id="bom_id" className="w-full">
-              <SelectValue placeholder={t('selectBomTemplate')}>
-                {bomId ? boms.find((b) => b.id === bomId)?.name : t('noBomTemplate')}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">{t('noBomTemplate')}</SelectItem>
-              {boms.map((b) => (
-                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="product_id">{t('finishedProduct')} *</Label>
-          {bomId ? (
-            /* The composition already says what it makes. Leaving this
-               selectable let a run be filed as "from the cream recipe" while
-               producing something else, which would make `bom_id` a lie about
-               what happened. */
-            <div
-              id="product_id"
-              className="flex h-9 w-full items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
-            >
-              {productById.get(productId)?.name ?? '—'}
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle>{t('sectionMain')}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="order_number">{t('orderNumber')} *</Label>
+              <Input id="order_number" value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} />
             </div>
-          ) : (
-            <Select value={productId} onValueChange={(val) => setProductId(val ?? '')}>
-              <SelectTrigger id="product_id" className="w-full">
-                <SelectValue placeholder={tCommon('select')}>
-                  {productId ? productById.get(productId)?.name : tCommon('select')}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {producibleProducts.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {bomId && <p className="text-[11px] leading-snug text-muted-foreground">{t('productFromBomHint')}</p>}
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="order_date">{t('orderDate')}</Label>
+              <Input id="order_date" type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+            </div>
+            <div className="sm:col-span-2">
+              <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="space-y-2">
-          <Label htmlFor="quantity">{t('produceQuantity')} *</Label>
-          <NumericInput id="quantity" value={quantity} onChange={(val) => changeQuantity(val as any)} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="planned_date">{t('plannedDate')}</Label>
-          <Input id="planned_date" type="date" value={plannedDate} onChange={(e) => setPlannedDate(e.target.value)} />
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <Label>{t('components')} *</Label>
-        {bomId && <p className="text-[11px] leading-snug text-muted-foreground">{t('bomAppliedHint')}</p>}
-        {/* Two pickers, not one: which box a material is added from is what
-            decides whether it counts as part of the run's recipe or as
-            something this batch needed on top. The right-hand one is entirely
-            optional — a run with nothing extra simply never uses it. */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label className="text-xs">{t('component')}</Label>
-            <ItemPicker
-              options={materialOptions}
-              onPick={(option) => addComponent(option.id, false)}
-              placeholder={`${t('component')}...`}
-              emptyLabel={tCommon('noData')}
-              hint={t('clickToAddComponentHint')}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">{t('extraMaterial')}</Label>
-            <ItemPicker
-              options={pickerOptions}
-              onPick={(option) => addComponent(option.id, true)}
-              placeholder={`${t('extraMaterial')}...`}
-              emptyLabel={tCommon('noData')}
-              hint={t('clickToAddExtraHint')}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3 md:hidden">
-          {lines.length === 0 ? (
-            <p className="rounded-2xl border border-dashed py-8 text-center text-sm text-muted-foreground">
-              {t('noComponents')}
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <CardTitle>{t('sectionMore')}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="bom_id">{t('bom')}</Label>
+              <Select value={bomId || 'none'} onValueChange={handleSelectBom}>
+                <SelectTrigger id="bom_id" className="w-full">
+                  <SelectValue placeholder={t('selectBomTemplate')}>
+                    {bomId ? (boms.find((b) => b.id === bomId)?.name ?? initialData?.bom?.name) : t('noBomTemplate')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t('noBomTemplate')}</SelectItem>
+                  {boms.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="batches">{t('batches')}{bomId ? ' *' : ''}</Label>
+              <NumericInput
+                id="batches"
+                value={batches}
+                disabled={!bomId}
+                onChange={(value) => changeBatches(value)}
+              />
+            </div>
+            <p className="-mt-2 text-[11px] leading-snug text-muted-foreground sm:col-span-2">
+              {bomId ? t('batchesHint') : t('manualLinesHint')}
             </p>
-          ) : (
-            (grouped
-              ? [
-                  { key: 'recipe', label: t('fromBom'), rows: recipeLines },
-                  { key: 'extra', label: t('extraMaterials'), rows: extraLines },
-                ]
-              : [{ key: 'all', label: null as string | null, rows: lines }]
-            ).map((group) => (
-              <div key={group.key} className="space-y-3">
-                {group.label && (
-                  <p className="px-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    {group.label}
-                  </p>
-                )}
-                {group.rows.map((line) => {
-                  const product = productById.get(line.componentId)
-                  const service = isService(product)
-                  const short = !service && (Number(product?.stock) || 0) < line.quantity
-                  return (
-                    <div key={line.componentId} className="rounded-2xl border bg-card p-3 shadow-sm">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="min-w-0 break-words text-sm font-semibold">{product?.name ?? '—'}</p>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={tCommon('delete')}
-                          onClick={() => setLines((c) => c.filter((l) => l.componentId !== line.componentId))}
-                          className="-mr-1 -mt-1 h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="mt-2 flex items-end gap-2">
-                        <label className="flex-1 space-y-1 text-xs text-muted-foreground">
-                          {t('required')}
-                          <div className="flex items-center gap-1.5">
-                            <NumericInput
-                              value={line.quantity}
-                              onChange={(val) =>
-                                setLines((current) =>
-                                  current.map((l) =>
-                                    l.componentId === line.componentId
-                                      ? { ...l, quantity: Number(val) || 0 }
-                                      : l
-                                  )
-                                )
-                              }
-                              className="text-right"
-                            />
-                            <span className="shrink-0 text-xs">{product?.unit}</span>
-                          </div>
-                        </label>
-                        <div className="flex-1 text-right text-xs text-muted-foreground">
-                          {t('available')}
-                          <p className={`text-sm tabular-nums ${short ? 'font-semibold text-rose-600 dark:text-rose-400' : 'text-foreground'}`}>
-                            {service ? '—' : formatNumber(Number(product?.stock) || 0)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="overflow-x-auto rounded-lg border max-md:hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-                <TableHead>{t('component')}</TableHead>
-                <TableHead className="text-right tabular-nums">{t('required')}</TableHead>
-                <TableHead className="text-right tabular-nums">{t('available')}</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {lines.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
-                    {t('noComponents')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                (grouped
-                  ? [
-                      { key: 'recipe', label: t('fromBom'), rows: recipeLines },
-                      { key: 'extra', label: t('extraMaterials'), rows: extraLines },
-                    ]
-                  : [{ key: 'all', label: null as string | null, rows: lines }]
-                ).flatMap((group) => [
-                  ...(group.label
-                    ? [
-                        <TableRow key={`${group.key}-head`} className="bg-slate-50/70 dark:bg-slate-800/40">
-                          <TableCell
-                            colSpan={4}
-                            className="py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                          >
-                            {group.label}
-                          </TableCell>
-                        </TableRow>,
-                      ]
-                    : []),
-                  ...group.rows.map((line) => {
-                  const product = productById.get(line.componentId)
-                  const service = isService(product)
-                  const short = !service && (Number(product?.stock) || 0) < line.quantity
-                  return (
-                    <TableRow key={line.componentId}>
-                      <TableCell className="font-medium">{product?.name ?? '—'}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="w-28">
-                            <NumericInput
-                              value={line.quantity}
-                              onChange={(val) =>
-                                setLines((current) =>
-                                  current.map((l) =>
-                                    l.componentId === line.componentId
-                                      ? { ...l, quantity: Number(val) || 0 }
-                                      : l
-                                  )
-                                )
-                              }
-                            />
-                          </div>
-                          <span className="text-xs text-muted-foreground">{product?.unit}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {service ? (
-                          <span className="text-muted-foreground">—</span>
-                        ) : (
-                          <span className={short ? 'font-semibold text-rose-600 dark:text-rose-400' : ''}>
-                            {formatNumber(Number(product?.stock) || 0)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setLines((c) => c.filter((l) => l.componentId !== line.componentId))}
-                          className="h-8 w-8 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )
-                  }),
-                ])
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* No cost estimate here on purpose. What a run costs is decided when
-            it is completed, out of the cost layers actually drawn down
-            (complete_production_order) — a figure computed from today's average
-            cost prices looks like an answer and is not one. The real numbers
-            are on the order's own page once it is finished. */}
-        {initialData?.status && (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200/60 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {tCommon('status')}
-            </span>
-            <StatusBadge tone="amber" label={t(`status_${initialData.status}`)} />
-          </div>
-        )}
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="status">{tCommon('status')} *</Label>
+              <Select value={status} onValueChange={(value) => setStatus((value as RunStatus) ?? 'completed')}>
+                <SelectTrigger id="status" className="w-full">
+                  <SelectValue>{t(`status_${status}`)}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completed">{t('status_completed')}</SelectItem>
+                  <SelectItem value="draft">{t('status_draft')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="notes">{tCommon('notes')}</Label>
+              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="notes">{tCommon('notes')}</Label>
-        <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
-      </div>
-
-      <div className="max-w-sm">
-        <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
-      </div>
+      <Card className="border-0 shadow-sm">
+        <CardContent className="space-y-2 pt-6">
+          {bomId && <p className="text-[11px] leading-snug text-muted-foreground">{t('bomLinesHint')}</p>}
+          <ProductionLinesTabs
+            mode="order"
+            products={products}
+            materials={materials}
+            outputs={outputs}
+            onMaterialsChange={setMaterials}
+            onOutputsChange={setOutputs}
+            addAsExtra={Boolean(bomId)}
+            disabled={isSubmitting}
+          />
+        </CardContent>
+      </Card>
 
       <FormFooter>
         <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
           {tCommon('cancel')}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={(e) => onSubmit(e, false)}
-          disabled={isSubmitting}
-        >
-          {t('saveAsDraft')}
-        </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {t('saveAndComplete')}
+          {tCommon('save')}
         </Button>
       </FormFooter>
-        </form>
-      </CardContent>
-    </Card>
+    </form>
   )
 }

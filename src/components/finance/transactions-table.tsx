@@ -1,5 +1,6 @@
 'use client'
 
+import { useCan } from '@/components/providers/permissions-provider'
 import { useTranslations } from 'next-intl'
 import { ArrowDownLeft, ArrowUpRight, DollarSign, MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -37,6 +38,7 @@ export function TransactionsTable({
   totalIncome,
   totalExpense,
 }: TransactionsTableProps) {
+  const canEdit = useCan('finance', 'edit', 'transactions')
   const tCommon = useTranslations('common')
   const t = useTranslations('finance')
   const router = useRouter()
@@ -47,7 +49,7 @@ export function TransactionsTable({
   const paginated = transactions
 
   /** The row's actions menu, shared by the desktop table row and the phone card. */
-  const renderActions = (tx: any) => (
+  const renderActions = (tx: any) => !canEdit ? null : (
                 <DropdownMenu>
                   <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
                     <MoreHorizontal className="h-4 w-4" />

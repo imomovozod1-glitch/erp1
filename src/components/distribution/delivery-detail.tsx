@@ -63,6 +63,7 @@ export function DeliveryDetail({ delivery, lang, canEdit }: DeliveryDetailProps)
     const confirmed = await confirmCancel({
       title: t('cancelDelivery'),
       description: t('cancelDeliveryConfirm'),
+      confirmLabel: t('cancelDelivery'),
       name: delivery.delivery_number,
     })
     if (!confirmed) return

@@ -267,22 +267,30 @@ export const getCustomersMapPoints = unstable_cache(
 )
 
 /**
- * Tenant-wide debt/credit totals for the customers page KPI. Computed by the
+ * Debt/credit totals for the customers page KPI — tenant-wide, or over the
+ * customers an `own`/`department` user may see (`ownerId`, the list's rule).
+ * Unscoped, a salesperson's KPI showed the whole company's figures. Computed by the
  * database over every customer — the page used to sum the full customer array
  * it had already downloaded, which stops being possible once the list is
  * paginated (and stops being correct if you only sum the visible page).
  */
 export const getCustomerBalanceTotals = unstable_cache(
-  async (tenantId: string) => {
+  async (tenantId: string, ownerId?: OwnerFilter) => {
     const supabase = getCacheClient() as any
-    const [{ data: credits }, { data: unpaid }] = await Promise.all([
-      supabase.from('customers').select('credit_balance').eq('tenant_id', tenantId),
-      supabase
-        .from('invoices')
-        .select('total_amount, paid_amount')
-        .eq('tenant_id', tenantId)
-        .not('status', 'in', '("paid","cancelled")'),
-    ])
+    let customersQuery = supabase.from('customers').select('id, credit_balance').eq('tenant_id', tenantId)
+    if (ownerId) customersQuery = customersQuery.or(ownerExpression('assigned_to', ownerId))
+    const { data: credits } = await customersQuery
+    let invoicesQuery = supabase
+      .from('invoices')
+      .select('total_amount, paid_amount')
+      .eq('tenant_id', tenantId)
+      .not('status', 'in', '("paid","cancelled")')
+    if (ownerId) {
+      const ids = ((credits ?? []) as { id: string }[]).map((c) => c.id)
+      if (ids.length === 0) return { totalCredit: 0, totalDebt: 0 }
+      invoicesQuery = invoicesQuery.in('customer_id', ids)
+    }
+    const { data: unpaid } = await invoicesQuery
     const totalCredit = (credits ?? []).reduce(
       (sum: number, c: any) => sum + (Number(c.credit_balance) || 0), 0)
     const totalDebt = (unpaid ?? []).reduce(

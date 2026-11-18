@@ -11,6 +11,10 @@ import { CACHE_TAGS } from './queries'
  */
 export function expireProfile(userId: string) {
   revalidateTag(`profile:${userId}`, { expire: 0 })
+  // getCachedEmployeeFormOptions carries every profile's permissions; left
+  // cached, the employee form reopened within a minute showed the OLD grants
+  // and saving it wrote them back.
+  revalidateTag('profiles', { expire: 0 })
 }
 
 export function expireRoleTemplates() {
