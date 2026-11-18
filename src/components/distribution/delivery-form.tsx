@@ -1,5 +1,6 @@
 'use client'
 
+import { DatePicker } from '@/components/ui/date-picker'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
@@ -272,11 +273,12 @@ export function DeliveryForm({
 
             <div className="space-y-2">
               <Label htmlFor="planned_date">{t('plannedDate')}</Label>
-              <Input
+              <DatePicker
                 id="planned_date"
-                type="date"
                 value={plannedDate}
-                onChange={(e) => setPlannedDate(e.target.value)}
+                onChange={setPlannedDate}
+                lang={lang}
+                placeholder={t('plannedDate')}
               />
             </div>
           </div>

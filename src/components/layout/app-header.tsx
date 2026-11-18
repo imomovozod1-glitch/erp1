@@ -1,12 +1,13 @@
 'use client'
 
+import { LOCALE_OPTIONS, LocaleSwitcher, RoundFlag } from '@/components/shared/locale-switcher'
 import { dataScope, hasViewAccess, type PermissionModule } from '@/lib/permissions'
 import { BackButton } from '@/components/shared/back-button'
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Bell, Building2, Moon, Sun, LogOut, Settings, AlertTriangle, Clock, Check, CheckCircle2, ChevronDown, Languages, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
+import { Bell, Building2, Moon, Sun, LogOut, Settings, AlertTriangle, Clock, Check, CheckCircle2, BookOpen, HelpCircle, CircleQuestionMark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
@@ -331,7 +332,6 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
     router.replace(`/${locale}${pathWithoutLocale}`)
   }
 
-  const currentLocale = LOCALES.find((l) => l.code === lang)
 
   // The module the phone app bar names — `/uz/inventory/products` → "Ombor".
   const section = pathname.split('/')[2]
@@ -437,36 +437,9 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Language Switcher */}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <button
-              type="button"
-              className={`flex w-9 cursor-pointer items-center justify-center gap-1.5 px-0 sm:w-auto sm:pr-2 sm:pl-1.5 ${HEADER_CONTROL}`}
-            />
-          }
-        >
-          <Languages className="h-3.5 w-3.5 shrink-0" />
-          <span className="hidden text-xs font-semibold sm:inline">{currentLocale?.code.toUpperCase()}</span>
-          <ChevronDown className="hidden h-3 w-3 opacity-60 sm:block" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-32 rounded-lg p-1">
-          {LOCALES.map((locale) => {
-            const isActive = lang === locale.code
-            return (
-              <DropdownMenuItem
-                key={locale.code}
-                onClick={() => handleLocaleChange(locale.code)}
-                className={`rounded-md gap-1.5 px-2 py-1 cursor-pointer ${isActive ? 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 font-semibold' : ''}`}
-              >
-                <span className="flex-1 text-xs">{locale.label}</span>
-                {isActive && <Check className="h-3 w-3 text-violet-600" />}
-              </DropdownMenuItem>
-            )
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Language Switcher — the shared one, so every screen offers the same
+          control; the header only adds keeping unsaved form input. */}
+      <LocaleSwitcher mode="path" compact onSelect={handleLocaleChange} />
 
       <ThemeToggle
         className={`w-9 ${HEADER_CONTROL}`}
@@ -597,8 +570,8 @@ export function AppHeader({ profile, lang }: AppHeaderProps) {
               {resolvedTheme === 'dark' ? tNav('lightMode') : tNav('darkMode')}
             </DropdownMenuItem>
             {LOCALES.map((locale) => (
-              <DropdownMenuItem key={locale.code} onClick={() => handleLocaleChange(locale.code)}>
-                <Languages className="mr-2 h-4 w-4" />
+              <DropdownMenuItem key={locale.code} onClick={() => handleLocaleChange(locale.code)} className="gap-2">
+                <RoundFlag iso={LOCALE_OPTIONS[locale.code].flag} title={locale.label} size="sm" />
                 <span className="flex-1">{locale.label}</span>
                 {locale.code === lang && <Check className="h-4 w-4 text-violet-600 dark:text-violet-300" />}
               </DropdownMenuItem>

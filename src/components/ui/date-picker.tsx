@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CalendarIcon } from 'lucide-react'
+import { useLocale } from 'next-intl'
 import { uz, ru, enUS } from 'react-day-picker/locale'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -44,6 +45,9 @@ interface DatePickerProps {
 }
 
 export function DatePicker({ id, value, onChange, placeholder, lang, disabled, className }: DatePickerProps) {
+  // The calendar speaks the interface language even where a caller did not
+  // pass `lang` (the report builder, the report filters).
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
   const selected = parseIsoDate(value)
   useCloseOnScroll(open, () => setOpen(false))
@@ -57,7 +61,9 @@ export function DatePicker({ id, value, onChange, placeholder, lang, disabled, c
             type="button"
             disabled={disabled}
             className={cn(
-              'flex h-9 w-full items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-normal shadow-xs transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50',
+              // The same box as <Input>, so a date sits in a form like any other field.
+              'flex h-10 w-full items-center gap-2 rounded-xl border border-input bg-card px-3 text-base font-normal transition-[color,box-shadow,border-color] outline-none hover:border-slate-300 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 md:h-9 md:text-sm dark:bg-input/30 dark:hover:border-slate-600',
+              open && 'border-ring ring-4 ring-ring/20',
               !selected && 'text-muted-foreground',
               className
             )}
@@ -81,7 +87,7 @@ export function DatePicker({ id, value, onChange, placeholder, lang, disabled, c
               setOpen(false)
             }
           }}
-          locale={toDayPickerLocale(lang)}
+          locale={toDayPickerLocale(lang ?? locale)}
           autoFocus
           captionLayout="dropdown"
           startMonth={new Date(1920, 0)}
