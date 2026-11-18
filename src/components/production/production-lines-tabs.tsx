@@ -138,12 +138,17 @@ export function ProductionLinesTabs({
     return false
   }
 
+  // Raw materials are goods off the shelf. A service (labour, power) is not
+  // offered here: it holds no stock, and charged as a material it puts a cost
+  // into the product that is usually also booked as a cashbox expense —
+  // counted twice. Lines saved with one before this keep showing and can be
+  // removed; new ones cannot be added.
   const materialOptions = products
-    .filter((p) => !outputs.some((o) => o.productId === p.id))
+    .filter((p) => !isService(p) && !outputs.some((o) => o.productId === p.id))
     .map((p) => ({
       id: p.id,
       name: p.name,
-      meta: isService(p) ? tRoot('inventory.service') : `${t('available')}: ${formatNumber(Number(p.stock) || 0)} ${p.unit}`,
+      meta: `${t('available')}: ${formatNumber(Number(p.stock) || 0)} ${p.unit}`,
       badge: materials.find((m) => m.productId === p.id)?.quantity ?? null,
     }))
   // An output goes onto the shelf, so a service cannot be one.
