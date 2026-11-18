@@ -1,5 +1,6 @@
 'use client'
 
+import { DatePicker } from '@/components/ui/date-picker'
 import { useTranslations } from 'next-intl'
 import { Filter, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -99,13 +100,25 @@ export function ReportFilters({
                   </SelectContent>
                 </Select>
 
-                <Input
-                  value={rule.value}
-                  onChange={(event) => updateRule(index, { value: event.target.value })}
-                  placeholder={t('filterValue')}
-                  inputMode={type === 'number' || type === 'money' ? 'decimal' : undefined}
-                  className="h-10 w-full min-w-32 flex-1 md:h-9 md:w-40"
-                />
+                {/* A date column gets the calendar: typed by hand, the value had to
+                    be guessed in the exact YYYY-MM-DD form the engine compares. */}
+                {type === 'date' ? (
+                  <div className="w-full min-w-32 flex-1 md:w-44 md:flex-none">
+                    <DatePicker
+                      value={rule.value || undefined}
+                      onChange={(value) => updateRule(index, { value })}
+                      placeholder={t('filterValue')}
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    value={rule.value}
+                    onChange={(event) => updateRule(index, { value: event.target.value })}
+                    placeholder={t('filterValue')}
+                    inputMode={type === 'number' || type === 'money' ? 'decimal' : undefined}
+                    className="h-10 w-full min-w-32 flex-1 md:h-9 md:w-40"
+                  />
+                )}
 
                 <button
                   type="button"

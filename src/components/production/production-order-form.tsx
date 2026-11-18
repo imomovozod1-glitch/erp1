@@ -15,6 +15,7 @@ import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -291,7 +292,7 @@ export function ProductionOrderForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="order_date">{t('orderDate')}</Label>
-              <Input id="order_date" type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+              <DatePicker id="order_date" value={orderDate} onChange={setOrderDate} lang={lang} placeholder={t('orderDate')} />
             </div>
             <div className="sm:col-span-2">
               <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />

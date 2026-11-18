@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 /**
  * One row in the picker's list.
@@ -58,6 +59,9 @@ interface ItemPickerProps {
  * proven; `bom-form.tsx`, `production-order-form.tsx` and
  * `purchase-order-form.tsx` now share it.
  */
+/** Exactly three rows: 3 × h-14 + the two dividers + the 1px border top and bottom. */
+const LIST_HEIGHT = 172
+
 export function ItemPicker({
   options,
   onPick,
@@ -68,7 +72,38 @@ export function ItemPicker({
 }: ItemPickerProps) {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
+  const [placement, setPlacement] = useState<'below' | 'above'>('below')
   const boxRef = useRef<HTMLDivElement>(null)
+
+  /**
+   * Opens the list on whichever side has room. Below by default; above when
+   * the box sits at the bottom of what can be seen — the last field of a
+   * route-modal or a card, where a list opening downwards was cut off by the
+   * dialog's own edge after the first half-row. Measured against the nearest
+   * scrolling ancestor (the dialog scrolls inside itself), else the window.
+   * Decided at the moment of opening, in the event, not in an effect.
+   */
+  const openList = () => {
+    const box = boxRef.current
+    if (box) {
+      const rect = box.getBoundingClientRect()
+      let top = 0
+      let bottom = window.innerHeight
+      for (let el = box.parentElement; el; el = el.parentElement) {
+        const { overflowY } = getComputedStyle(el)
+        if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'hidden') {
+          const area = el.getBoundingClientRect()
+          top = Math.max(top, area.top)
+          bottom = Math.min(bottom, area.bottom)
+          break
+        }
+      }
+      const below = bottom - rect.bottom
+      const above = rect.top - top
+      setPlacement(below < LIST_HEIGHT + 8 && above > below ? 'above' : 'below')
+    }
+    setOpen(true)
+  }
 
   // Click-outside and Escape close the list. On the document rather than via a
   // primitive, for the focus reason in the docstring above.
@@ -118,10 +153,12 @@ export function ItemPicker({
           value={search}
           onChange={(e) => {
             setSearch(e.target.value)
-            setOpen(true)
+            if (!open) openList()
           }}
-          onFocus={() => setOpen(true)}
-          onClick={() => setOpen(true)}
+          onFocus={openList}
+          onClick={() => {
+            if (!open) openList()
+          }}
           placeholder={placeholder}
           className="h-10 rounded-xl pl-9 md:h-9"
           role="combobox"
@@ -135,7 +172,13 @@ export function ItemPicker({
              because box-sizing is border-box. Fixed-height rows are what makes
              that arithmetic hold — with rows that size themselves to their
              text, "three rows" would drift with every long name. */
-          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[172px] overflow-y-auto overscroll-contain rounded-xl border bg-white shadow-lg dark:bg-slate-900">
+          <div
+            style={{ maxHeight: LIST_HEIGHT }}
+            className={cn(
+              'absolute left-0 right-0 z-50 overflow-y-auto overscroll-contain rounded-xl border bg-white shadow-lg dark:bg-slate-900',
+              placement === 'above' ? 'bottom-full mb-1' : 'top-full mt-1'
+            )}
+          >
             {visible.length === 0 ? (
               <p className="p-6 text-center text-sm text-muted-foreground">{emptyLabel}</p>
             ) : (
