@@ -1,43 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import {
-  type LucideIcon,
-  DollarSign,
-  ShoppingCart,
-  Package,
-  Users,
-  ArrowUpRight,
-  ArrowDownRight,
-  Plus,
-  Zap,
-  Layers,
-  Truck,
-  Factory,
-  Send,
-  AlertTriangle,
-  Contact,
-  Building2,
-  UserPlus,
-} from 'lucide-react'
-import { formatCurrency, isoDate } from '@/lib/utils'
-import { PeriodFilter } from '@/components/shared/period-filter'
-import { PageInfoButton } from '@/components/shared/page-info-button'
 import { useCan } from '@/components/providers/permissions-provider'
-
-const formatDateISO = (d: Date) => {
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+import { PageInfoButton } from '@/components/shared/page-info-button'
+import { PeriodFilter } from '@/components/shared/period-filter'
+import { periodMetrics, type DashboardPeriod, type SoldDay } from './dashboard-metrics'
+import { CountChips, KpiTiles } from './dashboard-tiles'
+import { QuickActions } from './quick-actions'
+import { useDashboardPeriod } from './use-dashboard-period'
 
 interface DashboardClientProps {
   lang: string
   /** Server-rendered "your support manager" strip; null when none is assigned. */
-  agentCard?: React.ReactNode
+  agentCard?: ReactNode
   stats: {
     totalOrders: number | null
     totalProducts: number | null
@@ -54,443 +30,55 @@ interface DashboardClientProps {
     totalReceivables?: number
     totalPayables?: number
     /** One row per day the company sold anything — see getCachedDashboardStats. */
-    soldDays?: { order_date: string; revenue: number; cost: number; orderCount: number }[]
+    soldDays?: SoldDay[]
   }
 }
 
+const LOW_STOCK_SHOWN = 5
 
-/**
- * One KPI tile.
- *
- * The five below were five copies of the same twenty lines, differing only in
- * label, number, icon and footer — so the decorative corner, the type scale and
- * the hover behaviour all had to be kept in step by hand, and one of them had
- * already drifted.
- */
-function KpiTile({
-  label,
-  value,
-  icon: Icon,
-  wide,
-  children,
-}: {
-  label: string
-  value: string
-  icon: LucideIcon
-  /** Spans both columns on a phone — the fifth tile would otherwise sit alone in a half-empty row. */
-  wide?: boolean
-  /** The small print under the number. */
-  children: React.ReactNode
-}) {
+function DashboardBar({ lang, state }: { lang: string; state: ReturnType<typeof useDashboardPeriod> }) {
+  const t = useTranslations()
+  const { choice } = state
   return (
-    <div className={`group relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-5 ${wide ? 'max-sm:col-span-2' : ''}`}>
-      <div
-        aria-hidden="true"
-        className="absolute top-0 right-0 h-24 w-24 translate-x-4 -translate-y-4 rounded-full bg-violet-100 opacity-60 transition-transform duration-300 group-hover:scale-110 dark:bg-violet-500/10"
+    <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none sm:flex-row sm:items-center">
+      <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground max-md:hidden">
+        {t('dashboard.title')}
+        <PageInfoButton text={t('pageInfo.dashboard')} />
+      </h1>
+      <PeriodFilter
+        period={choice.period}
+        onPeriodChange={(next) => state.setPeriod(next as DashboardPeriod)}
+        customStart={choice.start}
+        customEnd={choice.end}
+        onApplyCustomRange={state.applyRange}
+        lang={lang}
       />
-      <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-        <Icon className="h-5 w-5" />
-      </div>
-      <p className="relative mt-3 text-sm font-medium text-muted-foreground">{label}</p>
-      {/* `text-lg` on a phone, where two tiles share the width and a nine-digit
-          sum must still fit; `xl` once there are five across, where it used to
-          run straight out of the card in 2xl. */}
-      <h3 className="relative mt-0.5 text-lg font-extrabold tracking-tight break-words tabular-nums text-foreground sm:text-xl">
-        {value}
-      </h3>
-      <div className="relative">{children}</div>
     </div>
   )
 }
 
+/** The money tiles show what the server computed; the period only re-slices the day rows it sent. */
 export function DashboardClient({ lang, stats, agentCard }: DashboardClientProps) {
-  const [period, setPeriod] = useState<'today' | 'yesterday' | 'week' | 'month' | 'all' | 'custom'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('dashboard_period')
-      if (saved === 'today' || saved === 'yesterday' || saved === 'week' || saved === 'month' || saved === 'all' || saved === 'custom') {
-        return saved
-      }
-    }
-    return 'all'
-  })
-
-  const [customStart, setCustomStart] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('dashboard_custom_start')
-      if (saved) return saved
-    }
-    return formatDateISO(new Date()) + 'T00:00'
-  })
-  const [customEnd, setCustomEnd] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('dashboard_custom_end')
-      if (saved) return saved
-    }
-    return formatDateISO(new Date()) + 'T23:59'
-  })
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('dashboard_period', period)
-      sessionStorage.setItem('dashboard_custom_start', customStart)
-      sessionStorage.setItem('dashboard_custom_end', customEnd)
-    }
-  }, [period, customStart, customEnd])
-
-  const handleApplyCustomRange = (start: string, end: string) => {
-    setCustomStart(start)
-    setCustomEnd(end)
-    setPeriod('custom')
-  }
-
-  // The server leaves the company-wide totals out (null) for a user who may
-  // only see their own records (dashboard/page.tsx); the tile goes with them.
+  const period = useDashboardPeriod()
   const canSeeSales = useCan('sales', 'view') && stats.totalOrders !== null
-  const canSeeReports = useCan('analytics', 'view')
-  const canSeeFinance = useCan('finance', 'view')
-  const canSeeInventory = useCan('inventory', 'view')
-  const canSeeCustomers = useCan('customers', 'view') && stats.totalCustomers !== null
-  const canSeeEmployees = useCan('hr', 'view')
-  const canSeeSuppliers = useCan('procurement', 'view')
-  const canAddSale = useCan('sales', 'create')
-  const canAddMoney = useCan('finance', 'create')
-  const canAddCustomer = useCan('customers', 'create')
-  const canAddProduct = useCan('inventory', 'create')
-  const canAddPurchase = useCan('procurement', 'create')
-  const canAddProduction = useCan('production', 'create')
-  const canAddDelivery = useCan('distribution', 'create')
-  const canAddEmployee = useCan('hr', 'create')
-
-  const td = useTranslations('dashboard')
-  const tInfo = useTranslations('pageInfo')
-  const tSales = useTranslations('sales')
-  const tInventory = useTranslations('inventory')
-  const tProcurement = useTranslations('procurement')
-  const tProduction = useTranslations('production')
-  const tDistribution = useTranslations('distribution')
-  const tHr = useTranslations('hr')
-
-  const {
-    totalProducts,
-    totalCustomers,
-    totalEmployees,
-    totalSuppliers,
-    chartTxData,
-    allTimeExpense,
-    lowStockRows,
-    totalCashboxBalance = 0,
-    warehouseValue = 0,
-    totalReceivables = 0,
-    totalPayables = 0,
-    soldDays = [],
-  } = stats
-
-  // The money tiles show what the server computed (getCachedDashboardStats in
-  // src/lib/data/queries/analytics.ts). They used to be overwritten by
-  // whatever the browser's localStorage mirror held (`erp_cashboxes`,
-  // `erp_invoices`, ...) whenever that key existed at all — and the mirror is
-  // only a stale offline copy, so the dashboard could show old balances while
-  // the database held the real ones.
-  const realCashboxBalance = totalCashboxBalance
-  const realWarehouseValue = warehouseValue
-  const realReceivables = totalReceivables
-  const realPayables = totalPayables
-
-  // Date constants (initialized once to keep render pure)
-  const [now] = useState(() => new Date())
-  const todayStr = isoDate(now)
-  const oneDayMs = 24 * 60 * 60 * 1000
-  const yesterdayStr = isoDate(new Date(now.getTime() - oneDayMs))
-  const weekAgo = new Date(now.getTime() - 7 * oneDayMs)
-  const monthAgo = new Date(now.getTime() - 30 * oneDayMs)
-
-  // Custom range bounds (only meaningful when period === 'custom')
-  const customStartDate = customStart ? new Date(customStart) : null
-  const customEndDate = customEnd ? new Date(customEnd) : null
-
-  // Dynamic filter function
-  const getFilteredMetrics = () => {
-    let filteredTx = chartTxData
-
-    if (period === 'today') {
-      filteredTx = chartTxData.filter((tx) => tx.transaction_date === todayStr)
-    } else if (period === 'yesterday') {
-      filteredTx = chartTxData.filter((tx) => tx.transaction_date === yesterdayStr)
-    } else if (period === 'week') {
-      filteredTx = chartTxData.filter((tx) => new Date(tx.transaction_date) >= weekAgo)
-    } else if (period === 'month') {
-      filteredTx = chartTxData.filter((tx) => new Date(tx.transaction_date) >= monthAgo)
-    } else if (period === 'custom') {
-      filteredTx = chartTxData.filter((tx) => {
-        const d = new Date(tx.transaction_date)
-        return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
-      })
-    }
-
-    let exp = 0
-
-    if (period === 'all') {
-      exp = allTimeExpense
-    } else {
-      filteredTx.forEach((tx) => {
-        if (tx.type === 'expense') exp += tx.amount
-      })
-    }
-
-    // Profit = total sales revenue - cost price (COGS) of sold goods, filtered to the same period
-    let filteredSoldDays = soldDays
-    if (period === 'today') {
-      filteredSoldDays = soldDays.filter((si) => si.order_date?.split('T')[0] === todayStr)
-    } else if (period === 'yesterday') {
-      filteredSoldDays = soldDays.filter((si) => si.order_date?.split('T')[0] === yesterdayStr)
-    } else if (period === 'week') {
-      filteredSoldDays = soldDays.filter((si) => new Date(si.order_date) >= weekAgo)
-    } else if (period === 'month') {
-      filteredSoldDays = soldDays.filter((si) => new Date(si.order_date) >= monthAgo)
-    } else if (period === 'custom') {
-      filteredSoldDays = soldDays.filter((si) => {
-        if (!si.order_date) return false
-        const d = new Date(si.order_date)
-        return (!customStartDate || d >= customStartDate) && (!customEndDate || d <= customEndDate)
-      })
-    }
-    // "Total sales" is the sum of what was actually sold (sales_order_items), NOT the
-    // sum of `income` transactions — the latter also contains manual cashbox top-ups,
-    // customer debt repayments and other non-sale income.
-    const salesRevenue = filteredSoldDays.reduce((sum, si) => sum + si.revenue, 0)
-    const costOfGoods = filteredSoldDays.reduce((sum, si) => sum + si.cost, 0)
-    const profit = salesRevenue - costOfGoods
-    // Distinct orders, added up per day: an order belongs to exactly one date,
-    // so the per-day counts never double-count across a span.
-    const saleCount = filteredSoldDays.reduce((sum, si) => sum + si.orderCount, 0)
-    const avgCheck = saleCount > 0 ? salesRevenue / saleCount : 0
-
-    return {
-      revenue: salesRevenue,
-      expenses: exp,
-      profit,
-      avgCheck,
-      ordersCount: saleCount,
-    }
+  const metrics = periodMetrics(period.choice, period.now, { soldDays: stats.soldDays ?? [], transactions: stats.chartTxData, allTimeExpense: stats.allTimeExpense })
+  const lowStock = (stats.lowStockRows ?? []).filter((p) => p.stock < p.min_stock).slice(0, LOW_STOCK_SHOWN)
+  const totals = {
+    cashbox: stats.totalCashboxBalance ?? 0,
+    warehouse: stats.warehouseValue ?? 0,
+    receivables: stats.totalReceivables ?? 0,
+    payables: stats.totalPayables ?? 0,
+    products: stats.totalProducts ?? 0,
+    lowStock: lowStock.length,
+    showSales: canSeeSales,
   }
-
-  const metrics = getFilteredMetrics()
-  const lowStock = (lowStockRows ?? []).filter((p) => p.stock < p.min_stock).slice(0, 5)
-
-  // Language mapping helper using Next-Intl
-  const t = {
-    title: td('title'),
-    subtitle: td('subtitle'),
-    today: td('today'),
-    yesterday: td('yesterday'),
-    week: td('week'),
-    month: td('month'),
-    all: td('all'),
-    quickActions: td('quickActions'),
-    financialHealth: td('financialHealth'),
-    sales: td('sales'),
-    profit: td('profit'),
-    expenses: td('expenses'),
-    avgCheck: td('avgCheck'),
-    cashBalance: td('cashBalance'),
-    receivables: td('receivables'),
-    payables: td('payables'),
-    warehouseValue: td('warehouseValue'),
-    newSale: td('newSale'),
-    addIncome: td('addIncome'),
-    addExpense: td('addExpense'),
-    // scanner: td('scanner'),
-    lowStockTitle: td('lowStockTitle'),
-    activeCustomers: td('activeCustomers'),
-    activeEmployees: td('activeEmployees'),
-    growthVsLastMonth: td('vsLastMonth'),
-    pendingInvoices: td('pendingInvoices'),
-  }
-
   return (
     <div className="space-y-6">
-      {/* Top Bar with Period Presets */}
-      <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none sm:flex-row sm:items-center">
-        <div className="max-md:hidden">
-          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
-            {t.title}
-            <PageInfoButton text={tInfo('dashboard')} />
-          </h1>
-        </div>
-
-        {/* The same preset pills + custom-range popover as the reports and
-            transactions screens. This screen used to hand-roll them, which is
-            exactly the duplication PeriodFilter exists to prevent — its default
-            presets are this list, labelled from the same namespace. */}
-        <PeriodFilter
-          period={period}
-          onPeriodChange={(next) => setPeriod(next as typeof period)}
-          customStart={customStart}
-          customEnd={customEnd}
-          onApplyCustomRange={handleApplyCustomRange}
-          lang={lang}
-        />
-      </div>
-
-      {/* Who to call when something goes wrong, before the numbers. */}
+      <DashboardBar lang={lang} state={period} />
       {agentCard}
-
-      {/* Quick Action Launchpad — every "create new" page in the sidebar, one tap away */}
-      {(canAddSale || canAddMoney || canAddCustomer || canAddProduct || canAddPurchase || canAddProduction || canAddDelivery || canAddEmployee) && (
-      <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-5 shadow-sm max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none">
-        <h2 className="flex items-center gap-2 text-sm font-bold tracking-wider text-foreground uppercase max-md:text-base max-md:normal-case max-md:tracking-tight">
-          <Zap className="h-4 w-4 text-violet-600 dark:text-violet-400 max-md:hidden" />
-          {t.quickActions}
-        </h2>
-        {/* Phones: one row of square tiles that scrolls sideways, the first one
-            filled (the app design's "Tezkor amallar"). Desktop: the button grid. */}
-        <div className="flex gap-3 overflow-x-auto max-md:-mx-4 max-md:px-4 max-md:pb-1 max-md:[scrollbar-width:none] md:grid md:grid-cols-4 md:overflow-visible">
-          {/* One tone for all of them. They were previously indigo / emerald /
-              rose / blue / amber / slate at random — a colour per button with
-              no meaning behind any of it, which is the single loudest thing on
-              the page. These are all just "create something". */}
-          {[
-            { allowed: canAddSale, href: 'sales/orders/new', label: t.newSale, icon: Plus },
-            { allowed: canAddMoney, href: 'finance/cashbox?action=kirim', label: t.addIncome, icon: ArrowUpRight },
-            { allowed: canAddMoney, href: 'finance/cashbox?action=chiqim', label: t.addExpense, icon: ArrowDownRight },
-            { allowed: canAddCustomer, href: 'customers/new', label: tSales('addCustomer'), icon: Contact },
-            { allowed: canAddProduct, href: 'inventory/products/new', label: tInventory('addProduct'), icon: Package },
-            { allowed: canAddPurchase, href: 'procurement/purchase-orders/new', label: tProcurement('addPurchase'), icon: Truck },
-            { allowed: canAddPurchase, href: 'procurement/suppliers/new', label: tProcurement('addSupplier'), icon: Building2 },
-            { allowed: canAddProduction, href: 'production/orders/new', label: tProduction('addOrder'), icon: Factory },
-            { allowed: canAddDelivery, href: 'distribution/deliveries/new', label: tDistribution('addDelivery'), icon: Send },
-            { allowed: canAddEmployee, href: 'hr/employees/new', label: tHr('addEmployee'), icon: UserPlus },
-          ].filter((action) => action.allowed).map((action, index) => {
-            const Icon = action.icon
-            return (
-              <Link
-                key={action.href}
-                href={`/${lang}/${action.href}`}
-                className={
-                  'flex shrink-0 items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground/80 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 dark:hover:border-violet-700 dark:hover:bg-violet-950/30 dark:hover:text-violet-300 ' +
-                  // Phone tile: icon over label, 84px wide, card-white.
-                  'max-md:w-[5.25rem] max-md:flex-col max-md:justify-start max-md:rounded-2xl max-md:border-0 max-md:bg-card max-md:px-2 max-md:py-3 max-md:text-center max-md:text-[11px] max-md:shadow-sm ' +
-                  (index === 0 ? 'max-md:bg-brand-gradient max-md:text-white max-md:shadow-brand' : '')
-                }
-              >
-                <span
-                  className={
-                    'flex shrink-0 items-center justify-center max-md:h-10 max-md:w-10 max-md:rounded-xl ' +
-                    (index === 0 ? 'max-md:bg-white/20 max-md:text-white' : 'max-md:bg-violet-100 max-md:text-violet-700 dark:max-md:bg-violet-500/15 dark:max-md:text-violet-300')
-                  }
-                >
-                  <Icon className="h-4 w-4 shrink-0 max-md:h-5 max-md:w-5" />
-                </span>
-                <span className="leading-tight">{action.label}</span>
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-      )}
-
-      {/* Main KPI Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-        {canSeeSales && (
-        <KpiTile label={t.sales} value={formatCurrency(metrics.revenue)} icon={ShoppingCart}>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span className="tabular-nums">{td('ordersCountText', { count: metrics.ordersCount })}</span>
-            <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-300">
-              {td('averageCheckText', { amount: formatCurrency(metrics.avgCheck) })}
-            </span>
-          </div>
-        </KpiTile>
-        )}
-
-        {canSeeReports && (
-        <KpiTile label={t.profit} value={formatCurrency(metrics.profit)} icon={DollarSign}>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-300">
-              {td('profitabilityText', {
-                percentage: ((metrics.profit / (metrics.revenue || 1)) * 100).toFixed(1),
-              })}
-            </span>
-            {canSeeFinance && <span className="tabular-nums">{td('expenseText', { amount: formatCurrency(metrics.expenses) })}</span>}
-          </div>
-        </KpiTile>
-        )}
-
-        {canSeeFinance && (
-        <KpiTile label={t.cashBalance} value={formatCurrency(realCashboxBalance)} icon={Layers}>
-          {/* Money owed to us and money we owe: the one place on this screen
-              where colour classifies rather than decorates. */}
-          <div className="mt-3 flex items-center justify-between gap-1 border-t pt-2 text-[11px] text-slate-500 dark:text-slate-400">
-            <div className="flex min-w-0 flex-col">
-              <span className="text-[9px] font-medium uppercase text-slate-400 dark:text-slate-500">
-                {t.receivables}
-              </span>
-              <span className="mt-0.5 font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-                {formatCurrency(realReceivables)}
-              </span>
-            </div>
-            <div className="flex min-w-0 flex-col text-right">
-              <span className="text-[9px] font-medium uppercase text-slate-400 dark:text-slate-500">
-                {t.payables}
-              </span>
-              <span className="mt-0.5 font-bold tabular-nums text-rose-600 dark:text-rose-400">
-                {formatCurrency(realPayables)}
-              </span>
-            </div>
-          </div>
-        </KpiTile>
-        )}
-
-        {canSeeInventory && (
-        <KpiTile label={t.warehouseValue} value={formatCurrency(realWarehouseValue)} icon={Package}>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span className="tabular-nums">{td('productsCountText', { count: totalProducts ?? 0 })}</span>
-            <span className="font-semibold tabular-nums text-amber-600 dark:text-amber-400">
-              {td('lowStockCountText', { count: lowStock.length })}
-            </span>
-          </div>
-        </KpiTile>
-        )}
-
-        {canSeeSales && (
-        <KpiTile
-          wide
-          label={td('soldOnCredit')}
-          value={formatCurrency(realReceivables)}
-          icon={AlertTriangle}
-        >
-          <div className="mt-3 flex items-center text-xs text-slate-500 dark:text-slate-400">
-            <span>
-              {td('expectedFromCustomers')}
-            </span>
-          </div>
-        </KpiTile>
-        )}
-      </div>
-
-      {/* Small Secondary Meta info row (Customers & Employees) */}
-      {/* Three tiles, three columns — `md:grid-cols-4` left a visible empty
-          cell at the end of the row on every desktop width. */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-        {canSeeCustomers && (
-        <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
-          <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('customersCountText', { count: totalCustomers ?? 0 })}</span>
-        </div>
-        )}
-        {canSeeEmployees && (
-        <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
-          <Users className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('employeesCountText', { count: totalEmployees ?? 0 })}</span>
-        </div>
-        )}
-        {canSeeSuppliers && (
-        <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
-          <Truck className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{td('suppliersCountText', { count: totalSuppliers ?? 0 })}</span>
-        </div>
-        )}
-      </div>
-
+      <QuickActions lang={lang} />
+      <KpiTiles metrics={metrics} totals={totals} />
+      <CountChips customers={stats.totalCustomers} employees={stats.totalEmployees} suppliers={stats.totalSuppliers} />
     </div>
   )
 }

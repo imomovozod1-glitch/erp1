@@ -37,3 +37,9 @@ export function useCan(module: PermissionModule, action: PermissionAction, resou
     ? canResource(role, permissions, module, resource, action as LevelAction)
     : can(role, permissions, module, action)
 }
+
+/** The same check as a function, for a component that asks about several modules from a list. */
+export function useCanFn(): (module: PermissionModule, action: PermissionAction) => boolean {
+  const { role, permissions } = useContext(PermissionsContext)
+  return (module, action) => can(role, permissions, module, action)
+}

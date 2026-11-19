@@ -40,6 +40,8 @@ export * from './hr'
 export * from './hr-details'
 export * from './procurement'
 export * from './analytics'
+export * from './sales-report-data'
+export * from './dashboard-stats'
 export * from './pos'
 // Re-exported for the callers that imported it from here before it moved out
 // of the query layer; new code should import it from '@/lib/sales-discounts'.
