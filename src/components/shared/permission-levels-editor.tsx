@@ -9,6 +9,7 @@ import {
   Contact,
   DollarSign,
   Factory,
+  Info,
   Package,
   Settings,
   ShieldCheck,
@@ -21,17 +22,14 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { STATUS_DOT_STYLES, STATUS_TONE_STYLES, type StatusTone } from '@/components/shared/status-badge'
 import { cn } from '@/lib/utils'
 import {
-  ACCESS_LEVELS,
   MATRIX_MODULES,
   PERMISSION_RESOURCES,
   accessLevel,
   flattenLevels,
-  levelsFor,
   type AccessLevel,
   type LevelAction,
   type ModuleLevels,
@@ -49,16 +47,11 @@ interface PermissionLevelsEditorProps {
 
 const COLUMNS: LevelAction[] = ['view', 'create', 'edit', 'delete', 'export']
 
-/** How far a level reaches, for keeping the actions of one section consistent. */
+/** How far a level reaches; used to read one "which records" value off a section. */
 const RANK: Record<AccessLevel, number> = { none: 0, own: 1, department: 2, all: 3 }
 
-/** The same tones the status pills use, so a level reads like a status anywhere in the app. */
-const LEVEL_TONE: Record<AccessLevel, StatusTone> = {
-  none: 'slate',
-  own: 'amber',
-  department: 'blue',
-  all: 'emerald',
-}
+type Scope = Exclude<AccessLevel, 'none'>
+const SCOPES: Scope[] = ['own', 'department', 'all']
 
 /** The sidebar's icon for each module, so the editor reads like the app it controls. */
 const MODULE_ICON: Partial<Record<PermissionModule, LucideIcon>> = {
@@ -74,80 +67,59 @@ const MODULE_ICON: Partial<Record<PermissionModule, LucideIcon>> = {
   settings: Settings,
 }
 
-type GrantState = 'full' | 'partial' | 'none'
+/** Ticked / partly ticked / not ticked — what a group checkbox shows. */
+type Tick = 'all' | 'some' | 'none'
 
-/** Every action of a section at the widest level it offers — or closed. */
-function wholeSection(resource: PermissionResource, granted: boolean): ResourceLevels {
-  return Object.fromEntries(
-    resource.actions.map((action) => {
-      const offered = levelsFor(resource, action)
-      return [action, granted ? offered[offered.length - 1] : 'none']
-    })
-  ) as ResourceLevels
-}
-
-function sectionState(resource: PermissionResource, section: ResourceLevels): GrantState {
-  const levels = resource.actions.map((action) => section[action] ?? 'none')
-  if (levels.every((level) => level === 'none')) return 'none'
-  const full = resource.actions.every((action) => {
-    const offered = levelsFor(resource, action)
-    return section[action] === offered[offered.length - 1]
-  })
-  return full ? 'full' : 'partial'
-}
-
-function combineStates(states: GrantState[]): GrantState {
-  if (states.every((s) => s === 'full')) return 'full'
-  if (states.every((s) => s === 'none')) return 'none'
-  return 'partial'
+function combine(ticks: Tick[]): Tick {
+  if (ticks.every((t) => t === 'all')) return 'all'
+  if (ticks.every((t) => t === 'none')) return 'none'
+  return 'some'
 }
 
 /**
- * Keeps one section's actions coherent after a single change:
- *
- *   - seeing is the floor of everything else: nobody edits, deletes or exports
- *     records they cannot see, so raising an action raises `view` with it and
- *     narrowing `view` narrows the others to it;
- *   - creating needs the section open at all, at least to see one's own records.
+ * The single "which records" value of a section: the widest level its
+ * actions use, or everything when nothing is ticked yet. Creating does not
+ * count — a new record has no owner yet.
  */
-function applyChange(
-  resource: PermissionResource,
-  section: ResourceLevels,
-  action: LevelAction,
-  level: AccessLevel
-): ResourceLevels {
-  const next: ResourceLevels = { ...section, [action]: level }
-  const view = next.view ?? 'none'
-  if (action === 'view') {
-    for (const other of resource.actions) {
-      if (other === 'view') continue
-      if (level === 'none') next[other] = 'none'
-      else if (other !== 'create' && RANK[next[other] ?? 'none'] > RANK[level]) next[other] = level
-    }
-    return next
+function scopeOf(resource: PermissionResource, section: ResourceLevels): Scope {
+  if (!resource.ownable) return 'all'
+  let widest: AccessLevel = 'none'
+  for (const action of resource.actions) {
+    if (action === 'create') continue
+    const level = section[action] ?? 'none'
+    if (RANK[level] > RANK[widest]) widest = level
   }
-  if (level === 'none' || !resource.actions.includes('view')) return next
-  if (action === 'create') {
-    if (view === 'none') next.view = resource.ownable ? 'own' : 'all'
-  } else if (RANK[view] < RANK[level]) {
-    next.view = level
+  return widest === 'none' ? 'all' : widest
+}
+
+/** The section's levels with these actions ticked, all at one scope. */
+function sectionWith(resource: PermissionResource, ticked: Set<LevelAction>, scope: Scope): ResourceLevels {
+  const out: ResourceLevels = {}
+  for (const action of resource.actions) {
+    // Creating has no owner to scope by; everything else follows the section.
+    out[action] = !ticked.has(action) ? 'none' : action === 'create' || !resource.ownable ? 'all' : scope
   }
-  return next
+  return out
+}
+
+function tickedOf(resource: PermissionResource, section: ResourceLevels): Set<LevelAction> {
+  return new Set(resource.actions.filter((action) => (section[action] ?? 'none') !== 'none'))
 }
 
 /**
- * Permissions as the app is laid out: a card per module (with its sidebar
- * icon), a row per page of it, and in each cell how far that action reaches —
- * not at all, the user's own records, their department's, or everything.
+ * Permissions in plain terms, for whoever sets up a role — not someone who
+ * thinks in access levels. A card per module (with its sidebar icon), a row
+ * per page of it, a checkbox per thing the person may do there, and — only on
+ * pages whose records belong to someone — one "which records" choice: only
+ * their own, their department's, or all.
  *
- * Shortcuts at every level: a switch per page, one per module, and the
- * toolbar's grant-all / clear-all. Each switch is on only when everything
- * under it is granted in full; anything less shows as "partial".
+ * Every group has a checkbox of its own (the module, each page) that shows a
+ * dash when only part of it is ticked. Seeing a page is implied by doing
+ * anything on it, and taking "see" away takes everything else with it.
  *
- * It writes `levels` plus the module flags they imply (`flattenLevels`), so
- * every module-level check — and `app_can` in the database — keeps working. A
- * grant saved by the old module-only editor opens with its flags spread over
- * every page.
+ * The data underneath is unchanged: per-action levels in `levels` plus the
+ * module flags they imply (`flattenLevels`), read by every check in the app
+ * and by `app_can` in the database.
  */
 export function PermissionLevelsEditor({ value, onChange, disabled }: PermissionLevelsEditorProps) {
   const tNav = useTranslations('nav')
@@ -168,28 +140,65 @@ export function PermissionLevelsEditor({ value, onChange, disabled }: Permission
   const write = (module: PermissionModule, levels: ModuleLevels) =>
     onChange({ ...value, [module]: flattenLevels(levels) })
 
-  const setCell = (module: PermissionModule, resource: PermissionResource, action: LevelAction, level: AccessLevel) => {
+  const toggleAction = (module: PermissionModule, resource: PermissionResource, action: LevelAction, on: boolean) => {
     const levels = levelsOf(module)
-    write(module, { ...levels, [resource.key]: applyChange(resource, levels[resource.key], action, level) })
+    const section = levels[resource.key]
+    const ticked = tickedOf(resource, section)
+    if (on) {
+      ticked.add(action)
+      // Doing anything on a page means being able to open it.
+      if (resource.actions.includes('view')) ticked.add('view')
+    } else if (action === 'view') {
+      ticked.clear()
+    } else {
+      ticked.delete(action)
+    }
+    write(module, { ...levels, [resource.key]: sectionWith(resource, ticked, scopeOf(resource, section)) })
   }
 
-  const setSection = (module: PermissionModule, resource: PermissionResource, granted: boolean) =>
-    write(module, { ...levelsOf(module), [resource.key]: wholeSection(resource, granted) })
+  const setScope = (module: PermissionModule, resource: PermissionResource, scope: Scope) => {
+    const levels = levelsOf(module)
+    const section = levels[resource.key]
+    write(module, { ...levels, [resource.key]: sectionWith(resource, tickedOf(resource, section), scope) })
+  }
 
-  const setModule = (module: PermissionModule, granted: boolean) =>
+  const setSection = (module: PermissionModule, resource: PermissionResource, on: boolean) => {
+    const levels = levelsOf(module)
+    const section = levels[resource.key]
+    write(module, {
+      ...levels,
+      [resource.key]: sectionWith(resource, on ? new Set(resource.actions) : new Set(), scopeOf(resource, section)),
+    })
+  }
+
+  const setModule = (module: PermissionModule, on: boolean) => {
+    const levels = levelsOf(module)
     write(
       module,
-      Object.fromEntries(PERMISSION_RESOURCES[module].map((r) => [r.key, wholeSection(r, granted)]))
+      Object.fromEntries(
+        PERMISSION_RESOURCES[module].map((r) => [
+          r.key,
+          sectionWith(r, on ? new Set(r.actions) : new Set(), scopeOf(r, levels[r.key])),
+        ])
+      )
     )
+  }
 
-  const setEverything = (granted: boolean) => {
+  const setEverything = (on: boolean) => {
     const next: Permissions = { ...value }
     for (const moduleKey of MATRIX_MODULES) {
       next[moduleKey] = flattenLevels(
-        Object.fromEntries(PERMISSION_RESOURCES[moduleKey].map((r) => [r.key, wholeSection(r, granted)]))
+        Object.fromEntries(
+          PERMISSION_RESOURCES[moduleKey].map((r) => [r.key, sectionWith(r, on ? new Set(r.actions) : new Set(), 'all')])
+        )
       )
     }
     onChange(next)
+  }
+
+  const sectionTick = (resource: PermissionResource, section: ResourceLevels): Tick => {
+    const count = tickedOf(resource, section).size
+    return count === 0 ? 'none' : count === resource.actions.length ? 'all' : 'some'
   }
 
   const toggleExpanded = (module: PermissionModule) =>
@@ -204,41 +213,45 @@ export function PermissionLevelsEditor({ value, onChange, disabled }: Permission
   const resourceName = (module: PermissionModule, resource: PermissionResource) =>
     resource.key === 'main' ? tNav(module) : tPerm(`resource_${module}_${resource.key}`)
 
-  const stateBadge = (state: GrantState) => {
-    const tone: StatusTone = state === 'full' ? 'emerald' : state === 'partial' ? 'indigo' : 'slate'
+  const scopeSelect = (module: PermissionModule, resource: PermissionResource, section: ResourceLevels) => {
+    const ticked = tickedOf(resource, section).size > 0
+    const scope = scopeOf(resource, section)
     return (
-      <span
-        className={cn(
-          'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-          STATUS_TONE_STYLES[tone]
-        )}
+      <Select
+        value={scope}
+        disabled={disabled || !ticked}
+        onValueChange={(next) => next && setScope(module, resource, next as Scope)}
       >
-        <span className={cn('size-1.5 rounded-full', STATUS_DOT_STYLES[tone])} />
-        {tPerm(`state_${state}`)}
-      </span>
+        <SelectTrigger
+          aria-label={`${resourceName(module, resource)} — ${tPerm('recordsTitle')}`}
+          className="h-9 w-full rounded-xl text-xs font-medium md:h-8"
+        >
+          <SelectValue>{tPerm(`records_${scope}`)}</SelectValue>
+        </SelectTrigger>
+        <SelectContent alignItemWithTrigger={false} align="start" className="w-44 rounded-xl p-1">
+          {SCOPES.map((option) => (
+            <SelectItem key={option} value={option} className="rounded-lg py-1.5 text-sm">
+              {tPerm(`records_${option}`)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     )
   }
 
   return (
     <div className="space-y-3">
-      {/* Toolbar: what the colours mean, and the shortcuts that span every module. */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-muted/40 p-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-xs font-semibold text-muted-foreground">{tPerm('legendTitle')}</span>
-          {ACCESS_LEVELS.map((level) => (
-            <span key={level} className="inline-flex items-center gap-1.5 text-xs text-foreground" title={tPerm(`levelDesc_${level}`)}>
-              <span className={cn('size-2 rounded-full', STATUS_DOT_STYLES[LEVEL_TONE[level]])} />
-              <span className="font-medium">{tPerm(`levelShort_${level}`)}</span>
-              <span className="text-muted-foreground max-2xl:hidden">— {tPerm(`levelDesc_${level}`)}</span>
-            </span>
-          ))}
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-nowrap">
+      <div className="flex flex-col gap-3 rounded-2xl border border-violet-200/70 bg-brand-subtle p-3 sm:flex-row sm:items-center sm:justify-between dark:border-violet-900/50">
+        <p className="flex items-start gap-2 text-sm text-violet-900 dark:text-violet-100">
+          <Info className="mt-0.5 size-4 shrink-0 text-violet-600 dark:text-violet-300" />
+          {tPerm('simpleHint')}
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
           <Button
             type="button"
             variant="ghost"
-            className="col-span-2 justify-center sm:col-span-1"
             size="sm"
+            className="col-span-2 justify-center sm:col-span-1"
             onClick={() => setExpanded(allExpanded ? new Set() : new Set(MATRIX_MODULES))}
           >
             {allExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
@@ -259,9 +272,10 @@ export function PermissionLevelsEditor({ value, onChange, disabled }: Permission
         const isOpen = expanded.has(module)
         const levels = levelsOf(module)
         const sections = PERMISSION_RESOURCES[module]
-        const states = sections.map((resource) => sectionState(resource, levels[resource.key]))
-        const moduleState = combineStates(states)
-        const granted = states.filter((s) => s !== 'none').length
+        const ticks = sections.map((resource) => sectionTick(resource, levels[resource.key]))
+        const moduleTick = combine(ticks)
+        const granted = ticks.filter((t) => t !== 'none').length
+        const hasScope = sections.some((resource) => resource.ownable)
         const Icon = MODULE_ICON[module] ?? ShieldCheck
         return (
           <section
@@ -271,7 +285,15 @@ export function PermissionLevelsEditor({ value, onChange, disabled }: Permission
               isOpen ? 'border-violet-200 shadow-sm dark:border-violet-900/60' : 'border-border/60 hover:shadow-sm'
             )}
           >
-            <div className="flex items-center gap-3 px-3 py-2.5 sm:px-4">
+            <div className="flex items-center gap-3 px-3 py-2 sm:px-4">
+              <Checkbox
+                size="lg"
+                checked={moduleTick === 'all'}
+                indeterminate={moduleTick === 'some'}
+                onCheckedChange={() => setModule(module, moduleTick !== 'all')}
+                disabled={disabled}
+                aria-label={`${tNav(module)} — ${tPerm('selectModule')}`}
+              />
               <button
                 type="button"
                 aria-expanded={isOpen}
@@ -281,9 +303,7 @@ export function PermissionLevelsEditor({ value, onChange, disabled }: Permission
                 <span
                   className={cn(
                     'flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors',
-                    moduleState === 'none'
-                      ? 'bg-muted text-muted-foreground'
-                      : 'bg-brand-subtle text-violet-700 dark:text-violet-300'
+                    moduleTick === 'none' ? 'bg-muted text-muted-foreground' : 'bg-brand-subtle text-violet-700 dark:text-violet-300'
                   )}
                 >
                   <Icon className="size-4.5" />
@@ -296,105 +316,144 @@ export function PermissionLevelsEditor({ value, onChange, disabled }: Permission
                     </span>
                   )}
                 </span>
-                <span className="max-sm:hidden">{stateBadge(moduleState)}</span>
                 <ChevronDown
                   className={cn('size-4 shrink-0 text-muted-foreground transition-transform duration-200', isOpen && 'rotate-180')}
                 />
               </button>
-              <Switch
-                checked={moduleState === 'full'}
-                onCheckedChange={() => setModule(module, moduleState !== 'full')}
-                disabled={disabled}
-                aria-label={`${tNav(module)} — ${tPerm('moduleAll')}`}
-                title={tPerm('moduleAll')}
-              />
             </div>
 
             {isOpen && (
               <div className="border-t border-border/60">
-                {/* Desktop: sections down, actions across. */}
+                {/* Desktop: pages down, what they may do across. */}
                 <div className="overflow-x-auto max-md:hidden">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-muted/40 text-xs text-muted-foreground">
                         <th className="px-4 py-2.5 text-left font-semibold">{tPerm('section')}</th>
                         {COLUMNS.map((action) => (
-                          <th key={action} className="w-36 px-2 py-2.5 text-left font-semibold">
+                          <th key={action} className="w-24 px-2 py-2.5 text-center font-semibold">
                             {tPerm(`action_${action}`)}
                           </th>
                         ))}
+                        {hasScope && (
+                          <th className="w-44 px-3 py-2.5 text-left font-semibold" title={tPerm('recordsHint')}>
+                            {tPerm('recordsTitle')}
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
-                      {sections.map((resource, index) => (
-                        <tr key={resource.key} className="transition-colors hover:bg-muted/30">
-                          <td className="px-4 py-2.5">
-                            <span className="flex items-center gap-3">
-                              <Switch
-                                checked={states[index] === 'full'}
-                                onCheckedChange={() => setSection(module, resource, states[index] !== 'full')}
-                                disabled={disabled}
-                                aria-label={`${resourceName(module, resource)} — ${tPerm('sectionAll')}`}
-                                title={tPerm('sectionAll')}
-                              />
-                              <span className="font-medium text-foreground">{resourceName(module, resource)}</span>
-                            </span>
-                          </td>
-                          {COLUMNS.map((action) => (
-                            <td key={action} className="px-2 py-2.5">
-                              {resource.actions.includes(action) ? (
-                                <LevelSelect
-                                  label={`${resourceName(module, resource)} — ${tPerm(`action_${action}`)}`}
-                                  levels={levelsFor(resource, action)}
-                                  value={levels[resource.key][action] ?? 'none'}
+                      {sections.map((resource, index) => {
+                        const section = levels[resource.key]
+                        const ticked = tickedOf(resource, section)
+                        return (
+                          <tr
+                            key={resource.key}
+                            className={cn(
+                              'transition-colors',
+                              ticks[index] !== 'none' ? 'bg-violet-50/40 dark:bg-violet-950/10' : 'hover:bg-muted/30'
+                            )}
+                          >
+                            <td className="px-4 py-2.5">
+                              <label className="flex cursor-pointer items-center gap-3">
+                                <Checkbox
+                                  size="lg"
+                                  checked={ticks[index] === 'all'}
+                                  indeterminate={ticks[index] === 'some'}
+                                  onCheckedChange={() => setSection(module, resource, ticks[index] !== 'all')}
                                   disabled={disabled}
-                                  onChange={(level) => setCell(module, resource, action, level)}
+                                  aria-label={`${resourceName(module, resource)} — ${tPerm('selectSection')}`}
                                 />
-                              ) : (
-                                <span className="pl-3 text-muted-foreground/50" aria-hidden>—</span>
-                              )}
+                                <span className="font-medium text-foreground">{resourceName(module, resource)}</span>
+                              </label>
                             </td>
-                          ))}
-                        </tr>
-                      ))}
+                            {COLUMNS.map((action) => (
+                              <td key={action} className="px-2 py-2.5 text-center">
+                                {resource.actions.includes(action) ? (
+                                  <span className="inline-flex">
+                                    <Checkbox
+                                      checked={ticked.has(action)}
+                                      onCheckedChange={(on) => toggleAction(module, resource, action, on === true)}
+                                      disabled={disabled}
+                                      aria-label={`${resourceName(module, resource)} — ${tPerm(`action_${action}`)}`}
+                                    />
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground/40" aria-hidden>—</span>
+                                )}
+                              </td>
+                            ))}
+                            {hasScope && (
+                              <td className="px-3 py-2">
+                                {resource.ownable ? (
+                                  scopeSelect(module, resource, section)
+                                ) : (
+                                  <span className="pl-1 text-xs text-muted-foreground">{tPerm('records_all')}</span>
+                                )}
+                              </td>
+                            )}
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Phone: a card per section, an action per row. */}
+                {/* Phone: a card per page, its permissions as tick boxes. */}
                 <div className="space-y-2.5 p-3 md:hidden">
-                  {sections.map((resource, index) => (
-                    <div key={resource.key} className="rounded-2xl border border-border/60 bg-muted/30 p-3">
-                      <div className="mb-2.5 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-foreground">{resourceName(module, resource)}</p>
-                          <div className="mt-1">{stateBadge(states[index])}</div>
-                        </div>
-                        <Switch
-                          checked={states[index] === 'full'}
-                          onCheckedChange={() => setSection(module, resource, states[index] !== 'full')}
-                          disabled={disabled}
-                          aria-label={`${resourceName(module, resource)} — ${tPerm('sectionAll')}`}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        {COLUMNS.filter((action) => resource.actions.includes(action)).map((action) => (
-                          <div key={action} className="flex items-center justify-between gap-3">
-                            <span className="text-sm text-muted-foreground">{tPerm(`action_${action}`)}</span>
-                            <div className="w-40 shrink-0">
-                              <LevelSelect
-                                label={`${resourceName(module, resource)} — ${tPerm(`action_${action}`)}`}
-                                levels={levelsFor(resource, action)}
-                                value={levels[resource.key][action] ?? 'none'}
+                  {sections.map((resource, index) => {
+                    const section = levels[resource.key]
+                    const ticked = tickedOf(resource, section)
+                    return (
+                      <div
+                        key={resource.key}
+                        className={cn(
+                          'rounded-2xl border p-3',
+                          ticks[index] !== 'none'
+                            ? 'border-violet-200 bg-violet-50/50 dark:border-violet-900/60 dark:bg-violet-950/20'
+                            : 'border-border/60 bg-muted/30'
+                        )}
+                      >
+                        <label className="flex cursor-pointer items-center gap-3">
+                          <Checkbox
+                            size="lg"
+                            checked={ticks[index] === 'all'}
+                            indeterminate={ticks[index] === 'some'}
+                            onCheckedChange={() => setSection(module, resource, ticks[index] !== 'all')}
+                            disabled={disabled}
+                            aria-label={`${resourceName(module, resource)} — ${tPerm('selectSection')}`}
+                          />
+                          <span className="text-sm font-semibold text-foreground">{resourceName(module, resource)}</span>
+                        </label>
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          {COLUMNS.filter((action) => resource.actions.includes(action)).map((action) => (
+                            <label
+                              key={action}
+                              className={cn(
+                                'flex min-h-10 cursor-pointer items-center gap-2.5 rounded-xl border px-3 text-sm transition-colors',
+                                ticked.has(action)
+                                  ? 'border-violet-300 bg-card text-foreground dark:border-violet-800'
+                                  : 'border-border/60 bg-card/60 text-muted-foreground'
+                              )}
+                            >
+                              <Checkbox
+                                checked={ticked.has(action)}
+                                onCheckedChange={(on) => toggleAction(module, resource, action, on === true)}
                                 disabled={disabled}
-                                onChange={(level) => setCell(module, resource, action, level)}
                               />
-                            </div>
+                              {tPerm(`action_${action}`)}
+                            </label>
+                          ))}
+                        </div>
+                        {resource.ownable && (
+                          <div className="mt-3 space-y-1.5">
+                            <p className="text-xs font-medium text-muted-foreground">{tPerm('recordsTitle')}</p>
+                            {scopeSelect(module, resource, section)}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -402,58 +461,5 @@ export function PermissionLevelsEditor({ value, onChange, disabled }: Permission
         )
       })}
     </div>
-  )
-}
-
-/** One cell: a compact, colour-coded pill that opens the levels this action offers. */
-function LevelSelect({
-  label,
-  levels,
-  value,
-  disabled,
-  onChange,
-}: {
-  label: string
-  levels: readonly AccessLevel[]
-  value: AccessLevel
-  disabled?: boolean
-  onChange: (level: AccessLevel) => void
-}) {
-  const tPerm = useTranslations('permissions')
-  const tone = LEVEL_TONE[value]
-  return (
-    <Select
-      value={value}
-      disabled={disabled}
-      onValueChange={(next) => next && onChange(next as AccessLevel)}
-    >
-      <SelectTrigger
-        aria-label={label}
-        className={cn(
-          'h-9 w-full rounded-full border px-3 text-xs font-semibold shadow-none md:h-8',
-          STATUS_TONE_STYLES[tone]
-        )}
-      >
-        <SelectValue>
-          <span className="flex items-center gap-1.5">
-            <span className={cn('size-1.5 shrink-0 rounded-full', STATUS_DOT_STYLES[tone])} />
-            {tPerm(`levelShort_${value}`)}
-          </span>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent alignItemWithTrigger={false} align="start" className="w-64 rounded-2xl p-1.5">
-        {levels.map((level) => (
-          <SelectItem key={level} value={level} className="rounded-xl py-2 pl-2.5">
-            <span className="flex items-start gap-2.5">
-              <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', STATUS_DOT_STYLES[LEVEL_TONE[level]])} />
-              <span className="flex flex-col">
-                <span className="text-sm font-semibold">{tPerm(`levelShort_${level}`)}</span>
-                <span className="text-xs text-muted-foreground">{tPerm(`levelDesc_${level}`)}</span>
-              </span>
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   )
 }
