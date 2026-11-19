@@ -16,6 +16,7 @@ import {
   type SalesOrderRow,
 } from '@/lib/reports/sales-analytics'
 import { formatCurrency, formatDate, formatNumber } from '@/lib/utils'
+import { formatQty } from '@/components/reports/report-format'
 
 // recharts is the bulk of this page's JavaScript and the chart is client-only
 // anyway (ResponsiveContainer measures the DOM), so it is fetched on its own.
@@ -105,7 +106,7 @@ function Body({
           // how much a customer spends, and how many items they leave with.
           { label: t('metric.avgOrder'), value: formatCurrency(totals.avgCheck), hint: periodLabel },
           { label: t('metric.avgItemsPerOrder'), value: totals.avgItemsPerCheck.toFixed(2), hint: periodLabel },
-          { label: t('metric.soldQty'), value: formatNumber(Math.round(totals.soldQty * 100) / 100), hint: periodLabel },
+          { label: t('metric.soldQty'), value: formatQty(totals.soldQty), hint: periodLabel },
         ]}
       />
 
@@ -129,7 +130,7 @@ function Body({
               key: 'quantity',
               header: t('col.quantity'),
               align: 'right',
-              render: (row) => formatNumber(Math.round(row.quantity * 100) / 100),
+              render: (row) => formatQty(row.quantity),
             },
             {
               key: 'revenue',

@@ -6,7 +6,8 @@ import dynamic from 'next/dynamic'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ReportLayout, type ReportPeriod } from '@/components/reports/report-layout'
 import { ReportKpis } from '@/components/reports/report-kpis'
-import { ReportTable } from '@/components/reports/report-table'
+import { SlowMoversSection, type MovementThreshold } from '@/components/reports/products/slow-movers-section'
+import { SoldProductsTable } from '@/components/reports/products/sold-products-table'
 import {
   computeTotals,
   dailySeries,
@@ -17,7 +18,8 @@ import {
   type SalesItemRow,
   type SalesOrderRow,
 } from '@/lib/reports/sales-analytics'
-import { cn, formatCurrency, formatNumber } from '@/lib/utils'
+import { formatCurrency, formatNumber } from '@/lib/utils'
+import { formatQty } from '@/components/reports/report-format'
 
 // recharts is the bulk of this page's JavaScript and the chart is client-only
 // anyway (ResponsiveContainer measures the DOM), so it is fetched on its own.
@@ -25,9 +27,6 @@ const DailySalesChart = dynamic(
   () => import('@/components/reports/daily-sales-chart').then((m) => m.DailySalesChart),
   { ssr: false, loading: () => <Skeleton className="h-[400px] w-full rounded-xl" /> }
 )
-
-/** How many units still counts as "barely moving" in the period. */
-const MOVEMENT_THRESHOLDS = [0, 3, 10] as const
 
 /**
  * "Mahsulotlar bo'yicha savdo" — what sold, and, just as importantly, what
@@ -90,11 +89,10 @@ function Body({
   items: SalesItemRow[]
   products: CatalogProductRow[]
 }) {
-  const tc = useTranslations('common')
   const t = useTranslations('reports')
   const { range, periodLabel } = period
 
-  const [threshold, setThreshold] = useState<number>(0)
+  const [threshold, setThreshold] = useState<MovementThreshold>('0')
   const [includeOutOfStock, setIncludeOutOfStock] = useState(false)
 
   const view = useMemo(() => {
@@ -115,7 +113,7 @@ function Body({
   const dead = useMemo(
     () =>
       slowMovers(products, view.periodItems, items, new Date(`${today}T12:00`), {
-        maxQuantity: threshold,
+        maxQuantity: Number(threshold),
         includeOutOfStock,
       }),
     [products, view.periodItems, items, today, threshold, includeOutOfStock]
@@ -130,7 +128,7 @@ function Body({
         items={[
           { label: t('metric.revenue'), value: formatCurrency(totals.revenue), hint: periodLabel },
           { label: t('metric.profit'), value: formatCurrency(totals.profit), hint: `${totals.margin.toFixed(1)}%` },
-          { label: t('metric.soldQty'), value: formatNumber(Math.round(totals.soldQty * 100) / 100), hint: periodLabel },
+          { label: t('metric.soldQty'), value: formatQty(totals.soldQty), hint: periodLabel },
           { label: t('metric.productTypes'), value: formatNumber(sold.length), hint: periodLabel },
           {
             label: t('slowMovers.kpiLabel'),
@@ -142,192 +140,14 @@ function Body({
 
       <DailySalesChart title={t('dailyRevenue')} data={series} lang={lang} />
 
-      <ReportTable
-        title={t('cards.products.title')}
-        rows={sold}
-        rowKey={(row) => row.key}
-        searchable
-        searchPlaceholder={t('searchProduct')}
-        filterRow={(row, needle) => row.label.toLowerCase().includes(needle)}
-        columns={[
-          {
-            key: 'rank',
-            header: '#',
-            className: 'w-10 text-slate-400',
-            render: (_row, index) => index + 1,
-          },
-          {
-            key: 'name',
-            header: t('col.product'),
-            render: (row) => (
-              <span className="font-medium text-slate-800 dark:text-slate-200">
-                {row.label || tc('noData')}
-              </span>
-            ),
-          },
-          {
-            key: 'quantity',
-            header: t('col.quantity'),
-            align: 'right',
-            render: (row) => formatNumber(Math.round(row.quantity * 100) / 100),
-          },
-          {
-            key: 'orders',
-            header: t('col.orders'),
-            align: 'right',
-            className: 'hidden md:table-cell',
-            render: (row) => formatNumber(row.orders),
-          },
-          {
-            key: 'cost',
-            header: t('col.cost'),
-            align: 'right',
-            className: 'hidden lg:table-cell',
-            render: (row) => formatCurrency(row.cost),
-          },
-          {
-            key: 'profit',
-            header: t('col.profit'),
-            align: 'right',
-            className: 'hidden md:table-cell',
-            render: (row) => formatCurrency(row.profit),
-          },
-          {
-            key: 'revenue',
-            header: t('col.revenue'),
-            align: 'right',
-            render: (row) => (
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {formatCurrency(row.revenue)}
-              </span>
-            ),
-          },
-        ]}
+      <SoldProductsTable rows={sold} />
+      <SlowMoversSection
+        rows={dead}
+        threshold={threshold}
+        onThreshold={setThreshold}
+        includeOutOfStock={includeOutOfStock}
+        onIncludeOutOfStock={setIncludeOutOfStock}
       />
-
-      {/* ── Dead and slow stock ─────────────────────────────────────────── */}
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              {t('slowMovers.title')}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t('slowMovers.desc')}</p>
-          </div>
-          <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
-            <div className="flex max-w-full overflow-x-auto rounded-full border border-slate-200 bg-slate-100 p-0.5 md:rounded-lg dark:border-slate-700 dark:bg-slate-800">
-              {MOVEMENT_THRESHOLDS.map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setThreshold(value)}
-                  className={cn(
-                    'shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-colors md:rounded-md md:px-3 md:py-1.5',
-                    threshold === value
-                      ? 'bg-white text-violet-600 dark:bg-slate-700 dark:text-violet-400'
-                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'
-                  )}
-                >
-                  {value === 0
-                    ? t('slowMovers.neverSold')
-                    : t('slowMovers.upToUnits', { count: value })}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setIncludeOutOfStock((v) => !v)}
-              className={cn(
-                'flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
-                includeOutOfStock
-                  ? 'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-300'
-                  : 'border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400'
-              )}
-            >
-              <span
-                className={cn(
-                  'h-3 w-3 rounded-full border-2',
-                  includeOutOfStock
-                    ? 'border-violet-600 bg-violet-600'
-                    : 'border-slate-300 dark:border-slate-600'
-                )}
-              />
-              {t('slowMovers.includeOutOfStock')}
-            </button>
-          </div>
-        </div>
-
-        <ReportTable
-          rows={dead}
-          rowKey={(row) => row.id}
-          searchable
-          searchPlaceholder={t('searchProduct')}
-          filterRow={(row, needle) =>
-            row.name.toLowerCase().includes(needle) || row.sku.toLowerCase().includes(needle)
-          }
-          columns={[
-            {
-              key: 'name',
-              header: t('col.product'),
-              render: (row) => (
-                <div>
-                  <p className="font-medium text-slate-800 dark:text-slate-200">{row.name}</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500">{row.sku}</p>
-                </div>
-              ),
-            },
-            {
-              key: 'stock',
-              header: t('col.stock'),
-              align: 'right',
-              render: (row) => formatNumber(Math.round(row.stock * 100) / 100),
-            },
-            {
-              key: 'sold',
-              header: t('slowMovers.soldInPeriod'),
-              align: 'right',
-              className: 'hidden sm:table-cell',
-              render: (row) => formatNumber(Math.round(row.quantity * 100) / 100),
-            },
-            {
-              key: 'lastSale',
-              header: t('slowMovers.lastSale'),
-              align: 'right',
-              className: 'hidden md:table-cell',
-              render: (row) =>
-                row.daysSinceLastSale === null ? (
-                  <span className="text-amber-600 dark:text-amber-400">
-                    {t('slowMovers.neverSoldShort')}
-                  </span>
-                ) : (
-                  t('slowMovers.daysAgo', { count: row.daysSinceLastSale })
-                ),
-            },
-            {
-              key: 'tiedUp',
-              header: t('slowMovers.tiedUpValue'),
-              align: 'right',
-              render: (row) => (
-                <span className="font-semibold text-slate-900 dark:text-slate-100">
-                  {formatCurrency(row.tiedUpValue)}
-                </span>
-              ),
-            },
-          ]}
-          footer={
-            dead.length > 0 ? (
-              <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-xs dark:border-slate-800">
-                <span className="text-slate-500 dark:text-slate-400">
-                  {t('slowMovers.totalTiedUp')}
-                </span>
-                <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                  {formatCurrency(tiedUp)}
-                </span>
-              </div>
-            ) : null
-          }
-        />
-      </div>
     </>
   )
 }
