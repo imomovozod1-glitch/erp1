@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { isService } from '@/lib/product-kind'
+import { readStoredCart, writeStoredCart } from '@/components/pos/cart-storage'
 
 export interface CartItem {
   product: any
@@ -9,52 +10,10 @@ export interface CartItem {
   discountPercent: number
 }
 
-/** Only what survives a remount — the product itself is re-resolved from the live catalogue. */
-interface PersistedLine {
-  productId: string
-  quantity: number
-  discountPercent: number
-}
-
-const STORAGE_KEY = 'pos_cart'
-
-/** Reads the saved basket, re-resolving each line against the live catalogue. */
-function readStoredCart(catalogue: any[]): CartItem[] {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const saved: PersistedLine[] = JSON.parse(raw)
-    return saved
-      .map((entry) => {
-        const product = catalogue.find((p) => p.id === entry.productId)
-        return product
-          ? { product, quantity: entry.quantity, discountPercent: entry.discountPercent }
-          : null
-      })
-      .filter((item): item is CartItem => item !== null)
-  } catch {
-    return []
-  }
-}
-
 /**
- * The till's basket: its contents, the order-level discount, and the money
- * those two add up to.
- *
- * Lifted out of `pos-client.tsx`, which was carrying this alongside the
- * product grid, the customer picker, the checkout writes, the printer and the
- * receipt in one 1400-line component. The basket is the one piece of that
- * screen with rules of its own — never exceed stock, merge a repeat scan into
- * the existing line, drop a line at zero, survive a locale switch — and those
- * rules are worth reading without the other thousand lines around them.
- *
- * Deliberately says nothing about the UI: a stock rejection is reported
- * through `onStockExceeded` rather than by raising a toast here, so the hook
- * stays independent of next-intl and sonner.
- *
- * What it does NOT own: the selected customer and the payment method. They are
- * chosen alongside a sale but are not part of the basket, and `reset()` leaves
- * them to the caller.
+ * The till's basket: its lines, the order-level discount and the money they add up to.
+ * Never exceeds stock, merges a repeat scan, drops a line at zero, survives a locale switch.
+ * Stock refusals go through `onStockExceeded`, so the hook knows nothing of toasts.
  */
 export function usePosCart({
   catalogue,
@@ -65,18 +24,8 @@ export function usePosCart({
   /** Called when an action would take a line past the product's stock. */
   onStockExceeded: () => void
 }) {
-  // Switching language re-mounts this whole screen (see `handleLocaleChange` in
-  // app-header.tsx — [lang] is the top-most route segment, so a locale change
-  // necessarily remounts everything below it). Persisting the basket survives
-  // that; only id + quantity + discount are stored, and each line is
-  // re-resolved against the freshly-fetched catalogue below, so stale product
-  // data — or a product deleted since — can never come back into the basket.
-  //
-  // Restored AFTER mount rather than in the initialiser: the server renders an
-  // empty basket, so a restored one on the client's first render is a hydration
-  // mismatch — React logs it and throws the server's markup away to re-render
-  // the whole till. Deferred by a 0 ms timer so no state is set synchronously
-  // inside the effect (react-hooks/set-state-in-effect — see AGENTS.md).
+  // A locale switch remounts the till, so the basket is kept in sessionStorage and re-resolved
+  // against the live catalogue — restored after mount (a 0 ms timer) to keep hydration intact.
   const [items, setItems] = useState<CartItem[]>([])
   const [restored, setRestored] = useState(false)
 
@@ -88,31 +37,9 @@ export function usePosCart({
     return () => clearTimeout(timer)
   }, [catalogue])
 
+  // Never write before the first read, or mounting would wipe the very basket being restored.
   useEffect(() => {
-    // Never write before the first read, or mounting would wipe the very
-    // basket this is meant to preserve.
-    if (!restored) return
-    try {
-      if (items.length === 0) {
-        sessionStorage.removeItem(STORAGE_KEY)
-      } else {
-        sessionStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(
-            items.map(
-              (i): PersistedLine => ({
-                productId: i.product.id,
-                quantity: i.quantity,
-                discountPercent: i.discountPercent,
-              })
-            )
-          )
-        )
-      }
-    } catch {
-      // Storage unavailable (private browsing, quota) — the basket just won't
-      // survive a locale switch this time, not worth surfacing to the user.
-    }
+    if (restored) writeStoredCart(items)
   }, [items, restored])
 
   const [generalDiscountType, setGeneralDiscountType] = useState<'percent' | 'flat'>('flat')
