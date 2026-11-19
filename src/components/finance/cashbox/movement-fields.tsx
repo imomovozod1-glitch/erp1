@@ -1,37 +1,15 @@
 'use client'
 
-import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Label } from '@/components/ui/label'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { Textarea } from '@/components/ui/textarea'
+import { LabeledField } from '@/components/shared/labeled-field'
 import { NameSelect } from '@/components/shared/name-select'
 import { cn } from '@/lib/utils'
 import type { TransactionCategory } from './cashbox-types'
 import type { CashboxMovement } from './use-cashbox-movement'
-
-interface FieldProps {
-  id: string
-  label: string
-  aside?: ReactNode
-  children: ReactNode
-}
-
-export function Field({ id, label, aside, children }: FieldProps) {
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <Label htmlFor={id} className="text-xs font-semibold text-muted-foreground">
-          {label}
-        </Label>
-        {aside}
-      </div>
-      {children}
-    </div>
-  )
-}
 
 export type NoteTone = 'emerald' | 'rose' | 'slate'
 
@@ -64,7 +42,7 @@ export function CategoryField({ movement, categories, lang }: CategoryFieldProps
     </Link>
   )
   return (
-    <Field id="tx_category" label={`${t('category')} *`} aside={manageLink}>
+    <LabeledField compact id="tx_category" label={t('category')} required aside={manageLink}>
       <NameSelect
         id="tx_category"
         value={movement.form.categoryId}
@@ -72,7 +50,7 @@ export function CategoryField({ movement, categories, lang }: CategoryFieldProps
         options={categories.filter((c) => c.type === movement.form.type)}
         placeholder={t('selectType')}
       />
-    </Field>
+    </LabeledField>
   )
 }
 
@@ -81,7 +59,7 @@ export function MovementDetailsFields({ movement, lang }: { movement: CashboxMov
   const { form, patchForm } = movement
   return (
     <>
-      <Field id="tx_amount" label={`${tCommon('amount')} *`}>
+      <LabeledField compact id="tx_amount" label={tCommon('amount')} required>
         <NumericInput
           id="tx_amount"
           value={form.amount}
@@ -91,11 +69,11 @@ export function MovementDetailsFields({ movement, lang }: { movement: CashboxMov
           autoFocus
           className="rounded-xl text-lg font-extrabold"
         />
-      </Field>
-      <Field id="tx_date" label={`${tCommon('date')} *`}>
+      </LabeledField>
+      <LabeledField compact id="tx_date" label={tCommon('date')} required>
         <DatePicker id="tx_date" value={form.date} onChange={(date: string) => patchForm({ date })} lang={lang} placeholder={tCommon('date')} />
-      </Field>
-      <Field id="tx_desc" label={tCommon('description')}>
+      </LabeledField>
+      <LabeledField compact id="tx_desc" label={tCommon('description')}>
         <Textarea
           id="tx_desc"
           value={form.description}
@@ -104,7 +82,7 @@ export function MovementDetailsFields({ movement, lang }: { movement: CashboxMov
           rows={2}
           className="rounded-xl"
         />
-      </Field>
+      </LabeledField>
     </>
   )
 }

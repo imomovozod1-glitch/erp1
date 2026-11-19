@@ -2,7 +2,7 @@ import { getCachedProductDetails, getCachedProductBoms } from '@/lib/data/querie
 import { ProductBomsCard } from '@/components/production/product-boms-card'
 import { canEditModule, canViewModule } from '@/lib/permissions-server'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { ProductDetailClient } from '@/components/inventory/product-detail-client'
+import { ProductDetailClient } from '@/components/inventory/product-detail/product-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { getTranslations } from 'next-intl/server'
 import { notFound, redirect } from 'next/navigation'

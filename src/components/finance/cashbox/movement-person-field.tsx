@@ -1,10 +1,11 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { LabeledField } from '@/components/shared/labeled-field'
 import { NameSelect } from '@/components/shared/name-select'
 import { formatCurrency } from '@/lib/utils'
 import type { CashboxPageData, PersonType } from './cashbox-types'
-import { BalanceNote, Field, type NoteTone } from './movement-fields'
+import { BalanceNote, type NoteTone } from './movement-fields'
 import type { CashboxMovement } from './use-cashbox-movement'
 
 type Person = Exclude<PersonType, 'none'>
@@ -28,7 +29,7 @@ export function PersonField({ movement, snapshot }: PersonFieldProps) {
   const value = movement.form[`${personType}Id`]
   return (
     <div className="space-y-2 animate-in duration-200 fade-in">
-      <Field id={`tx_${personType}`} label={`${t(copy.label)} *`}>
+      <LabeledField compact id={`tx_${personType}`} label={t(copy.label)} required>
         <NameSelect
           id={`tx_${personType}`}
           value={value}
@@ -36,7 +37,7 @@ export function PersonField({ movement, snapshot }: PersonFieldProps) {
           options={snapshot[`${personType}s`]}
           placeholder={t(copy.placeholder)}
         />
-      </Field>
+      </LabeledField>
       {value && personType === 'customer' && <CustomerBalance movement={movement} />}
       {value && personType === 'supplier' && movement.form.type === 'expense' && <SupplierBalance movement={movement} />}
     </div>

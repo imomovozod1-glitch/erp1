@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getSessionUser } from '@/lib/auth'
 import { PageHeader } from '@/components/shared/page-header'
-import { UnitsList } from '@/components/inventory/units-list'
+import { UnitsList } from '@/components/inventory/units/units-list'
 import { getCachedMeasurementUnits } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 

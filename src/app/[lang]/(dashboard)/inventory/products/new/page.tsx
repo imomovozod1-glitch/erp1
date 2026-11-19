@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
-import { ProductForm } from '@/components/inventory/product-form'
+import { ProductForm } from '@/components/inventory/products/product-form'
 import { Metadata } from 'next'
 import { getCachedCategoriesForSelect, getAssignableUsers, getCachedProductFormOptions } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
