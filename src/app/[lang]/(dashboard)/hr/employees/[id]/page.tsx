@@ -1,6 +1,6 @@
 import { getCachedEmployeeDetails } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { EmployeeDetailClient } from '@/components/hr/employee-detail-client'
+import { EmployeeDetailClient } from '@/components/hr/employee-detail/employee-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { canEditRecord } from '@/lib/permissions-server'
 import { getTranslations } from 'next-intl/server'

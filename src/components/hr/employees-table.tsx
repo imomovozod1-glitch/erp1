@@ -1,263 +1,136 @@
 'use client'
 
-import { useCan } from '@/components/providers/permissions-provider'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Pencil, Users } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Card, CardContent } from '@/components/ui/card'
+import { useCan } from '@/components/providers/permissions-provider'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Users, MoreHorizontal, Pencil } from 'lucide-react'
-import React from 'react'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
-
-import {
-  Table, TableBody, TableCell, TableHead,
-  TableHeader, TableRow,
-} from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
+import { MobileChip, MobileThumb } from '@/components/shared/mobile-list'
+import { PagedListCard, type PageInfo } from '@/components/shared/paged-list-card'
+import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/responsive-table'
+import { RowActionsMenu } from '@/components/shared/row-actions-menu'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { TableSearch, TablePagination, TableFilterSelect } from '@/components/shared/table-pagination'
+import { TableFilterSelect } from '@/components/shared/table-pagination'
 import { EmployeeImportExport } from '@/components/hr/employee-import-export'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 
-interface EmployeesTableProps {
-  /** Only the current page's rows — the server applied search, filter and paging. */
+interface EmployeesTableProps extends PageInfo {
   employees: any[]
   lang: string
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
   status: 'all' | 'hired' | 'not_hired'
   paid: 'all' | 'paid' | 'free'
-  /** Whether the user may export — shows the Excel import/export menu. */
   canExport?: boolean
 }
 
-export function EmployeesTable({
-  employees,
-  lang,
-  page,
-  pageSize,
-  total,
-  totalPages,
-  status,
-  paid,
-  canExport = false,
-}: EmployeesTableProps) {
-  const canEdit = useCan('hr', 'edit', 'employees')
-  const tCommon = useTranslations('common')
-  const tSettings = useTranslations('settings')
-  const t = useTranslations('hr')
-  const router = useRouter()
-  
-  // No client-side filtering or slicing: `employees` IS the current page.
-  const paginated = employees
-
-  /** The row's actions menu, shared by the desktop table row and the phone card. */
-  const renderActions = (emp: any) => (
-                      <DropdownMenu>
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <DropdownMenuTrigger className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </DropdownMenuTrigger>
-                            }
-                          />
-                          <TooltipContent side="left">
-                            <p>{tCommon('actions')}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end">
-                          {canEdit && (
-                            <DropdownMenuItem onClick={() => router.push(`/${lang}/hr/employees/${emp.id}/edit`)}>
-                              <Pencil className="mr-2 h-3.5 w-3.5 text-slate-500" />
-                              {tCommon('edit')}
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-  );
-
+function EmployeeFilters({ status, paid }: Pick<EmployeesTableProps, 'status' | 'paid'>) {
+  const t = useTranslations()
   return (
-    <TooltipProvider>
-      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
-        <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
-          <div className="flex flex-wrap items-center gap-3">
-          <TableSearch />
-          <TableFilterSelect
-            param="status"
-            label={tCommon('status')}
-            value={status}
-            options={[
-              { value: 'all', label: tCommon('all') },
-              { value: 'hired', label: t('statusEmployed') },
-              { value: 'not_hired', label: t('statusNotEmployed') },
-            ]}
-          />
-          <TableFilterSelect
-            param="paid"
-            label={t('subscription')}
-            value={paid}
-            options={[
-              { value: 'all', label: tCommon('all') },
-              { value: 'paid', label: t('subscribed') },
-              { value: 'free', label: t('notSubscribed') },
-            ]}
-          />
+    <>
+      <TableFilterSelect
+        param="status"
+        label={t('common.status')}
+        value={status}
+        options={[
+          { value: 'all', label: t('common.all') },
+          { value: 'hired', label: t('hr.statusEmployed') },
+          { value: 'not_hired', label: t('hr.statusNotEmployed') },
+        ]}
+      />
+      <TableFilterSelect
+        param="paid"
+        label={t('hr.subscription')}
+        value={paid}
+        options={[
+          { value: 'all', label: t('common.all') },
+          { value: 'paid', label: t('hr.subscribed') },
+          { value: 'free', label: t('hr.notSubscribed') },
+        ]}
+      />
+    </>
+  )
+}
+
+function NameCell({ emp, href }: { emp: any; href: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <Avatar className="size-8">
+        <AvatarFallback className="bg-violet-100 text-xs text-violet-700 dark:bg-violet-950/50 dark:text-violet-400">{emp.full_name?.[0] ?? 'E'}</AvatarFallback>
+      </Avatar>
+      <Link href={href} onClick={(e) => e.stopPropagation()} className="font-semibold text-foreground transition-colors hover:text-violet-600 dark:hover:text-violet-400">
+        {emp.full_name ?? '—'}
+      </Link>
+    </div>
+  )
+}
+
+function useEmployeeBadges() {
+  const t = useTranslations('hr')
+  return {
+    employed: (emp: any) => <StatusBadge tone={emp.is_active ? 'emerald' : 'rose'} pulse={emp.is_active} label={t(emp.is_active ? 'statusEmployed' : 'statusTerminated')} />,
+    seat: (emp: any) => <StatusBadge tone={emp.is_paid ? 'indigo' : 'slate'} label={t(emp.is_paid ? 'subscribed' : 'notSubscribed')} />,
+  }
+}
+
+export function EmployeesTable({ employees, lang, status, paid, canExport = false, ...pageInfo }: EmployeesTableProps) {
+  const t = useTranslations()
+  const router = useRouter()
+  const canEdit = useCan('hr', 'edit', 'employees')
+  const badges = useEmployeeBadges()
+  const detailUrl = (emp: any) => `/${lang}/hr/employees/${emp.id}`
+  const menu = (emp: any) => (
+    <RowActionsMenu actions={[{ key: 'edit', label: t('common.edit'), icon: Pencil, href: `${detailUrl(emp)}/edit`, hidden: !canEdit }]} />
+  )
+  const roleOf = (emp: any) => emp.profiles?.role_templates?.name ?? (emp.profiles?.role ? t(`settings.role.${emp.profiles.role}`) : '—')
+  const columns: ResponsiveColumn<any>[] = [
+    { key: 'name', header: t('common.name'), cell: (emp) => <NameCell emp={emp} href={detailUrl(emp)} /> },
+    { key: 'phone', header: t('hr.phoneNumber'), className: 'whitespace-nowrap tabular-nums', cell: (emp) => emp.profiles?.phone || '—' },
+    { key: 'role', header: t('hr.roles'), cell: roleOf },
+    { key: 'code', header: t('hr.employeeCode'), className: 'max-lg:hidden', cell: (emp) => <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{emp.employee_code}</code> },
+    { key: 'position', header: t('hr.position'), cell: (emp) => emp.position || '—' },
+    { key: 'salary', header: t('hr.salary'), align: 'right', cell: (emp) => <span className="font-semibold">{formatCurrency(emp.salary)}</span> },
+    { key: 'hired', header: t('hr.hiredAt'), cell: (emp) => <span className="text-muted-foreground">{formatDate(emp.hired_at)}</span> },
+    { key: 'status', header: t('common.status'), cell: badges.employed },
+    { key: 'seat', header: t('hr.subscription'), cell: badges.seat },
+    { key: 'menu', header: '', className: 'w-12', isolated: true, cell: menu },
+  ]
+  return (
+    <PagedListCard
+      pageInfo={pageInfo}
+      filters={<EmployeeFilters status={status} paid={paid} />}
+      tools={canExport && <EmployeeImportExport employees={employees} lang={lang} />}
+    >
+      <ResponsiveTable
+        rows={employees}
+        rowKey={(emp) => emp.id}
+        columns={columns}
+        indexOffset={(pageInfo.page - 1) * pageInfo.pageSize}
+        onRowClick={(emp) => router.push(detailUrl(emp))}
+        empty={
+          <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+            <Users className="size-8 opacity-40" />
+            <p className="text-sm">{t('common.noData')}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {canExport && <EmployeeImportExport employees={employees} lang={lang} />}
-          </div>
-        </div>
-        <Table containerClassName="max-md:hidden">
-          <TableHeader>
-            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-              <TableHead className="w-10 font-semibold text-center">#</TableHead>
-              <TableHead>{tCommon('name')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('phoneNumber')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('roles')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('employeeCode')}</TableHead>
-              <TableHead>{t('position')}</TableHead>
-              <TableHead className="hidden md:table-cell text-right">{t('salary')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('hiredAt')}</TableHead>
-              <TableHead>{tCommon('status')}</TableHead>
-              <TableHead>{t('subscription')}</TableHead>
-              <TableHead className="w-12" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginated.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={11} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Users className="h-8 w-8 opacity-40" />
-                    <p className="text-sm">{tCommon('noData')}</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginated.map((emp, index) => (
-                <React.Fragment key={emp.id}>
-                  <TableRow 
-                    key={emp.id}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/${lang}/hr/employees/${emp.id}`)}
-                  >
-                    <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                      {(page - 1) * pageSize + index + 1}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2.5">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 text-xs">
-                            {emp.full_name?.[0] ?? 'E'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold text-slate-800 dark:text-slate-200">
-                            <Link
-                              href={`/${lang}/hr/employees/${emp.id}`}
-                              className="text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
-                            >
-                              {emp.full_name ?? '—'}
-                            </Link>
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell whitespace-nowrap text-sm tabular-nums text-slate-700 dark:text-slate-300">
-                      {emp.profiles?.phone || '—'}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-slate-700 dark:text-slate-300">
-                      {/* What the login may do: its role template, or the bare role
-                          for an account set up without one. No login, no rights. */}
-                      {emp.profiles?.role_templates?.name
-                        ?? (emp.profiles?.role ? tSettings(`role.${emp.profiles.role}`) : '—')}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <code className="text-xs bg-slate-100 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">{emp.employee_code}</code>
-                    </TableCell>
-                    <TableCell className="text-sm">{emp.position || '—'}</TableCell>
-                    <TableCell className="hidden md:table-cell text-right font-semibold">{formatCurrency(emp.salary)}</TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground">{formatDate(emp.hired_at)}</TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        tone={emp.is_active ? 'emerald' : 'rose'}
-                        pulse={emp.is_active}
-                        label={emp.is_active
-                          ? t('statusEmployed')
-                          : t('statusTerminated')}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {/* `is_paid` is what gates a system login (see employee-form.tsx),
-                          so whether a seat is subscribed has to be visible from the list,
-                          not only inside the edit form. */}
-                      <StatusBadge
-                        tone={emp.is_paid ? 'indigo' : 'slate'}
-                        label={emp.is_paid ? t('subscribed') : t('notSubscribed')}
-                      />
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      {renderActions(emp)}
-                    </TableCell>
-                  </TableRow>
-                </React.Fragment>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
-        <MobileCardList
-          isEmpty={paginated.length === 0}
-          empty={
-            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
-              <Users className="h-8 w-8 opacity-40" />
-              <p className="text-sm">{tCommon('noData')}</p>
-            </div>
-          }
-        >
-          {paginated.map((emp) => (
-            <MobileCard
-              key={emp.id}
-              onClick={() => router.push(`/${lang}/hr/employees/${emp.id}`)}
-              leading={<MobileThumb fallback={<Users />} />}
-              eyebrow={
-                <>
-                  {emp.employee_code && <MobileChip>{emp.employee_code}</MobileChip>}
-                  {emp.position && <span className="truncate">{emp.position}</span>}
-                </>
-              }
-              title={emp.full_name ?? '—'}
-              subtitle={emp.profiles?.phone || undefined}
-              status={
-                <StatusBadge
-                  tone={emp.is_active ? 'emerald' : 'rose'}
-                  pulse={emp.is_active}
-                  label={emp.is_active ? t('statusEmployed') : t('statusTerminated')}
-                />
-              }
-              menu={renderActions(emp)}
-              stats={[
-                { label: t('salary'), value: formatCurrency(emp.salary), tone: 'brand' },
-                { label: t('hiredAt'), value: formatDate(emp.hired_at) },
-                { label: t('subscription'), value: emp.is_paid ? t('subscribed') : t('notSubscribed'), tone: emp.is_paid ? 'good' : 'default' },
-              ]}
-            />
-          ))}
-        </MobileCardList>
-        <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
-      </CardContent>
-    </Card>
-    </TooltipProvider>
+        }
+        card={(emp) => ({
+          leading: <MobileThumb fallback={<Users />} />,
+          eyebrow: (
+            <>
+              {emp.employee_code && <MobileChip>{emp.employee_code}</MobileChip>}
+              {emp.position && <span className="truncate">{emp.position}</span>}
+            </>
+          ),
+          title: emp.full_name ?? '—',
+          subtitle: emp.profiles?.phone || undefined,
+          status: badges.employed(emp),
+          menu: menu(emp),
+          stats: [
+            { label: t('hr.salary'), value: formatCurrency(emp.salary), tone: 'brand' },
+            { label: t('hr.hiredAt'), value: formatDate(emp.hired_at) },
+            { label: t('hr.subscription'), value: t(emp.is_paid ? 'hr.subscribed' : 'hr.notSubscribed'), tone: emp.is_paid ? 'good' : 'default' },
+          ],
+        })}
+      />
+    </PagedListCard>
   )
 }

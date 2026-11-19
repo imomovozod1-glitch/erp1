@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   const input = parsed.data
 
   // A "free" (non-paid) employee cannot be given a system login at all —
-  // see the is_paid checkbox in employee-form.tsx, which is meant to keep
+  // see the is_paid checkbox in hr/employee-form/employee-access-section.tsx, which is meant to keep
   // this route from ever being reachable in that state client-side. This
   // is the same client-supplied-flag trust level as the rest of the
   // permissions system (admin-only route already gated above), not a new

@@ -15,9 +15,11 @@ interface DetailBannerProps {
   subtitle?: ReactNode
   active: boolean
   onExport: () => void
+  badges?: ReactNode
+  children?: ReactNode
 }
 
-export function DetailBanner({ leading, title, subtitle, active, onExport }: DetailBannerProps) {
+export function DetailBanner({ leading, title, subtitle, active, onExport, badges, children }: DetailBannerProps) {
   const t = useTranslations('common')
   return (
     <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border bg-card p-4 shadow-sm md:flex-row md:items-center md:rounded-xl md:p-5">
@@ -28,8 +30,9 @@ export function DetailBanner({ leading, title, subtitle, active, onExport }: Det
           {subtitle && <p className="mt-1 text-xs break-all text-muted-foreground">{subtitle}</p>}
         </div>
       </div>
+      {children}
       <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">
-        <StatusBadge tone={active ? 'emerald' : 'slate'} label={t(active ? 'active' : 'inactive')} />
+        {badges ?? <StatusBadge tone={active ? 'emerald' : 'slate'} label={t(active ? 'active' : 'inactive')} />}
         <Button onClick={onExport} size="sm" className="gap-2 max-md:h-10">
           <Download className="size-4" />
           {t('export')}

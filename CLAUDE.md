@@ -143,7 +143,7 @@ Maps are Leaflet + `react-leaflet`; **Mapbox is used for routing only**, never f
 - `react-hook-form` + `zod`, schema defined **inline in the component** (`zodResolver`) — no `schemas/` directory.
 - Numeric/money fields use `Controller` + `<NumericInput>` (`src/components/ui/numeric-input.tsx`).
 - Field errors render inline: `{errors.field && <p className="text-sm text-red-500">{errors.field.message}</p>}` — toasts only for submit success/failure.
-- `usePersistedForm` (`src/lib/hooks/use-persisted-form.ts`) saves edit-route drafts to `sessionStorage` (24 h expiry), written on change and restored after hydration (never during render — that broke hydration); call `clearPersistedForm(formId)` after submit. Not every form uses it (e.g. `employee-form.tsx` doesn't).
+- `usePersistedForm` (`src/lib/hooks/use-persisted-form.ts`) saves edit-route drafts to `sessionStorage` (24 h expiry), written on change and restored after hydration (never during render — that broke hydration); call `clearPersistedForm(formId)` after submit. Not every form uses it (e.g. `hr/employee-form/` doesn't).
 
 ### Excel import/export
 

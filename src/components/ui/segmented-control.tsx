@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 export interface SegmentOption<T extends string> {
   value: T
   label: string
+  disabled?: boolean
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -36,7 +37,7 @@ export function SegmentedControl<T extends string>({
           key={option.value}
           label={option.label}
           active={option.value === value}
-          disabled={disabled}
+          disabled={disabled || option.disabled}
           onSelect={() => onChange(option.value)}
         />
       ))}
@@ -60,7 +61,7 @@ function Segment({ label, active, disabled, onSelect }: SegmentProps) {
       disabled={disabled}
       onClick={onSelect}
       className={cn(
-        'h-7 truncate rounded-lg px-2 text-xs font-semibold transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed max-md:h-9',
+        'h-7 truncate rounded-lg px-2 text-xs font-semibold transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-40 max-md:h-9',
         active
           ? 'bg-card text-violet-700 shadow-sm dark:bg-violet-900/50 dark:text-violet-100'
           : 'text-muted-foreground hover:text-foreground'
