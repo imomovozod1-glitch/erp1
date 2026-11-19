@@ -526,6 +526,7 @@
     "extraMaterial": "Extra material",
     "extraMaterials": "Extra materials",
     "extraMaterialShort": "Extra",
+    "extraMaterialHint": "Not in the composition — added to this run by hand",
     "fromBom": "From composition",
     "productFromBomHint": "The finished product comes from the composition. To produce something else, pick the matching composition or switch to \"No composition\".",
     "tabMaterials": "Raw materials",

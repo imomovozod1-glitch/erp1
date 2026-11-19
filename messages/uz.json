@@ -526,6 +526,7 @@
     "extraMaterial": "Qo'shimcha xomashyo",
     "extraMaterials": "Qo'shimcha xomashyo",
     "extraMaterialShort": "Qo'shimcha",
+    "extraMaterialHint": "Tarkibda yo'q — shu ishlab chiqarishga qo'lda qo'shilgan",
     "fromBom": "Tarkib bo'yicha",
     "productFromBomHint": "Tayyor mahsulot tarkibdan olinadi. Boshqasini ishlab chiqarish uchun mos tarkibni tanlang yoki \"Tarkibsiz\" rejimiga o'ting.",
     "tabMaterials": "Xomashyo",

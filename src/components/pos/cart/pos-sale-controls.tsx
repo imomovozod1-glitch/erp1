@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, ArrowRightLeft, CheckCircle2, CreditCard, UserPlus, Wallet } from 'lucide-react'
+import { AlertTriangle, Banknote, CheckCircle2, CreditCard, Landmark, NotebookPen, UserPlus } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,11 +11,12 @@ import type { PosPaymentMethod } from '@/components/pos/checkout'
 import type { PosCart } from '@/components/pos/use-pos-cart'
 import type { PosSale } from '@/components/pos/use-pos-sale'
 
+// Icons only, each read at a glance: banknotes, a card, a bank, the debt ledger. The name stays in the tooltip.
 const PAYMENT_METHODS = [
-  { key: 'cash', icon: Wallet },
+  { key: 'cash', icon: Banknote },
   { key: 'card', icon: CreditCard },
-  { key: 'transfer', icon: ArrowRightLeft },
-  { key: 'debt', icon: AlertTriangle },
+  { key: 'transfer', icon: Landmark },
+  { key: 'debt', icon: NotebookPen },
 ] as const
 
 const customerLabel = (c: any) => (c.phone ? `${c.name} (${c.phone})` : c.name)
@@ -95,7 +96,10 @@ export function PaymentMethods({ sale }: { sale: PosSale }) {
   const t = useTranslations('pos')
   return (
     <div className="space-y-1.5">
-      <span className="text-xs font-medium text-muted-foreground">{t('paymentMethod')}</span>
+      {/* The buttons carry no words, so the chosen method is named here. */}
+      <p className="text-xs font-medium text-muted-foreground">
+        {t('paymentMethod')}: <span className="font-semibold text-violet-700 dark:text-violet-300">{t(sale.paymentMethod)}</span>
+      </p>
       <div className="grid grid-cols-4 gap-2">
         {PAYMENT_METHODS.map(({ key, icon: Icon }) => (
           <button
@@ -103,16 +107,16 @@ export function PaymentMethods({ sale }: { sale: PosSale }) {
             type="button"
             onClick={() => sale.setPaymentMethod(key as PosPaymentMethod)}
             title={t(key)}
+            aria-label={t(key)}
             aria-pressed={sale.paymentMethod === key}
             className={cn(
-              'flex h-16 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border text-[11px] font-semibold transition-all duration-150 active:scale-95 md:h-12 md:gap-1',
+              'flex h-14 cursor-pointer items-center justify-center rounded-2xl border transition-all duration-150 active:scale-95 md:h-12',
               sale.paymentMethod === key
                 ? 'border-transparent bg-brand-gradient text-white shadow-brand'
                 : 'border-border bg-background text-muted-foreground hover:border-violet-300 hover:text-violet-700 dark:hover:text-violet-300'
             )}
           >
-            <Icon className="size-4.5" />
-            <span className="max-w-full truncate px-0.5 leading-none">{t(key)}</span>
+            <Icon className="size-6" strokeWidth={1.75} />
           </button>
         ))}
       </div>
