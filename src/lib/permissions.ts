@@ -254,7 +254,15 @@ export interface PermissionResource {
 
 /** The sections of each module, in sidebar order. `main` = the module has none. */
 export const PERMISSION_RESOURCES: Record<PermissionModule, PermissionResource[]> = {
-  analytics: [{ key: 'main', actions: ['view', 'export'] }],
+  analytics: [
+    { key: 'sales', actions: ['view'], path: 'reports/sales' },
+    { key: 'employees', actions: ['view'], path: 'reports/employees' },
+    { key: 'customers', actions: ['view'], path: 'reports/customers' },
+    { key: 'products', actions: ['view'], path: 'reports/products' },
+    { key: 'abc', actions: ['view'], path: 'reports/abc' },
+    // The free-form builder on the /reports hub; exporting is its own right.
+    { key: 'builder', actions: ['view', 'export'] },
+  ],
   pos: [{ key: 'main', actions: ['view'] }],
   inventory: [
     { key: 'products', actions: ALL_ACTIONS, ownable: true, path: 'inventory/products' },
@@ -289,7 +297,11 @@ export const PERMISSION_RESOURCES: Record<PermissionModule, PermissionResource[]
     { key: 'categories', actions: CRUD, path: 'finance/categories' },
   ],
   hr: [{ key: 'employees', actions: ['create', 'view', 'edit', 'export'], path: 'hr/employees' }],
-  settings: [{ key: 'main', actions: ['view'] }],
+  settings: [
+    { key: 'company', actions: ['view'], path: 'settings/company' },
+    { key: 'printer', actions: ['view'], path: 'settings/printer' },
+    { key: 'integrations', actions: ['view'], path: 'settings/integrations' },
+  ],
 }
 
 /** Levels a cell offers: creating has no record to be responsible for yet. */
@@ -353,7 +365,12 @@ export function accessLevel(
   if (role === 'admin') return 'all'
   const entry = normalisePermissions(permissions)[module]
   if (!entry) return 'none'
-  if (entry.levels) return entry.levels[resource]?.[action] ?? 'none'
+  if (entry.levels) {
+    // Saved before this module was split into sections: its one `main` row
+    // stood for every page, and still does until the grant is edited.
+    const section = entry.levels[resource] ?? entry.levels.main
+    return section?.[action] ?? 'none'
+  }
   // Saved by the older editor: the module's flags apply to every section.
   if (!entry[action]) return 'none'
   const ownable = PERMISSION_RESOURCES[module].find((r) => r.key === resource)?.ownable

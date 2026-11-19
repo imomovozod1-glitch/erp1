@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { Building2, ShieldCheck, ReceiptText, Plug, ChevronRight } from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
-import { canViewModule } from '@/lib/permissions-server'
+import { canResource } from '@/lib/permissions-server'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params
@@ -39,10 +39,16 @@ export default async function SettingsPage({ params }: { params: Promise<{ lang:
   // Cards for the permissioned part of Settings are hidden from users without
   // the `settings` module; security always stays listed, since it is the
   // user's own account and every user needs it.
-  const canSeeSettingsModule = await canViewModule('settings')
+  const sectionOf: Record<string, string> = { company: 'company', printerTitle: 'printer', integrationsTitle: 'integrations' }
+  const [canCompany, canPrinter, canIntegrations] = await Promise.all([
+    canResource('settings', 'company', 'view'),
+    canResource('settings', 'printer', 'view'),
+    canResource('settings', 'integrations', 'view'),
+  ])
+  const allowed: Record<string, boolean> = { company: canCompany, printer: canPrinter, integrations: canIntegrations }
   const ALWAYS_VISIBLE = new Set<string>(['security'])
   const visibleCards = CARDS.filter(
-    (card) => canSeeSettingsModule || ALWAYS_VISIBLE.has(card.key)
+    (card) => ALWAYS_VISIBLE.has(card.key) || allowed[sectionOf[card.key]]
   )
 
   const cardDescriptions: Record<string, string> = {

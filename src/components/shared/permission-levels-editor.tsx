@@ -2,9 +2,28 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ChevronRight, CircleHelp } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Contact,
+  DollarSign,
+  Factory,
+  Package,
+  Settings,
+  ShieldCheck,
+  ShieldOff,
+  ShoppingCart,
+  Store,
+  TrendingUp,
+  Truck,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { STATUS_DOT_STYLES, STATUS_TONE_STYLES, type StatusTone } from '@/components/shared/status-badge'
 import { cn } from '@/lib/utils'
 import {
   ACCESS_LEVELS,
@@ -19,6 +38,7 @@ import {
   type PermissionModule,
   type PermissionResource,
   type Permissions,
+  type ResourceLevels,
 } from '@/lib/permissions'
 
 interface PermissionLevelsEditorProps {
@@ -27,24 +47,112 @@ interface PermissionLevelsEditorProps {
   disabled?: boolean
 }
 
-const COLUMNS: LevelAction[] = ['create', 'view', 'edit', 'delete', 'export']
+const COLUMNS: LevelAction[] = ['view', 'create', 'edit', 'delete', 'export']
 
-/** The level furthest up the grid first: a cell reads top to bottom as the legend does. */
-const LEVEL_ORDER = ACCESS_LEVELS
+/** How far a level reaches, for keeping the actions of one section consistent. */
+const RANK: Record<AccessLevel, number> = { none: 0, own: 1, department: 2, all: 3 }
+
+/** The same tones the status pills use, so a level reads like a status anywhere in the app. */
+const LEVEL_TONE: Record<AccessLevel, StatusTone> = {
+  none: 'slate',
+  own: 'amber',
+  department: 'blue',
+  all: 'emerald',
+}
+
+/** The sidebar's icon for each module, so the editor reads like the app it controls. */
+const MODULE_ICON: Partial<Record<PermissionModule, LucideIcon>> = {
+  analytics: TrendingUp,
+  pos: Store,
+  inventory: Package,
+  sales: ShoppingCart,
+  customers: Contact,
+  procurement: Truck,
+  finance: DollarSign,
+  hr: Users,
+  production: Factory,
+  settings: Settings,
+}
+
+type GrantState = 'full' | 'partial' | 'none'
+
+/** Every action of a section at the widest level it offers — or closed. */
+function wholeSection(resource: PermissionResource, granted: boolean): ResourceLevels {
+  return Object.fromEntries(
+    resource.actions.map((action) => {
+      const offered = levelsFor(resource, action)
+      return [action, granted ? offered[offered.length - 1] : 'none']
+    })
+  ) as ResourceLevels
+}
+
+function sectionState(resource: PermissionResource, section: ResourceLevels): GrantState {
+  const levels = resource.actions.map((action) => section[action] ?? 'none')
+  if (levels.every((level) => level === 'none')) return 'none'
+  const full = resource.actions.every((action) => {
+    const offered = levelsFor(resource, action)
+    return section[action] === offered[offered.length - 1]
+  })
+  return full ? 'full' : 'partial'
+}
+
+function combineStates(states: GrantState[]): GrantState {
+  if (states.every((s) => s === 'full')) return 'full'
+  if (states.every((s) => s === 'none')) return 'none'
+  return 'partial'
+}
 
 /**
- * Section x action grid: each module is an accordion row with a switch, each
- * cell picks how far that action reaches. Replaces the module checkboxes for a
- * company with the `permissions_v2` flag.
+ * Keeps one section's actions coherent after a single change:
  *
- * It writes `levels` plus the flags they imply (`flattenLevels`), so everything
- * that reads a module-level permission keeps working. A user saved by the older
- * editor opens with those flags spread over every section.
+ *   - seeing is the floor of everything else: nobody edits, deletes or exports
+ *     records they cannot see, so raising an action raises `view` with it and
+ *     narrowing `view` narrows the others to it;
+ *   - creating needs the section open at all, at least to see one's own records.
+ */
+function applyChange(
+  resource: PermissionResource,
+  section: ResourceLevels,
+  action: LevelAction,
+  level: AccessLevel
+): ResourceLevels {
+  const next: ResourceLevels = { ...section, [action]: level }
+  const view = next.view ?? 'none'
+  if (action === 'view') {
+    for (const other of resource.actions) {
+      if (other === 'view') continue
+      if (level === 'none') next[other] = 'none'
+      else if (other !== 'create' && RANK[next[other] ?? 'none'] > RANK[level]) next[other] = level
+    }
+    return next
+  }
+  if (level === 'none' || !resource.actions.includes('view')) return next
+  if (action === 'create') {
+    if (view === 'none') next.view = resource.ownable ? 'own' : 'all'
+  } else if (RANK[view] < RANK[level]) {
+    next.view = level
+  }
+  return next
+}
+
+/**
+ * Permissions as the app is laid out: a card per module (with its sidebar
+ * icon), a row per page of it, and in each cell how far that action reaches —
+ * not at all, the user's own records, their department's, or everything.
+ *
+ * Shortcuts at every level: a switch per page, one per module, and the
+ * toolbar's grant-all / clear-all. Each switch is on only when everything
+ * under it is granted in full; anything less shows as "partial".
+ *
+ * It writes `levels` plus the module flags they imply (`flattenLevels`), so
+ * every module-level check — and `app_can` in the database — keeps working. A
+ * grant saved by the old module-only editor opens with its flags spread over
+ * every page.
  */
 export function PermissionLevelsEditor({ value, onChange, disabled }: PermissionLevelsEditorProps) {
   const tNav = useTranslations('nav')
   const tPerm = useTranslations('permissions')
-  const [open, setOpen] = useState<PermissionModule | null>(null)
+  const [expanded, setExpanded] = useState<Set<PermissionModule>>(() => new Set())
 
   const levelsOf = (module: PermissionModule): ModuleLevels => {
     const levels: ModuleLevels = {}
@@ -57,215 +165,295 @@ export function PermissionLevelsEditor({ value, onChange, disabled }: Permission
     return levels
   }
 
-  const setCell = (module: PermissionModule, resource: string, action: LevelAction, level: AccessLevel) => {
+  const write = (module: PermissionModule, levels: ModuleLevels) =>
+    onChange({ ...value, [module]: flattenLevels(levels) })
+
+  const setCell = (module: PermissionModule, resource: PermissionResource, action: LevelAction, level: AccessLevel) => {
     const levels = levelsOf(module)
-    const section = { ...levels[resource], [action]: level }
-    if (action === 'view' && level === 'none') {
-      // Losing sight of a section removes everything that acts on it.
-      for (const key of Object.keys(section) as LevelAction[]) section[key] = 'none'
-    } else if (action !== 'view' && level !== 'none' && section.view === 'none') {
-      section.view = level
-    }
-    onChange({ ...value, [module]: flattenLevels({ ...levels, [resource]: section }) })
+    write(module, { ...levels, [resource.key]: applyChange(resource, levels[resource.key], action, level) })
   }
 
-  const setModule = (module: PermissionModule, granted: boolean) => {
-    const levels: ModuleLevels = {}
-    for (const resource of PERMISSION_RESOURCES[module]) {
-      levels[resource.key] = Object.fromEntries(
-        resource.actions.map((action) => [action, granted ? 'all' : 'none'])
+  const setSection = (module: PermissionModule, resource: PermissionResource, granted: boolean) =>
+    write(module, { ...levelsOf(module), [resource.key]: wholeSection(resource, granted) })
+
+  const setModule = (module: PermissionModule, granted: boolean) =>
+    write(
+      module,
+      Object.fromEntries(PERMISSION_RESOURCES[module].map((r) => [r.key, wholeSection(r, granted)]))
+    )
+
+  const setEverything = (granted: boolean) => {
+    const next: Permissions = { ...value }
+    for (const moduleKey of MATRIX_MODULES) {
+      next[moduleKey] = flattenLevels(
+        Object.fromEntries(PERMISSION_RESOURCES[moduleKey].map((r) => [r.key, wholeSection(r, granted)]))
       )
     }
-    onChange({ ...value, [module]: flattenLevels(levels) })
+    onChange(next)
   }
 
-  const isOn = (module: PermissionModule) =>
-    Object.values(levelsOf(module)).some((section) => Object.values(section).some((level) => level !== 'none'))
+  const toggleExpanded = (module: PermissionModule) =>
+    setExpanded((current) => {
+      const next = new Set(current)
+      if (next.has(module)) next.delete(module)
+      else next.add(module)
+      return next
+    })
+  const allExpanded = expanded.size === MATRIX_MODULES.length
 
   const resourceName = (module: PermissionModule, resource: PermissionResource) =>
     resource.key === 'main' ? tNav(module) : tPerm(`resource_${module}_${resource.key}`)
 
-  const levelName = (level: AccessLevel) => tPerm(`level_${level}`)
+  const stateBadge = (state: GrantState) => {
+    const tone: StatusTone = state === 'full' ? 'emerald' : state === 'partial' ? 'indigo' : 'slate'
+    return (
+      <span
+        className={cn(
+          'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+          STATUS_TONE_STYLES[tone]
+        )}
+      >
+        <span className={cn('size-1.5 rounded-full', STATUS_DOT_STYLES[tone])} />
+        {tPerm(`state_${state}`)}
+      </span>
+    )
+  }
 
   return (
-    <TooltipProvider>
-      <div className="divide-y rounded-2xl border dark:divide-slate-800 dark:border-slate-800">
-        {MATRIX_MODULES.map((module) => {
-          const expanded = open === module
-          const levels = levelsOf(module)
-          return (
-            <div key={module}>
-              <div className="flex items-center gap-2 px-3 py-2.5">
-                <button
-                  type="button"
-                  aria-expanded={expanded}
-                  onClick={() => setOpen(expanded ? null : module)}
-                  className="flex min-h-10 flex-1 items-center gap-2 rounded-lg text-left text-sm font-semibold text-slate-800 dark:text-slate-200"
+    <div className="space-y-3">
+      {/* Toolbar: what the colours mean, and the shortcuts that span every module. */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-muted/40 p-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="text-xs font-semibold text-muted-foreground">{tPerm('legendTitle')}</span>
+          {ACCESS_LEVELS.map((level) => (
+            <span key={level} className="inline-flex items-center gap-1.5 text-xs text-foreground" title={tPerm(`levelDesc_${level}`)}>
+              <span className={cn('size-2 rounded-full', STATUS_DOT_STYLES[LEVEL_TONE[level]])} />
+              <span className="font-medium">{tPerm(`levelShort_${level}`)}</span>
+              <span className="text-muted-foreground max-2xl:hidden">— {tPerm(`levelDesc_${level}`)}</span>
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-nowrap">
+          <Button
+            type="button"
+            variant="ghost"
+            className="col-span-2 justify-center sm:col-span-1"
+            size="sm"
+            onClick={() => setExpanded(allExpanded ? new Set() : new Set(MATRIX_MODULES))}
+          >
+            {allExpanded ? <ChevronsDownUp className="size-4" /> : <ChevronsUpDown className="size-4" />}
+            {allExpanded ? tPerm('collapseAll') : tPerm('expandAll')}
+          </Button>
+          <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => setEverything(true)}>
+            <ShieldCheck className="size-4" />
+            {tPerm('grantAll')}
+          </Button>
+          <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => setEverything(false)}>
+            <ShieldOff className="size-4" />
+            {tPerm('clearAll')}
+          </Button>
+        </div>
+      </div>
+
+      {MATRIX_MODULES.map((module) => {
+        const isOpen = expanded.has(module)
+        const levels = levelsOf(module)
+        const sections = PERMISSION_RESOURCES[module]
+        const states = sections.map((resource) => sectionState(resource, levels[resource.key]))
+        const moduleState = combineStates(states)
+        const granted = states.filter((s) => s !== 'none').length
+        const Icon = MODULE_ICON[module] ?? ShieldCheck
+        return (
+          <section
+            key={module}
+            className={cn(
+              'overflow-hidden rounded-2xl border bg-card transition-shadow duration-200',
+              isOpen ? 'border-violet-200 shadow-sm dark:border-violet-900/60' : 'border-border/60 hover:shadow-sm'
+            )}
+          >
+            <div className="flex items-center gap-3 px-3 py-2.5 sm:px-4">
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => toggleExpanded(module)}
+                className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              >
+                <span
+                  className={cn(
+                    'flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors',
+                    moduleState === 'none'
+                      ? 'bg-muted text-muted-foreground'
+                      : 'bg-brand-subtle text-violet-700 dark:text-violet-300'
+                  )}
                 >
-                  <ChevronRight className={cn('h-4 w-4 text-slate-400 transition-transform duration-200', expanded && 'rotate-90')} />
-                  {tNav(module)}
-                </button>
-                <Switch
-                  checked={isOn(module)}
-                  onCheckedChange={(checked) => setModule(module, checked)}
-                  disabled={disabled}
-                  aria-label={tNav(module)}
+                  <Icon className="size-4.5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-foreground">{tNav(module)}</span>
+                  {sections.length > 1 && (
+                    <span className="block text-xs text-muted-foreground tabular-nums">
+                      {tPerm('sectionsCount', { on: granted, total: sections.length })}
+                    </span>
+                  )}
+                </span>
+                <span className="max-sm:hidden">{stateBadge(moduleState)}</span>
+                <ChevronDown
+                  className={cn('size-4 shrink-0 text-muted-foreground transition-transform duration-200', isOpen && 'rotate-180')}
                 />
-              </div>
+              </button>
+              <Switch
+                checked={moduleState === 'full'}
+                onCheckedChange={() => setModule(module, moduleState !== 'full')}
+                disabled={disabled}
+                aria-label={`${tNav(module)} — ${tPerm('moduleAll')}`}
+                title={tPerm('moduleAll')}
+              />
+            </div>
 
-              {expanded && (
-                <div className="border-t dark:border-slate-800">
-                  {/* Desktop: the grid, with the legend once per row. */}
-                  <div className="max-md:hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-800/50">
-                          <th className="px-3 py-2" />
-                          {COLUMNS.map((action) => (
-                            <th key={action} className="w-20 px-2 py-2 text-center font-semibold text-slate-600 dark:text-slate-400">
-                              {tPerm(`action_${action}`)}
-                            </th>
-                          ))}
-                          <th className="w-44 px-3 py-2 text-left">
-                            <Tooltip>
-                              <TooltipTrigger render={<span className="inline-flex" />}>
-                                <CircleHelp className="h-4 w-4 text-slate-400" />
-                                <span className="sr-only">{tPerm('levelHint')}</span>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-64">{tPerm('levelHint')}</TooltipContent>
-                            </Tooltip>
+            {isOpen && (
+              <div className="border-t border-border/60">
+                {/* Desktop: sections down, actions across. */}
+                <div className="overflow-x-auto max-md:hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted/40 text-xs text-muted-foreground">
+                        <th className="px-4 py-2.5 text-left font-semibold">{tPerm('section')}</th>
+                        {COLUMNS.map((action) => (
+                          <th key={action} className="w-36 px-2 py-2.5 text-left font-semibold">
+                            {tPerm(`action_${action}`)}
                           </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {PERMISSION_RESOURCES[module].map((resource) => (
-                          <tr key={resource.key} className="border-t dark:border-slate-800">
-                            <td className="px-3 py-3 text-slate-700 dark:text-slate-300">{resourceName(module, resource)}</td>
-                            {COLUMNS.map((action) => (
-                              <td key={action} className="px-2 py-3">
-                                {resource.actions.includes(action) && (
-                                  <LevelPicker
-                                    label={`${resourceName(module, resource)} — ${tPerm(`action_${action}`)}`}
-                                    levels={levelsFor(resource, action)}
-                                    slots={resource.ownable ? LEVEL_ORDER : ['none', 'all']}
-                                    value={levels[resource.key][action] ?? 'none'}
-                                    levelName={levelName}
-                                    disabled={disabled}
-                                    onChange={(level) => setCell(module, resource.key, action, level)}
-                                  />
-                                )}
-                              </td>
-                            ))}
-                            <td className="px-3 py-3 align-middle">
-                              <div className="grid gap-1 text-xs leading-6 text-slate-600 dark:text-slate-400">
-                                {(resource.ownable ? LEVEL_ORDER : (['none', 'all'] as const)).map((level) => (
-                                  <span key={level}>{levelName(level)}</span>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Phone: five columns do not fit, so a card per section. */}
-                  <div className="space-y-3 p-3 md:hidden">
-                    {PERMISSION_RESOURCES[module].map((resource) => (
-                      <div key={resource.key} className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/50">
-                        <p className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">{resourceName(module, resource)}</p>
-                        <div className="space-y-2.5">
-                          {resource.actions.map((action) => {
-                            const level = levels[resource.key][action] ?? 'none'
-                            return (
-                              <div key={action} className="flex items-center gap-2">
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm text-slate-700 dark:text-slate-300">{tPerm(`action_${action}`)}</p>
-                                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">{levelName(level)}</p>
-                                </div>
-                                <LevelPicker
-                                  horizontal
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {sections.map((resource, index) => (
+                        <tr key={resource.key} className="transition-colors hover:bg-muted/30">
+                          <td className="px-4 py-2.5">
+                            <span className="flex items-center gap-3">
+                              <Switch
+                                checked={states[index] === 'full'}
+                                onCheckedChange={() => setSection(module, resource, states[index] !== 'full')}
+                                disabled={disabled}
+                                aria-label={`${resourceName(module, resource)} — ${tPerm('sectionAll')}`}
+                                title={tPerm('sectionAll')}
+                              />
+                              <span className="font-medium text-foreground">{resourceName(module, resource)}</span>
+                            </span>
+                          </td>
+                          {COLUMNS.map((action) => (
+                            <td key={action} className="px-2 py-2.5">
+                              {resource.actions.includes(action) ? (
+                                <LevelSelect
                                   label={`${resourceName(module, resource)} — ${tPerm(`action_${action}`)}`}
                                   levels={levelsFor(resource, action)}
-                                  slots={resource.ownable ? LEVEL_ORDER : ['none', 'all']}
-                                  value={level}
-                                  levelName={levelName}
+                                  value={levels[resource.key][action] ?? 'none'}
                                   disabled={disabled}
-                                  onChange={(next) => setCell(module, resource.key, action, next)}
+                                  onChange={(level) => setCell(module, resource, action, level)}
                                 />
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                              ) : (
+                                <span className="pl-3 text-muted-foreground/50" aria-hidden>—</span>
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </TooltipProvider>
+
+                {/* Phone: a card per section, an action per row. */}
+                <div className="space-y-2.5 p-3 md:hidden">
+                  {sections.map((resource, index) => (
+                    <div key={resource.key} className="rounded-2xl border border-border/60 bg-muted/30 p-3">
+                      <div className="mb-2.5 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-foreground">{resourceName(module, resource)}</p>
+                          <div className="mt-1">{stateBadge(states[index])}</div>
+                        </div>
+                        <Switch
+                          checked={states[index] === 'full'}
+                          onCheckedChange={() => setSection(module, resource, states[index] !== 'full')}
+                          disabled={disabled}
+                          aria-label={`${resourceName(module, resource)} — ${tPerm('sectionAll')}`}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        {COLUMNS.filter((action) => resource.actions.includes(action)).map((action) => (
+                          <div key={action} className="flex items-center justify-between gap-3">
+                            <span className="text-sm text-muted-foreground">{tPerm(`action_${action}`)}</span>
+                            <div className="w-40 shrink-0">
+                              <LevelSelect
+                                label={`${resourceName(module, resource)} — ${tPerm(`action_${action}`)}`}
+                                levels={levelsFor(resource, action)}
+                                value={levels[resource.key][action] ?? 'none'}
+                                disabled={disabled}
+                                onChange={(level) => setCell(module, resource, action, level)}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )
+      })}
+    </div>
   )
 }
 
-function LevelPicker({
+/** One cell: a compact, colour-coded pill that opens the levels this action offers. */
+function LevelSelect({
   label,
   levels,
-  slots,
   value,
-  levelName,
   disabled,
-  horizontal,
   onChange,
 }: {
   label: string
   levels: readonly AccessLevel[]
-  /** Every level the row's legend lists, so an offered dot sits beside its own label. */
-  slots: readonly AccessLevel[]
   value: AccessLevel
-  levelName: (level: AccessLevel) => string
   disabled?: boolean
-  horizontal?: boolean
   onChange: (level: AccessLevel) => void
 }) {
+  const tPerm = useTranslations('permissions')
+  const tone = LEVEL_TONE[value]
   return (
-    <div
-      role="radiogroup"
-      aria-label={label}
-      className={cn('mx-auto flex w-fit items-center', horizontal ? 'flex-row' : 'flex-col')}
+    <Select
+      value={value}
+      disabled={disabled}
+      onValueChange={(next) => next && onChange(next as AccessLevel)}
     >
-      {slots.map((level) => {
-        if (!levels.includes(level)) {
-          return <span key={level} aria-hidden="true" className={horizontal ? 'h-10 w-8' : 'h-7 w-7'} />
-        }
-        const selected = value === level
-        return (
-          <button
-            key={level}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            aria-label={levelName(level)}
-            title={levelName(level)}
-            disabled={disabled}
-            onClick={() => onChange(level)}
-            className={cn(
-              'flex items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-50',
-              // The dots line up with the legend's rows; the touch target is the button.
-              horizontal ? 'h-10 w-8' : 'h-7 w-7'
-            )}
-          >
-            <span
-              className={cn(
-                'h-3.5 w-3.5 rounded-full transition-colors duration-200',
-                selected ? 'bg-emerald-500' : 'bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600'
-              )}
-            />
-          </button>
-        )
-      })}
-    </div>
+      <SelectTrigger
+        aria-label={label}
+        className={cn(
+          'h-9 w-full rounded-full border px-3 text-xs font-semibold shadow-none md:h-8',
+          STATUS_TONE_STYLES[tone]
+        )}
+      >
+        <SelectValue>
+          <span className="flex items-center gap-1.5">
+            <span className={cn('size-1.5 shrink-0 rounded-full', STATUS_DOT_STYLES[tone])} />
+            {tPerm(`levelShort_${value}`)}
+          </span>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent alignItemWithTrigger={false} align="start" className="w-64 rounded-2xl p-1.5">
+        {levels.map((level) => (
+          <SelectItem key={level} value={level} className="rounded-xl py-2 pl-2.5">
+            <span className="flex items-start gap-2.5">
+              <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', STATUS_DOT_STYLES[LEVEL_TONE[level]])} />
+              <span className="flex flex-col">
+                <span className="text-sm font-semibold">{tPerm(`levelShort_${level}`)}</span>
+                <span className="text-xs text-muted-foreground">{tPerm(`levelDesc_${level}`)}</span>
+              </span>
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }

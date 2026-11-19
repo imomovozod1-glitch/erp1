@@ -114,7 +114,7 @@ function isoDaysAgo(days: number, today: string): string {
  * for the one caveat that follows from it.
  */
 export function ReportBuilder({ today }: { today: string }) {
-  const canExport = useCan('analytics', 'export')
+  const canExport = useCan('analytics', 'export', 'builder')
   const tCommon = useTranslations('common')
   const [confirmDelete, confirmDialog] = useConfirmDelete()
   const tRoot = useTranslations()
