@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { List, Map as MapIcon } from 'lucide-react'
-import { CustomersTable } from './customers-table'
+import { CustomersTable } from './customers/customers-table'
 import { AllCustomersMap } from './all-customers-map'
 
 interface CustomersViewTabsProps {

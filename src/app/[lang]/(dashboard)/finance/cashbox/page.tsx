@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { CashboxClient } from '@/components/finance/cashbox-client'
+import { CashboxClient } from '@/components/finance/cashbox/cashbox-client'
 import { getCachedCashboxPageData, getCachedCashboxTransactions } from '@/lib/data/queries'
 import { resolvePeriodDays, type PeriodKey } from '@/lib/data/paginate'
 import { getCurrentTenantId } from '@/lib/tenant'

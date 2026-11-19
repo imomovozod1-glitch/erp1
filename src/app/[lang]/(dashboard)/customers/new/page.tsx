@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
-import { CustomerForm } from '@/components/sales/customer-form'
+import { CustomerForm } from '@/components/sales/customer-form/customer-form'
 import { getCachedCustomerCategories, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'

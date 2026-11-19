@@ -2,7 +2,8 @@ import { cn } from '@/lib/utils'
 
 export type StatusTone = 'emerald' | 'rose' | 'amber' | 'blue' | 'indigo' | 'slate'
 
-const TONE_STYLES: Record<StatusTone, string> = {
+/** Pill colours per tone — exported so other tone-coded controls match the badges exactly. */
+export const STATUS_TONE_STYLES: Record<StatusTone, string> = {
   emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50',
   rose: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50',
   amber: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50',
@@ -11,7 +12,7 @@ const TONE_STYLES: Record<StatusTone, string> = {
   slate: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700',
 }
 
-const DOT_STYLES: Record<StatusTone, string> = {
+export const STATUS_DOT_STYLES: Record<StatusTone, string> = {
   emerald: 'bg-emerald-500',
   rose: 'bg-rose-500',
   amber: 'bg-amber-500',
@@ -38,11 +39,11 @@ export function StatusBadge({ label, tone, pulse = false, className }: StatusBad
     <span
       className={cn(
         'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border whitespace-nowrap',
-        TONE_STYLES[tone],
+        STATUS_TONE_STYLES[tone],
         className
       )}
     >
-      <span className={cn('w-1.5 h-1.5 shrink-0 rounded-full', DOT_STYLES[tone], pulse && 'animate-pulse')} />
+      <span className={cn('w-1.5 h-1.5 shrink-0 rounded-full', STATUS_DOT_STYLES[tone], pulse && 'animate-pulse')} />
       {label}
     </span>
   )

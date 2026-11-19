@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { getCachedEmployeeFormOptions } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { EmployeeForm } from '@/components/hr/employee-form'
+import { EmployeeForm } from '@/components/hr/employee-form/employee-form'
 import { Metadata } from 'next'
 import { requireResourceAction } from '@/lib/permissions-server'
 

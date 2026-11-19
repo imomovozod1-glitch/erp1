@@ -6,7 +6,6 @@
  * `tenant_id` explicitly: the service-role client it uses bypasses RLS.
  */
 
-import { nextEmployeeCode } from '@/lib/employee-code'
 import { unstable_cache } from 'next/cache'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { queryPage, type PageResult } from '@/lib/data/paginate'
@@ -87,76 +86,6 @@ export const getCachedDepartments = unstable_cache(
   { tags: [CACHE_TAGS.departments], revalidate: 120 }
 )
 
-/**
- * The cashbox screen's standing data: the registers themselves plus the four
- * picker lists behind the kirim/chiqim dialog.
- *
- * The screen used to fetch all of this from the BROWSER after hydrating: the
- * cashboxes, then — awaiting that first — their transactions, then four more
- * lookups for the customer/employee/supplier/category pickers. Against a
- * Supabase project ~500 ms away that is a second and a half of empty cards
- * after the page has already been delivered, every single visit, and none of
- * it was cached anywhere.
- *
- * Fetched together rather than as five exported queries because the screen
- * always needs all five, and one cache entry means one round trip on a miss
- * instead of five. The transaction history is deliberately NOT part of it —
- * see `getCachedCashboxTransactions`.
- *
- * `failed` is part of the contract: the client keeps a localStorage mirror for
- * when Supabase is unreachable (see `adjustCashboxBalance` in
- * finance-helpers.ts), and it can only decide to use it if it can tell an
- * empty tenant apart from a failed read.
- */
-/**
- * The dropdown contents behind the employee form.
- *
- * The form used to fetch these itself from three `useEffect`s once it had
- * hydrated — four queries for a screen the server had already rendered, each a
- * ~500 ms round trip, with the selects sitting empty until they landed. The
- * page is a Server Component and can simply arrive with them.
- *
- * `accounts` is profiles not already claimed by ANOTHER employee
- * (`employees.profile_id` is UNIQUE); the caller re-adds the employee's own
- * current link so editing one does not make it vanish from its own dropdown.
- */
-export const getCachedEmployeeFormOptions = unstable_cache(
-  async (tenantId: string) => {
-    const supabase = getCacheClient() as any
-    const [cashboxes, roleTemplates, profiles, linked] = await Promise.all([
-      supabase.from('cashboxes').select('id, name').eq('tenant_id', tenantId).order('name'),
-      supabase
-        .from('role_templates')
-        .select('id, name, permissions')
-        .eq('tenant_id', tenantId)
-        .order('name'),
-      supabase
-        .from('profiles')
-        .select('id, full_name, phone, role, permissions')
-        .eq('tenant_id', tenantId),
-      supabase
-        .from('employees')
-        .select('profile_id, employee_code')
-        .eq('tenant_id', tenantId),
-    ])
-
-    return {
-      cashboxes: cashboxes.data ?? [],
-      roleTemplates: roleTemplates.data ?? [],
-      profiles: profiles.data ?? [],
-      claimedProfileIds: (linked.data ?? [])
-        .map((e: any) => e.profile_id as string | null)
-        .filter((id: string | null): id is string => id !== null),
-      nextEmployeeCode: nextEmployeeCode((linked.data ?? []).map((e: any) => e.employee_code)),
-    }
-  },
-  ['employee-form-options'],
-  {
-    tags: [CACHE_TAGS.cashbox, CACHE_TAGS.roleTemplates, CACHE_TAGS.employees, 'profiles'],
-    revalidate: 60,
-  }
-)
-
 export const getCachedDepartmentsForSelect = unstable_cache(
   async (tenantId: string) => {
     const supabase = getCacheClient() as any
@@ -201,49 +130,6 @@ export const getCachedDepartmentById = unstable_cache(
   },
   ['department-by-id'],
   { tags: [CACHE_TAGS.departments], revalidate: 3600 }
-)
-
-export const getCachedEmployeeDetails = unstable_cache(
-  async (id: string, tenantId: string) => {
-    const supabase = getCacheClient() as any
-    const { data: employee } = await supabase
-      .from('employees')
-      .select('*, profiles(*, departments!fk_profiles_department(name), role_templates(name))')
-      .eq('id', id)
-      .eq('tenant_id', tenantId)
-      .single()
-
-    if (!employee) return null
-    const profileId = employee.profile_id
-
-    const [
-      { data: transactions },
-      { data: salesOrders },
-    ] = await Promise.all([
-      supabase
-        .from('transactions')
-        .select('*')
-        .eq('employee_id', id)
-        .eq('tenant_id', tenantId)
-        .order('transaction_date', { ascending: false }),
-      profileId
-        ? supabase
-            .from('sales_orders')
-            .select('*, customers(name)')
-            .eq('created_by', profileId)
-            .eq('tenant_id', tenantId)
-            .order('order_date', { ascending: false })
-        : Promise.resolve({ data: [] })
-    ])
-
-    return {
-      employee,
-      transactions: transactions ?? [],
-      salesOrders: salesOrders ?? [],
-    }
-  },
-  ['employee-details-by-id'],
-  { tags: [CACHE_TAGS.employees, CACHE_TAGS.transactions, CACHE_TAGS.orders], revalidate: 30 }
 )
 
 export function getEmployeesPage(

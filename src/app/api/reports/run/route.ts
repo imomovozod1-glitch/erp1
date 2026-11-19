@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getTenantContext } from '@/lib/auth'
-import { canDo, getDataScope, getPermissionContext } from '@/lib/permissions-server'
+import { canDo, canResource, getDataScope, getPermissionContext } from '@/lib/permissions-server'
 import { runReport } from '@/lib/reports/engine'
 import {
   DATED_SOURCES,
@@ -40,6 +40,12 @@ const SOURCE_MODULE = {
 export async function POST(request: NextRequest) {
   const ctx = await getTenantContext()
   if (!ctx) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  // The builder is a section of Reports in its own right, checked before the
+  // body is even read; the source's own module is checked below as well, so a
+  // builder grant reads only what the user could open anyway.
+  if (!(await canResource('analytics', 'builder', 'view'))) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
 
   const parsed = requestSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'invalid_input' }, { status: 400 })

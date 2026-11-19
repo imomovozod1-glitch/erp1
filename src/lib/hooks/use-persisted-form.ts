@@ -1,76 +1,71 @@
-import { useForm, UseFormProps, UseFormReturn, FieldValues, useWatch } from 'react-hook-form'
+import { useForm, UseFormProps, UseFormReturn, FieldValues, DefaultValues } from 'react-hook-form'
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
-// A draft older than this is treated as abandoned, not "resumed" — without
-// this, a form field toggled once (e.g. is_active) and left un-submitted
-// silently keeps overriding every future fresh visit to the same "new X"
-// page, since sessionStorage has no natural expiry of its own.
-const DRAFT_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
+// An abandoned draft must not keep overriding every later visit to the same form.
+const DRAFT_MAX_AGE_MS = 24 * 60 * 60 * 1000
 
+const storageKey = (formId: string) => `form_persist_${formId}`
+const routeOf = (pathname: string) => pathname.replace(/^\/[a-z]{2}/, '')
+
+interface Draft {
+  path: string
+  data: Record<string, unknown>
+  savedAt: number
+}
+
+function readDraft(formId: string, path: string): Record<string, unknown> | null {
+  try {
+    const raw = sessionStorage.getItem(storageKey(formId))
+    const draft: Draft | null = raw ? JSON.parse(raw) : null
+    if (!draft || draft.path !== path) return null
+    if (typeof draft.savedAt === 'number' && Date.now() - draft.savedAt < DRAFT_MAX_AGE_MS) return draft.data
+    sessionStorage.removeItem(storageKey(formId))
+  } catch (e) {
+    console.error('Error reading persisted form data', e)
+  }
+  return null
+}
+
+function writeDraft(formId: string, path: string, data: unknown) {
+  try {
+    sessionStorage.setItem(storageKey(formId), JSON.stringify({ path, data, savedAt: Date.now() }))
+  } catch (e) {
+    console.error('Error writing persisted form data', e)
+  }
+}
+
+/**
+ * `useForm` that keeps an unsaved edit in sessionStorage and offers it back on the
+ * same edit route. A "new X" route always opens blank. The draft is restored after
+ * hydration — reading it during render made the server and the browser disagree,
+ * and React's recovery re-render could drop what the user had just typed.
+ */
 export function usePersistedForm<TFieldValues extends FieldValues = FieldValues, TContext = any>(
   formId: string,
   props?: UseFormProps<TFieldValues, TContext>
 ): UseFormReturn<TFieldValues, TContext> {
   const pathname = usePathname()
-
-  // A "new X" route always opens blank. Restoring an abandoned draft there
-  // reads as a bug rather than a convenience — the user starts creating a
-  // product and finds the previous, never-saved one already typed into the
-  // form. Drafts stay on for edit routes, where the form belongs to one
-  // specific record and restoring it is unambiguous.
   const isCreateRoute = /\/new\/?$/.test(pathname)
-
-  // 1. Get initial default values, checking sessionStorage
-  const getInitialValues = () => {
-    if (typeof window === 'undefined' || isCreateRoute) return props?.defaultValues
-    try {
-      const savedStr = sessionStorage.getItem(`form_persist_${formId}`)
-      if (savedStr) {
-        const saved = JSON.parse(savedStr)
-        const currentPath = pathname.replace(/^\/[a-z]{2}/, '')
-        // One-time initializer: this only ever seeds useForm's initial defaultValues.
-        // eslint-disable-next-line react-hooks/purity
-        const isFresh = typeof saved.savedAt === 'number' && Date.now() - saved.savedAt < DRAFT_MAX_AGE_MS
-        if (saved.path === currentPath && isFresh) {
-          return {
-            ...props?.defaultValues,
-            ...saved.data
-          }
-        }
-        if (saved.path === currentPath && !isFresh) {
-          sessionStorage.removeItem(`form_persist_${formId}`)
-        }
-      }
-    } catch (e) {
-      console.error('Error reading persisted form data', e)
-    }
-    return props?.defaultValues
-  }
-
-  const form = useForm<TFieldValues, TContext>({
-    ...props,
-    defaultValues: getInitialValues() as any
-  })
-
-  // 2. Watch all form changes and persist to sessionStorage (optimized with stringified values)
-  const values = useWatch({ control: form.control })
-  const valuesStr = JSON.stringify(values)
+  const form = useForm<TFieldValues, TContext>(props)
+  const { reset } = form
 
   useEffect(() => {
-    if (typeof window === 'undefined' || isCreateRoute) return
-    try {
-      const currentPath = pathname.replace(/^\/[a-z]{2}/, '')
-      sessionStorage.setItem(`form_persist_${formId}`, JSON.stringify({
-        path: currentPath,
-        data: values,
-        savedAt: Date.now(),
-      }))
-    } catch (e) {
-      console.error('Error writing persisted form data', e)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [valuesStr, pathname, formId, isCreateRoute])
+    if (isCreateRoute) return
+    const draft = readDraft(formId, routeOf(pathname))
+    if (draft) reset({ ...props?.defaultValues, ...draft } as DefaultValues<TFieldValues>, { keepDefaultValues: true })
+    // Restored once per form and route; later default changes belong to the form itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formId, pathname, isCreateRoute, reset])
+
+  const { subscribe } = form
+  useEffect(() => {
+    if (isCreateRoute) return
+    return subscribe({
+      formState: { values: true },
+      callback: ({ values }) => writeDraft(formId, routeOf(pathname), values),
+    })
+  }, [subscribe, formId, pathname, isCreateRoute])
 
   return form
 }
@@ -78,7 +73,7 @@ export function usePersistedForm<TFieldValues extends FieldValues = FieldValues,
 export function clearPersistedForm(formId: string) {
   if (typeof window === 'undefined') return
   try {
-    sessionStorage.removeItem(`form_persist_${formId}`)
+    sessionStorage.removeItem(storageKey(formId))
   } catch (e) {
     console.error('Error clearing persisted form data', e)
   }

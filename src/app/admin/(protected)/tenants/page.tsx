@@ -5,7 +5,8 @@ import { PageHeader } from '@/components/shared/page-header'
 import { TenantsTable, type TenantRow } from '@/components/admin/tenants-table'
 import { DomainSyncButton } from '@/components/admin/domain-sync-button'
 import { computeEffectiveStatus } from '@/lib/tenant-status'
-import { WILDCARD_DOMAIN, listProjectDomains, tenantHost } from '@/lib/vercel-domains'
+import { tenantHost } from '@/lib/vercel-domains'
+import { WILDCARD_DOMAIN, listProjectDomains } from '@/lib/vercel-domain-status'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('admin.tenants')

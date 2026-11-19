@@ -1,463 +1,74 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { useTranslations, useLocale } from 'next-intl'
-import { useRouter } from 'next/navigation'
-import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
-import { useForm, Controller, useWatch } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { toast } from 'sonner'
-import { Loader2, Building2, Wallet, FileText, ReceiptText, LifeBuoy } from 'lucide-react'
-import { addMonths, DURATION_PRESETS, LICENSE_COUNT_PRESETS, PresetPicker } from '@/components/admin/preset-picker'
+import { useState } from 'react'
+import { FileText, LifeBuoy, Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Controller } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { NumericInput } from '@/components/ui/numeric-input'
-import { PasswordInput } from '@/components/ui/password-input'
-import { DatePicker } from '@/components/ui/date-picker'
-import {
-  AdminField,
-  AdminFormActions,
-  AdminFormSection,
-  AdminFormShell,
-} from '@/components/admin/admin-form-layout'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { isReservedSubdomain } from '@/lib/tenant-auth'
-import { phoneSchema } from '@/lib/phone-validation'
-import { newPasswordSchema } from '@/lib/password-validation'
-import { PhoneInput } from '@/components/ui/phone-input'
+import { NameSelect } from '@/components/shared/name-select'
+import { AdminField, AdminFormActions, AdminFormSection, AdminFormShell } from '@/components/admin/admin-form-layout'
 import { TenantPaymentDialog } from '@/components/admin/tenant-payment-dialog'
-import { formatDate, isoDate } from '@/lib/utils'
-import { adminErrorMessage } from '@/lib/admin-errors'
+import { BasicsSection, CreateSubscription, EditSubscription } from '@/components/admin/tenant-form/tenant-sections'
+import type { SupportAgentOption, TenantFormInitialData, TenantFormMode } from '@/components/admin/tenant-form/tenant-schema'
+import { useTenantForm, type TenantFormState } from '@/components/admin/tenant-form/use-tenant-form'
 
-export interface TenantFormInitialData {
-  id: string
-  subdomain: string
-  company_name: string
-  phone: string
-  costing_method: 'fifo' | 'lifo' | 'aveco'
-  license_count: number
-  license_months: number
-  subscription_started_at: string | null
-  subscription_ends_at: string | null
-  details: string | null
-  support_agent_id: string | null
-}
-
-export interface SupportAgentOption {
-  id: string
-  full_name: string
-}
+export type { SupportAgentOption, TenantFormInitialData } from '@/components/admin/tenant-form/tenant-schema'
 
 interface TenantFormProps {
-  mode: 'create' | 'edit'
+  mode: TenantFormMode
   initialData?: TenantFormInitialData
   supportAgents: SupportAgentOption[]
 }
 
-export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps) {
-  const tErrors = useTranslations('admin.errors')
-  const tPassword = useTranslations('admin.password')
-  const tAuth = useTranslations('auth')
-  const tCosting = useTranslations('inventory')
-  const tDetail = useTranslations('admin.tenants.detail')
+function SupportAndNotes({ state, agents }: { state: TenantFormState; agents: SupportAgentOption[] }) {
   const t = useTranslations('admin.form')
-  const lang = useLocale()
-  const router = useRouter()
-  const exitForm = useRouteModalExit('/admin/tenants')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false)
-  // Editing a tenant touches only its identity, support agent and notes. The
-  // subscription moves through a payment (TenantPaymentDialog), and the
-  // costing method is fixed at creation (migration_tenant_costing_lock.sql).
-  const isEdit = mode === 'edit'
-
-  const tenantFormSchema = useMemo(
-    () =>
-      z.object({
-        subdomain: z
-          .string()
-          .min(2, t('subdomainInvalid'))
-          .regex(/^[a-z0-9-]+$/, t('subdomainInvalid'))
-          .refine((v) => !isReservedSubdomain(v), t('subdomainReserved')),
-        company_name: z.string().min(1, t('companyNameRequired')),
-        phone: phoneSchema(t('phoneInvalid')),
-        password:
-          mode === 'create'
-            ? newPasswordSchema(tAuth('passwordRequirements'))
-            : z.union([newPasswordSchema(tAuth('passwordRequirements')), z.literal('')]).optional(),
-        // The subscription fields are only on the create form; editing moves
-        // the subscription through a payment instead, so they are not checked.
-        costing_method: z.enum(['fifo', 'lifo', 'aveco']),
-        license_count:
-          mode === 'create'
-            ? z.number({ message: t('licenseCountRequired') }).int().min(1, t('licenseCountRequired'))
-            : z.number().optional(),
-        license_months:
-          mode === 'create'
-            ? z.number({ message: t('licenseMonthsRequired') }).int().min(1, t('licenseMonthsRequired'))
-            : z.number().optional(),
-        subscription_started_at:
-          mode === 'create' ? z.string().min(1, t('subscriptionStartRequired')) : z.string().optional(),
-        subscription_ends_at:
-          mode === 'create' ? z.string().min(1, t('subscriptionEndRequired')) : z.string().optional(),
-        price_paid:
-          mode === 'create'
-            ? z.number({ message: t('pricePaidRequired') }).min(0, t('pricePaidNegative'))
-            : z.number().optional(),
-        details: z.string().optional(),
-        support_agent_id: z.string().uuid().nullable().optional(),
-      }).refine(
-        (data) =>
-          mode === 'edit' ||
-          new Date(data.subscription_ends_at ?? '') > new Date(data.subscription_started_at ?? ''),
-        {
-          message: t('subscriptionEndBeforeStart'),
-          path: ['subscription_ends_at'],
-        }
-      ),
-    [t, tAuth, mode]
+  const options = agents.map((a) => ({ id: a.id, name: a.full_name }))
+  return (
+    <>
+      <AdminFormSection icon={LifeBuoy} title={t('sectionSupport')} description={t('sectionSupportHint')} columns={1}>
+        <AdminField className="sm:w-80">
+          <Controller
+            control={state.form.control}
+            name="support_agent_id"
+            render={({ field }) => (
+              <NameSelect value={field.value ?? ''} onChange={(id) => field.onChange(id || null)} options={options} placeholder={t('noSupportAgent')} clearLabel={t('noSupportAgent')} />
+            )}
+          />
+        </AdminField>
+      </AdminFormSection>
+      <AdminFormSection icon={FileText} title={t('sectionNotes')} description={t('sectionNotesHint')} columns={1}>
+        <AdminField>
+          <Textarea id="details" rows={4} placeholder={t('detailsPlaceholder')} {...state.form.register('details')} />
+        </AdminField>
+      </AdminFormSection>
+    </>
   )
-  type TenantFormData = z.infer<typeof tenantFormSchema>
+}
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    getValues,
-    setValue,
-    formState: { errors },
-  } = useForm<TenantFormData>({
-    resolver: zodResolver(tenantFormSchema),
-    defaultValues: initialData
-      ? {
-          subdomain: initialData.subdomain,
-          company_name: initialData.company_name,
-          phone: initialData.phone,
-          costing_method: initialData.costing_method,
-          license_count: initialData.license_count,
-          license_months: initialData.license_months,
-          subscription_started_at: initialData.subscription_started_at ?? '',
-          subscription_ends_at: initialData.subscription_ends_at ?? '',
-          support_agent_id: initialData.support_agent_id ?? null,
-        }
-      : {
-          costing_method: 'fifo',
-          license_count: 1,
-          license_months: 1,
-          subscription_started_at: isoDate(),
-          subscription_ends_at: addMonths(isoDate(), 1),
-          price_paid: 0,
-          support_agent_id: null,
-        },
-  })
-
-  const watchedEndDate = useWatch({ control, name: 'subscription_ends_at' })
-
-  // Duration presets are a convenience: clicking one sets license_months AND
-  // recomputes subscription_ends_at from the current start date — a one-time
-  // action, not a live watcher, so a manual edit to the end date afterward
-  // is never silently overwritten by an unrelated field change.
-  const applyDurationPreset = (months: number) => {
-    setValue('license_months', months, { shouldValidate: true })
-    const start = getValues('subscription_started_at')
-    if (start) {
-      setValue('subscription_ends_at', addMonths(start, months), { shouldValidate: true })
-    }
-  }
-
-  // The end date is no longer directly editable (see the subscriptionEnd
-  // field below, now static text) — it's purely derived from start date +
-  // duration, so a start-date change has to recompute it too, not just a
-  // duration-preset click.
-  const handleStartDateChange = (newStart: string) => {
-    setValue('subscription_started_at', newStart, { shouldValidate: true })
-    const months = getValues('license_months')
-    if (newStart && months) {
-      setValue('subscription_ends_at', addMonths(newStart, months), { shouldValidate: true })
-    }
-  }
-
-  const onSubmit = async (data: TenantFormData) => {
-    setIsSubmitting(true)
-    try {
-      const body = isEdit
-        ? {
-            subdomain: data.subdomain,
-            company_name: data.company_name,
-            phone: data.phone,
-            details: data.details,
-            support_agent_id: data.support_agent_id,
-          }
-        : data
-      const res = await fetch(
-        mode === 'create' ? '/api/admin/tenants' : `/api/admin/tenants/${initialData!.id}`,
-        {
-          method: mode === 'create' ? 'POST' : 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }
-      )
-      const json = await res.json()
-      if (!res.ok) {
-        toast.error(adminErrorMessage(tErrors, json, t('genericError')))
-        setIsSubmitting(false)
-        return
-      }
-      toast.success(mode === 'create' ? t('createSuccess') : t('updateSuccess'))
-      exitForm()
-      router.refresh()
-    } catch {
-      toast.error(t('genericError'))
-      setIsSubmitting(false)
-    }
-  }
-
+/** A company's identity, subscription (create only), support agent and notes. */
+export function TenantForm({ mode, initialData, supportAgents }: TenantFormProps) {
+  const t = useTranslations('admin.form')
+  const state = useTenantForm(mode, initialData)
+  const [paying, setPaying] = useState(false)
+  const editing = mode === 'edit' && initialData
   return (
     <AdminFormShell>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <AdminFormSection icon={Building2} title={t('sectionBasics')} description={t('sectionBasicsHint')}>
-          <AdminField>
-            <Label htmlFor="company_name">{t('companyName')}</Label>
-            <Input id="company_name" placeholder={t('companyNamePlaceholder')} {...register('company_name')} />
-            {errors.company_name && <p className="text-sm text-red-500">{errors.company_name.message}</p>}
-          </AdminField>
-
-          <AdminField>
-            <Label htmlFor="subdomain">{t('subdomain')}</Label>
-            <Input id="subdomain" placeholder={t('subdomainPlaceholder')} {...register('subdomain')} />
-            {errors.subdomain ? (
-              <p className="text-sm text-red-500">{errors.subdomain.message}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t('subdomainHint')}</p>
-            )}
-          </AdminField>
-
-          <AdminField>
-            <Label htmlFor="phone">{t('phone')}</Label>
-            <Controller
-              control={control}
-              name="phone"
-              render={({ field }) => (
-                <PhoneInput
-                  id="phone"
-                  placeholder={t('phonePlaceholder')}
-                  value={field.value ?? ''}
-                  onChange={field.onChange}
-                  hasError={!!errors.phone}
-                />
-              )}
-            />
-            {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
-          </AdminField>
-
-          {mode === 'create' && (
-            <AdminField>
-              <Label htmlFor="password">{t('password')}</Label>
-              <PasswordInput
-                id="password"
-                placeholder={t('passwordPlaceholder')}
-                showLabel={tPassword('show')}
-                hideLabel={tPassword('hide')}
-                {...register('password')}
-              />
-              {errors.password ? (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
-              ) : (
-                <p className="text-xs text-muted-foreground">{tAuth('passwordRequirements')}</p>
-              )}
-            </AdminField>
-          )}
-        </AdminFormSection>
-
-        {isEdit && initialData ? (
-          <AdminFormSection icon={ReceiptText} title={t('sectionSubscription')} description={tDetail('paymentDialogDesc')}>
-            {/* Shown, never editable: the costing method is frozen at creation
-                by migration_tenant_costing_lock.sql, but the operator still
-                needs to see which one a tenant runs on. */}
-            <AdminField>
-              <Label>{t('costingMethod')}</Label>
-              <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
-                {tCosting(initialData.costing_method)}
-              </div>
-              <p className="text-xs text-muted-foreground">{tDetail('costingLockedHint')}</p>
-            </AdminField>
-            <AdminField>
-              <Label>{t('subscriptionEnd')}</Label>
-              <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
-                {initialData.subscription_ends_at ? formatDate(initialData.subscription_ends_at) : '—'}
-              </div>
-            </AdminField>
-            <AdminField>
-              <Label className="invisible hidden sm:block">&nbsp;</Label>
-              <Button
-                type="button"
-                onClick={() => setIsPaymentOpen(true)}
-                className="w-full gap-2 bg-violet-600 text-white hover:bg-violet-500 sm:w-auto"
-              >
-                <Wallet className="h-4 w-4" /> {tDetail('makePayment')}
-              </Button>
-            </AdminField>
-          </AdminFormSection>
-        ) : (
-          <AdminFormSection icon={ReceiptText} title={t('sectionSubscription')} description={t('sectionSubscriptionHint')}>
-            <AdminField>
-              <Label>{t('costingMethod')}</Label>
-              <Controller
-                control={control}
-                name="costing_method"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue>
-                        {(value: 'fifo' | 'lifo' | 'aveco') => tCosting(value)}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fifo">{tCosting('fifo')}</SelectItem>
-                      <SelectItem value="lifo">{tCosting('lifo')}</SelectItem>
-                      <SelectItem value="aveco">{tCosting('aveco')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <p className="text-xs text-muted-foreground">{tDetail('costingLockedHint')}</p>
-            </AdminField>
-
-            <AdminField wide>
-              <Label>{t('licenseCount')}</Label>
-              <Controller
-                control={control}
-                name="license_count"
-                render={({ field: { value } }) => (
-                  <PresetPicker
-                    value={value}
-                    options={LICENSE_COUNT_PRESETS}
-                    onSelect={(v) => setValue('license_count', v, { shouldValidate: true })}
-                    customLabel={t('custom')}
-                  />
-                )}
-              />
-              {errors.license_count && <p className="text-sm text-red-500">{errors.license_count.message}</p>}
-            </AdminField>
-
-            <AdminField wide>
-              <Label>{t('licenseMonths')}</Label>
-              <Controller
-                control={control}
-                name="license_months"
-                render={({ field: { value } }) => (
-                  <PresetPicker
-                    value={value}
-                    options={DURATION_PRESETS}
-                    onSelect={applyDurationPreset}
-                    customLabel={t('custom')}
-                    suffix={t('months')}
-                  />
-                )}
-              />
-              {errors.license_months && <p className="text-sm text-red-500">{errors.license_months.message}</p>}
-            </AdminField>
-
-            <AdminField>
-              <Label htmlFor="subscription_started_at">{t('subscriptionStart')}</Label>
-              <Controller
-                control={control}
-                name="subscription_started_at"
-                render={({ field }) => (
-                  <DatePicker
-                    id="subscription_started_at"
-                    value={field.value}
-                    onChange={handleStartDateChange}
-                    lang={lang}
-                    placeholder={t('selectDatePlaceholder')}
-                  />
-                )}
-              />
-              {errors.subscription_started_at && (
-                <p className="text-sm text-red-500">{errors.subscription_started_at.message}</p>
-              )}
-            </AdminField>
-
-            <AdminField>
-              <Label>{t('subscriptionEnd')}</Label>
-              {/* Computed from start date + duration preset above — not
-                  directly editable, so it can never drift out of sync with
-                  the chosen duration (see handleStartDateChange/applyDurationPreset). */}
-              <div className="flex h-9 items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/50 dark:text-slate-300">
-                {watchedEndDate ? formatDate(watchedEndDate) : '—'}
-              </div>
-              {errors.subscription_ends_at && (
-                <p className="text-sm text-red-500">{errors.subscription_ends_at.message}</p>
-              )}
-            </AdminField>
-
-            <AdminField>
-              <Label htmlFor="price_paid">{t('initialPayment')}</Label>
-              <Controller
-                control={control}
-                name="price_paid"
-                render={({ field: { value, onChange } }) => (
-                  <NumericInput id="price_paid" placeholder="0" value={value ?? undefined} onChange={onChange} />
-                )}
-              />
-              {errors.price_paid && <p className="text-sm text-red-500">{errors.price_paid.message}</p>}
-            </AdminField>
-          </AdminFormSection>
-        )}
-
-        <AdminFormSection icon={LifeBuoy} title={t('sectionSupport')} description={t('sectionSupportHint')} columns={1}>
-          <AdminField>
-            <Controller
-              control={control}
-              name="support_agent_id"
-              render={({ field }) => (
-                <Select value={field.value ?? 'none'} onValueChange={(v) => field.onChange(v === 'none' ? null : v)}>
-                  <SelectTrigger className="w-full sm:w-80">
-                    <SelectValue>
-                      {(val: string) => {
-                        if (val === 'none' || !val) return t('noSupportAgent')
-                        return supportAgents.find((a) => a.id === val)?.full_name ?? t('noSupportAgent')
-                      }}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t('noSupportAgent')}</SelectItem>
-                    {supportAgents.map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>{agent.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </AdminField>
-        </AdminFormSection>
-
-        <AdminFormSection icon={FileText} title={t('sectionNotes')} description={t('sectionNotesHint')} columns={1}>
-          <AdminField>
-            <Textarea id="details" rows={4} placeholder={t('detailsPlaceholder')} {...register('details')} />
-          </AdminField>
-        </AdminFormSection>
-
+      <form onSubmit={state.onSubmit}>
+        <BasicsSection state={state} create={mode === 'create'} />
+        {editing ? <EditSubscription initial={initialData} onPay={() => setPaying(true)} /> : <CreateSubscription state={state} />}
+        <SupportAndNotes state={state} agents={supportAgents} />
         <AdminFormActions>
-          <Button type="button" variant="outline" onClick={() => exitForm()}>
+          <Button type="button" variant="outline" onClick={() => state.exitForm()}>
             {t('cancel')}
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="bg-violet-600 hover:bg-violet-500">
-            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {mode === 'create' ? t('create') : t('save')}
+          <Button type="submit" disabled={state.submitting}>
+            {state.submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {t(mode === 'create' ? 'create' : 'save')}
           </Button>
         </AdminFormActions>
       </form>
-      {isEdit && initialData && (
-        <TenantPaymentDialog
-          tenant={initialData}
-          open={isPaymentOpen}
-          onOpenChange={setIsPaymentOpen}
-        />
-      )}
+      {editing && <TenantPaymentDialog tenant={initialData} open={paying} onOpenChange={setPaying} />}
     </AdminFormShell>
   )
 }

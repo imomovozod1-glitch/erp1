@@ -4,32 +4,12 @@ import { cache } from 'react'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
 import { getCurrentTenantId } from '@/lib/tenant'
-import {
-  accessLevel,
-  can,
-  dataScope,
-  type DataScope,
-  type LevelAction,
-  type PermissionAction,
-  type PermissionModule,
-} from '@/lib/permissions'
+import { accessLevel, can, dataScope, type DataScope, type LevelAction, type PermissionAction, type PermissionModule } from '@/lib/permissions'
 
 /**
- * Server-side enforcement of `profiles.permissions`.
- *
- * Until now the permission matrix was consulted in exactly ONE place —
- * `app-sidebar.tsx`, to decide which nav links to render. Hiding a link is not
- * access control: a `staff` user with no `finance` permission simply typed
- * /uz/finance/cashbox and got the whole module, because no page ever checked.
- * These helpers close that gap for every module, from a Server Component, so
- * the check runs before any data is fetched or markup is produced.
- *
- * Scope, stated plainly: this is still an application-level boundary, not a
- * database one. RLS scopes rows to the tenant, but within a tenant it grants
- * every authenticated member the same access, so a user who crafts raw
- * PostgREST calls can still reach data their role hides in the UI. Making
- * `permissions` an RLS boundary means expressing it in SQL policies; that is a
- * separate migration and is deliberately not what this file claims to do.
+ * Server-side enforcement of `profiles.permissions`, from Server Components and routes,
+ * before any data is fetched — hiding a sidebar link is not access control. Still an
+ * application-level boundary: RLS scopes rows per tenant, not per permission.
  */
 
 /** The caller's role + permission map, memoised per request. */

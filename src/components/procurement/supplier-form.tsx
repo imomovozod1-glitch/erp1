@@ -1,394 +1,157 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
-import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { createClient } from '@/lib/supabase/client'
-import { invalidateSuppliers } from '@/lib/data/revalidate'
-import { errorMessage } from '@/lib/error-message'
+import { Controller, useForm } from 'react-hook-form'
+import { CreditCard, FileText, Mail, Phone, Truck, User } from 'lucide-react'
 import { toast } from 'sonner'
+import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PhoneInput } from '@/components/ui/phone-input'
-import { phoneSchema } from '@/lib/phone-validation'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import dynamic from 'next/dynamic'
-import { Truck, Mail, Phone, MapPin, CreditCard, FileText, User, Loader2 } from 'lucide-react'
+import { AddressField } from '@/components/shared/address-field'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
 import { FormFooter } from '@/components/shared/form-footer'
+import { LabeledField } from '@/components/shared/labeled-field'
+import { StatusField } from '@/components/inventory/catalog-form/catalog-fields'
+import { createClient } from '@/lib/supabase/client'
+import { invalidateSuppliers } from '@/lib/data/revalidate'
+import { errorMessage } from '@/lib/error-message'
+import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
+import { phoneSchema } from '@/lib/phone-validation'
 
-// Load MapPicker dynamically for Next.js SSR compatibility
-const MapPicker = dynamic(() => import('@/components/sales/map-picker').then(mod => mod.MapPicker), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-80 bg-slate-50 dark:bg-slate-800 border border-dashed rounded-xl flex flex-col items-center justify-center space-y-2">
-      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-    </div>
-  )
+const optionalText = z.string().optional().or(z.literal(''))
+
+const supplierSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(1, t('common.required')),
+    phone: phoneSchema(t('auth.invalidPhone')),
+    email: z.string().email(t('common.invalidEmail')).optional().or(z.literal('')),
+    address: optionalText,
+    latitude: z.number().nullable().optional(),
+    longitude: z.number().nullable().optional(),
+    contact_person: optionalText,
+    tin: optionalText,
+    notes: optionalText,
+    is_active: z.boolean(),
+  })
+
+type SupplierData = z.infer<ReturnType<typeof supplierSchema>>
+
+const supplierDefaults = (initial: any): SupplierData => ({
+  name: initial?.name || '',
+  phone: initial?.phone || '',
+  email: initial?.email || '',
+  address: initial?.address || '',
+  latitude: initial?.latitude ?? null,
+  longitude: initial?.longitude ?? null,
+  contact_person: initial?.contact_person || '',
+  tin: initial?.tin || '',
+  notes: initial?.notes || '',
+  is_active: initial?.is_active ?? true,
 })
 
+const orNull = (value?: string | null) => value || null
+
+async function saveSupplier(data: SupplierData, initial: any, assignedTo: string | null) {
+  const supabase = createClient() as any
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth?.user?.id ?? null
+  const payload = {
+    assigned_to: assignedTo ?? initial?.assigned_to ?? userId,
+    created_by: initial?.created_by ?? userId,
+    name: data.name,
+    phone: data.phone,
+    email: orNull(data.email),
+    address: orNull(data.address),
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    contact_person: orNull(data.contact_person),
+    tin: orNull(data.tin),
+    notes: orNull(data.notes),
+    is_active: data.is_active,
+  }
+  const query = initial?.id ? supabase.from('suppliers').update(payload).eq('id', initial.id) : supabase.from('suppliers').insert([payload])
+  const { error } = await query
+  if (error) throw error
+}
+
 interface SupplierFormProps {
-  /** Active tenant members who can be made responsible for this record. */
   assignableUsers: AssignableUser[]
   initialData?: any
   lang: string
 }
 
 export function SupplierForm({ initialData, lang, assignableUsers }: SupplierFormProps) {
-  const tSales = useTranslations('sales')
-  const tCommon = useTranslations('common')
-  const tAuth = useTranslations('auth')
-  const tRoot = useTranslations()
-  const t = useTranslations('procurement')
+  const t = useTranslations()
   const exitForm = useRouteModalExit(`/${lang}/procurement/suppliers`)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
-  const [isMapOpen, setIsMapOpen] = useState(false)
-  const [tempAddress, setTempAddress] = useState('')
-  const [tempLat, setTempLat] = useState<number | null>(null)
-  const [tempLng, setTempLng] = useState<number | null>(null)
-  const [hasPreciseLocation, setHasPreciseLocation] = useState(
-    typeof initialData?.latitude === 'number' && typeof initialData?.longitude === 'number'
-  )
+  const form = useForm<SupplierData>({ resolver: zodResolver(supplierSchema(t)), defaultValues: supplierDefaults(initialData) })
+  const { register, control, formState } = form
+  const errors = formState.errors
 
-  const formSchema = z.object({
-    name: z.string().min(1, tCommon('required')),
-    phone: phoneSchema(tAuth('invalidPhone')),
-    email: z.string().email(tCommon('invalidEmail')).optional().or(z.literal('')),
-    address: z.string().optional().or(z.literal('')),
-    latitude: z.number().nullable().optional(),
-    longitude: z.number().nullable().optional(),
-    contact_person: z.string().optional().or(z.literal('')),
-    tin: z.string().optional().or(z.literal('')),
-    notes: z.string().optional().or(z.literal('')),
-    is_active: z.boolean(),
-  })
-
-  type FormData = z.infer<typeof formSchema>
-
-  const { register, handleSubmit, control, setValue, getValues, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: initialData?.name || '',
-      phone: initialData?.phone || '',
-      email: initialData?.email || '',
-      address: initialData?.address || '',
-      latitude: initialData?.latitude ?? null,
-      longitude: initialData?.longitude ?? null,
-      contact_person: initialData?.contact_person || '',
-      tin: initialData?.tin || '',
-      notes: initialData?.notes || '',
-      is_active: initialData?.is_active ?? true,
-    },
-  })
-
-  const handleLocationSelect = (address: string, lat: number, lng: number) => {
-    setTempAddress(address)
-    setTempLat(lat)
-    setTempLng(lng)
-  }
-
-  const handleOpenMap = () => {
-    setTempAddress(getValues('address') || '')
-    setTempLat(getValues('latitude') ?? null)
-    setTempLng(getValues('longitude') ?? null)
-    setIsMapOpen(true)
-  }
-
-  const handleConfirmLocation = () => {
-    setValue('address', tempAddress, { shouldDirty: true, shouldValidate: true })
-    setValue('latitude', tempLat, { shouldDirty: true })
-    setValue('longitude', tempLng, { shouldDirty: true })
-    setHasPreciseLocation(typeof tempLat === 'number' && typeof tempLng === 'number')
-    setIsMapOpen(false)
-  }
-
-  const onSubmit = async (data: FormData) => {
-    // The button's own disabled state can lag a render behind the click,
-    // so re-check synchronously before doing any work.
-    if (isSubmitting) return
-    setIsSubmitting(true)
+  const submit = async (data: SupplierData) => {
+    if (submitting) return
+    setSubmitting(true)
     try {
-      const supabase = createClient() as any
-
-      // These forms had no current-user lookup at all; the creator/assignee
-      // stamps below need one.
-      const { data: userRes } = await supabase.auth.getUser()
-      const userId: string | null = userRes?.user?.id ?? null
-
-      const payload = {
-        // Responsible person; falls back to the current user so a record is
-        // never left unassigned by accident.
-        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
-        created_by: initialData?.created_by ?? userId,
-        name: data.name,
-        phone: data.phone,
-        email: data.email || null,
-        address: data.address || null,
-        latitude: data.latitude ?? null,
-        longitude: data.longitude ?? null,
-        contact_person: data.contact_person || null,
-        tin: data.tin || null,
-        notes: data.notes || null,
-        is_active: data.is_active,
-      }
-
-      if (initialData?.id) {
-        const { error } = await supabase
-          .from('suppliers')
-          .update(payload as any)
-          .eq('id', initialData.id)
-        if (error) throw error
-        toast.success(t('supplierUpdated'))
-      } else {
-        const { error } = await supabase
-          .from('suppliers')
-          .insert([payload as any])
-        if (error) throw error
-        toast.success(t('supplierCreated'))
-      }
+      await saveSupplier(data, initialData, assignedTo)
+      toast.success(t(initialData?.id ? 'procurement.supplierUpdated' : 'procurement.supplierCreated'))
       await invalidateSuppliers()
       exitForm()
-    } catch (error: any) {
-      toast.error(errorMessage(tRoot, error, tCommon('error')))
+    } catch (error) {
+      toast.error(errorMessage(t, error, t('common.error')))
     } finally {
-      setIsSubmitting(false)
+      setSubmitting(false)
     }
   }
 
   return (
-    <>
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl md:rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-      <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <div className="h-10 w-10 rounded-lg bg-violet-50 dark:bg-violet-950/50 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
-          <Truck className="h-5 w-5" />
-        </div>
+    <form onSubmit={form.handleSubmit(submit)} className="space-y-6 rounded-2xl border bg-card p-4 shadow-xs md:rounded-xl md:p-6">
+      <header className="flex items-center gap-3 border-b pb-4">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-subtle text-violet-600 dark:text-violet-400">
+          <Truck className="size-5" />
+        </span>
         <div>
-          <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">{t('supplier')}</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">{t('addSupplier')}</p>
+          <h3 className="text-base font-bold text-foreground">{t('procurement.supplier')}</h3>
+          <p className="text-xs text-muted-foreground">{t('procurement.addSupplier')}</p>
         </div>
+      </header>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <LabeledField id="name" label={t('procurement.supplierName')} icon={Truck} required error={errors.name?.message}>
+          <Input id="name" {...register('name')} placeholder={t('procurement.supplierName')} />
+        </LabeledField>
+        <LabeledField id="phone" label={t('procurement.supplierPhone')} icon={Phone} required error={errors.phone?.message as string | undefined}>
+          <Controller control={control} name="phone" render={({ field }) => <PhoneInput id="phone" value={field.value ?? ''} onChange={field.onChange} hasError={!!errors.phone} />} />
+        </LabeledField>
+        <LabeledField id="contact_person" label={t('procurement.contactPerson')} icon={User}>
+          <Input id="contact_person" {...register('contact_person')} placeholder={t('procurement.contactPerson')} />
+        </LabeledField>
+        <LabeledField id="email" label={t('common.email')} icon={Mail} error={errors.email?.message}>
+          <Input id="email" type="email" {...register('email')} placeholder="example@mail.com" />
+        </LabeledField>
+        <LabeledField id="tin" label={t('procurement.tin')} icon={CreditCard}>
+          <Input id="tin" {...register('tin')} placeholder="123456789" />
+        </LabeledField>
+        <StatusField control={control} />
+        <AddressField form={form} label={t('common.address')} placeholder={t('common.address')} className="md:col-span-2" />
+        <LabeledField id="notes" label={t('common.notes')} icon={FileText} className="md:col-span-2">
+          <Textarea id="notes" {...register('notes')} placeholder={t('common.notes')} rows={3} className="resize-none" />
+        </LabeledField>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Supplier Name */}
-        <div className="space-y-2">
-          <Label htmlFor="name" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <Truck className="h-3.5 w-3.5 text-slate-400" />
-            {t('supplierName')} *
-          </Label>
-          <Input
-            id="name"
-            {...register('name')}
-            placeholder={t('supplierName')}
-            className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
-          />
-          {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name.message}</p>}
-        </div>
-
-        {/* Phone */}
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <Phone className="h-3.5 w-3.5 text-slate-400" />
-            {t('supplierPhone')} *
-          </Label>
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field }) => (
-              <PhoneInput
-                id="phone"
-                value={field.value ?? ''}
-                onChange={field.onChange}
-                hasError={!!errors.phone}
-                triggerClassName="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg"
-                inputClassName="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
-              />
-            )}
-          />
-          {errors.phone && <p className="text-xs text-red-500 font-medium">{errors.phone.message}</p>}
-        </div>
-
-        {/* Contact Person */}
-        <div className="space-y-2">
-          <Label htmlFor="contact_person" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-slate-400" />
-            {t('contactPerson')}
-          </Label>
-          <Input
-            id="contact_person"
-            {...register('contact_person')}
-            placeholder={t('contactPerson')}
-            className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
-          />
-        </div>
-
-        {/* Email */}
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <Mail className="h-3.5 w-3.5 text-slate-400" />
-            {tCommon('email')}
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            {...register('email')}
-            placeholder="example@mail.com"
-            className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
-          />
-          {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>}
-        </div>
-
-        {/* TIN */}
-        <div className="space-y-2">
-          <Label htmlFor="tin" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <CreditCard className="h-3.5 w-3.5 text-slate-400" />
-            {t('tin')}
-          </Label>
-          <Input
-            id="tin"
-            {...register('tin')}
-            placeholder="123456789"
-            className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800"
-          />
-        </div>
-
-        {/* Status */}
-        <div className="space-y-2">
-          <Label htmlFor="is_active" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-slate-400" />
-            {tCommon('status')}
-          </Label>
-          <Controller
-            control={control}
-            name="is_active"
-            render={({ field }) => (
-              <Select value={field.value ? 'true' : 'false'} onValueChange={(val) => field.onChange(val === 'true')}>
-                <SelectTrigger id="is_active" className="w-full">
-                  <SelectValue>{field.value ? tCommon('active') : tCommon('inactive')}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">{tCommon('active')}</SelectItem>
-                  <SelectItem value="false">{tCommon('inactive')}</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
-
-        {/* Address */}
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="address" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-slate-400" />
-            {tCommon('address')}
-            {hasPreciseLocation && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded-full normal-case">
-                <MapPin className="h-2.5 w-2.5" />
-                {t('pinnedOnMap')}
-              </span>
-            )}
-          </Label>
-          <div className="flex gap-2">
-            <Input
-              id="address"
-              {...register('address')}
-              placeholder={tCommon('address')}
-              className="h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 flex-1"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleOpenMap}
-              className="h-10 px-4 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
-            >
-              <MapPin className="h-4 w-4 text-slate-500" />
-              {tSales('locationPicker.button')}
-            </Button>
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="notes" className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5 text-slate-400" />
-            {tCommon('notes')}
-          </Label>
-          <Textarea
-            id="notes"
-            {...register('notes')}
-            placeholder={tCommon('notes')}
-            rows={3}
-            className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500 rounded-lg text-sm transition-all focus:bg-white dark:focus:bg-slate-800 resize-none"
-          />
-        </div>
-      </div>
-
       <div className="max-w-sm">
-        <AssigneeSelect
-          value={assignedTo}
-          onChange={setAssignedTo}
-          users={assignableUsers}
-        />
+        <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
       </div>
-
       <FormFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => exitForm()}
-          disabled={isSubmitting}
-        >
-          {tCommon('cancel')}
+        <Button type="button" variant="outline" onClick={() => exitForm()} disabled={submitting}>
+          {t('common.cancel')}
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? tCommon('loading') : tCommon('save')}
+        <Button type="submit" disabled={submitting}>
+          {t(submitting ? 'common.saving' : 'common.save')}
         </Button>
       </FormFooter>
     </form>
-
-    {isMapOpen && (
-      <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
-        <DialogContent className="sm:max-w-2xl bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg">
-          <DialogHeader className="pb-3 border-b border-slate-100 dark:border-slate-800">
-            <DialogTitle className="font-bold text-slate-800 dark:text-slate-200 text-base flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-              {tSales('locationPicker.dialogTitle')}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-1">
-              {tSales('locationPicker.dialogSubtitle')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <MapPicker
-              onLocationSelect={handleLocationSelect}
-              initialAddress={tempAddress || getValues('address')}
-              initialLat={tempLat}
-              initialLng={tempLng}
-            />
-          </div>
-          <DialogFooter className="-mx-6 -mb-6 rounded-b-xl px-6 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsMapOpen(false)}
-            >
-              {tCommon('cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={handleConfirmLocation}
-            >
-              {tCommon('save')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    )}
-    </>
   )
 }

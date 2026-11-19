@@ -7,6 +7,7 @@ import type { LucideIcon } from 'lucide-react'
 import { ArrowRight, BarChart3, Boxes, Contact, Layers, Table2, TrendingUp, Users } from 'lucide-react'
 import { ReportBuilder } from '@/components/reports/report-builder'
 import { PageHeader } from '@/components/shared/page-header'
+import { useCan } from '@/components/providers/permissions-provider'
 
 /**
  * The Reports hub.
@@ -42,6 +43,20 @@ export function ReportsTabs({ today, lang }: { today: string; lang: string }) {
   const t = useTranslations('reports')
 
   const [tab, setTab] = useState<'catalog' | 'custom'>('catalog')
+  // Each report and the builder are sections of the `analytics` permission:
+  // only the ones this user may open are offered.
+  const canSales = useCan('analytics', 'view', 'sales')
+  const canEmployees = useCan('analytics', 'view', 'employees')
+  const canCustomers = useCan('analytics', 'view', 'customers')
+  const canProducts = useCan('analytics', 'view', 'products')
+  const canAbc = useCan('analytics', 'view', 'abc')
+  const canBuilder = useCan('analytics', 'view', 'builder')
+  const allowedCards: Record<ReportCard['key'], boolean> = {
+    sales: canSales, employees: canEmployees, customers: canCustomers, products: canProducts, abc: canAbc,
+  }
+  const cards = REPORT_CARDS.filter((card) => allowedCards[card.key])
+  const showCatalog = cards.length > 0
+  const activeTab = !showCatalog && canBuilder ? 'custom' : !canBuilder ? 'catalog' : tab
 
   const tabClass = (active: boolean) =>
     `flex shrink-0 items-center gap-1.5 rounded-full md:rounded-md px-3.5 py-2 md:px-3 md:py-1.5 text-xs font-semibold transition-colors ${
@@ -57,21 +72,23 @@ export function ReportsTabs({ today, lang }: { today: string; lang: string }) {
         info={tInfo('analytics')}
         breadcrumbs={[{ label: 'Falco', href: `/${lang}/dashboard` }, { label: t('title') }]}
       >
+        {showCatalog && canBuilder && (
         <div className="inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-full md:rounded-lg border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
-          <button type="button" onClick={() => setTab('catalog')} className={tabClass(tab === 'catalog')}>
+          <button type="button" onClick={() => setTab('catalog')} className={tabClass(activeTab === 'catalog')}>
             <BarChart3 className="h-3.5 w-3.5" />
             {t('catalog')}
           </button>
-          <button type="button" onClick={() => setTab('custom')} className={tabClass(tab === 'custom')}>
+          <button type="button" onClick={() => setTab('custom')} className={tabClass(activeTab === 'custom')}>
             <Table2 className="h-3.5 w-3.5" />
             {t('custom')}
           </button>
         </div>
+        )}
       </PageHeader>
 
-      {tab === 'catalog' ? (
+      {activeTab === 'catalog' ? (
         <div className="grid gap-3 md:gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {REPORT_CARDS.map((card) => {
+          {cards.map((card) => {
             const Icon = card.icon
             return (
               <Link

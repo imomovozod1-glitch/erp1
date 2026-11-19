@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { getSessionUser } from '@/lib/auth'
 import { PageHeader } from '@/components/shared/page-header'
 import { CompanyForm } from '@/components/settings/company-form'
-import { requireModuleView } from '@/lib/permissions-server'
+import { requireResourceView } from '@/lib/permissions-server'
 import { getCurrentTenantId, getCachedTenant } from '@/lib/tenant'
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -22,7 +22,7 @@ export default async function CompanySettingsPage({
   // Settings is a permissioned module; profile/ and security/ deliberately
   // stay open so a user can always read their own details and change their
   // own password.
-  await requireModuleView('settings', lang)
+  await requireResourceView('settings', 'company', lang)
   const user = await getSessionUser()
 
   if (!user) {

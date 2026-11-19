@@ -1,114 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useMemo } from 'react'
+import { Loader2, Search, type LucideIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import {
-  Search,
-  LayoutDashboard,
-  TrendingUp,
-  Store,
-  Package,
-  Wrench,
-  Factory,
-  Tags,
-  ArrowLeftRight,
-  Ruler,
-  ShoppingCart,
-  FileText,
-  Contact,
-  Layers,
-  Truck,
-  Route,
-  Building2,
-  Wallet,
-  DollarSign,
-  ListTree,
-  Users,
-  ShieldCheck,
-  Settings,
-  BookOpen,
-  HelpCircle,
-  LifeBuoy,
-  Loader2,
-  type LucideIcon,
-} from 'lucide-react'
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import { createClient } from '@/lib/supabase/client'
-import { formatCurrency } from '@/lib/utils'
-import {
-  dataScope,
-  hasViewAccess,
-  type PermissionModule,
-} from '@/lib/permissions'
-
-/** A page the palette can jump to. `module` gates it behind view access. */
-interface NavTarget {
-  href: string
-  icon: LucideIcon
-  labelKey: [string, string]
-  module?: PermissionModule
-}
-
-const NAV_TARGETS: NavTarget[] = [
-  { href: 'dashboard', icon: LayoutDashboard, labelKey: ['nav', 'dashboard'] },
-  { href: 'reports', icon: TrendingUp, labelKey: ['nav', 'reports'], module: 'analytics' },
-  { href: 'pos', icon: Store, labelKey: ['nav', 'pos'], module: 'pos' },
-  { href: 'inventory/products', icon: Package, labelKey: ['inventory', 'products'], module: 'inventory' },
-  { href: 'inventory/services', icon: Wrench, labelKey: ['inventory', 'services'], module: 'inventory' },
-  { href: 'inventory/categories', icon: Tags, labelKey: ['inventory', 'categories'], module: 'inventory' },
-  { href: 'inventory/movements', icon: ArrowLeftRight, labelKey: ['inventory', 'stockMovements'], module: 'inventory' },
-  { href: 'inventory/units', icon: Ruler, labelKey: ['inventory', 'unit'], module: 'inventory' },
-  { href: 'sales/orders', icon: ShoppingCart, labelKey: ['sales', 'orders'], module: 'sales' },
-  { href: 'sales/invoices', icon: FileText, labelKey: ['sales', 'invoices'], module: 'sales' },
-  { href: 'customers', icon: Contact, labelKey: ['nav', 'customers'], module: 'customers' },
-  { href: 'customers/categories', icon: Layers, labelKey: ['sales', 'customerCategories'], module: 'customers' },
-  { href: 'procurement/purchase-orders', icon: Truck, labelKey: ['procurement', 'purchases'], module: 'procurement' },
-  { href: 'procurement/suppliers', icon: Building2, labelKey: ['procurement', 'suppliers'], module: 'procurement' },
-  { href: 'finance/cashbox', icon: Wallet, labelKey: ['finance', 'cashbox'], module: 'finance' },
-  { href: 'finance/transactions', icon: DollarSign, labelKey: ['finance', 'transactions'], module: 'finance' },
-  { href: 'finance/categories', icon: ListTree, labelKey: ['finance', 'txCategories'], module: 'finance' },
-  { href: 'hr/employees', icon: Users, labelKey: ['hr', 'employees'], module: 'hr' },
-  { href: 'hr/roles', icon: ShieldCheck, labelKey: ['hr', 'roles'], module: 'hr' },
-  { href: 'production/orders', icon: Factory, labelKey: ['production', 'orders'], module: 'production' },
-  { href: 'production/boms', icon: Layers, labelKey: ['production', 'boms'], module: 'production' },
-  { href: 'distribution/deliveries', icon: Truck, labelKey: ['distribution', 'deliveries'], module: 'distribution' },
-  { href: 'distribution/routes', icon: Route, labelKey: ['distribution', 'routes'], module: 'distribution' },
-  { href: 'settings', icon: Settings, labelKey: ['nav', 'settings'], module: 'settings' },
-  { href: 'guide', icon: BookOpen, labelKey: ['nav', 'guide'] },
-  { href: 'faq', icon: HelpCircle, labelKey: ['nav', 'faq'] },
-  { href: 'support', icon: LifeBuoy, labelKey: ['support', 'title'] },
-]
-
-interface Hit {
-  id: string
-  href: string
-  title: string
-  subtitle?: string
-}
-
-interface Results {
-  products: Hit[]
-  customers: Hit[]
-  suppliers: Hit[]
-  orders: Hit[]
-  invoices: Hit[]
-}
-
-const EMPTY_RESULTS: Results = { products: [], customers: [], suppliers: [], orders: [], invoices: [] }
-
-/** Escapes the PostgREST `or=(…)` separators so a comma or paren in the query can't break out of the filter. */
-function safeTerm(term: string) {
-  return term.replace(/[,()*\\]/g, ' ').trim()
-}
+import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { SOURCES, type Hit } from '@/components/layout/search/search-records'
+import { NAV_TARGETS } from '@/components/layout/search/search-targets'
+import { useGlobalSearch } from '@/components/layout/search/use-global-search'
+import { hasViewAccess } from '@/lib/permissions'
 
 interface GlobalSearchProps {
   lang: string
@@ -118,301 +17,92 @@ interface GlobalSearchProps {
   userId: string | null
 }
 
-export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchProps) {
-  const router = useRouter()
-  const tCommon = useTranslations('common')
-  const tNav = useTranslations('nav')
-  const tInventory = useTranslations('inventory')
-  const tSales = useTranslations('sales')
-  const tFinance = useTranslations('finance')
-  const tHr = useTranslations('hr')
-  const tProcurement = useTranslations('procurement')
-  const tProduction = useTranslations('production')
-  const tDistribution = useTranslations('distribution')
-  const tSupport = useTranslations('support')
+const MAX_PAGES = 6
 
-  const namespaces: Record<string, (key: string) => string> = {
-    nav: tNav,
-    inventory: tInventory,
-    sales: tSales,
-    finance: tFinance,
-    hr: tHr,
-    procurement: tProcurement,
-    production: tProduction,
-    distribution: tDistribution,
-    support: tSupport,
-  }
+function usePages(query: string, role: GlobalSearchProps['role'], permissions: unknown) {
+  const t = useTranslations()
+  return useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    const pages = NAV_TARGETS.filter((target) => !target.module || hasViewAccess(role, permissions, target.module)).map((target) => ({ ...target, text: t(target.label) }))
+    return (needle ? pages.filter((page) => page.text.toLowerCase().includes(needle)) : pages).slice(0, MAX_PAGES)
+  }, [query, role, permissions, t])
+}
 
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<Results>(EMPTY_RESULTS)
-  const [isSearching, setIsSearching] = useState(false)
+function HitGroup({ heading, hits, icon: Icon, onGo }: { heading: string; hits: Hit[]; icon: LucideIcon; onGo: (href: string) => void }) {
+  if (hits.length === 0) return null
+  return (
+    <CommandGroup heading={heading}>
+      {hits.map((hit) => (
+        <CommandItem key={hit.id} value={`${heading}-${hit.id}`} onSelect={() => onGo(hit.href)} className="gap-3 py-2">
+          <Icon className="text-muted-foreground" />
+          <span className="truncate">{hit.title}</span>
+          {hit.subtitle && <span className="ml-auto truncate text-xs text-muted-foreground">{hit.subtitle}</span>}
+        </CommandItem>
+      ))}
+    </CommandGroup>
+  )
+}
 
-  const canView = (module: PermissionModule) => hasViewAccess(role, permissions, module)
-  /** `undefined` when the user may see every row, their own id when they may not. */
-  const ownerFilter = (module: PermissionModule) =>
-    userId && dataScope(role, permissions, module) === 'own' ? userId : undefined
-
-  const pages = useMemo(() => {
-    const visible = NAV_TARGETS.filter((target) => !target.module || canView(target.module))
-    const q = query.trim().toLowerCase()
-    const labelled = visible.map((target) => ({
-      ...target,
-      label: namespaces[target.labelKey[0]](target.labelKey[1]),
-    }))
-    if (!q) return labelled.slice(0, 6)
-    return labelled.filter((target) => target.label.toLowerCase().includes(q)).slice(0, 6)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, role, permissions])
-
-  // ⌘K / Ctrl+K anywhere in the app.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setOpen((prev) => !prev)
-      }
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [])
-
-  // Debounced record search. Each module is queried only if the user may view
-  // it, and narrowed to their own records when their data scope says so — the
-  // palette must never surface a row its list page would hide.
-  useEffect(() => {
-    const term = safeTerm(query)
-    // Clearing is done by `handleQueryChange`/`handleOpenChange`, not here — a
-    // synchronous setState inside an effect is a React Compiler lint error.
-    if (!open || term.length < 2) return
-
-    let cancelled = false
-    const timer = setTimeout(async () => {
-      setIsSearching(true)
-      const supabase = createClient() as any
-      const like = `%${term}%`
-
-      const scoped = (builder: any, module: PermissionModule) => {
-        const owner = ownerFilter(module)
-        return owner ? builder.or(`assigned_to.eq.${owner},assigned_to.is.null`) : builder
-      }
-
-      const [products, customers, suppliers, orders, invoices] = await Promise.all([
-        canView('inventory')
-          ? scoped(
-              supabase.from('products').select('id, name, sku, price, is_service').or(`name.ilike.${like},sku.ilike.${like}`),
-              'inventory'
-            ).limit(5)
-          : Promise.resolve({ data: [] }),
-        canView('customers')
-          ? scoped(
-              supabase.from('customers').select('id, name, phone').or(`name.ilike.${like},phone.ilike.${like}`),
-              'customers'
-            ).limit(5)
-          : Promise.resolve({ data: [] }),
-        canView('procurement')
-          ? scoped(
-              supabase.from('suppliers').select('id, name, phone').or(`name.ilike.${like},phone.ilike.${like}`),
-              'procurement'
-            ).limit(5)
-          : Promise.resolve({ data: [] }),
-        canView('sales')
-          ? scoped(
-              supabase
-                .from('sales_orders')
-                .select('id, order_number, total_amount, customers(name)')
-                .ilike('order_number', like),
-              'sales'
-            ).limit(5)
-          : Promise.resolve({ data: [] }),
-        canView('sales')
-          ? scoped(
-              supabase
-                .from('invoices')
-                .select('id, invoice_number, total_amount, customers(name)')
-                .ilike('invoice_number', like),
-              'sales'
-            ).limit(5)
-          : Promise.resolve({ data: [] }),
-      ])
-
-      if (cancelled) return
-      setResults({
-        // A service lives in `products` but has its own screens: sending one to
-        // the product editor would offer stock fields the database forbids it.
-        products: (products.data ?? []).map((p: any) => ({
-          id: p.id,
-          href: p.is_service
-            ? `/${lang}/inventory/services/${p.id}/edit`
-            : `/${lang}/inventory/products/${p.id}`,
-          title: p.name,
-          subtitle: [p.sku, formatCurrency(p.price)].filter(Boolean).join(' · '),
-        })),
-        customers: (customers.data ?? []).map((c: any) => ({
-          id: c.id,
-          href: `/${lang}/customers/${c.id}`,
-          title: c.name,
-          subtitle: c.phone ?? undefined,
-        })),
-        suppliers: (suppliers.data ?? []).map((s: any) => ({
-          id: s.id,
-          href: `/${lang}/procurement/suppliers/${s.id}`,
-          title: s.name,
-          subtitle: s.phone ?? undefined,
-        })),
-        orders: (orders.data ?? []).map((o: any) => ({
-          id: o.id,
-          href: `/${lang}/sales/orders/${o.id}`,
-          title: o.order_number,
-          subtitle: [o.customers?.name, formatCurrency(o.total_amount)].filter(Boolean).join(' · '),
-        })),
-        invoices: (invoices.data ?? []).map((i: any) => ({
-          id: i.id,
-          href: `/${lang}/sales/invoices/${i.id}`,
-          title: i.invoice_number,
-          subtitle: [i.customers?.name, formatCurrency(i.total_amount)].filter(Boolean).join(' · '),
-        })),
-      })
-      setIsSearching(false)
-    }, 250)
-
-    return () => {
-      cancelled = true
-      clearTimeout(timer)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, open, lang, role, permissions, userId])
-
-  const handleQueryChange = (value: string) => {
-    setQuery(value)
-    // Drop the previous query's hits immediately so they can't be read as
-    // results for what is being typed now.
-    if (safeTerm(value).length < 2) {
-      setResults(EMPTY_RESULTS)
-      setIsSearching(false)
-    }
-  }
-
-  const handleOpenChange = (next: boolean) => {
-    setOpen(next)
-    if (!next) {
-      setQuery('')
-      setResults(EMPTY_RESULTS)
-      setIsSearching(false)
-    }
-  }
-
-  const go = (href: string) => {
-    setOpen(false)
-    setQuery('')
-    router.push(href)
-  }
-
-  const hitCount =
-    results.products.length +
-    results.customers.length +
-    results.suppliers.length +
-    results.orders.length +
-    results.invoices.length
-
-  const renderGroup = (heading: string, hits: Hit[], icon: LucideIcon) => {
-    if (hits.length === 0) return null
-    const Icon = icon
-    return (
-      <CommandGroup heading={heading}>
-        {hits.map((hit) => (
-          <CommandItem key={hit.id} value={`${heading}-${hit.id}`} onSelect={() => go(hit.href)} className="gap-3 py-2">
-            <Icon className="text-muted-foreground" />
-            <span className="truncate">{hit.title}</span>
-            {hit.subtitle && (
-              <span className="ml-auto truncate text-xs text-muted-foreground">{hit.subtitle}</span>
-            )}
-          </CommandItem>
-        ))}
-      </CommandGroup>
-    )
-  }
-
+function SearchTriggers({ onOpen }: { onOpen: () => void }) {
+  const t = useTranslations('common')
   return (
     <>
-      {/* Desktop: a real-looking search field. Mobile: just the icon. */}
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="hidden md:order-first md:flex items-center gap-2.5 h-10 w-64 lg:w-80 xl:w-96 min-w-0 shrink rounded-xl border border-border bg-card px-3.5 text-left text-sm text-muted-foreground shadow-2xs transition-colors hover:border-violet-300 hover:bg-violet-50/50 dark:hover:border-violet-700 dark:hover:bg-violet-950/30"
+        onClick={onOpen}
+        className="hidden h-10 w-64 min-w-0 shrink items-center gap-2.5 rounded-xl border border-border bg-card px-3.5 text-left text-sm text-muted-foreground shadow-2xs transition-colors hover:border-violet-300 hover:bg-violet-50/50 md:order-first md:flex lg:w-80 xl:w-96 dark:hover:border-violet-700 dark:hover:bg-violet-950/30"
       >
-        <Search className="h-4 w-4 shrink-0" />
-        <span className="min-w-0 flex-1 truncate">{tCommon('searchPlaceholder')}</span>
-        <kbd className="hidden lg:inline-flex h-6 shrink-0 items-center rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 font-mono text-[11px] text-slate-400">
-          Ctrl K
-        </kbd>
+        <Search className="size-4 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">{t('searchPlaceholder')}</span>
+        <kbd className="hidden h-6 shrink-0 items-center rounded-md border bg-card px-2 font-mono text-[11px] text-muted-foreground lg:inline-flex">Ctrl K</kbd>
       </button>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        aria-label={tCommon('search')}
-        className="md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-violet-50 dark:hover:bg-violet-500/15"
+        onClick={onOpen}
+        aria-label={t('search')}
+        className="flex size-10 shrink-0 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-violet-50 md:hidden dark:hover:bg-violet-500/15"
       >
-        <Search className="h-4 w-4" />
+        <Search className="size-4" />
       </button>
+    </>
+  )
+}
 
-      <CommandDialog
-        open={open}
-        onOpenChange={handleOpenChange}
-        title={tCommon('search')}
-        description={tCommon('searchPlaceholder')}
-        className="sm:max-w-xl"
-      >
-        {/* `shouldFilter={false}`: remote hits are already filtered by the
-            database, and cmdk's own fuzzy filter matches against each item's
-            `value`, so it would drop every result that doesn't literally
-            contain the query. */}
+/** Quick search: jump to a page, or to a product, customer, supplier, order or invoice. */
+export function GlobalSearch({ lang, role, permissions, userId }: GlobalSearchProps) {
+  const t = useTranslations()
+  const search = useGlobalSearch({ role, permissions, userId }, lang)
+  const pages = usePages(search.query, role, permissions)
+  const hitCount = Object.values(search.results).reduce((sum, hits) => sum + hits.length, 0)
+  return (
+    <>
+      <SearchTriggers onOpen={() => search.setOpen(true)} />
+      <CommandDialog open={search.open} onOpenChange={search.setOpen} title={t('common.search')} description={t('common.searchPlaceholder')} className="sm:max-w-xl">
+        {/* Remote hits are already filtered by the database; cmdk's own filter would drop them. */}
         <Command shouldFilter={false}>
-        <CommandInput
-          autoFocus
-          value={query}
-          onValueChange={handleQueryChange}
-          placeholder={tCommon('searchPlaceholder')}
-          wrapperClassName="p-2 pb-1"
-          groupClassName="h-11! text-base"
-          className="text-base sm:text-sm"
-        />
-        <CommandList>
-          {isSearching && (
-            <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {tCommon('loading')}
-            </div>
-          )}
-          {!isSearching && query.trim().length >= 2 && hitCount === 0 && pages.length === 0 && (
-            <CommandEmpty>{tCommon('noResults')}</CommandEmpty>
-          )}
-          {pages.length > 0 && (
-            <CommandGroup heading={tCommon('pages')}>
-              {pages.map((target) => {
-                const Icon = target.icon
-                return (
-                  <CommandItem
-                    key={target.href}
-                    value={`page-${target.href}`}
-                    className="gap-3 py-2"
-                    onSelect={() => go(`/${lang}/${target.href}`)}
-                  >
+          <CommandInput autoFocus value={search.query} onValueChange={search.changeQuery} placeholder={t('common.searchPlaceholder')} wrapperClassName="p-2 pb-1" groupClassName="h-11! text-base" className="text-base sm:text-sm" />
+          <CommandList>
+            {search.searching && (
+              <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" /> {t('common.loading')}
+              </div>
+            )}
+            {!search.searching && search.typed && hitCount === 0 && pages.length === 0 && <CommandEmpty>{t('common.noResults')}</CommandEmpty>}
+            {pages.length > 0 && (
+              <CommandGroup heading={t('common.pages')}>
+                {pages.map(({ href, icon: Icon, text }) => (
+                  <CommandItem key={href} value={`page-${href}`} className="gap-3 py-2" onSelect={() => search.go(`/${lang}/${href}`)}>
                     <Icon className="text-muted-foreground" />
-                    <span>{target.label}</span>
+                    <span>{text}</span>
                   </CommandItem>
-                )
-              })}
-            </CommandGroup>
-          )}
-          {renderGroup(tInventory('products'), results.products, Package)}
-          {renderGroup(tSales('customers'), results.customers, Contact)}
-          {renderGroup(tProcurement('suppliers'), results.suppliers, Building2)}
-          {renderGroup(tSales('orders'), results.orders, ShoppingCart)}
-          {renderGroup(tSales('invoices'), results.invoices, FileText)}
-          {query.trim().length < 2 && (
-            <p className="px-3 py-2.5 text-xs text-muted-foreground">{tCommon('searchHint')}</p>
-          )}
-        </CommandList>
+                ))}
+              </CommandGroup>
+            )}
+            {SOURCES.map((source) => (
+              <HitGroup key={source.key} heading={t(source.heading)} hits={search.results[source.key]} icon={source.icon} onGo={search.go} />
+            ))}
+            {!search.typed && <p className="px-3 py-2.5 text-xs text-muted-foreground">{t('common.searchHint')}</p>}
+          </CommandList>
         </Command>
       </CommandDialog>
     </>

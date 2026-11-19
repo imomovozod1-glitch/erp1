@@ -16,6 +16,7 @@ import {
   type SalesOrderRow,
 } from '@/lib/reports/sales-analytics'
 import { formatCurrency, formatNumber } from '@/lib/utils'
+import { formatQty } from '@/components/reports/report-format'
 
 // recharts is the bulk of this page's JavaScript and the chart is client-only
 // anyway (ResponsiveContainer measures the DOM), so it is fetched on its own.
@@ -160,7 +161,7 @@ function Body({
             header: t('col.quantity'),
             align: 'right',
             className: 'hidden md:table-cell',
-            render: (row) => formatNumber(Math.round(row.quantity * 100) / 100),
+            render: (row) => formatQty(row.quantity),
           },
           {
             key: 'avgCheck',

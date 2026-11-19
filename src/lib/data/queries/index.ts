@@ -28,14 +28,21 @@
 
 export * from './cache-tags'
 export * from './inventory'
+export * from './inventory-details'
 export * from './production'
+export * from './production-details'
 export * from './distribution'
+export * from './deliveries'
 export * from './sales'
 export * from './customers'
+export * from './customers-overview'
 export * from './finance'
 export * from './hr'
+export * from './hr-details'
 export * from './procurement'
 export * from './analytics'
+export * from './sales-report-data'
+export * from './dashboard-stats'
 export * from './pos'
 // Re-exported for the callers that imported it from here before it moved out
 // of the query layer; new code should import it from '@/lib/sales-discounts'.

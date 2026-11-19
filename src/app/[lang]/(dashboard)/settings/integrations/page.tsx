@@ -4,7 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { getSessionUser, getCachedProfile } from '@/lib/auth'
 import { PageHeader } from '@/components/shared/page-header'
 import { TelegramIntegrationForm } from '@/components/settings/telegram-integration-form'
-import { requireModuleView } from '@/lib/permissions-server'
+import { requireResourceView } from '@/lib/permissions-server'
 import { getTelegramStatus } from '@/lib/integrations/telegram'
 import { getCurrentTenantId } from '@/lib/tenant'
 
@@ -23,7 +23,7 @@ export default async function IntegrationsSettingsPage({
   // Settings is a permissioned module; profile/ and security/ deliberately
   // stay open so a user can always read their own details and change their
   // own password.
-  await requireModuleView('settings', lang)
+  await requireResourceView('settings', 'integrations', lang)
   const user = await getSessionUser()
 
   if (!user) {

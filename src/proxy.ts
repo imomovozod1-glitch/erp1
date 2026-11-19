@@ -1,374 +1,108 @@
 import createMiddleware from 'next-intl/middleware'
 import { NextRequest, NextResponse } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
 import { routing } from '@/i18n/routing'
-import { computeEffectiveStatus } from '@/lib/tenant-status'
-// Shared with the tenant login route, which has to refuse a sign-in on a
-// subdomain the account does not belong to — one parser, one answer.
+import { lookupTenant, readGateCookie, touchLastActive, writeGateCookie, type TenantGateInfo } from '@/lib/proxy/tenant-gate'
+import { updateSession } from '@/lib/supabase/middleware'
+// Shared with the tenant login route, so a sign-in and the gate parse the subdomain the same way.
 import { getTenantSubdomain } from '@/lib/tenant-host'
 
 const intlMiddleware = createMiddleware(routing)
 
 const TENANT_STATUS_ROUTE = '/tenant-status'
-// /tenant-status must be public: it's shown to visitors who may have no
-// session at all (a blocked/gone tenant's subdomain) — requiring auth here
-// would bounce them to /login, which the tenant gate then bounces right back
-// to /tenant-status, an infinite redirect loop.
+// /tenant-status must be public: a gone tenant's visitor may have no session, and sending them to
+// /login would bounce straight back here — a redirect loop.
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', TENANT_STATUS_ROUTE]
 
-interface TenantGateInfo {
-  id: string
-  status: string
+/** Subdomains that are consoles, not tenants (reserved at provisioning), served from their own tree. */
+const CONSOLES = ['admin', 'support'] as const
+
+/** Areas outside [lang] with their own auth: no locale redirect, tenant gate or tenant session. */
+const SELF_AUTHED = ['/admin', '/tg', '/support']
+
+const under = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+
+// admin.<domain>/login keeps its URL while Next.js serves src/app/admin/**; same for support.
+function rewriteConsole(request: NextRequest, prefix: string) {
+  const url = request.nextUrl.clone()
+  if (!url.pathname.startsWith(prefix)) url.pathname = `${prefix}${url.pathname === '/' ? '' : url.pathname}`
+  return NextResponse.rewrite(url)
 }
 
-// Every request under a tenant subdomain previously paid for a fresh,
-// uncached Supabase REST round-trip here (measured ~650-750ms per call from
-// a typical dev network path) — on top of the auth session check right
-// after it, that's up to ~1.5-2s of pure network wait before Next.js even
-// starts rendering the page, on every single navigation. A tenant's status
-// only ever changes via a deliberate admin action, so a short-lived cookie
-// cache removes that cost for the overwhelming majority of requests while
-// still catching a newly-blocked tenant within one cache window.
-//
-// Not cryptographically signed: forging this cookie only ever bypasses the
-// *billing* gate (subscription lapsed), never RLS/data isolation, which is
-// enforced independently at the database layer regardless of this cookie.
-// The short TTL bounds how long that forgery could matter.
-const TENANT_GATE_COOKIE = 'tg_cache'
-const TENANT_GATE_TTL_MS = 30_000
-
-interface TenantGateCacheEntry {
-  s: string // subdomain this entry is valid for
-  id: string
-  st: string // status
-  t: number // cached-at, ms epoch
+function localeOf(pathname: string) {
+  const locale = routing.locales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`)
+  return { locale, path: locale ? pathname.replace(`/${locale}`, '') || '/' : pathname }
 }
 
-function readTenantGateCache(request: NextRequest, subdomain: string): TenantGateInfo | null {
-  const raw = request.cookies.get(TENANT_GATE_COOKIE)?.value
-  if (!raw) return null
-  try {
-    const parsed: TenantGateCacheEntry = JSON.parse(raw)
-    if (parsed.s !== subdomain) return null
-    if (Date.now() - parsed.t > TENANT_GATE_TTL_MS) return null
-    return { id: parsed.id, status: parsed.st }
-  } catch {
-    return null
+function statusRedirect(request: NextRequest, locale: string, reason: string) {
+  const url = new URL(`/${locale}${TENANT_STATUS_ROUTE}`, request.url)
+  url.searchParams.set('reason', reason)
+  return NextResponse.redirect(url)
+}
+
+interface Gate {
+  tenant: TenantGateInfo | null
+  /** The lookup missed the cookie, so the answer is written back onto whatever response goes out. */
+  remember: (response: NextResponse) => NextResponse
+  /** Set when the visitor must not reach the app at all. */
+  refusal?: NextResponse
+}
+
+/** A blocked or inactive tenant should not even see a login form, and an unknown subdomain never reaches the app. */
+async function tenantGate(request: NextRequest, subdomain: string | null, locale: string, path: string): Promise<Gate> {
+  const none: Gate = { tenant: null, remember: (r) => r }
+  if (!subdomain || path === TENANT_STATUS_ROUTE) return none
+  const cached = readGateCookie(request, subdomain)
+  const tenant = cached ?? (await lookupTenant(subdomain))
+  const remember = (response: NextResponse) => {
+    if (!cached && tenant) writeGateCookie(response, subdomain, tenant)
+    return response
   }
+  if (!tenant) return { ...none, refusal: statusRedirect(request, locale, 'not-found') }
+  if (tenant.status !== 'active') return { tenant, remember, refusal: remember(statusRedirect(request, locale, tenant.status === 'blocked' ? 'blocked' : 'inactive')) }
+  return { tenant, remember }
 }
 
-function writeTenantGateCache(response: NextResponse, subdomain: string, tenant: TenantGateInfo) {
-  const entry: TenantGateCacheEntry = { s: subdomain, id: tenant.id, st: tenant.status, t: Date.now() }
-  response.cookies.set(TENANT_GATE_COOKIE, JSON.stringify(entry), {
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 60,
-    path: '/',
-  })
-}
-
-/** Fire-and-forget PATCH against the service-role REST API — never blocks the response on this. */
-function patchTenant(tenantId: string, body: Record<string, unknown>) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !serviceKey) return
-
-  fetch(`${supabaseUrl}/rest/v1/tenants?id=eq.${tenantId}`, {
-    method: 'PATCH',
-    headers: {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    },
-    body: JSON.stringify(body),
-    cache: 'no-store',
-  }).catch(() => {})
-}
-
-/**
- * Lightweight, UNCACHED-AT-THE-FETCH-LEVEL tenant lookup for the Edge
- * middleware gate — callers should check `readTenantGateCache` first (see
- * above) so this only actually runs on a cache miss.
- *
- * Deliberately NOT `getCachedTenant()`/`unstable_cache` (src/lib/tenant.ts) —
- * that depends on Next's workAsyncStorage/incrementalCache, which isn't
- * guaranteed available in Edge middleware and can throw there. Uses the
- * service-role key directly (never exposed to the browser — this file only
- * runs server-side) since RLS on `tenants` only grants `authenticated`-role
- * policies scoped to the caller's own tenant, and this check has to run
- * before we know who (if anyone) is logged in.
- *
- * Also enforces the active→blocked transition on a lapsed, unpaid
- * subscription right here — this is the one check every request actually
- * goes through, so it's the authoritative place for that, not a decorative
- * status computed only in the admin UI (see src/lib/tenant-status.ts).
- */
-// The cookie above only helps a browser that has already been here — the very
-// first request (opening the login page) always missed it and waited on the
-// REST round trip. This per-process cache serves every visitor of a tenant
-// within the same window, the same way the middleware caches the JWKS.
-const tenantGateMemory = new Map<string, { tenant: TenantGateInfo; t: number }>()
-
-async function getTenantBySubdomain(subdomain: string): Promise<TenantGateInfo | null> {
-  const hit = tenantGateMemory.get(subdomain)
-  if (hit && Date.now() - hit.t < TENANT_GATE_TTL_MS) return hit.tenant
-  const tenant = await fetchTenantBySubdomain(subdomain)
-  if (tenant) tenantGateMemory.set(subdomain, { tenant, t: Date.now() })
-  else tenantGateMemory.delete(subdomain)
-  return tenant
-}
-
-async function fetchTenantBySubdomain(subdomain: string): Promise<TenantGateInfo | null> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !serviceKey) return null
-
-  try {
-    const res = await fetch(
-      `${supabaseUrl}/rest/v1/tenants?subdomain=eq.${encodeURIComponent(subdomain)}&select=id,status,subscription_ends_at`,
-      {
-        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
-        cache: 'no-store',
-      }
-    )
-    if (!res.ok) return null
-    const rows: (TenantGateInfo & { subscription_ends_at: string | null })[] = await res.json()
-    const tenant = rows[0] ?? null
-    if (!tenant) return null
-
-    const effectiveStatus = computeEffectiveStatus(tenant.status, tenant.subscription_ends_at)
-    if (effectiveStatus !== tenant.status) {
-      patchTenant(tenant.id, { status: effectiveStatus })
-    }
-    return { id: tenant.id, status: effectiveStatus }
-  } catch {
-    return null
+async function protectedResponse(request: NextRequest, forwarded: NextRequest, gate: Gate, locale: string | undefined) {
+  const { supabaseResponse, user } = await updateSession(forwarded)
+  if (!user && locale) {
+    const loginUrl = new URL(`/${locale}/login`, request.url)
+    loginUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+    return gate.remember(NextResponse.redirect(loginUrl))
   }
-}
-
-/**
- * Fire-and-forget — never blocks the response on this.
- *
- * Throttled by a cookie because "last active" is a coarse admin-console signal
- * measured in minutes, and this fired a service-role write on EVERY navigation:
- * a click-heavy session was issuing hundreds of pointless UPDATEs against the
- * same row, each one a connection the database had to serve while the user was
- * waiting on a real query.
- */
-const LAST_ACTIVE_COOKIE = 'la_ping'
-const LAST_ACTIVE_TTL_MS = 5 * 60 * 1000
-
-function shouldTouchLastActive(request: NextRequest, tenantId: string): boolean {
-  const raw = request.cookies.get(LAST_ACTIVE_COOKIE)?.value
-  if (!raw) return true
-  try {
-    const parsed: { id: string; t: number } = JSON.parse(raw)
-    return parsed.id !== tenantId || Date.now() - parsed.t > LAST_ACTIVE_TTL_MS
-  } catch {
-    return true
-  }
-}
-
-function touchTenantLastActive(response: NextResponse, tenantId: string) {
-  patchTenant(tenantId, { last_active_at: new Date().toISOString() })
-  response.cookies.set(LAST_ACTIVE_COOKIE, JSON.stringify({ id: tenantId, t: Date.now() }), {
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 600,
-    path: '/',
-  })
+  if (user && gate.tenant) touchLastActive(request, supabaseResponse, gate.tenant.id)
+  gate.remember(supabaseResponse)
+  const intlResponse = intlMiddleware(forwarded)
+  if (!intlResponse) return supabaseResponse
+  supabaseResponse.cookies.getAll().forEach((cookie) => intlResponse.cookies.set(cookie.name, cookie.value, cookie))
+  return intlResponse
 }
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const subdomain = getTenantSubdomain(request.headers.get('host') || '')
+  const consolePrefix = CONSOLES.find((name) => name === subdomain)
+  if (consolePrefix) return rewriteConsole(request, `/${consolePrefix}`)
 
-  // Extract host and check for subdomain
-  const host = request.headers.get('host') || ''
-  const tenantSubdomain = getTenantSubdomain(host)
+  const headers = new Headers(request.headers)
+  if (subdomain) headers.set('x-tenant-subdomain', subdomain)
+  const forwarded = new NextRequest(request, { headers })
+  const passThrough = () => NextResponse.next({ request: { headers } })
+  if (pathname.includes('/api/') || SELF_AUTHED.some((prefix) => under(pathname, prefix))) return passThrough()
 
-  // admin.<domain> is the super-admin console, not a tenant — rewrite to the
-  // same /admin path tree that already works at <domain>/admin/** (see the
-  // path-based bypass further below), so the URL bar still shows
-  // admin.<domain>/login while Next.js actually serves src/app/admin/**.
-  // "admin" can never collide with a real tenant subdomain: tenants are
-  // only ever created via the provisioning route, which never accepts it
-  // (reserved, see src/app/api/admin/tenants/route.ts).
-  if (tenantSubdomain === 'admin') {
-    const url = request.nextUrl.clone()
-    if (!pathname.startsWith('/admin')) {
-      url.pathname = `/admin${pathname === '/' ? '' : pathname}`
-    }
-    return NextResponse.rewrite(url)
-  }
-
-  // support.<domain> is the support-agent portal (support_agents, its own auth
-  // model — see getSupportAgentSession() in src/lib/admin-auth.ts), not a
-  // tenant. Same rewrite trick as "admin" above, so support.<domain>/login
-  // stays in the URL bar while Next.js serves src/app/support/**. "support" is
-  // likewise reserved at provisioning time (RESERVED_SUBDOMAINS in
-  // src/lib/tenant-auth.ts), so it can never collide with a real tenant.
-  if (tenantSubdomain === 'support') {
-    const url = request.nextUrl.clone()
-    if (!pathname.startsWith('/support')) {
-      url.pathname = `/support${pathname === '/' ? '' : pathname}`
-    }
-    return NextResponse.rewrite(url)
-  }
-
-  // Clone headers and append tenant context if present
-  const requestHeaders = new Headers(request.headers)
-  if (tenantSubdomain) {
-    requestHeaders.set('x-tenant-subdomain', tenantSubdomain)
-  }
-
-  // Create a new request with the updated headers
-  const reqWithHeaders = new NextRequest(request, {
-    headers: requestHeaders,
-  })
-
-  // ─── Fast path: Skip i18n & locale redirects for API routes ───────────────
-  if (pathname.startsWith('/api/') || pathname.includes('/api/')) {
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      }
-    })
-  }
-
-  // ─── Fast path: the super-admin console lives outside [lang] entirely and
-  // has its own auth model (super_admins, not profiles/RLS) — never run
-  // locale redirects, tenant-subdomain gating, or tenant auth against it.
-  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      }
-    })
-  }
-
-  // The Telegram Mini App entry screen lives outside [lang] and has no tenant
-  // subdomain of its own — Telegram opens it on the bare app host. Running the
-  // locale redirect or the tenant gate against it would bounce it before it
-  // could read initData and work out which tenant to send the user to.
-  if (pathname === '/tg' || pathname.startsWith('/tg/')) {
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      }
-    })
-  }
-
-  // Same reasoning for the support-agent portal (support_agents, its own
-  // auth model — see src/lib/admin-auth.ts's getSupportAgentSession()).
-  if (pathname === '/support' || pathname.startsWith('/support/')) {
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      }
-    })
-  }
-
-  // Extract locale from pathname
-  const pathnameLocale = routing.locales.find(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  )
-
-  // Get the path without locale
-  const pathWithoutLocale = pathnameLocale
-    ? pathname.replace(`/${pathnameLocale}`, '') || '/'
-    : pathname
-
-  // `/<lang>` on the bare host is the public landing page (src/app/[lang]/page.tsx);
-  // on a tenant subdomain it is still the redirect to the dashboard.
-  const isLandingPage = !tenantSubdomain && pathWithoutLocale === '/'
-
-  const isPublicRoute = isLandingPage || PUBLIC_ROUTES.some(
-    (route) => pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
-  )
-
-  // ─── Tenant status gate ────────────────────────────────────────────────────
-  // Runs for every route under a resolved tenant subdomain (including public
-  // ones like /login) — a blocked/inactive tenant shouldn't even see a login
-  // form, and a subdomain matching no tenant at all shouldn't reach the app.
-  let gatedTenant: TenantGateInfo | null = null
-  let tenantGateNeedsWrite = false
-  if (tenantSubdomain && pathWithoutLocale !== TENANT_STATUS_ROUTE) {
-    gatedTenant = readTenantGateCache(request, tenantSubdomain)
-    if (!gatedTenant) {
-      gatedTenant = await getTenantBySubdomain(tenantSubdomain)
-      tenantGateNeedsWrite = gatedTenant != null
-    }
-    const locale = pathnameLocale || routing.defaultLocale
-
-    if (!gatedTenant) {
-      const url = new URL(`/${locale}${TENANT_STATUS_ROUTE}`, request.url)
-      url.searchParams.set('reason', 'not-found')
-      return NextResponse.redirect(url)
-    }
-    if (gatedTenant.status !== 'active') {
-      const url = new URL(`/${locale}${TENANT_STATUS_ROUTE}`, request.url)
-      url.searchParams.set('reason', gatedTenant.status === 'blocked' ? 'blocked' : 'inactive')
-      const response = NextResponse.redirect(url)
-      if (tenantGateNeedsWrite) writeTenantGateCache(response, tenantSubdomain as string, gatedTenant)
-      return response
-    }
-  }
-
-  // ─── Fast path: skip Supabase network call for public routes ──────────────
-  if (isPublicRoute) {
-    const response = intlMiddleware(reqWithHeaders) ?? NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      }
-    })
-    if (tenantGateNeedsWrite && gatedTenant && tenantSubdomain) {
-      writeTenantGateCache(response, tenantSubdomain, gatedTenant)
-    }
-    return response
-  }
-
-  // ─── Protected routes: validate session with Supabase ─────────────────────
-  const { supabaseResponse, user } = await updateSession(reqWithHeaders)
-
-  // Redirect unauthenticated users to login
-  if (!user && pathnameLocale) {
-    const locale = pathnameLocale || routing.defaultLocale
-    const loginUrl = new URL(`/${locale}/login`, request.url)
-    loginUrl.searchParams.set('redirectTo', pathname)
-    const response = NextResponse.redirect(loginUrl)
-    if (tenantGateNeedsWrite && gatedTenant && tenantSubdomain) {
-      writeTenantGateCache(response, tenantSubdomain, gatedTenant)
-    }
-    return response
-  }
-
-  if (user && gatedTenant && shouldTouchLastActive(request, gatedTenant.id)) {
-    touchTenantLastActive(supabaseResponse, gatedTenant.id)
-  }
-
-  if (tenantGateNeedsWrite && gatedTenant && tenantSubdomain) {
-    writeTenantGateCache(supabaseResponse, tenantSubdomain, gatedTenant)
-  }
-
-  // Apply i18n middleware and forward Supabase cookies
-  const intlResponse = intlMiddleware(reqWithHeaders)
-  if (intlResponse) {
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      intlResponse.cookies.set(cookie.name, cookie.value, cookie)
-    })
-    return intlResponse
-  }
-
-  return supabaseResponse
+  const { locale, path } = localeOf(pathname)
+  // `/<lang>` on the bare host is the public landing page; on a tenant it still redirects to the dashboard.
+  const isPublic = (!subdomain && path === '/') || PUBLIC_ROUTES.some((route) => under(path, route))
+  const gate = await tenantGate(request, subdomain, locale || routing.defaultLocale, path)
+  if (gate.refusal) return gate.refusal
+  // Public routes skip the Supabase session check entirely.
+  if (isPublic) return gate.remember(intlMiddleware(forwarded) ?? passThrough())
+  return protectedResponse(request, forwarded, gate, locale)
 }
 
 export const config = {
   matcher: [
-    // Match all pathnames except for Next.js internals and API routes.
-    // `.html` is excluded so static files served straight out of public/
-    // (public/offline.html, the Capacitor shell's offline fallback) are not
-    // caught by the locale redirect and bounced to /uz/offline.html.
+    // Everything except Next.js internals, API routes and static files; `.html` is excluded so
+    // public/offline.html (the Capacitor shell's offline page) is not bounced to /uz/offline.html.
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|html)$).*)',
   ],
 }

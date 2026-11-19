@@ -1,84 +1,45 @@
 'use client'
 
-import { useCan } from '@/components/providers/permissions-provider'
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { errorMessage } from '@/lib/error-message'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Ban, Factory, Pencil, Play, Trash2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { MoreHorizontal, Pencil, Trash2, Factory, Ban, Play } from 'lucide-react'
+import { useCan } from '@/components/providers/permissions-provider'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
+import { MobileChip, MobileThumb } from '@/components/shared/mobile-list'
+import { PagedListCard, type PageInfo } from '@/components/shared/paged-list-card'
+import { ResponsiveTable } from '@/components/shared/responsive-table'
+import { RowActionsMenu } from '@/components/shared/row-actions-menu'
+import { StatusBadge } from '@/components/shared/status-badge'
+import { TableFilterChips } from '@/components/shared/table-pagination'
+import { EmptyCatalog } from '@/components/inventory/catalog/catalog-parts'
 import { createClient } from '@/lib/supabase/client'
 import { invalidateProduction } from '@/lib/data/revalidate'
-import { cancelProductionOrder, productionErrorMessage } from '@/lib/production-actions'
 import { businessRpcErrorMessage } from '@/lib/business-rpc'
-import { useConfirmDelete } from '@/components/shared/confirm-dialog'
-import { Card, CardContent } from '@/components/ui/card'
-import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
-import { StatusBadge } from '@/components/shared/status-badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { formatCurrency, formatNumber, formatDate } from '@/lib/utils'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
-import { TableSearch, TablePagination, TableFilterChips } from '@/components/shared/table-pagination'
+import { errorMessage } from '@/lib/error-message'
+import { cancelProductionOrder, productionErrorMessage } from '@/lib/production-actions'
+import { formatCurrency, formatDate, formatNumber } from '@/lib/utils'
+import { RUN_STATUS_TONE } from './order-detail/run-costing'
 
-const STATUS_TONE = {
-  draft: 'amber',
-  completed: 'emerald',
-  cancelled: 'rose',
-} as const
-
-interface ProductionOrdersTableProps {
-  /** Only the current page's rows — the server already applied search/filter/paging. */
+interface ProductionOrdersTableProps extends PageInfo {
   orders: any[]
   lang: string
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
   status: 'all' | 'draft' | 'completed' | 'cancelled'
 }
 
-export function ProductionOrdersTable({
-  orders,
-  lang,
-  page,
-  pageSize,
-  total,
-  totalPages,
-  status,
-}: ProductionOrdersTableProps) {
-  const canEdit = useCan('production', 'edit', 'orders')
-  const canDelete = useCan('production', 'delete', 'orders')
+const FILTERS = ['all', 'draft', 'completed', 'cancelled'] as const
+
+function useRunRowActions() {
   const t = useTranslations()
-  const router = useRouter()
-  const [confirmAction, confirmDialog] = useConfirmDelete()
+  const [confirm, confirmDialog] = useConfirmDelete()
   const [busyId, setBusyId] = useState<string | null>(null)
 
-  const handleCancel = async (order: any) => {
-    const confirmed = await confirmAction({
-      title: t('production.cancelTitle'),
-      confirmLabel: t('production.cancelRun'),
-      description: order.status === 'completed' ? t('production.cancelConfirm') : undefined,
-      name: order.order_number,
-    })
-    if (!confirmed) return
-    setBusyId(order.id)
+  const withBusy = async (id: string, action: () => Promise<string>) => {
+    setBusyId(id)
     try {
-      await cancelProductionOrder(createClient(), order.id)
-      toast.success(t('production.cancelled'))
+      toast.success(await action())
       await invalidateProduction()
     } catch (error) {
       toast.error(productionErrorMessage(t, error, (e) => businessRpcErrorMessage(t, e)))
@@ -87,225 +48,96 @@ export function ProductionOrdersTable({
     }
   }
 
-  const handleDelete = async (order: any) => {
-    // A finished run is the paperwork behind stock movements and cost layers:
-    // it is cancelled (which reverses them), never deleted.
-    if (order.status === 'completed') {
-      toast.error(t('production.cannotDeleteCompleted'))
-      return
-    }
-    if (!(await confirmAction({ name: order.order_number }))) return
-    setBusyId(order.id)
-    const supabase = createClient() as any
-    const { error } = await supabase.from('production_orders').delete().eq('id', order.id)
-    if (error) {
-      toast.error(errorMessage(t, error, t('common.error')))
-    } else {
-      toast.success(t('common.success'))
-      await invalidateProduction()
-    }
-    setBusyId(null)
+  const cancel = async (order: any) => {
+    const description = order.status === 'completed' ? t('production.cancelConfirm') : undefined
+    if (!(await confirm({ title: t('production.cancelTitle'), confirmLabel: t('production.cancelRun'), description, name: order.order_number }))) return
+    await withBusy(order.id, async () => {
+      await cancelProductionOrder(createClient(), order.id)
+      return t('production.cancelled')
+    })
   }
 
-  /** The row's actions menu, shared by the desktop table row and the phone card. */
-  const renderActions = (order: any) => {
-    const detailHref = `/${lang}/production/orders/${order.id}`
-    const isDraft = order.status === 'draft'
-    if (!canEdit && !canDelete) return null
+  // A finished run is the paperwork behind stock movements: it is cancelled, never deleted.
+  const remove = async (order: any) => {
+    if (order.status === 'completed') return void toast.error(t('production.cannotDeleteCompleted'))
+    if (!(await confirm({ name: order.order_number }))) return
+    await withBusy(order.id, async () => {
+      const { error } = await createClient().from('production_orders').delete().eq('id', order.id)
+      if (error) throw new Error(errorMessage(t, error, t('common.error')))
+      return t('common.success')
+    })
+  }
+
+  return { busyId, cancel, remove, confirmDialog }
+}
+
+export function ProductionOrdersTable({ orders, lang, status, ...pageInfo }: ProductionOrdersTableProps) {
+  const t = useTranslations()
+  const router = useRouter()
+  const canEdit = useCan('production', 'edit', 'orders')
+  const canDelete = useCan('production', 'delete', 'orders')
+  const actions = useRunRowActions()
+  const href = (o: any) => `/${lang}/production/orders/${o.id}`
+  const done = (o: any) => o.status === 'completed'
+  const money = (o: any, key: 'total_cost' | 'unit_cost') => (done(o) ? formatCurrency(Number(o[key]) || 0) : '—')
+  const quantity = (o: any) => `${formatNumber(Number(o.quantity) || 0)} ${o.product?.unit ?? ''}`
+  const more = (o: any) => ((o.outputs?.length ?? 0) > 1 ? t('production.moreOutputs', { count: o.outputs.length - 1 }) : '')
+  const badge = (o: any) => <StatusBadge tone={RUN_STATUS_TONE[o.status as keyof typeof RUN_STATUS_TONE] ?? 'slate'} label={t(`production.status_${o.status}`)} />
+  const menu = (o: any) => {
+    const draft = o.status === 'draft'
     return (
-                        <DropdownMenu>
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <DropdownMenuTrigger
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </DropdownMenuTrigger>
-                              }
-                            />
-                            <TooltipContent side="left">
-                              <p>{t('common.actions')}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                          <DropdownMenuContent align="end" className="w-44">
-                            {canEdit && isDraft && (
-                              <DropdownMenuItem
-                                render={<Link href={`/${lang}/production/orders/${order.id}/edit`} prefetch={true} />}
-                              >
-                                <Pencil className="mr-2 h-3.5 w-3.5" /> {t('common.edit')}
-                              </DropdownMenuItem>
-                            )}
-                            {/* Completing needs the shortage check and a
-                                non-destructive confirmation, which live on the
-                                run's own page — this only takes you there. */}
-                            {canEdit && isDraft && (
-                              <DropdownMenuItem render={<Link href={detailHref} prefetch={true} />}>
-                                <Play className="mr-2 h-3.5 w-3.5" /> {t('production.complete')}
-                              </DropdownMenuItem>
-                            )}
-                            {canEdit && order.status !== 'cancelled' && (
-                              <DropdownMenuItem onClick={() => handleCancel(order)} disabled={busyId === order.id}>
-                                <Ban className="mr-2 h-3.5 w-3.5" /> {t('common.cancel')}
-                              </DropdownMenuItem>
-                            )}
-                            {canDelete && order.status !== 'completed' && (
-                              <DropdownMenuItem
-                                onClick={() => handleDelete(order)}
-                                disabled={busyId === order.id}
-                                className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                              >
-                                <Trash2 className="mr-2 h-3.5 w-3.5" /> {t('common.delete')}
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+      <RowActionsMenu
+        actions={[
+          { key: 'edit', label: t('common.edit'), icon: Pencil, href: `${href(o)}/edit`, hidden: !canEdit || !draft },
+          { key: 'complete', label: t('production.complete'), icon: Play, href: href(o), hidden: !canEdit || !draft },
+          { key: 'cancel', label: t('common.cancel'), icon: Ban, onClick: () => actions.cancel(o), disabled: actions.busyId === o.id, hidden: !canEdit || o.status === 'cancelled' },
+          { key: 'delete', label: t('common.delete'), icon: Trash2, onClick: () => actions.remove(o), disabled: actions.busyId === o.id, destructive: true, hidden: !canDelete || done(o) },
+        ]}
+      />
     )
   }
+  const filters = FILTERS.map((value) => ({ value, label: value === 'all' ? t('common.all') : t(`production.status_${value}`) }))
 
   return (
-    <TooltipProvider>
-      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
-        <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
-            <TableSearch />
-            <TableFilterChips
-              param="status"
-              value={status}
-              options={[
-                { value: 'all', label: t('common.all') },
-                { value: 'draft', label: t('production.status_draft') },
-                { value: 'completed', label: t('production.status_completed') },
-                { value: 'cancelled', label: t('production.status_cancelled') },
-              ]}
-            />
-          </div>
-
-          <Table containerClassName="max-md:hidden">
-            <TableHeader>
-              <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-                <TableHead className="w-10 text-center font-semibold">#</TableHead>
-                <TableHead className="font-semibold">{t('production.orderNumber')}</TableHead>
-                <TableHead>{t('production.finishedProduct')}</TableHead>
-                <TableHead className="text-right tabular-nums">{t('common.quantity')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('production.plannedDate')}</TableHead>
-                <TableHead className="hidden lg:table-cell text-right tabular-nums">
-                  {t('production.totalCost')}
-                </TableHead>
-                <TableHead className="hidden lg:table-cell text-right tabular-nums">
-                  {t('production.unitCost')}
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">{t('common.assignedTo')}</TableHead>
-                <TableHead>{t('common.status')}</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Factory className="h-8 w-8 opacity-40" />
-                      <p className="text-sm">{t('common.noData')}</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                orders.map((order, index) => {
-                  const detailHref = `/${lang}/production/orders/${order.id}`
-                  return (
-                    <TableRow
-                      key={order.id}
-                      className="cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/80"
-                      onClick={() => router.push(detailHref)}
-                    >
-                      <TableCell className="text-center text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {(page - 1) * pageSize + index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <Link
-                          href={detailHref}
-                          className="font-semibold text-slate-800 transition-colors hover:text-violet-600 dark:text-slate-200 dark:hover:text-violet-400"
-                        >
-                          {order.order_number}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        {order.product?.name ?? '—'}
-                        {(order.outputs?.length ?? 0) > 1 && <span className="ml-1.5 text-xs text-muted-foreground">{t('production.moreOutputs', { count: order.outputs.length - 1 })}</span>}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatNumber(Number(order.quantity) || 0)} {order.product?.unit}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {order.planned_date ? formatDate(order.planned_date) : '—'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-right tabular-nums">
-                        {order.status === 'completed' ? formatCurrency(Number(order.total_cost) || 0) : '—'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-right font-semibold tabular-nums text-violet-600 dark:text-violet-400">
-                        {order.status === 'completed' ? formatCurrency(Number(order.unit_cost) || 0) : '—'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        {order.assignee?.full_name || t('common.unassigned')}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge
-                          tone={STATUS_TONE[order.status as keyof typeof STATUS_TONE] ?? 'slate'}
-                          label={t(`production.status_${order.status}`)}
-                        />
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        {renderActions(order)}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </Table>
-          {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
-          <MobileCardList
-            isEmpty={orders.length === 0}
-            empty={
-              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
-                <Factory className="h-8 w-8 opacity-40" />
-                <p className="text-sm">{t('common.noData')}</p>
-              </div>
-            }
-          >
-            {orders.map((order) => (
-              <MobileCard
-                key={order.id}
-                onClick={() => router.push(`/${lang}/production/orders/${order.id}`)}
-                leading={<MobileThumb fallback={<Factory />} />}
-                eyebrow={
-                  <>
-                    <MobileChip>{order.order_number}</MobileChip>
-                    {order.planned_date && <span className="truncate">{formatDate(order.planned_date)}</span>}
-                  </>
-                }
-                title={`${order.product?.name ?? '—'}${(order.outputs?.length ?? 0) > 1 ? ` ${t('production.moreOutputs', { count: order.outputs.length - 1 })}` : ''}`}
-                status={
-                  <StatusBadge
-                    tone={STATUS_TONE[order.status as keyof typeof STATUS_TONE] ?? 'slate'}
-                    label={t(`production.status_${order.status}`)}
-                  />
-                }
-                menu={renderActions(order)}
-                stats={[
-                  { label: t('common.quantity'), value: `${formatNumber(Number(order.quantity) || 0)} ${order.product?.unit ?? ''}`, tone: 'brand' },
-                  { label: t('production.totalCost'), value: order.status === 'completed' ? formatCurrency(Number(order.total_cost) || 0) : '—' },
-                  { label: t('production.unitCost'), value: order.status === 'completed' ? formatCurrency(Number(order.unit_cost) || 0) : '—' },
-                ]}
-              />
-            ))}
-          </MobileCardList>
-          <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
-        </CardContent>
-      </Card>
-      {confirmDialog}
-    </TooltipProvider>
+    <>
+      <PagedListCard pageInfo={pageInfo} filters={<TableFilterChips param="status" value={status} options={filters} />}>
+        <ResponsiveTable
+          rows={orders}
+          rowKey={(o) => o.id}
+          indexOffset={(pageInfo.page - 1) * pageInfo.pageSize}
+          onRowClick={(o) => router.push(href(o))}
+          empty={<EmptyCatalog icon={Factory} />}
+          columns={[
+            { key: 'number', header: t('production.orderNumber'), cell: (o) => <Link href={href(o)} className="font-semibold text-foreground hover:text-violet-600 dark:hover:text-violet-400">{o.order_number}</Link> },
+            { key: 'product', header: t('production.finishedProduct'), cell: (o) => <>{o.product?.name ?? '—'}{more(o) && <span className="ml-1.5 text-xs text-muted-foreground">{more(o)}</span>}</> },
+            { key: 'qty', header: t('common.quantity'), align: 'right', className: 'tabular-nums', cell: quantity },
+            { key: 'date', header: t('production.plannedDate'), className: 'text-muted-foreground', cell: (o) => (o.planned_date ? formatDate(o.planned_date) : '—') },
+            { key: 'total', header: t('production.totalCost'), align: 'right', className: 'tabular-nums max-lg:hidden', cell: (o) => money(o, 'total_cost') },
+            { key: 'unit', header: t('production.unitCost'), align: 'right', className: 'font-semibold text-violet-600 tabular-nums dark:text-violet-400 max-lg:hidden', cell: (o) => money(o, 'unit_cost') },
+            { key: 'assignee', header: t('common.assignedTo'), className: 'text-muted-foreground max-lg:hidden', cell: (o) => o.assignee?.full_name || t('common.unassigned') },
+            { key: 'status', header: t('common.status'), cell: badge },
+            { key: 'menu', header: '', className: 'w-12', isolated: true, cell: menu },
+          ]}
+          card={(o) => ({
+            leading: <MobileThumb fallback={<Factory />} />,
+            eyebrow: (
+              <>
+                <MobileChip>{o.order_number}</MobileChip>
+                {o.planned_date && <span className="truncate">{formatDate(o.planned_date)}</span>}
+              </>
+            ),
+            title: `${o.product?.name ?? '—'}${more(o) ? ` ${more(o)}` : ''}`,
+            status: badge(o),
+            menu: menu(o),
+            stats: [
+              { label: t('common.quantity'), value: quantity(o), tone: 'brand' },
+              { label: t('production.totalCost'), value: money(o, 'total_cost') },
+              { label: t('production.unitCost'), value: money(o, 'unit_cost') },
+            ],
+          })}
+        />
+      </PagedListCard>
+      {actions.confirmDialog}
+    </>
   )
 }

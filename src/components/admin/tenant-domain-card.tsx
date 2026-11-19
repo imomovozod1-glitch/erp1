@@ -22,7 +22,7 @@ interface DomainStatus {
  * The company's address, in the one state an operator can act on.
  *
  * Three questions, deliberately not collapsed into one (see
- * getTenantDomainStatus in src/lib/vercel-domains.ts): is the host known to
+ * getTenantDomainStatus in src/lib/vercel-domain-status.ts): is the host known to
  * the platform, and does it actually answer? A host added a minute ago is
  * known and still unreachable while its certificate is issued, which is
  * exactly the window in which a newly created company looks broken — so that

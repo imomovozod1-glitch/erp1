@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
-import { OrderForm } from '@/components/sales/order-form'
+import { OrderForm } from '@/components/sales/order-form/order-form'
 import { getCachedOrderById, getCachedCustomersForSelect, getAssignableUsers, getOrderItemsForEdit } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'

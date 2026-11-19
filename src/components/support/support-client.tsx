@@ -1,314 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import { toast } from 'sonner'
-import { 
-  Send, 
-  MessageSquare, 
-  Phone, 
-  Mail, 
-  CheckCircle2, 
-  ArrowRight,
-  ShieldCheck,
-  Bot,
-  BookOpen,
-  HelpCircle
-} from 'lucide-react'
 import { PageHeader } from '@/components/shared/page-header'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { ContactCards } from '@/components/support/page/contact-cards'
+import { SelfServiceLinks, SupportAside } from '@/components/support/page/support-aside'
+import { TicketForm } from '@/components/support/page/ticket-form'
 import { SupportConversation } from '@/components/support/support-conversation'
-import Link from 'next/link'
-import { errorMessage } from '@/lib/error-message'
 
 interface SupportClientProps {
   lang: string
   tenantId: string | null
   /** Server-rendered card naming the assigned support manager. */
-  agentCard?: React.ReactNode
+  agentCard?: ReactNode
 }
 
 export function SupportClient({ lang, tenantId, agentCard }: SupportClientProps) {
-  const tInfo = useTranslations('pageInfo')
-  const tCommon = useTranslations('common')
-  const tChat = useTranslations('supportChat')
-  const tNav = useTranslations('nav')
-  // Root translator with fully-qualified keys, as in products-table.tsx: with
-  // five namespaces in one file the editor's i18n plugin cannot tell which one
-  // a bare `t(...)` belongs to, and it reported every key here as missing. A
-  // full key is unambiguous to the plugin and to the next reader.
   const t = useTranslations()
-  const [subject, setSubject] = useState('')
-  const [message, setMessage] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  // Bumped after a new ticket so the conversation list below pulls it in.
   const [threadsVersion, setThreadsVersion] = useState(0)
-
-  // This used to be a prop: a setTimeout, a success toast, and the text thrown
-  // away — nothing was stored, so nothing could ever be answered. It now opens
-  // a real thread that the assigned support agent sees in their portal.
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault()
-    if (isSubmitting) return
-    if (subject.trim().length < 3 || !message.trim()) {
-      toast.error(t('support.subjectMessageRequired'))
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      const res = await fetch('/api/tenant/support/threads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject: subject.trim(), body: message.trim() }),
-      })
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
-        throw new Error(json.error || '')
-      }
-      setIsSubmitted(true)
-      toast.success(t('support.ticketSuccess'))
-      setSubject('')
-      setMessage('')
-      // Tell the conversation panel below to pull in the new thread.
-      setThreadsVersion((v) => v + 1)
-    } catch (error: any) {
-      toast.error(errorMessage(t, error, tCommon('error')))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success(t('support.copied', { label }))
-  }
-
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title={t('support.title')}
         subtitle={t('support.description')}
-        info={tInfo('support')}
-        breadcrumbs={[
-          { label: 'Falco', href: `/${lang}/dashboard` },
-          { label: t('support.title') },
-        ]}
+        info={t('pageInfo.support')}
+        breadcrumbs={[{ label: 'Falco', href: `/${lang}/dashboard` }, { label: t('support.title') }]}
       />
-
       {agentCard}
-
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Telegram Card */}
-        <a 
-          href="https://t.me/erpsupport_bot" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="group relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/65 dark:border-slate-800 hover:border-violet-400 dark:hover:border-violet-600 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/10 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-300" />
-          <div>
-            <div className="p-3 bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 rounded-2xl w-fit mb-4">
-              <Bot className="h-6 w-6" />
-            </div>
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 group-hover:text-sky-600 transition-colors">
-              {t('support.contactTelegram')}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              {t('support.contactTelegramDesc')}
-            </p>
-          </div>
-          <div className="flex items-center gap-1 text-sky-600 dark:text-sky-400 text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
-            <span>@erpsupport_bot</span>
-            <ArrowRight className="h-3 w-3" />
-          </div>
-        </a>
-
-        {/* Phone Card */}
-        <div 
-          onClick={() => handleCopy('+998712000000', tCommon('phone'))}
-          className="group relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/65 dark:border-slate-800 hover:border-violet-400 hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-300" />
-          <div>
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-2xl w-fit mb-4">
-              <Phone className="h-6 w-6" />
-            </div>
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 transition-colors">
-              {t('support.contactPhone')}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              {t('support.contactPhoneDesc')}
-            </p>
-          </div>
-          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
-            <span>+998 (71) 200-00-00</span>
-            <ArrowRight className="h-3 w-3" />
-          </div>
-        </div>
-
-        {/* Email Card */}
-        <div 
-          onClick={() => handleCopy('support@erpsystem.uz', tCommon('email'))}
-          className="group relative overflow-hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200/65 dark:border-slate-800 hover:border-violet-400 hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/10 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-110 transition-transform duration-300" />
-          <div>
-            <div className="p-3 bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 rounded-2xl w-fit mb-4">
-              <Mail className="h-6 w-6" />
-            </div>
-            <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors">
-              {t('support.contactEmail')}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              {t('support.contactEmailDesc')}
-            </p>
-          </div>
-          <div className="flex items-center gap-1 text-violet-600 dark:text-violet-400 text-xs font-semibold mt-4 group-hover:gap-2 transition-all">
-            <span>support@erpsystem.uz</span>
-            <ArrowRight className="h-3 w-3" />
-          </div>
-        </div>
-      </div>
-
+      <ContactCards />
       <div className="grid gap-6 lg:grid-cols-5">
-        {/* Support Ticket Form */}
-        <Card className="lg:col-span-3 border-slate-200/65 dark:border-slate-800 shadow-md rounded-2xl">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-              {t('support.submitTicket')}
-            </CardTitle>
-            <CardDescription>
-              {t('support.ticketFormDesc')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isSubmitted ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center animate-in fade-in-50 zoom-in-95 duration-300">
-                <div className="p-4 bg-violet-50 dark:bg-violet-950/20 text-violet-600 dark:text-violet-400 rounded-full mb-4 animate-bounce">
-                  <CheckCircle2 className="h-10 w-10" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('support.ticketReceived')}</h3>
-                <p className="text-sm text-muted-foreground max-w-sm mt-2">{t('support.ticketSuccess')}</p>
-                <Button 
-                  onClick={() => setIsSubmitted(false)}
-                  className="mt-6 bg-violet-600 hover:bg-violet-500"
-                >
-                  {t('support.sendNewTicket')}
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    {t('support.ticketSubject')}
-                  </label>
-                  <Input 
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder={t('support.subjectPlaceholder')}
-                    className="rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-violet-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                    {t('support.ticketMessage')}
-                  </label>
-                  <Textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder={t('support.messagePlaceholder')}
-                    className="rounded-xl border-slate-200 dark:border-slate-700 min-h-30 focus-visible:ring-violet-500"
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full bg-violet-600 hover:bg-violet-500 font-medium rounded-xl gap-2 h-11"
-                >
-                  <Send className="h-4 w-4" />
-                  {isSubmitting ? t('support.sending') : t('support.submitTicket')}
-                </Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Sidebar Info Panel */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Operator Status */}
-          <div className="bg-linear-to-br from-violet-500 to-violet-700 text-white p-6 rounded-2xl relative overflow-hidden shadow-lg">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-8 -translate-y-8" />
-            <div className="relative z-10 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                </span>
-                <span className="text-xs font-bold uppercase tracking-wider text-violet-100">
-                  {t('support.liveStatus')}
-                </span>
-              </div>
-              <h3 className="text-xl font-extrabold leading-snug">
-                {t('support.alwaysConnected')}
-              </h3>
-              <p className="text-xs text-violet-100/90 leading-relaxed">
-                {t('support.liveStatusDesc')}
-              </p>
-              <div className="pt-2 flex items-center gap-2 text-xs font-semibold bg-white/15 px-3 py-2 rounded-xl w-fit">
-                <span>{t('support.premiumActive')}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Security & Confidentiality */}
-          <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 p-6 rounded-2xl space-y-3">
-            <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-semibold text-sm">
-              <ShieldCheck className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-              <span>{t('support.securityTitle')}</span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {t('support.securityDesc')}
-            </p>
-          </div>
-        </div>
+        <TicketForm onCreated={() => setThreadsVersion((v) => v + 1)} />
+        <SupportAside />
       </div>
-
-      {/* The tenant's own tickets and the replies to them. This is where an
-          answer from the assigned support agent actually lands. */}
+      {/* The company's own tickets — where the support agent's answer actually lands. */}
       <section className="space-y-3">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{tChat('myTickets')}</h2>
-        <SupportConversation
-          endpoint="/api/tenant/support/threads"
-          viewer="tenant"
-          refreshKey={threadsVersion}
-          inboxTopic={tenantId ? `support-inbox:tenant:${tenantId}` : undefined}
-        />
+        <h2 className="text-lg font-bold text-foreground">{t('supportChat.myTickets')}</h2>
+        <SupportConversation endpoint="/api/tenant/support/threads" viewer="tenant" refreshKey={threadsVersion} inboxTopic={tenantId ? `support-inbox:tenant:${tenantId}` : undefined} />
       </section>
-
-      {/* Self-service first. This replaced a generic AI chat widget that had no
-          knowledge of the actual system and answered from a one-paragraph
-          prompt — the guide and the FAQ say what the app really does. */}
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href={`/${lang}/faq`}
-          className="inline-flex items-center gap-2 rounded-lg bg-violet-50 dark:bg-violet-950/40 px-3.5 py-2 text-xs font-semibold text-violet-700 dark:text-violet-300 transition-colors hover:bg-violet-100 dark:hover:bg-violet-900/50"
-        >
-          <HelpCircle className="h-3.5 w-3.5" />
-          {tNav('faq')}
-        </Link>
-        <Link
-          href={`/${lang}/guide`}
-          className="inline-flex items-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
-        >
-          <BookOpen className="h-3.5 w-3.5" />
-          {tNav('guide')}
-        </Link>
-      </div>
+      <SelfServiceLinks lang={lang} />
     </div>
   )
 }
