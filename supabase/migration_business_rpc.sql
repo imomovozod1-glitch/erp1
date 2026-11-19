@@ -1184,7 +1184,9 @@ BEGIN
     ) VALUES (
       'income', v_amount, 'sales',
       v_invoice.invoice_number || ' uchun tezkor to''lov',
-      'invoice', p_invoice_id, v_invoice.customer_id,
+      -- Booked against the drawer the money went into, so it shows in that
+      -- cashbox's history; the invoice number is in the description.
+      'cashbox', (v_cashbox ->> 'cashbox_id')::uuid, v_invoice.customer_id,
       COALESCE(p_paid_at, CURRENT_DATE), auth.uid()
     );
   END IF;
@@ -1312,7 +1314,7 @@ BEGIN
       CASE WHEN v_diff > 0 THEN 'income' ELSE 'expense' END::transaction_type,
       abs(v_diff), v_label,
       v_label || ' #' || (p_invoice ->> 'invoice_number'),
-      'invoices', v_id,
+      'cashbox', (v_cashbox ->> 'cashbox_id')::uuid,
       NULLIF(p_invoice ->> 'customer_id', '')::uuid,
       COALESCE(NULLIF(p_invoice ->> 'paid_at', '')::date, NULLIF(p_invoice ->> 'issued_at', '')::date, CURRENT_DATE),
       v_uid
