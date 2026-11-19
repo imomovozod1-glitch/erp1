@@ -1,37 +1,22 @@
 'use client'
 
-import { useCan } from '@/components/providers/permissions-provider'
-import { useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { errorMessage } from '@/lib/error-message'
-import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { Pencil, Power, Route as RouteIcon, Trash2, Waypoints } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { MoreHorizontal, Pencil, Trash2, Power, Route as RouteIcon, Waypoints } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { invalidateRoutes } from '@/lib/data/revalidate'
-import { Card, CardContent } from '@/components/ui/card'
-import { TableSearch, TablePagination } from '@/components/shared/table-pagination'
-import { Button } from '@/components/ui/button'
-import { MobileCard, MobileCardList, MobileChip, MobileThumb } from '@/components/shared/mobile-list'
-import { StatusBadge } from '@/components/shared/status-badge'
-import {
-  DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Table, TableBody, TableCell, TableHead,
-  TableHeader, TableRow,
-} from '@/components/ui/table'
+import { useCan } from '@/components/providers/permissions-provider'
+import { useConfirmDelete } from '@/components/shared/confirm-dialog'
+import { MobileChip, MobileThumb } from '@/components/shared/mobile-list'
+import { PagedListCard, type PageInfo } from '@/components/shared/paged-list-card'
+import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/responsive-table'
+import { RowActionsMenu } from '@/components/shared/row-actions-menu'
+import { ActiveBadge, EmptyCatalog } from '@/components/inventory/catalog/catalog-parts'
 import { WEEKDAY_KEYS } from '@/components/distribution/weekdays'
-import {
-  isRoutePlanError,
-  optimizeSavedRoute,
-  routeHoursMinutes,
-  routeKm,
-  routePlanErrorMessage,
-} from '@/lib/route-plan'
+import { invalidateRoutes } from '@/lib/data/revalidate'
+import { deleteOrArchive, setRowActive } from '@/lib/delete-or-archive'
+import { useRowAction } from '@/lib/hooks/use-row-action'
+import { isRoutePlanError, optimizeSavedRoute, routeHoursMinutes, routeKm, routePlanErrorMessage } from '@/lib/route-plan'
+import { createClient } from '@/lib/supabase/client'
 
 interface RouteRow {
   id: string
@@ -40,275 +25,111 @@ interface RouteRow {
   weekday: number | null
   agent?: { full_name: string | null } | null
   stops?: { id: string }[] | null
-  // Set once the round has been solved (migration_route_geometry.sql). Null on
-  // a route nobody has optimised, and blanked again whenever its stops change.
+  /** Set once the round is solved; blanked again whenever its stops change. */
   optimized_at?: string | null
   distance_m?: number | null
   duration_s?: number | null
 }
 
-interface RoutesTableProps {
-  /** Only the current page's rows — the server applied search and paging. */
+interface RoutesTableProps extends PageInfo {
   routes: RouteRow[]
   lang: string
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
 }
 
-/**
- * Marshrutlar — the routes list.
- *
- * Paged and searched on the server (`getRoutesPage`), like every other list:
- * `routes` is only the page being shown.
- */
-export function RoutesTable({ routes, lang, page, pageSize, total, totalPages }: RoutesTableProps) {
+function useRouteActions() {
+  const t = useTranslations()
+  const [confirmDelete, confirmDialog] = useConfirmDelete()
+  const { busyId, run } = useRowAction(invalidateRoutes)
+  // Unlike the form's button this PERSISTS the new order and shape, through the server (the Mapbox token is server-only).
+  const optimize = (route: RouteRow) =>
+    run(route.id, async () => {
+      const result = await optimizeSavedRoute(route.id)
+      if (!isRoutePlanError(result)) return t('distribution.routeOptimized')
+      toast.error(routePlanErrorMessage(t, result))
+      return null
+    })
+  const toggle = (route: RouteRow) =>
+    run(route.id, async () => {
+      await setRowActive(createClient(), 'distribution_routes', route.id, !route.is_active)
+      return t('common.success')
+    })
+  // A delivery still pointing at the route archives it instead.
+  const remove = async (route: RouteRow) => {
+    if (!(await confirmDelete({ name: route.name }))) return
+    await run(route.id, async () => ((await deleteOrArchive(createClient(), 'distribution_routes', route.id)) === 'archived' ? t('distribution.routeInUse') : t('common.success')))
+  }
+  return { busyId, optimize, toggle, remove, confirmDialog }
+}
+
+function useRouteLabels() {
+  const t = useTranslations('distribution')
+  return {
+    weekday: (route: RouteRow) => (route.weekday ? t(WEEKDAY_KEYS[route.weekday - 1]) : t('noWeekday')),
+    agent: (route: RouteRow) => route.agent?.full_name || t('noAgent'),
+    stops: (route: RouteRow) => t('routeStopsCount', { count: route.stops?.length ?? 0 }),
+    summary: (route: RouteRow) =>
+      route.optimized_at ? `${t('routeDistance', { km: routeKm(route.distance_m ?? 0) })} · ${t('routeDuration', routeHoursMinutes(route.duration_s ?? 0))}` : '—',
+  }
+}
+
+/** Marshrutlar: paged and searched on the server, like every other list. */
+export function RoutesTable({ routes, lang, ...pageInfo }: RoutesTableProps) {
+  const t = useTranslations()
+  const router = useRouter()
   const canEdit = useCan('distribution', 'edit', 'routes')
   const canDelete = useCan('distribution', 'delete', 'routes')
-  const tCommon = useTranslations('common')
-  const tRoot = useTranslations()
-  const t = useTranslations('distribution')
-  const [confirmDelete, confirmDialog] = useConfirmDelete()
-  const router = useRouter()
-  const [isDeleting, setIsDeleting] = useState<string | null>(null)
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null)
-  const [isOptimizing, setIsOptimizing] = useState<string | null>(null)
-
-  /**
-   * Re-plans a saved marshrut without opening it.
-   *
-   * Unlike the same button inside the route form, this one PERSISTS: the API
-   * route rewrites distribution_route_stops.position and stores the shape, so
-   * the round is re-ordered for whoever opens it next. That is also why it is
-   * a server call rather than a browser write — the Mapbox token is
-   * server-only (src/lib/mapbox.ts).
-   */
-  const handleOptimize = async (id: string) => {
-    setIsOptimizing(id)
-    try {
-      const result = await optimizeSavedRoute(id)
-      if (isRoutePlanError(result)) {
-        toast.error(routePlanErrorMessage(tRoot, result))
-        return
-      }
-      toast.success(t('routeOptimized'))
-      await invalidateRoutes()
-    } finally {
-      setIsOptimizing(null)
-    }
+  const actions = useRouteActions()
+  const label = useRouteLabels()
+  const editUrl = (route: RouteRow) => `/${lang}/distribution/routes/${route.id}/edit`
+  const menu = (route: RouteRow) => {
+    const busy = actions.busyId === route.id
+    return (
+      <RowActionsMenu
+        actions={[
+          { key: 'edit', label: t('common.edit'), icon: Pencil, href: editUrl(route), hidden: !canEdit },
+          { key: 'optimize', label: t('distribution.optimize'), icon: Waypoints, onClick: () => actions.optimize(route), disabled: busy },
+          { key: 'toggle', label: t(route.is_active ? 'common.inactive' : 'common.active'), icon: Power, onClick: () => actions.toggle(route), disabled: busy, hidden: !canEdit },
+          { key: 'delete', label: t('common.delete'), icon: Trash2, onClick: () => actions.remove(route), disabled: busy, destructive: true, hidden: !canDelete },
+        ]}
+      />
+    )
   }
-
-  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    setIsUpdatingStatus(id)
-    const supabase = createClient() as any
-    const { error } = await supabase.from('distribution_routes').update({ is_active: !currentStatus }).eq('id', id)
-    if (error) {
-      toast.error(errorMessage(tRoot, error, tCommon('error')))
-    } else {
-      toast.success(tCommon('success'))
-      await invalidateRoutes()
-    }
-    setIsUpdatingStatus(null)
-  }
-
-  const handleDelete = async (id: string) => {
-    const route = routes.find((r) => r.id === id)
-    if (!(await confirmDelete({ name: route?.name }))) return
-
-    setIsDeleting(id)
-    const supabase = createClient() as any
-    const { error } = await supabase.from('distribution_routes').delete().eq('id', id)
-    if (error) {
-      if (error.code === '23503') {
-        // A delivery still points at it (deliveries.route_id), so the route is
-        // archived rather than removed.
-        const { error: updateError } = await supabase
-          .from('distribution_routes')
-          .update({ is_active: false })
-          .eq('id', id)
-        if (updateError) {
-          toast.error(tCommon('error'))
-        } else {
-          toast.success(t('routeInUse'))
-          await invalidateRoutes()
-        }
-      } else {
-        toast.error(errorMessage(tRoot, error, tCommon('error')))
-      }
-    } else {
-      toast.success(tCommon('success'))
-      await invalidateRoutes()
-    }
-    setIsDeleting(null)
-  }
-
-  /** The row's actions menu, shared by the desktop table row and the phone card. */
-  const renderActions = (route: any) => !(canEdit || canDelete) ? null : (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" />}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        {canEdit && (
-                          <DropdownMenuItem
-                          render={<Link href={`/${lang}/distribution/routes/${route.id}/edit`} prefetch={true} />}
-                        >
-                          <Pencil className="mr-2 h-3.5 w-3.5" /> {tCommon('edit')}
-                        </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={() => handleOptimize(route.id)}
-                          disabled={isOptimizing === route.id}
-                        >
-                          <Waypoints className="mr-2 h-3.5 w-3.5" /> {t('optimize')}
-                        </DropdownMenuItem>
-                        {canEdit && (
-                          <DropdownMenuItem
-                          onClick={() => handleToggleStatus(route.id, route.is_active)}
-                          disabled={isUpdatingStatus === route.id}
-                        >
-                          <Power className="mr-2 h-3.5 w-3.5" />{' '}
-                          {route.is_active ? tCommon('inactive') : tCommon('active')}
-                        </DropdownMenuItem>
-                        )}
-                        {canDelete && (
-                          <DropdownMenuItem
-                          onClick={() => handleDelete(route.id)}
-                          className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
-                          disabled={isDeleting === route.id}
-                        >
-                          <Trash2 className="mr-2 h-3.5 w-3.5" /> {tCommon('delete')}
-                        </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-  );
-
+  const columns: ResponsiveColumn<RouteRow>[] = [
+    { key: 'name', header: t('distribution.routeName'), cell: (route) => <span className="font-medium text-foreground">{route.name}</span> },
+    { key: 'agent', header: t('distribution.agent'), cell: (route) => <span className={route.agent?.full_name ? '' : 'text-muted-foreground'}>{label.agent(route)}</span> },
+    { key: 'weekday', header: t('distribution.weekday'), cell: (route) => <span className="text-muted-foreground">{label.weekday(route)}</span> },
+    { key: 'stops', header: t('distribution.stops'), cell: (route) => <span className="text-sm text-muted-foreground">{label.stops(route)}</span> },
+    { key: 'summary', header: t('distribution.routeSummary'), className: 'max-lg:hidden', cell: (route) => <span className="text-xs text-muted-foreground">{label.summary(route)}</span> },
+    { key: 'status', header: t('common.status'), cell: (route) => <ActiveBadge active={route.is_active} /> },
+    { key: 'menu', header: '', className: 'w-12', isolated: true, cell: menu },
+  ]
   return (
-    <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
-      <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <TableSearch />
-          </div>
-        </div>
-
-        <Table containerClassName="max-md:hidden">
-          <TableHeader>
-            <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-              <TableHead className="w-10 text-center font-semibold text-slate-500 dark:text-slate-400">#</TableHead>
-              <TableHead className="font-semibold">{t('routeName')}</TableHead>
-              <TableHead>{t('agent')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('weekday')}</TableHead>
-              <TableHead>{t('stops')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('routeSummary')}</TableHead>
-              <TableHead>{tCommon('status')}</TableHead>
-              <TableHead className="w-12" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {routes.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-12">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <RouteIcon className="h-8 w-8 opacity-40" />
-                    <p className="text-sm">{tCommon('noData')}</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              routes.map((route, index) => (
-                <TableRow
-                  key={route.id}
-                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/${lang}/distribution/routes/${route.id}/edit`)}
-                >
-                  <TableCell className="text-center font-medium text-slate-500 dark:text-slate-400 text-xs">
-                    {(page - 1) * pageSize + index + 1}
-                  </TableCell>
-                  <TableCell>
-                    <p className="font-medium text-slate-800 dark:text-slate-200">{route.name}</p>
-                  </TableCell>
-                  <TableCell className={route.agent?.full_name ? '' : 'text-muted-foreground'}>
-                    {route.agent?.full_name || t('noAgent')}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground">
-                    {route.weekday ? t(WEEKDAY_KEYS[route.weekday - 1]) : t('noWeekday')}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">
-                      {t('routeStopsCount', { count: route.stops?.length ?? 0 })}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground">
-                    {route.optimized_at ? (
-                      <span className="text-xs">
-                        {t('routeDistance', { km: routeKm(route.distance_m ?? 0) })} ·{' '}
-                        {t('routeDuration', routeHoursMinutes(route.duration_s ?? 0))}
-                      </span>
-                    ) : (
-                      <span className="text-xs">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge
-                      tone={route.is_active ? 'emerald' : 'slate'}
-                      label={route.is_active ? tCommon('active') : tCommon('inactive')}
-                    />
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    {renderActions(route)}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-        {/* Phones: the same rows as cards (shared/mobile-list.tsx). */}
-        <MobileCardList
-          isEmpty={routes.length === 0}
-          empty={
-            <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
-              <RouteIcon className="h-8 w-8 opacity-40" />
-              <p className="text-sm">{tCommon('noData')}</p>
-            </div>
-          }
-        >
-          {routes.map((route) => (
-            <MobileCard
-              key={route.id}
-              onClick={() => router.push(`/${lang}/distribution/routes/${route.id}/edit`)}
-              leading={<MobileThumb fallback={<RouteIcon />} />}
-              eyebrow={
-                <>
-                  <MobileChip>{route.weekday ? t(WEEKDAY_KEYS[route.weekday - 1]) : t('noWeekday')}</MobileChip>
-                  <span className="truncate">{route.agent?.full_name || t('noAgent')}</span>
-                </>
-              }
-              title={route.name}
-              status={
-                <StatusBadge
-                  tone={route.is_active ? 'emerald' : 'slate'}
-                  label={route.is_active ? tCommon('active') : tCommon('inactive')}
-                />
-              }
-              menu={renderActions(route)}
-              stats={[
-                { label: t('stops'), value: t('routeStopsCount', { count: route.stops?.length ?? 0 }), tone: 'brand' },
-                {
-                  label: t('routeSummary'),
-                  value: route.optimized_at
-                    ? `${t('routeDistance', { km: routeKm(route.distance_m ?? 0) })} · ${t('routeDuration', routeHoursMinutes(route.duration_s ?? 0))}`
-                    : '—',
-                },
-              ]}
-            />
-          ))}
-        </MobileCardList>
-        <TablePagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} />
-      </CardContent>
-      {confirmDialog}
-    </Card>
+    <PagedListCard pageInfo={pageInfo}>
+      <ResponsiveTable
+        rows={routes}
+        rowKey={(route) => route.id}
+        columns={columns}
+        indexOffset={(pageInfo.page - 1) * pageInfo.pageSize}
+        onRowClick={(route) => router.push(editUrl(route))}
+        empty={<EmptyCatalog icon={RouteIcon} />}
+        card={(route) => ({
+          leading: <MobileThumb fallback={<RouteIcon />} />,
+          eyebrow: (
+            <>
+              <MobileChip>{label.weekday(route)}</MobileChip>
+              <span className="truncate">{label.agent(route)}</span>
+            </>
+          ),
+          title: route.name,
+          status: <ActiveBadge active={route.is_active} />,
+          menu: menu(route),
+          stats: [
+            { label: t('distribution.stops'), value: label.stops(route), tone: 'brand' },
+            { label: t('distribution.routeSummary'), value: label.summary(route) },
+          ],
+        })}
+      />
+      {actions.confirmDialog}
+    </PagedListCard>
   )
 }

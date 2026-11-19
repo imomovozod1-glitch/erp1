@@ -1,39 +1,21 @@
 'use client'
 
-import { DatePicker } from '@/components/ui/date-picker'
-import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
-import { useTranslations } from 'next-intl'
-import { errorMessage } from '@/lib/error-message'
-import { createClient } from '@/lib/supabase/client'
-import { invalidateDeliveries } from '@/lib/data/revalidate'
-import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
-import { formatCurrency, isoDate } from '@/lib/utils'
 import { FormFooter } from '@/components/shared/form-footer'
+import { LabeledField } from '@/components/shared/labeled-field'
+import { NameSelect } from '@/components/shared/name-select'
+import type { DeliverableOrder, DeliveryRouteOption } from '@/components/distribution/delivery-form/delivery-model'
+import { useDeliveryForm, type DeliveryFormState } from '@/components/distribution/delivery-form/use-delivery-form'
+import { formatCurrency } from '@/lib/utils'
 
-export interface DeliverableOrder {
-  id: string
-  order_number: string
-  status: string
-  total_amount: number
-  customer_id: string | null
-  customers?: { id: string; name: string; phone?: string | null; address?: string | null } | null
-}
-
-export interface DeliveryRouteOption {
-  id: string
-  name: string
-  agent_id: string | null
-}
+export type { DeliverableOrder, DeliveryRouteOption } from '@/components/distribution/delivery-form/delivery-model'
 
 interface DeliveryFormProps {
   assignableUsers: AssignableUser[]
@@ -44,266 +26,83 @@ interface DeliveryFormProps {
   lang: string
 }
 
-/**
- * Yetkazib berish — one sale on its way to a customer.
- *
- * An ordinary browser write: creating or editing a delivery moves no stock and
- * no money (`create_sale` already did both). Only the status move goes through
- * the database, because that carries the sales order with it — see
- * `set_delivery_status` in migration_distribution.sql.
- *
- * Picking the sale fills in the customer and their address, the way picking a
- * composition fills in a production run: the document it comes from knows
- * those, and retyping them is how they end up disagreeing.
- */
-export function DeliveryForm({
-  initialData,
-  orders,
-  routes,
-  assignableUsers,
-  nextNumber,
-  lang,
-}: DeliveryFormProps) {
-  const tRoot = useTranslations()
-  const tCommon = useTranslations('common')
+function OrderField({ state }: { state: DeliveryFormState }) {
   const t = useTranslations('distribution')
-  const router = useRouter()
-  const exitForm = useRouteModalExit(`/${lang}/distribution/deliveries`)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const supabase = createClient() as any
-
-  const [deliveryNumber, setDeliveryNumber] = useState<string>(
-    initialData?.delivery_number || nextNumber
+  const options = state.orderOptions.map((o) => ({ id: o.id, name: o.order_number, customer: o.customers?.name ?? '—', total: Number(o.total_amount) || 0 }))
+  return (
+    <LabeledField id="order_id" label={t('order')}>
+      <NameSelect
+        id="order_id"
+        value={state.draft.orderId}
+        onChange={state.chooseOrder}
+        options={options}
+        placeholder={t('noOrderLink')}
+        clearLabel={t('noOrderLink')}
+        meta={(o) => <span className="text-xs text-muted-foreground">{`${o.customer} · ${formatCurrency(o.total)}`}</span>}
+      />
+      {options.length === 0 && <p className="text-[11px] leading-snug text-muted-foreground">{t('noDeliverableOrders')}</p>}
+    </LabeledField>
   )
-  const [orderId, setOrderId] = useState<string>(initialData?.order_id || '')
-  const [customerId, setCustomerId] = useState<string>(initialData?.customer_id || '')
-  const [routeId, setRouteId] = useState<string>(initialData?.route_id || '')
-  const [agentId, setAgentId] = useState<string>(initialData?.agent_id || '')
-  const [plannedDate, setPlannedDate] = useState<string>(initialData?.planned_date || isoDate())
-  const [address, setAddress] = useState<string>(initialData?.address || '')
-  const [notes, setNotes] = useState<string>(initialData?.notes || '')
-  const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
+}
 
-  // An edit keeps whatever sale it already has, even though that sale is no
-  // longer "deliverable" — it is already on this delivery.
-  const orderOptions = useMemo(() => {
-    if (!initialData?.order_id || orders.some((o) => o.id === initialData.order_id)) return orders
-    return [
-      {
-        id: initialData.order_id,
-        order_number: initialData.order?.order_number ?? initialData.order_id,
-        status: initialData.order?.status ?? '',
-        total_amount: Number(initialData.order?.total_amount) || 0,
-        customer_id: initialData.customer_id ?? null,
-        customers: initialData.customer ?? null,
-      } as DeliverableOrder,
-      ...orders,
-    ]
-  }, [orders, initialData])
+function MainFields({ state, routes, users, initial, lang }: { state: DeliveryFormState; routes: DeliveryRouteOption[]; users: AssignableUser[]; initial: any; lang: string }) {
+  const t = useTranslations()
+  const { draft, patch } = state
+  const agents = users.map((u) => ({ id: u.id, name: u.full_name || '—' }))
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <LabeledField id="delivery_number" label={t('distribution.deliveryNumber')} required>
+        <Input id="delivery_number" value={draft.deliveryNumber} onChange={(e) => patch({ deliveryNumber: e.target.value })} />
+      </LabeledField>
+      <OrderField state={state} />
+      {/* Taken from the sale, not typed: two records of who it is for would eventually disagree. */}
+      <LabeledField id="customer" label={t('distribution.customer')}>
+        <div id="customer" className="flex h-9 w-full items-center rounded-xl border border-input bg-muted/50 px-3 text-sm text-foreground max-md:h-10">
+          {state.selectedOrder?.customers?.name ?? initial?.customer?.name ?? '—'}
+        </div>
+      </LabeledField>
+      <LabeledField id="route_id" label={t('distribution.route')}>
+        <NameSelect id="route_id" value={draft.routeId} onChange={state.chooseRoute} options={routes} placeholder={t('common.select')} clearLabel={t('common.select')} />
+      </LabeledField>
+      <LabeledField id="agent_id" label={t('distribution.courier')}>
+        <NameSelect id="agent_id" value={draft.agentId} onChange={(agentId) => patch({ agentId })} options={agents} placeholder={t('distribution.noAgent')} clearLabel={t('distribution.noAgent')} />
+      </LabeledField>
+      <LabeledField id="planned_date" label={t('distribution.plannedDate')}>
+        <DatePicker id="planned_date" value={draft.plannedDate} onChange={(plannedDate) => patch({ plannedDate })} lang={lang} placeholder={t('distribution.plannedDate')} />
+      </LabeledField>
+    </div>
+  )
+}
 
-  const selectedOrder = orderOptions.find((o) => o.id === orderId)
-
-  /** The sale knows its customer and where they are; take both from it. */
-  const handleSelectOrder = (value: string | null) => {
-    const next = !value || value === 'none' ? '' : value
-    setOrderId(next)
-    const chosen = orderOptions.find((o) => o.id === next)
-    if (!chosen) return
-    setCustomerId(chosen.customer_id ?? '')
-    if (chosen.customers?.address) setAddress(chosen.customers.address)
-  }
-
-  /** A round has an agent; choosing it suggests them as the courier. */
-  const handleSelectRoute = (value: string | null) => {
-    const next = !value || value === 'none' ? '' : value
-    setRouteId(next)
-    const chosen = routes.find((r) => r.id === next)
-    if (chosen?.agent_id && !agentId) setAgentId(chosen.agent_id)
-  }
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!deliveryNumber.trim()) {
-      toast.error(tCommon('required'))
-      return
-    }
-    if (!orderId && !customerId) {
-      toast.error(tCommon('required'))
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      const userRes = await supabase.auth.getUser()
-      const userId: string | null = userRes.data?.user?.id ?? null
-
-      const payload: Record<string, any> = {
-        delivery_number: deliveryNumber.trim(),
-        order_id: orderId || null,
-        customer_id: customerId || null,
-        route_id: routeId || null,
-        agent_id: agentId || null,
-        planned_date: plannedDate || null,
-        address: address.trim() || null,
-        notes: notes.trim() || null,
-        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
-        created_by: initialData?.created_by ?? userId,
-      }
-
-      if (initialData?.id) {
-        const { error } = await supabase.from('deliveries').update(payload).eq('id', initialData.id)
-        if (error) throw error
-        toast.success(tCommon('success'))
-        await invalidateDeliveries()
-        exitForm()
-      } else {
-        const { data: created, error } = await supabase
-          .from('deliveries')
-          .insert([payload])
-          .select('id')
-          .single()
-        if (error) throw error
-        toast.success(tCommon('success'))
-        await invalidateDeliveries()
-        router.push(`/${lang}/distribution/deliveries/${created.id}`)
-      }
-    } catch (error: any) {
-      // Two different unique rules land here as 23505, and telling the user the
-      // number is taken when the real problem is that the sale is already out
-      // for delivery would send them chasing the wrong thing.
-      let message: string = errorMessage(tRoot, error, tCommon('error'))
-      if (error?.code === '23505') {
-        const constraint = `${error.message ?? ''}${error.details ?? ''}`
-        message = constraint.includes('uniq_deliveries_live_order')
-          ? t('orderAlreadyHasDelivery')
-          : t('duplicateNumber')
-      }
-      toast.error(message)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
+/** Yetkazib berish — one sale on its way to a customer. */
+export function DeliveryForm({ initialData, orders, routes, assignableUsers, nextNumber, lang }: DeliveryFormProps) {
+  const t = useTranslations()
+  const state = useDeliveryForm(initialData, orders, routes, nextNumber, lang)
+  const { draft, patch } = state
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader>
-        <CardTitle>{initialData ? t('editDelivery') : t('addDelivery')}</CardTitle>
+        <CardTitle>{t(initialData ? 'distribution.editDelivery' : 'distribution.addDelivery')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="delivery_number">{t('deliveryNumber')} *</Label>
-              <Input
-                id="delivery_number"
-                value={deliveryNumber}
-                onChange={(e) => setDeliveryNumber(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="order_id">{t('order')}</Label>
-              <Select value={orderId || 'none'} onValueChange={handleSelectOrder}>
-                <SelectTrigger id="order_id" className="w-full">
-                  <SelectValue placeholder={t('selectOrder')}>
-                    {selectedOrder ? selectedOrder.order_number : t('noOrderLink')}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t('noOrderLink')}</SelectItem>
-                  {orderOptions.map((o) => (
-                    <SelectItem key={o.id} value={o.id}>
-                      {o.order_number} — {o.customers?.name ?? '—'} · {formatCurrency(Number(o.total_amount) || 0)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {orderOptions.length === 0 && (
-                <p className="text-[11px] leading-snug text-muted-foreground">{t('noDeliverableOrders')}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t('customer')}</Label>
-              {/* Taken from the sale, not typed: two records of who this is for
-                  would eventually disagree. */}
-              <div className="flex h-9 w-full items-center rounded-md border border-input bg-slate-50 px-3 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                {selectedOrder?.customers?.name ?? initialData?.customer?.name ?? '—'}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="route_id">{t('route')}</Label>
-              <Select value={routeId || 'none'} onValueChange={handleSelectRoute}>
-                <SelectTrigger id="route_id" className="w-full">
-                  <SelectValue>
-                    {routeId ? routes.find((r) => r.id === routeId)?.name ?? '—' : tCommon('select')}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{tCommon('select')}</SelectItem>
-                  {routes.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="agent_id">{t('courier')}</Label>
-              <Select
-                value={agentId || 'none'}
-                onValueChange={(val) => setAgentId(!val || val === 'none' ? '' : val)}
-              >
-                <SelectTrigger id="agent_id" className="w-full">
-                  <SelectValue>
-                    {agentId
-                      ? assignableUsers.find((u) => u.id === agentId)?.full_name ?? '—'
-                      : t('noAgent')}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t('noAgent')}</SelectItem>
-                  {assignableUsers.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.full_name || '—'}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="planned_date">{t('plannedDate')}</Label>
-              <DatePicker
-                id="planned_date"
-                value={plannedDate}
-                onChange={setPlannedDate}
-                lang={lang}
-                placeholder={t('plannedDate')}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="address">{t('address')}</Label>
-            <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">{tCommon('notes')}</Label>
-            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
-          </div>
-
+        <form onSubmit={state.submit} className="space-y-6">
+          <MainFields state={state} routes={routes} users={assignableUsers} initial={initialData} lang={lang} />
+          <LabeledField id="address" label={t('distribution.address')}>
+            <Input id="address" value={draft.address} onChange={(e) => patch({ address: e.target.value })} />
+          </LabeledField>
+          <LabeledField id="notes" label={t('common.notes')}>
+            <Textarea id="notes" value={draft.notes} onChange={(e) => patch({ notes: e.target.value })} rows={3} />
+          </LabeledField>
           <div className="max-w-sm">
-            <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
+            <AssigneeSelect value={draft.assignedTo} onChange={(assignedTo) => patch({ assignedTo })} users={assignableUsers} />
           </div>
-
           <FormFooter>
-            <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
-              {tCommon('cancel')}
+            <Button type="button" variant="outline" onClick={() => state.exitForm()} disabled={state.submitting}>
+              {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {tCommon('save')}
+            <Button type="submit" disabled={state.submitting}>
+              {state.submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {t('common.save')}
             </Button>
           </FormFooter>
         </form>

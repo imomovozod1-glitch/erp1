@@ -1,10 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Layers, Pencil, Power, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { toast } from 'sonner'
 import { useCan } from '@/components/providers/permissions-provider'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
 import { MobileThumb } from '@/components/shared/mobile-list'
@@ -15,7 +13,7 @@ import { ActiveBadge, EmptyCatalog } from '@/components/inventory/catalog/catalo
 import { createClient } from '@/lib/supabase/client'
 import { invalidateBoms } from '@/lib/data/revalidate'
 import { deleteOrArchive, setRowActive } from '@/lib/delete-or-archive'
-import { errorMessage } from '@/lib/error-message'
+import { useRowAction } from '@/lib/hooks/use-row-action'
 import { formatNumber } from '@/lib/utils'
 
 interface BomRow {
@@ -36,18 +34,8 @@ interface BomsTableProps extends PageInfo {
 function useBomActions() {
   const t = useTranslations()
   const [confirmDelete, confirmDialog] = useConfirmDelete()
-  const [busyId, setBusyId] = useState<string | null>(null)
-  const run = async (bom: BomRow, action: () => Promise<string>) => {
-    setBusyId(bom.id)
-    try {
-      toast.success(await action())
-      await invalidateBoms()
-    } catch (error) {
-      toast.error(errorMessage(t, error, t('common.error')))
-    } finally {
-      setBusyId(null)
-    }
-  }
+  const { busyId, run: runOn } = useRowAction(invalidateBoms)
+  const run = (bom: BomRow, action: () => Promise<string>) => runOn(bom.id, action)
   const toggle = (bom: BomRow) =>
     run(bom, async () => {
       await setRowActive(createClient(), 'product_boms', bom.id, !bom.is_active)
