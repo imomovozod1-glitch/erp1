@@ -35,7 +35,11 @@ export function LineBadges({ mode, isExtra, consumption }: { mode: LinesMode; is
       {mode === 'order' && consumption === 'fixed' && (
         <span className={cn(PILL, 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300')}>{t('consumption_fixed')}</span>
       )}
-      {isExtra && <span className={cn(PILL, 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300')}>{t('extraMaterialShort')}</span>}
+      {isExtra && (
+        <span title={t('extraMaterialHint')} className={cn(PILL, 'cursor-help bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300')}>
+          {t('extraMaterialShort')}
+        </span>
+      )}
     </>
   )
 }
