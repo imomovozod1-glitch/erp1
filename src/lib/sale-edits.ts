@@ -1,6 +1,6 @@
 'use client'
 
-import { depositToCashbox, findSaleCashbox, withdrawFromCashbox } from '@/lib/finance-helpers'
+import { depositToCashbox, findSaleCashbox, withdrawFromCashbox } from '@/lib/finance/cashbox-balance'
 import { returnLinesToStock, salePaymentMethod } from '@/lib/status-actions'
 import { isoDate } from '@/lib/utils'
 import { BusinessRpcError, callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'

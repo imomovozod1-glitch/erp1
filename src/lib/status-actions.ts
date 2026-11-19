@@ -1,7 +1,7 @@
 'use client'
 
 import type { OrderStatus, InvoiceStatus } from '@/lib/statuses'
-import { findSaleCashbox, withdrawFromCashbox } from '@/lib/finance-helpers'
+import { findSaleCashbox, withdrawFromCashbox } from '@/lib/finance/cashbox-balance'
 import { recordCostLayer } from '@/lib/inventory-costing'
 import { callBusinessRpc, RPC_MISSING } from '@/lib/business-rpc'
 

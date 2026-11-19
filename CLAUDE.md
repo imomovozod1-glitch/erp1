@@ -91,7 +91,7 @@ The business write path, consistent across every `*-form.tsx`:
 | `save_invoice` | `invoice-form.tsx` | `sales.create`/`edit`; existing: `sales.edit`, own |
 | `save_production_order`, `complete_production_order`, `cancel_production_order` | `production-actions.ts` ← `production-order-form.tsx`, order detail | `production.create`/`edit`, own; cost split over outputs by `cost_share`, else by quantity |
 | `receive_purchase` | `purchase-order-form.tsx` | `procurement.create`/`edit` |
-| `create_cashbox`, `record_cashbox_movement` | `cashbox-client.tsx` | `finance.create`/`edit` |
+| `create_cashbox`, `record_cashbox_movement` | `finance/cashbox/` (`cashbox-save.ts`, `cashbox-operations.ts`) | `finance.create`/`edit` |
 | `save_transaction` | `transaction-form.tsx` | `finance.create`/`edit`; existing: `finance.edit`, own |
 
 "own" = with an `own` data scope only records `assigned_to` the caller. Still plain browser writes: product stock adjustments (`product-form.tsx`), the AI stock scanner, cashbox rename/delete, and the non-money header fields of orders (`order-form.tsx`).
@@ -109,7 +109,7 @@ API routes (`src/app/api/`) handle everything that needs the service role or a s
 - Cancelling (any status, including `delivered`) is `cancelSalesOrder` in `src/lib/status-actions.ts` → `cancel_sales_order(uuid)` (needs `sales.edit`; with an `own` scope only sales assigned to the caller), opened through `src/components/sales/cancel-sale-dialog.tsx`; a cancelled sale can no longer be edited. It reverses everything: stock + `in` movements + a `sale_cancellation` cost layer; the sale's income transactions are deleted and their sum withdrawn from the cashbox matching the payment method parsed from the order/invoice notes; invoices are cancelled (which removes the debt); anything else paid on the invoice (spent credit, collected debt) goes back to `customers.credit_balance`.
 - Editing a sale's lines (`src/lib/sale-edits.ts` `updateSaleLines` → `update_sale_lines`, UI `sale-lines-editor.tsx` inside `order-form.tsx`): a removed line goes back to stock (`return_sale_lines_to_stock`, shared with cancelling); a price change rewrites `total_price`; the order total is recomputed (lines − discount + tax) and is read-only in the form; the difference moves the cashbox and the income transaction (cash sales) or the invoice total / debt, with any overpayment turned into customer credit (debt sales).
 - `src/lib/inventory-costing.ts` + `migration_inventory_costing.sql`: FIFO / LIFO / AVECO per tenant (`tenants.costing_method`), `inventory_cost_layers` per stock-in; `products.cost_price` kept as a weighted average.
-- `src/lib/finance-helpers.ts`: `adjustCashboxBalance(...)` (throws `InsufficientFundsError`; falls back to a `localStorage['erp_cashboxes']` mirror if Supabase fails), `applyCustomerCredit(...)`.
+- `src/lib/finance/` — `cashbox-balance.ts`: `adjustCashboxBalance(...)` (throws `InsufficientFundsError`; falls back to a `localStorage['erp_cashboxes']` mirror if Supabase fails); `customer-credit.ts`: `applyCustomerCredit(...)`; the drawer-picking rule is `cashbox-target.ts`.
 - POS (`src/components/pos/`) shows the receipt immediately and saves in the background. Printing: `src/lib/printer/` builds ESC/POS bytes (58/80 mm, CP866 Cyrillic) and sends over WebUSB or Web Bluetooth, falling back to `window.print()`; config is per-device in `localStorage['erp_printer_config']`.
 
 ### Maps & route planning

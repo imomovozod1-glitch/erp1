@@ -8,7 +8,7 @@
  * little. `localStorage` is deliberately not used — it is synchronous (it
  * blocks the main thread on every read) and caps out around 5 MB, which a full
  * product/customer catalogue exceeds. The existing `localStorage['erp_cashboxes']`
- * mirror in src/lib/finance-helpers.ts predates this and should migrate here.
+ * mirror in src/lib/finance/cashbox-local.ts predates this and should migrate here.
  */
 
 const DB_NAME = 'erp_offline'

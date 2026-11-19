@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select'
 import { formatCurrency } from '@/lib/utils'
 
-export type CashboxType = 'cash' | 'card' | 'transfer' | 'other'
+import type { CashboxType } from './cashbox-types'
 
 export interface CashboxFormValues {
   name: string

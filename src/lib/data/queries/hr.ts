@@ -105,7 +105,7 @@ export const getCachedDepartments = unstable_cache(
  *
  * `failed` is part of the contract: the client keeps a localStorage mirror for
  * when Supabase is unreachable (see `adjustCashboxBalance` in
- * finance-helpers.ts), and it can only decide to use it if it can tell an
+ * lib/finance/cashbox-target.ts), and it can only decide to use it if it can tell an
  * empty tenant apart from a failed read.
  */
 /**

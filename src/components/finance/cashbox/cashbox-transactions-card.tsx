@@ -1,6 +1,7 @@
 'use client'
 
 import { useCan } from '@/components/providers/permissions-provider'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Calendar, Receipt, Search, TrendingUp } from 'lucide-react'
@@ -20,30 +21,21 @@ interface Cashbox {
   name: string
 }
 
-/**
- * The cashbox transaction history: one row per movement, with the period's
- * income and expense totalled in the footer.
- *
- * Split out of `cashbox-client.tsx` (1600 lines) because it is the one part of
- * that screen that only reads: the rows it renders are already filtered by
- * period in Postgres and by the search box here, and the only thing it can do
- * to them is hand one back for deletion.
- */
+const matchesQuery = (tx: any, cashboxName: string, query: string) =>
+  [tx.description, tx.category, cashboxName].some((field) => (field ?? '').toLowerCase().includes(query))
+
 export function CashboxTransactionsCard({
-  transactions,
+  transactions: allTransactions,
   cashboxes,
-  search,
-  onSearchChange,
   lang,
 }: {
-  /** Already filtered — by period on the server, by `search` by the caller. */
   transactions: any[]
   cashboxes: Cashbox[]
-  search: string
-  onSearchChange: (value: string) => void
   lang: string
 }) {
-  // Rows open the transaction's editor, which a view-only user cannot use.
+  const [search, setSearch] = useState('')
+  const cashboxName = (id: string) => cashboxes.find((c) => c.id === id)?.name ?? ''
+  const transactions = allTransactions.filter((tx) => matchesQuery(tx, cashboxName(tx.reference_id), search.toLowerCase()))
   const canEdit = useCan('finance', 'edit', 'transactions')
   const router = useRouter()
   const tCommon = useTranslations('common')
@@ -66,7 +58,7 @@ export function CashboxTransactionsCard({
         <Input
           placeholder={`${tCommon('search')}...`}
           value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className="pl-9 h-10 md:h-9 border-slate-200 dark:border-slate-700 rounded-xl text-xs"
         />
       </div>

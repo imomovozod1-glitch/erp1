@@ -1,4 +1,5 @@
-import { adjustCashboxBalance, applyCustomerCredit } from '@/lib/finance-helpers'
+import { adjustCashboxBalance } from '@/lib/finance/cashbox-balance'
+import { applyCustomerCredit } from '@/lib/finance/customer-credit'
 import { consumeCostLayers, getEffectiveCostingMethod } from '@/lib/inventory-costing'
 import { formatCurrency, generateDocumentNumber, isoDate } from '@/lib/utils'
 import type { CartItem } from '@/components/pos/use-pos-cart'
