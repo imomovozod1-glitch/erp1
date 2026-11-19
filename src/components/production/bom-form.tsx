@@ -228,6 +228,13 @@ export function BomForm({ initialData, initialItems, initialOutputs, products, p
             )}
           />
         </div>
+
+        <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notes">{tCommon('description')}</Label>
+        <Textarea id="notes" {...register('notes')} rows={2} />
       </div>
 
       <ProductionLinesTabs
@@ -239,15 +246,6 @@ export function BomForm({ initialData, initialItems, initialOutputs, products, p
         onOutputsChange={setOutputs}
         disabled={isSubmitting}
       />
-
-      <div className="space-y-2">
-        <Label htmlFor="notes">{tCommon('description')}</Label>
-        <Textarea id="notes" {...register('notes')} rows={3} />
-      </div>
-
-      <div className="max-w-sm">
-        <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
-      </div>
 
       <FormFooter>
         <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>

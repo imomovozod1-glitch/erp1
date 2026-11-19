@@ -22,7 +22,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import type { Resolver } from 'react-hook-form'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
+import { PermissionsEditor } from '@/components/shared/permissions/permissions-editor'
 import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
 import { isStrongPassword } from '@/lib/password-validation'
 import { isValidPhone } from '@/lib/phone-validation'
@@ -542,7 +542,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
                     </div>
                     <div className="space-y-2">
                       <Label>{tSettings('permissions')}</Label>
-                      <PermissionsMatrix value={permsValue} onChange={editPermissions} />
+                      <PermissionsEditor value={permsValue} onChange={editPermissions} />
                     </div>
                   </div>
                 )}
@@ -596,7 +596,7 @@ export function EmployeeForm({ initialData, lang, options }: EmployeeFormProps) 
                 </div>
                 <div className="space-y-2">
                   <Label>{tSettings('permissions')}</Label>
-                  <PermissionsMatrix value={permsValue} onChange={editPermissions} />
+                  <PermissionsEditor value={permsValue} onChange={editPermissions} />
                 </div>
               </div>
             )}

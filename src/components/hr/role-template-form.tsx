@@ -14,7 +14,7 @@ import { invalidateRoleTemplates } from '@/lib/data/revalidate'
 import { errorMessage } from '@/lib/error-message'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-import { PermissionsMatrix } from '@/components/shared/permissions-matrix'
+import { PermissionsEditor } from '@/components/shared/permissions/permissions-editor'
 import { EMPTY_PERMISSIONS, type Permissions } from '@/lib/permissions'
 import { FormFooter } from '@/components/shared/form-footer'
 
@@ -106,7 +106,7 @@ export function RoleTemplateForm({ initialData, lang }: RoleTemplateFormProps) {
 
           <div className="space-y-2">
             <Label>{tSettings('permissions')}</Label>
-            <PermissionsMatrix value={permsValue} onChange={setPermsValue} />
+            <PermissionsEditor value={permsValue} onChange={setPermsValue} />
           </div>
 
           <FormFooter>

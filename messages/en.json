@@ -1883,9 +1883,10 @@
     "simpleHint": "Tick what this employee may do. A section left unticked stays hidden from them.",
     "recordsTitle": "Which records",
     "recordsHint": "The employee sees only records assigned to them, their department's, or all of them.",
-    "records_own": "Only their own",
-    "records_department": "Their department's",
     "records_all": "All",
+    "scopeShort_own": "Own",
+    "scopeShort_department": "Department",
+    "scopeShort_all": "All",
     "selectSection": "Tick the whole section",
     "selectModule": "Tick the whole module",
     "scopeHint": "With “Own only”, the user sees just the records they created in that module."

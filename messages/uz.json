@@ -1883,9 +1883,10 @@
     "simpleHint": "Xodim nimalar qila olishini belgilang. Belgilanmagan bo'lim unga ko'rinmaydi.",
     "recordsTitle": "Qaysi yozuvlar",
     "recordsHint": "Xodim faqat o'ziga biriktirilgan yozuvlarni, bo'limidagilarni yoki hammasini ko'radi.",
-    "records_own": "Faqat o'zinikini",
-    "records_department": "Bo'limidagilarni",
     "records_all": "Hammasini",
+    "scopeShort_own": "O'ziniki",
+    "scopeShort_department": "Bo'limi",
+    "scopeShort_all": "Hammasi",
     "selectSection": "Bo'limni to'liq belgilash",
     "selectModule": "Modulni to'liq belgilash",
     "scopeHint": "“Faqat o‘zi” tanlansa, foydalanuvchi shu modulda faqat o‘zi yaratgan yozuvlarni ko‘radi."
