@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouteModalExit } from '@/lib/hooks/use-route-modal'
 import { useTranslations } from 'next-intl'
 import { errorMessage } from '@/lib/error-message'
-import { Resolver, Controller } from 'react-hook-form'
+import type { Resolver } from 'react-hook-form'
 import { usePersistedForm, clearPersistedForm } from '@/lib/hooks/use-persisted-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -15,18 +15,14 @@ import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { LabeledField } from '@/components/shared/labeled-field'
+import { StatusField } from '@/components/inventory/catalog-form/catalog-fields'
 import { AssigneeSelect, type AssignableUser } from '@/components/shared/assignee-select'
-import {
-  ProductionLinesTabs,
-  costShareTotal,
-  type MaterialLine,
-  type OutputLine,
-} from '@/components/production/production-lines-tabs'
+import { ProductionLinesTabs, type MaterialLine, type OutputLine } from '@/components/production/production-lines-tabs'
+import { linesProblem } from './lines/lines-model'
+import { MISSING_SCHEMA_CODES, saveBom, savedBomMaterials, savedBomOutputs } from './bom-save'
 import { FormFooter } from '@/components/shared/form-footer'
-
 
 export interface BomProductOption {
   id: string
@@ -49,9 +45,6 @@ interface BomFormProps {
   lang: string
 }
 
-/** Lower-level codes a database without migration_production_outputs.sql answers with. */
-const MISSING_SCHEMA_CODES = new Set(['PGRST204', 'PGRST205', '42P01', '42703'])
-
 /**
  * Tarkib — the recipe for one batch.
  *
@@ -66,7 +59,15 @@ const MISSING_SCHEMA_CODES = new Set(['PGRST204', 'PGRST205', '42P01', '42703'])
  * replaced wholesale. `product_boms.product_id` / `output_quantity` mirror the
  * first finished product for every reader that predates product_bom_outputs.
  */
-export function BomForm({ initialData, initialItems, initialOutputs, products, presetProductId, lang, assignableUsers }: BomFormProps) {
+export function BomForm({
+  initialData,
+  initialItems,
+  initialOutputs,
+  products,
+  presetProductId,
+  lang,
+  assignableUsers,
+}: BomFormProps) {
   // The draft is keyed by the product it is for, so opening "add composition"
   // from one product never restores a half-written recipe for another.
   const FORM_ID = `bom-form-v2:${initialData?.id ?? presetProductId ?? 'new'}`
@@ -76,30 +77,11 @@ export function BomForm({ initialData, initialItems, initialOutputs, products, p
   const exitForm = useRouteModalExit(`/${lang}/production/boms`)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [assignedTo, setAssignedTo] = useState<string | null>(initialData?.assigned_to ?? null)
-  const supabase = createClient() as any
 
-  const [materials, setMaterials] = useState<MaterialLine[]>(() =>
-    (initialItems ?? []).map((item: any) => ({
-      productId: item.component_id,
-      quantity: Number(item.quantity) || 0,
-      consumption: item.consumption === 'fixed' ? 'fixed' : 'variable',
-      isExtra: false,
-    }))
+  const [materials, setMaterials] = useState<MaterialLine[]>(() => savedBomMaterials(initialItems))
+  const [outputs, setOutputs] = useState<OutputLine[]>(() =>
+    savedBomOutputs(initialOutputs, initialData, presetProductId)
   )
-  const [outputs, setOutputs] = useState<OutputLine[]>(() => {
-    if (initialOutputs && initialOutputs.length > 0) {
-      return initialOutputs.map((row: any) => ({
-        productId: row.product_id,
-        quantity: Number(row.quantity) || 0,
-        costShare: row.cost_share === null || row.cost_share === undefined ? null : Number(row.cost_share),
-        isExtra: false,
-      }))
-    }
-    const productId = initialData?.product_id ?? presetProductId
-    return productId
-      ? [{ productId, quantity: Number(initialData?.output_quantity) || 1, costShare: null, isExtra: false }]
-      : []
-  })
 
   const schema = z.object({
     name: z.string().min(1, tCommon('required')),
@@ -109,7 +91,12 @@ export function BomForm({ initialData, initialItems, initialOutputs, products, p
 
   type FormData = z.infer<typeof schema>
 
-  const { register, handleSubmit, control, formState: { errors } } = usePersistedForm<FormData>(FORM_ID, {
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = usePersistedForm<FormData>(FORM_ID, {
     resolver: zodResolver(schema) as unknown as Resolver<FormData>,
     defaultValues: {
       name: initialData?.name || '',
@@ -118,69 +105,12 @@ export function BomForm({ initialData, initialItems, initialOutputs, products, p
     },
   })
 
-  const onSubmit = async (data: any) => {
-    if (materials.length === 0 || materials.some((m) => !(m.quantity > 0))) {
-      toast.error(t('noComponents'))
-      return
-    }
-    if (outputs.length === 0 || outputs.some((o) => !(o.quantity > 0))) {
-      toast.error(t('noOutputs'))
-      return
-    }
-    const useShares = outputs.every((o) => o.costShare !== null)
-    if (useShares && Math.abs(costShareTotal(outputs) - 100) > 0.01) {
-      toast.error(t('costShareSum'))
-      return
-    }
+  const onSubmit = async (data: FormData) => {
+    const problem = linesProblem(materials, outputs)
+    if (problem) return void toast.error(tRoot(problem))
     setIsSubmitting(true)
     try {
-      const userRes = await supabase.auth.getUser()
-      const userId: string | null = userRes.data?.user?.id ?? null
-
-      const payload: Record<string, any> = {
-        name: data.name.trim(),
-        product_id: outputs[0].productId,
-        output_quantity: outputs[0].quantity,
-        notes: data.notes || null,
-        is_active: data.is_active,
-        assigned_to: assignedTo ?? initialData?.assigned_to ?? userId,
-        created_by: initialData?.created_by ?? userId,
-      }
-
-      let bomId: string = initialData?.id
-      if (bomId) {
-        const { error } = await supabase.from('product_boms').update(payload).eq('id', bomId)
-        if (error) throw error
-        const [{ error: delItems }, { error: delOutputs }] = await Promise.all([
-          supabase.from('product_bom_items').delete().eq('bom_id', bomId),
-          supabase.from('product_bom_outputs').delete().eq('bom_id', bomId),
-        ])
-        if (delItems) throw delItems
-        if (delOutputs) throw delOutputs
-      } else {
-        const { data: created, error } = await supabase.from('product_boms').insert([payload]).select('id').single()
-        if (error) throw error
-        bomId = created.id
-      }
-
-      // `tenant_id` is left out on purpose: the set_tenant_id() BEFORE INSERT
-      // trigger stamps it (migration_production.sql).
-      const [{ error: itemsError }, { error: outputsError }] = await Promise.all([
-        supabase.from('product_bom_items').insert(
-          materials.map((m) => ({ bom_id: bomId, component_id: m.productId, quantity: m.quantity, consumption: m.consumption }))
-        ),
-        supabase.from('product_bom_outputs').insert(
-          outputs.map((o) => ({
-            bom_id: bomId,
-            product_id: o.productId,
-            quantity: o.quantity,
-            cost_share: useShares ? o.costShare : null,
-          }))
-        ),
-      ])
-      if (itemsError) throw itemsError
-      if (outputsError) throw outputsError
-
+      await saveBom(createClient(), { ...data, assignedTo, materials, outputs }, initialData)
       toast.success(tCommon('success'))
       await invalidateBoms()
       clearPersistedForm(FORM_ID)
@@ -203,59 +133,39 @@ export function BomForm({ initialData, initialItems, initialOutputs, products, p
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="name">{t('bomName')} *</Label>
-          <Input id="name" {...register('name')} placeholder={t('bomNamePlaceholder')} />
-          {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <LabeledField id="name" label={t('bomName')} required error={errors.name?.message}>
+              <Input id="name" {...register('name')} placeholder={t('bomNamePlaceholder')} />
+            </LabeledField>
 
-        <div className="space-y-2">
-          <Label htmlFor="is_active">{tCommon('status')}</Label>
-          <Controller
-            control={control}
-            name="is_active"
-            render={({ field }) => (
-              <Select value={field.value ? 'true' : 'false'} onValueChange={(val) => field.onChange(val === 'true')}>
-                <SelectTrigger id="is_active" className="w-full">
-                  <SelectValue>{field.value ? tCommon('active') : tCommon('inactive')}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">{tCommon('active')}</SelectItem>
-                  <SelectItem value="false">{tCommon('inactive')}</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
+            <StatusField control={control} />
+
+            <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
+          </div>
+
+          <LabeledField id="notes" label={tCommon('description')}>
+            <Textarea id="notes" {...register('notes')} rows={2} />
+          </LabeledField>
+
+          <ProductionLinesTabs
+            mode="bom"
+            products={products}
+            materials={materials}
+            outputs={outputs}
+            onMaterialsChange={setMaterials}
+            onOutputsChange={setOutputs}
+            disabled={isSubmitting}
           />
-        </div>
 
-        <AssigneeSelect value={assignedTo} onChange={setAssignedTo} users={assignableUsers} />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="notes">{tCommon('description')}</Label>
-        <Textarea id="notes" {...register('notes')} rows={2} />
-      </div>
-
-      <ProductionLinesTabs
-        mode="bom"
-        products={products}
-        materials={materials}
-        outputs={outputs}
-        onMaterialsChange={setMaterials}
-        onOutputsChange={setOutputs}
-        disabled={isSubmitting}
-      />
-
-      <FormFooter>
-        <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
-          {tCommon('cancel')}
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {tCommon('save')}
-        </Button>
-      </FormFooter>
+          <FormFooter>
+            <Button type="button" variant="outline" onClick={() => exitForm()} disabled={isSubmitting}>
+              {tCommon('cancel')}
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {tCommon('save')}
+            </Button>
+          </FormFooter>
         </form>
       </CardContent>
     </Card>
