@@ -1,17 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import {
-  CONSOLE_SUBDOMAINS,
-  ROOT_DOMAIN,
-  WILDCARD_DOMAIN,
-  isDomainAutomationConfigured,
-  isHostServing,
-  listProjectDomains,
-  missingDomainConfig,
-  registerTenantDomain,
-  tenantHost,
-} from '@/lib/vercel-domains'
+import { CONSOLE_SUBDOMAINS, ROOT_DOMAIN, isDomainAutomationConfigured, missingDomainConfig, registerTenantDomain, tenantHost } from '@/lib/vercel-domains'
+import { WILDCARD_DOMAIN, isHostServing, listProjectDomains } from '@/lib/vercel-domain-status'
 
 /**
  * Tenant hosts, reconciled against the hosting platform.
@@ -72,7 +63,7 @@ export async function GET() {
       host: tenantHost(subdomain),
       registered: wildcard || registered.has(tenantHost(subdomain)),
       // Registered but unverified means the host is on the project and still
-      // cannot be opened — see listProjectDomains in src/lib/vercel-domains.ts.
+      // cannot be opened — see listProjectDomains in src/lib/vercel-domain-status.ts.
       verified: wildcard || (registered.get(tenantHost(subdomain)) ?? false),
     })),
   })

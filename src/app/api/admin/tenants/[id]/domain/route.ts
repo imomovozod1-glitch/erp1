@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSuperAdminSession } from '@/lib/admin-auth'
 import { getCacheClient } from '@/lib/supabase/cache-client'
-import { getTenantDomainStatus, registerTenantDomain } from '@/lib/vercel-domains'
+import { registerTenantDomain } from '@/lib/vercel-domains'
+import { getTenantDomainStatus } from '@/lib/vercel-domain-status'
 
 /**
  * One company's address, as the console shows it.
