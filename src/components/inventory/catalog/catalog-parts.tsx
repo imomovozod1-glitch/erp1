@@ -6,10 +6,9 @@ import Image from 'next/image'
 import { Download, type LucideIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { TooltipProvider } from '@/components/ui/tooltip'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { TableFilterChips, TablePagination, TableSearch } from '@/components/shared/table-pagination'
+import { PagedListCard } from '@/components/shared/paged-list-card'
+import { TableFilterChips } from '@/components/shared/table-pagination'
 import { cn } from '@/lib/utils'
 import type { CatalogItem, CatalogPage } from './catalog-types'
 
@@ -17,21 +16,9 @@ export function CatalogShell({ page, tools, children }: { page: CatalogPage; too
   const t = useTranslations('common')
   const statuses = (['all', 'active', 'inactive'] as const).map((value) => ({ value, label: t(value) }))
   return (
-    <TooltipProvider>
-      <Card className="border-0 shadow-sm max-md:overflow-visible max-md:bg-transparent max-md:shadow-none">
-        <CardContent className="p-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4 max-md:border-0 max-md:px-0 max-md:pt-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <TableSearch />
-              <TableFilterChips param="status" value={page.status} options={statuses} />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">{tools}</div>
-          </div>
-          {children}
-          <TablePagination page={page.page} totalPages={page.totalPages} total={page.total} pageSize={page.pageSize} />
-        </CardContent>
-      </Card>
-    </TooltipProvider>
+    <PagedListCard pageInfo={page} tools={tools} filters={<TableFilterChips param="status" value={page.status} options={statuses} />}>
+      {children}
+    </PagedListCard>
   )
 }
 

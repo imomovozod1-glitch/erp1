@@ -2,7 +2,7 @@
 
 import { Factory, Layers, RefreshCw, ShoppingCart, Truck, type LucideIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DetailTabs } from '@/components/shared/detail-page'
 import { ResponsiveTable } from '@/components/shared/responsive-table'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { translateMovementReason } from '@/lib/movement-reason'
@@ -172,28 +172,11 @@ function CostLayersTab({ costLayers }: Pick<ProductHistory, 'costLayers'>) {
 
 export function ProductHistoryTabs({ history, unit }: { history: ProductHistory; unit?: string }) {
   const t = useTranslations('inventory')
-  return (
-    <Tabs defaultValue="movements" className="rounded-xl border bg-card shadow-sm">
-      <TabsList variant="line" className="h-auto w-full justify-start overflow-x-auto border-b px-2 [scrollbar-width:none]">
-        {TABS.map(({ key, icon: Icon, label }) => (
-          <TabsTrigger key={key} value={key} className="flex-none px-4 py-3 font-semibold data-active:text-violet-600 dark:data-active:text-violet-400">
-            <Icon className="size-4" />
-            {t(label)}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-      <TabsContent value="movements">
-        <MovementsTab movements={history.movements} unit={unit} />
-      </TabsContent>
-      <TabsContent value="sales">
-        <SalesTab sales={history.sales} />
-      </TabsContent>
-      <TabsContent value="purchases">
-        <PurchasesTab purchases={history.purchases} />
-      </TabsContent>
-      <TabsContent value="costLayers">
-        <CostLayersTab costLayers={history.costLayers} />
-      </TabsContent>
-    </Tabs>
-  )
+  const content: Record<keyof ProductHistory, React.ReactNode> = {
+    movements: <MovementsTab movements={history.movements} unit={unit} />,
+    sales: <SalesTab sales={history.sales} />,
+    purchases: <PurchasesTab purchases={history.purchases} />,
+    costLayers: <CostLayersTab costLayers={history.costLayers} />,
+  }
+  return <DetailTabs tabs={TABS.map(({ key, icon, label }) => ({ key, icon, label: t(label), content: content[key] }))} />
 }

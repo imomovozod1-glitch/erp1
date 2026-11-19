@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
-import { SaleForm } from '@/components/sales/sale-form'
+import { SaleForm } from '@/components/sales/sale-form/sale-form'
 import { getCachedProductsForSelect, getCachedCustomersForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireResourceAction } from '@/lib/permissions-server'

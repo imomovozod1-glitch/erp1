@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { formatCurrency, isoDate } from '@/lib/utils'
 import { invalidateCashboxMovement } from '@/lib/data/revalidate'
 import { fireTelegramNotification } from '@/lib/integrations/notify-client'
+import { failureMessage } from '@/lib/failure-message'
 import {
   buildMovement,
   debtSettlement,
@@ -18,7 +19,6 @@ import {
 import { recordMovementOnline, type SettleInput } from './cashbox-operations'
 import { recordMovementOffline } from './cashbox-operations-offline'
 import type { Cashbox, CashboxPageData, MovementType, NamedRow, PersonType } from './cashbox-types'
-import { failureMessage } from './failure-message'
 import { useCashboxDebts } from './use-cashbox-debts'
 
 interface MovementDeps {

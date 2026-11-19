@@ -12,6 +12,7 @@ export interface ResponsiveColumn<T> {
   cell: (row: T, index: number) => ReactNode
   align?: 'right'
   className?: string
+  isolated?: boolean
 }
 
 interface ResponsiveTableProps<T> {
@@ -21,10 +22,11 @@ interface ResponsiveTableProps<T> {
   card: (row: T, index: number) => ComponentProps<typeof MobileCard>
   numbered?: boolean
   indexOffset?: number
+  onRowClick?: (row: T) => void
   empty?: ReactNode
 }
 
-export function ResponsiveTable<T>({ rows, rowKey, columns, card, numbered = true, indexOffset = 0, empty }: ResponsiveTableProps<T>) {
+export function ResponsiveTable<T>({ rows, rowKey, columns, card, numbered = true, indexOffset = 0, onRowClick, empty }: ResponsiveTableProps<T>) {
   const t = useTranslations('common')
   const emptyState = empty ?? <p className="py-10 text-center text-sm text-muted-foreground">{t('noData')}</p>
   const span = columns.length + (numbered ? 1 : 0)
@@ -32,7 +34,7 @@ export function ResponsiveTable<T>({ rows, rowKey, columns, card, numbered = tru
     <>
       <MobileCardList className="p-3" isEmpty={rows.length === 0} empty={emptyState}>
         {rows.map((row, index) => (
-          <MobileCard key={rowKey(row, index)} {...card(row, index)} />
+          <MobileCard key={rowKey(row, index)} onClick={onRowClick && (() => onRowClick(row))} {...card(row, index)} />
         ))}
       </MobileCardList>
       <Table containerClassName="max-md:hidden">
@@ -53,10 +55,18 @@ export function ResponsiveTable<T>({ rows, rowKey, columns, card, numbered = tru
             </TableRow>
           ) : (
             rows.map((row, index) => (
-              <TableRow key={rowKey(row, index)}>
+              <TableRow
+                key={rowKey(row, index)}
+                onClick={onRowClick && (() => onRowClick(row))}
+                className={cn(onRowClick && 'cursor-pointer transition-colors')}
+              >
                 {numbered && <TableCell className="text-center text-xs text-muted-foreground">{indexOffset + index + 1}</TableCell>}
                 {columns.map((column) => (
-                  <TableCell key={column.key} className={cn(column.align === 'right' && 'text-right', column.className)}>
+                  <TableCell
+                    key={column.key}
+                    onClick={column.isolated ? (e) => e.stopPropagation() : undefined}
+                    className={cn(column.align === 'right' && 'text-right', column.className)}
+                  >
                     {column.cell(row, index)}
                   </TableCell>
                 ))}

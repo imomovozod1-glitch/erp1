@@ -1,5 +1,6 @@
 'use client'
 
+import { insufficientCashboxMessage } from '@/lib/sale-messages'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { errorMessage } from '@/lib/error-message'
@@ -86,11 +87,7 @@ export function CancelSaleDialog({
       if (error instanceof SaleCancelError) {
         toast.error(
           error.code === 'insufficient_cashbox'
-            ? t('sales.cancelSaleInsufficient', {
-                cashbox: error.details.cashboxName ?? '—',
-                balance: formatCurrency(error.details.balance ?? 0),
-                amount: formatCurrency(error.details.amount ?? 0),
-              })
+            ? insufficientCashboxMessage(t, error.details)
             : error.code === 'forbidden'
               ? t('common.noPermission')
               : t('sales.cancelSaleAlreadyCancelled')

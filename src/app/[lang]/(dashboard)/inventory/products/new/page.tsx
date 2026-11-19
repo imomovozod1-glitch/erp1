@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { ProductForm } from '@/components/inventory/products/product-form'
 import { Metadata } from 'next'
-import { getCachedCategoriesForSelect, getAssignableUsers, getCachedProductFormOptions } from '@/lib/data/queries'
+import { getCachedCategoriesForSelect, getAssignableUsers, getCachedProductFormOptions, getNextProductSku } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireResourceAction } from '@/lib/permissions-server'
 
@@ -21,12 +21,13 @@ export default async function NewProductPage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireResourceAction('inventory', 'products', 'create', lang, '/inventory/products')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tCommon, categories, assignableUsers, options] = await Promise.all([
+  const [t, tCommon, categories, assignableUsers, cachedOptions, nextSku] = await Promise.all([
     getTranslations('inventory'),
     getTranslations('common'),
     getCachedCategoriesForSelect(tenantId),
     getAssignableUsers(tenantId),
     getCachedProductFormOptions(tenantId),
+    getNextProductSku(tenantId),
   ])
 
   return (
@@ -40,7 +41,7 @@ export default async function NewProductPage({
           { label: tCommon('add') },
         ]}
       />
-      <ProductForm categories={categories} lang={lang} assignableUsers={assignableUsers} options={options} />
+      <ProductForm categories={categories} lang={lang} assignableUsers={assignableUsers} options={{ ...cachedOptions, nextSku }} />
     </div>
   )
 }

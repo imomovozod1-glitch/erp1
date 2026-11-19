@@ -98,6 +98,18 @@ export const getCachedMeasurementUnits = unstable_cache(
   { tags: ['measurement_units'], revalidate: 120 }
 )
 
+const nextSkuAfter = (rows: { sku: string }[]) =>
+  String(rows.reduce((max, row) => Math.max(max, Number.parseInt(row.sku, 10) || 0), 1000) + 1)
+
+/**
+ * The next free numeric sku, read fresh: a cached suggestion outlived the product that
+ * took it, so two products created in a row collided on the same sku.
+ */
+export async function getNextProductSku(tenantId: string) {
+  const { data } = await (getCacheClient() as any).from('products').select('sku').eq('tenant_id', tenantId)
+  return nextSkuAfter(data ?? [])
+}
+
 export const getCachedProductFormOptions = unstable_cache(
   async (tenantId: string) => {
     const supabase = getCacheClient() as any
@@ -112,16 +124,10 @@ export const getCachedProductFormOptions = unstable_cache(
       supabase.from('products').select('sku').eq('tenant_id', tenantId),
     ])
 
-    let maxSku = 1000
-    for (const row of skus.data ?? []) {
-      const parsed = Number.parseInt(row.sku, 10)
-      if (Number.isFinite(parsed) && parsed > maxSku) maxSku = parsed
-    }
-
     return {
       units: (units.data ?? []).map((u: any) => u.name as string),
       costingMethod: (tenant.data?.costing_method ?? null) as string | null,
-      nextSku: String(maxSku + 1),
+      nextSku: nextSkuAfter(skus.data ?? []),
     }
   },
   ['product-form-options'],

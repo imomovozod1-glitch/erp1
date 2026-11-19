@@ -17,8 +17,11 @@ interface NameSelectProps<T extends NamedOption> {
   options: readonly T[]
   placeholder: string
   meta?: (option: T) => ReactNode
+  clearLabel?: string
   triggerClassName?: string
 }
+
+const CLEAR = '__none__'
 
 export function NameSelect<T extends NamedOption>({
   id,
@@ -27,17 +30,23 @@ export function NameSelect<T extends NamedOption>({
   options,
   placeholder,
   meta,
+  clearLabel,
   triggerClassName,
 }: NameSelectProps<T>) {
   const tCommon = useTranslations('common')
   const selected = options.find((option) => option.id === value)
   return (
-    <Select value={value} onValueChange={(next) => onChange(next ?? '')}>
+    <Select value={value || (clearLabel ? CLEAR : value)} onValueChange={(next) => onChange(!next || next === CLEAR ? '' : next)}>
       <SelectTrigger id={id} className={cn('w-full rounded-xl', triggerClassName)}>
-        <SelectValue placeholder={placeholder}>{selected?.name ?? placeholder}</SelectValue>
+        <SelectValue placeholder={placeholder}>{selected?.name ?? clearLabel ?? placeholder}</SelectValue>
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false} className="rounded-xl p-1.5">
-        {options.length === 0 ? (
+        {clearLabel && (
+          <SelectItem value={CLEAR} className="rounded-lg py-2 pr-8 pl-2.5 text-muted-foreground">
+            {clearLabel}
+          </SelectItem>
+        )}
+        {options.length === 0 && !clearLabel ? (
           <p className="px-3 py-4 text-center text-xs text-muted-foreground">{tCommon('noData')}</p>
         ) : (
           options.map((option) => (

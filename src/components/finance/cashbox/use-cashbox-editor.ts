@@ -6,11 +6,11 @@ import { toast } from 'sonner'
 import { errorMessage } from '@/lib/error-message'
 import { invalidateCashbox, invalidateTransactions } from '@/lib/data/revalidate'
 import { useConfirmDelete } from '@/components/shared/confirm-dialog'
+import { failureMessage } from '@/lib/failure-message'
 import { writeMirror } from './cashbox-mirror'
 import { saveCashboxOffline, saveCashboxOnline } from './cashbox-save'
 import type { CashboxFormValues } from './cashbox-form-dialog'
 import type { Cashbox, CashboxPageData } from './cashbox-types'
-import { failureMessage } from './failure-message'
 
 interface EditorDeps {
   supabase: any

@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
 import { ServiceForm } from '@/components/inventory/services/service-form'
 import { Metadata } from 'next'
-import { getCachedCategoriesForSelect, getAssignableUsers, getCachedProductFormOptions } from '@/lib/data/queries'
+import { getCachedCategoriesForSelect, getAssignableUsers, getCachedProductFormOptions, getNextProductSku } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { requireResourceAction } from '@/lib/permissions-server'
 
@@ -21,13 +21,14 @@ export default async function NewServicePage({
   // Creating/editing needs the module's Edit permission, not just View.
   await requireResourceAction('inventory', 'services', 'create', lang, '/inventory/services')
   const tenantId = await getCurrentTenantId() as string
-  const [t, tCommon, categories, assignableUsers, options] = await Promise.all([
+  const [t, tCommon, categories, assignableUsers, cachedOptions, nextSku] = await Promise.all([
     getTranslations('inventory'),
     getTranslations('common'),
     getCachedCategoriesForSelect(tenantId),
     getAssignableUsers(tenantId),
     // Services and goods share the unit list and the sku sequence.
     getCachedProductFormOptions(tenantId),
+    getNextProductSku(tenantId),
   ])
 
   return (
@@ -41,7 +42,7 @@ export default async function NewServicePage({
           { label: tCommon('add') },
         ]}
       />
-      <ServiceForm categories={categories} lang={lang} assignableUsers={assignableUsers} options={options} />
+      <ServiceForm categories={categories} lang={lang} assignableUsers={assignableUsers} options={{ ...cachedOptions, nextSku }} />
     </div>
   )
 }

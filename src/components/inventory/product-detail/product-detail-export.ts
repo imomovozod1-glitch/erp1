@@ -1,3 +1,4 @@
+import { downloadWorkbook } from '@/components/shared/detail-page'
 import { formatCurrency, formatDateTime, formatNumber } from '@/lib/utils'
 import { translateMovementReason } from '@/lib/movement-reason'
 import { isIncoming, type ProductHistory } from './product-detail-types'
@@ -58,12 +59,8 @@ function historySheets(history: ProductHistory, t: Translate) {
   ]
 }
 
-export async function exportProductDetail(product: any, history: ProductHistory, t: Translate) {
-  const XLSX = await import('xlsx')
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(infoSheet(product, t)), t('inventory.excel.generalInfoSheet'))
-  for (const sheet of historySheets(history, t)) {
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(sheet.rows), sheet.name)
-  }
-  XLSX.writeFile(workbook, `${product.name.replace(/\s+/g, '_')}_details_report.xlsx`)
-}
+export const exportProductDetail = (product: any, history: ProductHistory, t: Translate) =>
+  downloadWorkbook(`${product.name.replace(/\s+/g, '_')}_details_report.xlsx`, [
+    { name: t('inventory.excel.generalInfoSheet'), rows: infoSheet(product, t) },
+    ...historySheets(history, t),
+  ])

@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { PageHeader } from '@/components/shared/page-header'
-import { InvoiceForm } from '@/components/sales/invoice-form'
+import { InvoiceForm } from '@/components/sales/invoice-form/invoice-form'
 import { getCachedInvoiceById, getCachedCustomersForSelect, getCachedOrdersForSelect, getAssignableUsers } from '@/lib/data/queries'
 import { getCurrentTenantId } from '@/lib/tenant'
 import { Metadata } from 'next'

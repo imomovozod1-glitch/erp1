@@ -2,7 +2,7 @@ import { getCachedCustomerDetails, getCachedCustomerDistribution } from '@/lib/d
 import { CustomerRoutesCard } from '@/components/distribution/customer-routes-card'
 import { canEditRecord, canViewModule, requireResourceView } from '@/lib/permissions-server'
 import { getCurrentTenantId } from '@/lib/tenant'
-import { CustomerDetailClient } from '@/components/sales/customer-detail-client'
+import { CustomerDetailClient } from '@/components/sales/customer-detail/customer-detail-client'
 import { PageHeader } from '@/components/shared/page-header'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
