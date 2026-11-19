@@ -1,432 +1,73 @@
 'use client'
 
-import { useState } from 'react'
+import { Loader2, Send, Unplug } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useConfirmDelete } from '@/components/shared/confirm-dialog'
-import { toast } from 'sonner'
-import { Send, CheckCircle2, Loader2, Unplug, ExternalLink, RefreshCw, AlertTriangle, ChevronDown } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { PasswordInput } from '@/components/ui/password-input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { TELEGRAM_EVENTS, type TelegramEvent } from '@/lib/integrations/telegram-events'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { TELEGRAM_LANGUAGES, type TelegramLanguage, type TelegramStatus } from '@/lib/integrations/telegram-types'
-import { errorMessage } from '@/lib/error-message'
+import { AdvancedChatId, ConnectionInfo, EventToggles, LanguageField, SetupSteps, TokenField } from '@/components/settings/telegram/telegram-parts'
+import { useTelegramIntegration, type TelegramIntegration } from '@/components/settings/telegram/use-telegram-integration'
+import type { TelegramStatus } from '@/lib/integrations/telegram-types'
 
-// Each language under its own name, as in the header's language switcher —
-// the admin choosing Russian for the group reads "Русский" whatever the UI is in.
-const LANGUAGE_LABELS: Record<TelegramLanguage, string> = {
-  uz: "O'zbekcha",
-  ru: 'Русский',
-  en: 'English',
+function ConnectionBadge({ status }: { status: TelegramStatus }) {
+  const t = useTranslations('settings.integrations')
+  if (!status.connected) return <StatusBadge tone="slate" label={t('statusNotConnected')} />
+  return <StatusBadge tone={status.enabled ? 'emerald' : 'amber'} label={t(status.enabled ? 'statusActive' : 'statusPaused')} />
 }
 
-
-/**
- * Telegram bot connection UI.
- *
- * All reads/writes go through `/api/integrations/telegram` rather than the
- * browser Supabase client: `integration_settings` grants no `authenticated`
- * RLS policy, precisely so the bot token can never be selected from here.
- * The stored token is therefore never rendered — only a masked hint — and the
- * token field is left blank on an existing connection, meaning "keep the
- * current one" unless the admin types a new value.
- */
-export function TelegramIntegrationForm({ initialStatus }: { initialStatus: TelegramStatus }) {
-  const tRoot = useTranslations()
-  const tCommon = useTranslations('common')
-  const t = useTranslations('settings.integrations')
-  const [confirmDelete, confirmDialog] = useConfirmDelete()
-
-  // The card's state is rendered by the server and arrives as a prop. It used
-  // to fetch it back from our own `/api/integrations/telegram` after hydrating
-  // — an HTTP round trip plus a Supabase query for a screen the server had
-  // just finished rendering, behind a skeleton.
-  const [status, setStatus] = useState<TelegramStatus>(initialStatus)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isTesting, setIsTesting] = useState(false)
-  const [isDisconnecting, setIsDisconnecting] = useState(false)
-  const [isDetecting, setIsDetecting] = useState(false)
-  const [showAdvanced, setShowAdvanced] = useState(false)
-
-  const [botToken, setBotToken] = useState('')
-  const [chatId, setChatId] = useState(initialStatus.chatId ?? '')
-  const [enabled, setEnabled] = useState(initialStatus.enabled)
-  const [events, setEvents] = useState<Partial<Record<TelegramEvent, boolean>>>(
-    initialStatus.events ?? {}
-  )
-  const [language, setLanguage] = useState<TelegramLanguage>(initialStatus.language ?? 'uz')
-
-  const applyStatus = (data: TelegramStatus) => {
-    setStatus(data)
-    setChatId(data.chatId ?? '')
-    setEnabled(data.enabled)
-    setEvents(data.events ?? {})
-    setLanguage(data.language ?? 'uz')
-    // Never prefill the token — the API deliberately doesn't return it.
-    setBotToken('')
-  }
-
-
-  const codeMessage = (code: string | undefined) => {
-    switch (code) {
-      case 'invalid_token_format':
-        return t('errorTokenFormat')
-      case 'token_rejected':
-        return t('errorTokenRejected')
-      case 'invalid_chat_id':
-        return t('errorChatIdFormat')
-      case 'token_required':
-        return t('errorTokenRequired')
-      case 'not_configured':
-        return t('errorNotConfigured')
-      case 'no_chat_yet':
-        return t('errorNoChatYet')
-      case 'detect_failed':
-        return t('errorDetectFailed')
-      case 'awaiting_chat':
-        return t('errorNoChatYet')
-      case 'send_failed':
-        return t('errorSendFailed')
-      default:
-        return errorMessage(tRoot, code, tCommon('error'))
-    }
-  }
-
-  const handleSave = async () => {
-    if (isSaving) return
-    // The token is the only thing a connection needs; the destination chat is
-    // discovered from the bot itself (see /api/integrations/telegram).
-    if (!status?.connected && !botToken.trim()) {
-      toast.error(t('errorTokenRequired'))
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      const res = await fetch('/api/integrations/telegram', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // Omitted when blank → the server keeps the stored token.
-          ...(botToken.trim() ? { bot_token: botToken.trim() } : {}),
-          // Blank means "work it out yourself".
-          ...(chatId.trim() ? { chat_id: chatId.trim() } : {}),
-          enabled,
-          events,
-          language,
-        }),
-      })
-      const json = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        toast.error(codeMessage(json.error))
-        return
-      }
-      toast.success(json.awaitingChat ? t('savedAwaitingChat') : tCommon('saved'))
-
-      const refreshed = await fetch('/api/integrations/telegram')
-      if (refreshed.ok) applyStatus(await refreshed.json())
-    } catch {
-      toast.error(tCommon('error'))
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleDetectChat = async () => {
-    if (isDetecting) return
-    setIsDetecting(true)
-    try {
-      const res = await fetch('/api/integrations/telegram/detect-chat', { method: 'POST' })
-      const json = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        toast.error(codeMessage(json.error))
-        return
-      }
-      toast.success(t('chatDetected', { chat: json.chatTitle ?? json.chatId }))
-      const refreshed = await fetch('/api/integrations/telegram')
-      if (refreshed.ok) applyStatus(await refreshed.json())
-    } catch {
-      toast.error(tCommon('error'))
-    } finally {
-      setIsDetecting(false)
-    }
-  }
-
-  const handleTest = async () => {
-    if (isTesting) return
-    setIsTesting(true)
-    try {
-      const res = await fetch('/api/integrations/telegram/test', { method: 'POST' })
-      const json = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        toast.error(codeMessage(json.error))
-        return
-      }
-      toast.success(t('testSent'))
-    } catch {
-      toast.error(tCommon('error'))
-    } finally {
-      setIsTesting(false)
-    }
-  }
-
-  const handleDisconnect = async () => {
-    if (isDisconnecting) return
-    if (!(await confirmDelete({ description: t('disconnectConfirm'), confirmLabel: t('disconnect') }))) return
-
-    setIsDisconnecting(true)
-    try {
-      const res = await fetch('/api/integrations/telegram', { method: 'DELETE' })
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
-        toast.error(errorMessage(tRoot, json, tCommon('error')))
-        return
-      }
-      toast.success(t('disconnected'))
-      const refreshed = await fetch('/api/integrations/telegram')
-      if (refreshed.ok) applyStatus(await refreshed.json())
-    } catch {
-      toast.error(tCommon('error'))
-    } finally {
-      setIsDisconnecting(false)
-    }
-  }
-
-
-
+function Actions({ state }: { state: TelegramIntegration }) {
+  const t = useTranslations()
+  const spin = <Loader2 className="mr-2 size-4 animate-spin" />
   return (
-    <Card className="max-w-3xl border-slate-200/60 dark:border-slate-800 shadow-sm">
+    <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+      <Button onClick={state.save} disabled={state.busy === 'save'}>
+        {state.busy === 'save' && spin}
+        {t('common.save')}
+      </Button>
+      <Button variant="outline" onClick={state.test} disabled={state.busy === 'test' || !state.status.connected}>
+        {state.busy === 'test' ? spin : <Send className="mr-2 size-4" />}
+        {t('settings.integrations.sendTest')}
+      </Button>
+      {state.status.connected && (
+        <Button variant="ghost" onClick={state.disconnect} disabled={state.busy === 'disconnect'} className="ml-auto text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30">
+          {state.busy === 'disconnect' ? spin : <Unplug className="mr-2 size-4" />}
+          {t('settings.integrations.disconnect')}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+/** Telegram bot connection. The stored token is never shown — only a masked hint; a blank field keeps it. */
+export function TelegramIntegrationForm({ initialStatus }: { initialStatus: TelegramStatus }) {
+  const t = useTranslations('settings.integrations')
+  const state = useTelegramIntegration(initialStatus)
+  return (
+    <Card className="max-w-3xl border shadow-sm">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-lg bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400 shrink-0">
-              <Send className="h-5 w-5" />
+            <div className="shrink-0 rounded-lg bg-sky-50 p-2.5 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
+              <Send className="size-5" />
             </div>
             <div>
               <CardTitle className="text-base">{t('telegramTitle')}</CardTitle>
               <CardDescription className="mt-1">{t('telegramDesc')}</CardDescription>
             </div>
           </div>
-          <StatusBadge
-            tone={status?.connected ? (status.enabled ? 'emerald' : 'amber') : 'slate'}
-            label={
-              status?.connected
-                ? status.enabled
-                  ? t('statusActive')
-                  : t('statusPaused')
-                : t('statusNotConnected')
-            }
-          />
+          <ConnectionBadge status={state.status} />
         </div>
       </CardHeader>
-
       <CardContent className="space-y-6">
-        {/* Setup guide — two steps, because the chat id resolves itself. */}
-        <ol className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5 list-decimal list-inside bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
-          <li>
-            {t('stepCreateBot')}{' '}
-            <a
-              href="https://t.me/BotFather"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-violet-600 dark:text-violet-400 hover:underline inline-flex items-center gap-0.5"
-            >
-              @BotFather <ExternalLink className="h-3 w-3" />
-            </a>
-          </li>
-          <li>{t('stepPasteToken')}</li>
-          <li>{t('stepPressStart')}</li>
-        </ol>
-
-        {status?.connected && status.botUsername && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>
-                {t('connectedAs')}{' '}
-                <a
-                  href={`https://t.me/${status.botUsername}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold hover:underline"
-                >
-                  @{status.botUsername}
-                </a>
-                {status.tokenHint ? ` (${status.tokenHint})` : ''}
-              </span>
-            </div>
-
-            {status.awaitingChat ? (
-              /* The bot is live but nobody has written to it yet, so Telegram
-                 has not told us where to post. */
-              <div className="rounded-lg border border-amber-200/70 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/20 p-4 space-y-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                  <div className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-                    {t('awaitingChatHint')}
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <a
-                    href={`https://t.me/${status.botUsername}?start=erp`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-500"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                    {t('openBot')}
-                  </a>
-                  <Button size="sm" variant="outline" onClick={handleDetectChat} disabled={isDetecting}>
-                    {isDetecting ? (
-                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                    )}
-                    {t('detectChat')}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span>
-                  {t('sendingTo')} <b className="tabular-nums">{status.chatId}</b>
-                </span>
-                <Button size="sm" variant="ghost" onClick={handleDetectChat} disabled={isDetecting} className="h-7 px-2">
-                  {isDetecting ? (
-                    <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                  ) : (
-                    <RefreshCw className="mr-1.5 h-3 w-3" />
-                  )}
-                  {t('redetectChat')}
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="space-y-2">
-          <Label htmlFor="telegram_token">
-            {t('botToken')} {!status?.connected && '*'}
-          </Label>
-          <PasswordInput
-            id="telegram_token"
-            value={botToken}
-            onChange={(e) => setBotToken(e.target.value)}
-            placeholder={status?.connected ? t('botTokenKeepPlaceholder') : '123456789:AA...'}
-            autoComplete="off"
-          />
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            {status?.connected ? t('botTokenKeepHint') : t('botTokenHint')}
-          </p>
-        </div>
-
-        {/* Manual override, folded away: the normal path never needs it. */}
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced((prev) => !prev)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-          >
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-            {t('advanced')}
-          </button>
-          {showAdvanced && (
-            <div className="space-y-2 pl-5">
-              <Label htmlFor="telegram_chat_id">{t('chatId')}</Label>
-              <Input
-                id="telegram_chat_id"
-                value={chatId}
-                onChange={(e) => setChatId(e.target.value)}
-                placeholder="-1001234567890"
-                autoComplete="off"
-              />
-              <p className="text-xs text-slate-400 dark:text-slate-500">{t('chatIdOptionalHint')}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="telegram_language">{t('botLanguage')}</Label>
-          <Select value={language} onValueChange={(value) => setLanguage(value as TelegramLanguage)}>
-            <SelectTrigger id="telegram_language" className="w-full sm:w-60">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TELEGRAM_LANGUAGES.map((code) => (
-                <SelectItem key={code} value={code}>
-                  {LANGUAGE_LABELS[code]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-slate-400 dark:text-slate-500">{t('botLanguageHint')}</p>
-        </div>
-
-        <div className="space-y-3">
-          <Label>{t('notifications')}</Label>
-          <label className="flex items-start gap-2.5 cursor-pointer">
-            <Checkbox
-              checked={enabled}
-              onCheckedChange={(checked) => setEnabled(checked === true)}
-              className="mt-0.5"
-            />
-            <span className="text-sm text-slate-700 dark:text-slate-300 leading-tight">
-              {t('enableLabel')}
-              <span className="block text-xs text-slate-400 dark:text-slate-500">{t('enableHint')}</span>
-            </span>
-          </label>
-
-          <div className="grid gap-2.5 sm:grid-cols-2 pl-6">
-            {TELEGRAM_EVENTS.map((event) => (
-              <label
-                key={event}
-                className={`flex items-center gap-2.5 ${enabled ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
-              >
-                <Checkbox
-                  checked={events[event] === true}
-                  disabled={!enabled}
-                  onCheckedChange={(checked) =>
-                    setEvents((prev) => ({ ...prev, [event]: checked === true }))
-                  }
-                />
-                <span className="text-sm text-slate-700 dark:text-slate-300">{t(`event_${event}`)}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {tCommon('save')}
-          </Button>
-          <Button variant="outline" onClick={handleTest} disabled={isTesting || !status?.connected}>
-            {isTesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-            {t('sendTest')}
-          </Button>
-          {status?.connected && (
-            <Button
-              variant="ghost"
-              onClick={handleDisconnect}
-              disabled={isDisconnecting}
-              className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 ml-auto"
-            >
-              {isDisconnecting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Unplug className="mr-2 h-4 w-4" />
-              )}
-              {t('disconnect')}
-            </Button>
-          )}
-        </div>
+        <SetupSteps />
+        <ConnectionInfo state={state} />
+        <TokenField state={state} />
+        <AdvancedChatId state={state} />
+        <LanguageField state={state} />
+        <EventToggles state={state} />
+        <Actions state={state} />
       </CardContent>
-      {confirmDialog}
+      {state.confirmDialog}
     </Card>
   )
 }
