@@ -1,22 +1,21 @@
 'use client'
 
 import Link from 'next/link'
-import { Building2, LifeBuoy } from 'lucide-react'
+import { LifeBuoy } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { SidebarMenuButton } from '@/components/ui/sidebar'
 import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database.types'
+import { FalcoMark } from '@/components/shared/falco-logo'
 
 // `min-h-12` keeps the 48px row in the icon rail, so the icons below never shift up on collapse.
 export function BrandButton({ lang, onNavigate }: { lang: string; onNavigate: () => void }) {
   const t = useTranslations('nav')
   return (
     <SidebarMenuButton size="lg" tooltip="Falco" className="group-data-[collapsible=icon]:min-h-12" render={<Link href={`/${lang}/dashboard`} prefetch onClick={onNavigate} />}>
-      <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
-        <Building2 className="size-4" />
-      </div>
+      <FalcoMark className="size-8!" />
       <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
         <span className="truncate font-semibold">Falco</span>
         <span className="truncate text-xs text-muted-foreground">{t('brandTagline')}</span>

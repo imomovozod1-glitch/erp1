@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
-import type { LucideIcon } from 'lucide-react'
-import { AlertCircle, Building2, Check, Loader2 } from 'lucide-react'
+import { AlertCircle, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { FalcoMark } from '@/components/shared/falco-logo'
 
 /**
  * Shared chrome for every sign-in surface in the app. There are three, each
@@ -69,8 +69,8 @@ export function AuthAside({
       <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-white/5" />
 
       <div className="relative flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
-          <Building2 className="size-5" />
+        <div className="flex size-11 items-center justify-center rounded-2xl bg-white shadow-sm">
+          <FalcoMark className="size-8" />
         </div>
         <div>
           <p className="text-lg font-bold leading-none">Falco</p>
@@ -101,7 +101,6 @@ export function AuthAside({
 }
 
 export function AuthCard({
-  icon: Icon,
   brandTitle,
   brandSubtitle,
   heading,
@@ -109,7 +108,6 @@ export function AuthCard({
   action,
   children,
 }: {
-  icon: LucideIcon
   brandTitle: string
   brandSubtitle: string
   heading: string
@@ -122,8 +120,8 @@ export function AuthCard({
     <div className="rounded-3xl border border-border/60 bg-card p-6 shadow-xl shadow-violet-900/5 sm:p-8 dark:shadow-black/30">
       <div className="mb-8 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-brand">
-            <Icon className="size-5" />
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-border/60 bg-card shadow-sm">
+            <FalcoMark className="size-8" />
           </div>
           <div className="min-w-0">
             <p className="truncate text-lg font-bold leading-none text-foreground">{brandTitle}</p>

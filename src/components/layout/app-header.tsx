@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { AlertTriangle, Building2, LogOut } from 'lucide-react'
+import { AlertTriangle, LogOut } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -21,6 +21,7 @@ import { useNotifications } from '@/components/layout/header/use-notifications'
 import { useSidebarOffset } from '@/lib/hooks/use-sidebar-offset'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database.types'
+import { FalcoMark } from '@/components/shared/falco-logo'
 
 interface AppHeaderProps {
   profile: Profile | null
@@ -40,8 +41,8 @@ function PhoneTitle({ lang }: { lang: string }) {
       {segments.length > 2 ? (
         <BackButton className="size-9 rounded-xl border-border/60 bg-card text-foreground shadow-sm hover:bg-violet-50 dark:bg-card" />
       ) : (
-        <Link href={`/${lang}/dashboard`} aria-label="Falco" className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white shadow-brand">
-          <Building2 className="size-4" />
+        <Link href={`/${lang}/dashboard`} aria-label="Falco" className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-card shadow-sm">
+          <FalcoMark className="size-6" />
         </Link>
       )}
       <div className="min-w-0 leading-tight">

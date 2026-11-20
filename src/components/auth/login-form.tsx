@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2 } from 'lucide-react'
 import { PasswordInput } from '@/components/ui/password-input'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -109,7 +108,6 @@ export function LoginForm({ lang }: { lang: string }) {
 
   return (
     <AuthCard
-      icon={Building2}
       brandTitle="Falco"
       brandSubtitle={t('brandSubtitle')}
       heading={t('loginTitle')}

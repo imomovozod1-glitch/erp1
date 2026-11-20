@@ -7,7 +7,6 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import { LifeBuoy } from 'lucide-react'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
@@ -78,7 +77,6 @@ export function SupportLoginForm() {
 
   return (
     <AuthCard
-      icon={LifeBuoy}
       brandTitle={t('brandTitle')}
       brandSubtitle={t('brandSubtitle')}
       heading={t('loginHeading')}

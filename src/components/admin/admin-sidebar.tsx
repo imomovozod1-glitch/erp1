@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { ShieldCheck, LayoutDashboard, Building2, Wallet, ShieldAlert, Settings, LifeBuoy, Inbox } from 'lucide-react'
+import { LayoutDashboard, Building2, Wallet, ShieldAlert, Settings, LifeBuoy, Inbox } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +20,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { getInitials } from '@/lib/utils'
+import { FalcoMark } from '@/components/shared/falco-logo'
 
 const NAV_ITEMS = [
   { key: 'dashboard', icon: LayoutDashboard, href: '/admin' },
@@ -53,9 +54,7 @@ export function AdminSidebar({ adminName, adminEmail }: AdminSidebarProps) {
               className="group-data-[collapsible=icon]:min-h-12"
               render={<Link href="/admin" prefetch={true} />}
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-violet-600 text-white">
-                <ShieldCheck className="size-4" />
-              </div>
+              <FalcoMark className="size-8!" />
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">Falco Admin</span>
                 <span className="truncate text-xs text-muted-foreground">{t('consoleSubtitle')}</span>
