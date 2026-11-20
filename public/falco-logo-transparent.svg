@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="250 130 526 814" width="526" height="814">
+  <defs>
+    <!-- Yuqori qanot: soya (pastki) va yorug' (yuqori) yuzalar -->
+    <linearGradient id="topShade" gradientUnits="userSpaceOnUse" x1="300" y1="590" x2="700" y2="240">
+      <stop offset="0" stop-color="#38187D"/>
+      <stop offset="0.5" stop-color="#4825A3"/>
+      <stop offset="1" stop-color="#6537D7"/>
+    </linearGradient>
+    <linearGradient id="topLight" gradientUnits="userSpaceOnUse" x1="330" y1="470" x2="720" y2="200">
+      <stop offset="0" stop-color="#46239A"/>
+      <stop offset="0.45" stop-color="#6138C6"/>
+      <stop offset="1" stop-color="#7F55F5"/>
+    </linearGradient>
+    <!-- Pastki qanot -->
+    <linearGradient id="lowShade" gradientUnits="userSpaceOnUse" x1="400" y1="640" x2="660" y2="470">
+      <stop offset="0" stop-color="#482993"/>
+      <stop offset="0.5" stop-color="#6146BB"/>
+      <stop offset="1" stop-color="#7E75EA"/>
+    </linearGradient>
+    <linearGradient id="lowLight" gradientUnits="userSpaceOnUse" x1="350" y1="640" x2="650" y2="445">
+      <stop offset="0" stop-color="#7D69D8"/>
+      <stop offset="0.5" stop-color="#9888EB"/>
+      <stop offset="1" stop-color="#AB9CFB"/>
+    </linearGradient>
+    <linearGradient id="ink" gradientUnits="userSpaceOnUse" x1="300" y1="0" x2="720" y2="0">
+      <stop offset="0" stop-color="#3B1A86"/>
+      <stop offset="1" stop-color="#5A2FC8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Yuqori qanot: butun shakl (soya yuzasi) + qayrilish chizig'igacha yorug' yuza -->
+  <path d="M275,528 C280,460 335,408 400,378 C520,323 660,228 758,154 C740,240 665,370 600,414 C510,475 345,520 304,603 C285,585 274,555 275,528 Z" fill="url(#topShade)"/>
+  <path d="M304,603 C285,585 274,555 275,528 C280,460 335,408 400,378 C520,323 660,228 758,154 C715,225 590,340 500,402 C430,445 340,500 304,603 Z" fill="url(#topLight)"/>
+
+  <!-- Pastki qanot: butun shakl (soya yuzasi) + yuqori yorug' tasma -->
+  <path d="M338,630 C340,590 390,545 450,522 C560,478 660,428 727,382 C712,460 615,560 534,585 C580,588 620,582 649,573 C625,595 590,622 540,625 C470,627 390,630 352,693 C342,675 337,650 338,630 Z" fill="url(#lowShade)"/>
+  <path d="M352,693 C342,675 337,650 338,630 C340,590 390,545 450,522 C560,478 660,428 727,382 C690,440 600,500 500,547 C430,580 375,620 352,693 Z" fill="url(#lowLight)"/>
+
+  <!-- Yozuv: "Falco" — geometrik monolinear wordmark, harflar alohida.
+       Cap-height 140 (780–920), x-height 90, yumaloq harflarda optik overshoot, optik kerning -->
+  <g fill="none" stroke="url(#ink)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <!-- F -->
+    <path d="M292,910 V790 H358"/>
+    <path d="M292,848 H344"/>
+    <!-- a: bir qavatli -->
+    <circle cx="423" cy="875" r="37"/>
+    <path d="M460,840 V910"/>
+    <!-- l -->
+    <path d="M514,790 V910"/>
+    <!-- c -->
+    <path d="M625.2,848.8 A37,37 0 1 0 625.2,901.2"/>
+    <!-- o -->
+    <circle cx="704" cy="875" r="37"/>
+  </g>
+</svg>

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { getSupportAgentSession } from '@/lib/admin-auth'
 import { SupportLogoutButton } from '@/components/support-portal/support-logout-button'
-import { LifeBuoy } from 'lucide-react'
+import { FalcoMark } from '@/components/shared/falco-logo'
 
 export default async function SupportProtectedLayout({
   children,
@@ -18,9 +18,7 @@ export default async function SupportProtectedLayout({
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="flex items-center justify-between border-b bg-white dark:bg-slate-900 dark:border-slate-800 px-4 sm:px-6 h-14">
         <div className="flex items-center gap-2">
-          <div className="flex aspect-square size-7 items-center justify-center rounded-lg bg-violet-600 text-white">
-            <LifeBuoy className="size-4" />
-          </div>
+          <FalcoMark className="size-7" />
           <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">{t('brandTitle')}</span>
           <span className="text-xs text-muted-foreground">· {session.fullName}</span>
         </div>

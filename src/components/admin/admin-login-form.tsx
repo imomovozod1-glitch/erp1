@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ShieldCheck, Mail } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { LocaleSwitcher } from '@/components/shared/locale-switcher'
@@ -78,7 +78,6 @@ export function AdminLoginForm() {
 
   return (
     <AuthCard
-      icon={ShieldCheck}
       brandTitle={t('brandTitle')}
       brandSubtitle={t('brandSubtitle')}
       heading={t('heading')}

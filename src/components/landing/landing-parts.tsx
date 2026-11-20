@@ -1,17 +1,11 @@
 import { Reveal } from '@/components/landing/reveal'
+import { FalcoLogo } from '@/components/shared/falco-logo'
 import type { Icon } from '@phosphor-icons/react'
 import { CloudCheck, DeviceMobile, Translate } from '@phosphor-icons/react/dist/ssr'
 import { TEXT_STRONG, TEXT_MUTED, INSET, HAIRLINE, SKELETON } from '@/components/landing/landing-theme'
 
 export function Logo() {
-  return (
-    <span className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-fuchsia-500 text-base font-extrabold text-white shadow-lg shadow-violet-500/40">
-        F
-      </span>
-      <span className={`text-lg font-bold tracking-tight ${TEXT_STRONG}`}>Falco</span>
-    </span>
-  )
+  return <FalcoLogo className="h-9 w-auto" />
 }
 
 export function SectionHeading({ eyebrow, title, subtitle }: { eyebrow?: string; title: string; subtitle?: string }) {
