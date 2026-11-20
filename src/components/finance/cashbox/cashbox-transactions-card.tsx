@@ -3,6 +3,7 @@
 import { useCan } from '@/components/providers/permissions-provider'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { categoryLabel } from '@/lib/finance/category-label'
 import { useRouter } from 'next/navigation'
 import { Calendar, Receipt, Search, TrendingUp } from 'lucide-react'
 import {
@@ -83,7 +84,7 @@ export function CashboxTransactionsCard({
               onClick={canEdit ? () => router.push(`/${lang}/finance/transactions/${tx.id}/edit`) : undefined}
               eyebrow={
                 <>
-                  <MobileChip>{tx.category}</MobileChip>
+                  <MobileChip>{categoryLabel(t, tx.category)}</MobileChip>
                   <span>{formatDateTime(tx.created_at)}</span>
                 </>
               }
@@ -166,7 +167,7 @@ export function CashboxTransactionsCard({
                     <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">{cbName}</td>
                     <td className="p-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border border-slate-200/30 dark:border-slate-700">
-                        {tx.category}
+                        {categoryLabel(t, tx.category)}
                       </span>
                     </td>
                     <td className="p-4 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">{tx.description || '—'}</td>
