@@ -827,6 +827,7 @@
     }
   },
   "finance": {
+    "categorySales": "Sotuv",
     "title": "Moliya",
     "transactions": "Tranzaksiyalar",
     "income": "Daromad",

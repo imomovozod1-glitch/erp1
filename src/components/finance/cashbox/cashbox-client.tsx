@@ -56,14 +56,17 @@ export function CashboxClient({ lang, initialData, period, customStart, customEn
 
       {offline && <OfflineNotice />}
 
-      <CashboxListCard
-        cashboxes={snapshot.cashboxes}
-        onMove={(cashbox, type) => movement.openFor(cashbox, type)}
-        onEdit={editor.openFor}
-        onDelete={editor.remove}
-      />
-
-      <CashboxTransactionsCard transactions={snapshot.transactions} cashboxes={snapshot.cashboxes} lang={lang} />
+      {/* Two lists on one page: a grid, so the page scrolls at full height instead of
+          squeezing both cards into the screen (the app-page list rule skips grids). */}
+      <div className="grid gap-6">
+        <CashboxListCard
+          cashboxes={snapshot.cashboxes}
+          onMove={(cashbox, type) => movement.openFor(cashbox, type)}
+          onEdit={editor.openFor}
+          onDelete={editor.remove}
+        />
+        <CashboxTransactionsCard transactions={snapshot.transactions} cashboxes={snapshot.cashboxes} lang={lang} />
+      </div>
 
       {editor.open && (
         <CashboxFormDialog

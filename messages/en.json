@@ -827,6 +827,7 @@
     }
   },
   "finance": {
+    "categorySales": "Sale",
     "title": "Finance",
     "transactions": "Transactions",
     "income": "Income",

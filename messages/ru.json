@@ -827,6 +827,7 @@
     }
   },
   "finance": {
+    "categorySales": "Продажа",
     "title": "Финансы",
     "transactions": "Транзакции",
     "income": "Доходы",

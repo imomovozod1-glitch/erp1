@@ -2,6 +2,7 @@
 
 import { useCan } from '@/components/providers/permissions-provider'
 import { useTranslations } from 'next-intl'
+import { categoryLabel } from '@/lib/finance/category-label'
 import { ArrowDownLeft, ArrowUpRight, DollarSign, MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -106,7 +107,7 @@ export function TransactionsTable({
                   <TableCell className="text-muted-foreground">{formatDateTime(tx.created_at)}</TableCell>
                   <TableCell className="hidden md:table-cell">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
-                      {tx.category}
+                      {categoryLabel(t, tx.category)}
                     </span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground max-w-50 truncate">
@@ -170,11 +171,11 @@ export function TransactionsTable({
                 leading={<MobileThumb fallback={isIncome ? <ArrowDownLeft /> : <ArrowUpRight />} />}
                 eyebrow={
                   <>
-                    {tx.category && <MobileChip>{tx.category}</MobileChip>}
+                    {tx.category && <MobileChip>{categoryLabel(t, tx.category)}</MobileChip>}
                     <span className="truncate">{formatDateTime(tx.created_at)}</span>
                   </>
                 }
-                title={tx.description || tx.category || '—'}
+                title={tx.description || categoryLabel(t, tx.category) || '—'}
                 subtitle={tx.assignee?.full_name || tCommon('unassigned')}
                 menu={renderActions(tx)}
                 stats={[
